@@ -43,8 +43,14 @@ export function Tanitim() {
         </Link>
       </main>
 
-      <footer className="border-t border-kenar px-4 py-6 text-center text-kucuk text-kursun-koyu">
-        <p>Beşiktaş Arnavutköy Korkmaz Yiğit Anadolu Lisesi · Matematik</p>
+      {/*
+       * Okul kimliği iki satır: üstte ilçe, altında okul adı. Mührün kendi
+       * düzeni de böyledir (alt yayda BEŞİKTAŞ, çevresinde okul adı).
+       * "Matematik" burada tekrar edilmez — kilit satırında zaten yazıyor.
+       */}
+      <footer className="border-t border-kenar px-4 py-6 text-center text-kursun-koyu">
+        <p className="text-etiket">Beşiktaş</p>
+        <p className="mt-1 text-kucuk">Arnavutköy Korkmaz Yiğit Anadolu Lisesi</p>
       </footer>
     </div>
   )
