@@ -135,8 +135,25 @@ kümeleri taşınır; `latin-ext` Türkçe için zorunludur (ğ, ş, İ).
 Grafik kütüphanesi (`recharts`) ve PDF görüntüleyici (`pdf.js`) geldiklerinde tembel
 yüklenecektir — ana pakete girmeyecekler.
 
-## 8. Sırada ne var
+## 8. Teslim kuralı — geç teslim yoktur
+
+Ödev son tarihinde kapanır. Süre dolduktan sonra gönderim **sunucu tarafında
+reddedilir**; öğrenci ödevi yapmamış sayılır. Ara durum (geç teslim, kırıntılı puan)
+yoktur.
+
+Bunun mimariye üç yansıması var:
+
+1. `odevler` tablosunda geç teslim politikası alanı **yok**; `gonderimler` tablosunda
+   `gec_mi` alanı **yok**. Şema sadeleşir.
+2. Kural istemcide değil, gönderim fonksiyonunun içinde uygulanır (Faz 1): son tarih
+   geçmişse fonksiyon hata döndürür. İstemcide düğmeyi gizlemek yeterli değildir —
+   ağ isteğini elle gönderen biri kuralı aşmamalıdır.
+3. Uyarı akışı teslimden **önceye** taşınır: son gün yaklaşırken öğrenciye ve veliye
+   bildirim gider. Süre dolduktan sonra gönderilen bildirim "yapılmadı" bildirimidir.
+
+## 9. Sırada ne var
 
 Faz 1: veri modeli ve güvenlik temeli. `siniflar` tablosu, `odevler` için ayrı
 `soru_pdf_url` / `anahtar_pdf_url` alanları, RLS + `SECURITY DEFINER` fonksiyonlar,
-`pgcrypto` ile PIN hash'leme, oran sınırlama, imzalı ve süreli dosya adresleri.
+`pgcrypto` ile PIN hash'leme, oran sınırlama, imzalı ve süreli dosya adresleri,
+son tarih sonrası gönderimi reddeden kontrol.

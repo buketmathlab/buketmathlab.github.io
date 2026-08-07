@@ -15,17 +15,15 @@ type Ozellikler = {
   onSecim?: (ogrenciId: string) => void
 }
 
-const sira: readonly YoklamaDurumu[] = ['teslim', 'gec', 'eksik', 'bekliyor']
+const sira: readonly YoklamaDurumu[] = ['teslim', 'yapmadi', 'bekliyor']
 const isimler: Record<YoklamaDurumu, string> = {
-  teslim: 'Teslim etti',
-  gec: 'Geç teslim',
-  eksik: 'Göndermedi',
+  teslim: 'Yaptı',
+  yapmadi: 'Yapmadı',
   bekliyor: 'Süresi dolmadı',
 }
 const noktaRengi: Record<YoklamaDurumu, string> = {
   teslim: 'bg-yesil',
-  gec: 'bg-altin',
-  eksik: 'bg-kirmizi',
+  yapmadi: 'bg-kirmizi',
   bekliyor: 'bg-kenar-koyu',
 }
 
@@ -39,7 +37,7 @@ const noktaRengi: Record<YoklamaDurumu, string> = {
  */
 export function YoklamaSeridi({ baslik, hucreler, onSecim }: Ozellikler) {
   const toplam = hucreler.length
-  const teslimEden = hucreler.filter((h) => h.durum === 'teslim' || h.durum === 'gec').length
+  const teslimEden = hucreler.filter((h) => h.durum === 'teslim').length
   const oran = toplam === 0 ? 0 : teslimEden / toplam
 
   return (
@@ -48,7 +46,7 @@ export function YoklamaSeridi({ baslik, hucreler, onSecim }: Ozellikler) {
         <div>
           <h3 className="text-b3">{baslik}</h3>
           <p className="text-kucuk text-kursun-koyu">
-            {sayi(teslimEden)} / {sayi(toplam)} öğrenci gönderdi
+            {sayi(teslimEden)} / {sayi(toplam)} öğrenci yaptı
           </p>
         </div>
         <p className="text-rakam font-baslik text-murekkep" aria-hidden="true">

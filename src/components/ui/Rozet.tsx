@@ -17,7 +17,7 @@ type Ozellikler = {
   ekSinif?: string
 }
 
-/** Durum etiketi: "Geç", "Onay bekliyor", "Özel ders". Renk tek anlam taşıyıcı değildir. */
+/** Durum etiketi: "Yapıldı", "Onay bekliyor", "Özel ders". Renk tek anlam taşıyıcı değildir. */
 export function Rozet({ ton = 'notr', children, ekSinif }: Ozellikler) {
   return (
     <span

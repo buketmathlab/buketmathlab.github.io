@@ -19,25 +19,19 @@ const gorunum: Record<YoklamaDurumu, { dolgu: string; cizgi: string; yazi: strin
     dolgu: 'fill-yesil',
     cizgi: 'stroke-yesil',
     yazi: 'fill-kagit-yuksek',
-    ad: 'teslim etti',
+    ad: 'ödevi yaptı',
   },
-  gec: {
-    dolgu: 'fill-altin-soluk',
-    cizgi: 'stroke-altin',
-    yazi: 'fill-altin-koyu',
-    ad: 'geç teslim etti',
-  },
-  eksik: {
+  yapmadi: {
     dolgu: 'fill-kirmizi-soluk',
     cizgi: 'stroke-kirmizi',
     yazi: 'fill-kirmizi-metin',
-    ad: 'göndermedi',
+    ad: 'ödevi yapmadı',
   },
   bekliyor: {
     dolgu: 'fill-kagit-golge',
     cizgi: 'stroke-kenar-koyu',
     yazi: 'fill-kursun-koyu',
-    ad: 'süresi dolmadı',
+    ad: 'süresi dolmadı, henüz göndermedi',
   },
 }
 
@@ -46,8 +40,8 @@ const SEKIZGEN = '15,1.5 33,1.5 46.5,15 46.5,33 33,46.5 15,46.5 1.5,33 1.5,15'
 
 /**
  * Sekizgen hücre — ismin geometrisinin işlevselleştiği yer.
- * Kağıt yoklama defterindeki kareyi sekizgene çevirir; dolu/boş/geç durumu
- * tek bakışta okunur. Dokunma hedefi 44px'in altına düşmez.
+ * Kağıt yoklama defterindeki kareyi sekizgene çevirir; yaptı / yapmadı / süresi
+ * dolmadı durumu tek bakışta okunur. Dokunma hedefi 44px'in altına düşmez.
  */
 export function SekizgenHucre({ durum, kisaMetin, tamMetin, onTiklama }: Ozellikler) {
   const stil = gorunum[durum]

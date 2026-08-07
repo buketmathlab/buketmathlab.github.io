@@ -58,8 +58,8 @@ tonu (`altin-koyu`, `kursun-koyu`). Palet aynı kalıyor, erişilebilirlik sağl
 **Altın cimri kullanılır.** Tüm arayüzde yalnız başarı ve madalya bağlamında görünür.
 
 **Renk tek başına anlam taşımaz.** Yoklama hücrelerinde durum aynı zamanda dolgu/boş
-farkıyla ve ekran okuyucuya giden metinle anlatılır ("112 · Nil Aksoy — geç teslim
-etti").
+farkıyla ve ekran okuyucuya giden metinle anlatılır ("112 · Nil Aksoy — ödevi
+yapmadı").
 
 ## 3. Tipografi
 
@@ -128,6 +128,11 @@ Her etkileşim dört durumda tasarlanır: **boş · yükleniyor · hata · dolu.
 | **Gönder** | Öğrencinin geri dönüşü olmayan teslimi |
 | **Kaydet** | Taslak; henüz kimse görmüyor |
 | **Onayla** | Öğretmenin son imzası |
+
+**Geç teslim yoktur.** Ödevin durumu üç değerdir: **yaptı · yapmadı · süresi
+dolmadı**. Son tarih geçtiğinde gönderim kapanır ve ödev yapılmamış sayılır; "geç"
+diye bir ara durum, ara renk veya ara rozet bulunmaz. Bu yüzden uyarı, tesliminden
+*sonra* değil *önce* gelir: "Bugün son gün" rozeti ve son gün bildirimi.
 
 ## 7. Yasaklar
 

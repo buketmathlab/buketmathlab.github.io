@@ -26,9 +26,13 @@ export function Tanitim() {
           <KilitSatiri olcek="buyuk" ekSinif="items-center" />
         </div>
 
+        {/*
+         * Markanın tezi (8 → ∞) yukarıdaki işarette zaten yaşanıyor; bir de cümleyle
+         * anlatmak onu zayıflatır. Bu yüzden burada slogan yok, ne olduğunu söyleyen
+         * iki kısa cümle var.
+         */}
         <p className="mt-8 max-w-md text-govde text-kursun-koyu">
-          Ödevler, çözümler ve gelişim tek yerde. Sekiz, yatay çevrildiğinde sonsuz olur —
-          öğrenmenin sınırı yoktur.
+          Ödevler, çözümler ve notlar tek yerde. Öğrenci, veli ve öğretmen aynı sayfada.
         </p>
 
         <Link

@@ -50,7 +50,7 @@ export function TasarimSistemi() {
 
         <Bolum
           baslik="İmza öğesi — sekizgen yoklama şeridi"
-          aciklama="Sınıf panosunun tepesinde durur. Her öğrenci bir sekizgen hücredir; sınıfın nabzı tek bakışta okunur. Numara hücrenin içindedir — 200 öğrencide ad-soyad değil numara ayırt eder."
+          aciklama="Sınıf panosunun tepesinde durur. Her öğrenci bir sekizgen hücredir; sınıfın nabzı tek bakışta okunur. Numara hücrenin içindedir — 200 öğrencide ad-soyad değil numara ayırt eder. Üç durum vardır: yaptı, yapmadı, süresi dolmadı."
         >
           <YoklamaSeridi baslik="9A · Türev — 1. Ödev" hucreler={ornekYoklama} />
         </Bolum>
@@ -179,9 +179,9 @@ export function TasarimSistemi() {
               </Buton>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Rozet ton="olumlu">Teslim edildi</Rozet>
-              <Rozet ton="uyari">Geç</Rozet>
-              <Rozet ton="olumsuz">Gönderilmedi</Rozet>
+              <Rozet ton="olumlu">Yapıldı</Rozet>
+              <Rozet ton="uyari">Bugün son gün</Rozet>
+              <Rozet ton="olumsuz">Yapılmadı</Rozet>
               <Rozet ton="notr">Onay bekliyor</Rozet>
               <Rozet ton="altin">Özel ders</Rozet>
             </div>

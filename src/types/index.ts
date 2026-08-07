@@ -34,9 +34,6 @@ export type Ogrenci = {
 /** Ödev türü: test otomatik puanlanır, açık uçlu öğretmen onayı bekler. */
 export type OdevTuru = 'test' | 'acik'
 
-/** Geç teslim politikası — ödev oluştururken seçilir. */
-export type GecTeslim = 'kapali' | 'acik' | 'kirintili'
-
 export type Odev = {
   id: string
   baslik: string
@@ -45,8 +42,12 @@ export type Odev = {
   sinif_id: string | null
   kademe: Kademe | null
   soru_sayisi: number
+  /**
+   * Son teslim anı. Bu an geçtikten sonra gönderim KAPANIR — geç teslim yoktur.
+   * Kural sunucuda uygulanır (Faz 1): son tarihten sonra gelen gönderim reddedilir,
+   * öğrenci "yapmadı" sayılır.
+   */
   son_tarih: string
-  gec_teslim: GecTeslim
   soru_pdf_url: string | null // öğrenci baştan görür
   anahtar_pdf_url: string | null // yalnız gönderim sonrası açılır
   yayinda: boolean
@@ -60,7 +61,6 @@ export type Gonderim = {
   odev_id: string
   ogrenci_id: string
   gonderim_zamani: string
-  gec_mi: boolean
   puan: number | null
   onaylandi: boolean
   foto_url: string | null
@@ -68,8 +68,12 @@ export type Gonderim = {
   ai_denetim_notu: string | null
 }
 
-/** Sınıf panosundaki sekizgen yoklama şeridinin hücre durumu. */
-export type YoklamaDurumu = 'teslim' | 'gec' | 'eksik' | 'bekliyor'
+/**
+ * Sınıf panosundaki sekizgen yoklama şeridinin hücre durumu.
+ * Geç teslim diye bir durum yoktur: süre dolduğunda ödev ya yapılmıştır ya yapılmamıştır.
+ * `bekliyor` yalnız son tarihi henüz gelmemiş ödevler içindir.
+ */
+export type YoklamaDurumu = 'teslim' | 'yapmadi' | 'bekliyor'
 
 /** Her etkileşimin dört hâli: boş · yükleniyor · hata · dolu. */
 export type VeriDurumu = 'yukleniyor' | 'bos' | 'hata' | 'dolu'

@@ -13,7 +13,7 @@ const adlar = [
   'Arda Sezer', 'Buse Tekin', 'Cem Yiğit',
 ]
 
-const durumlar = ['teslim', 'teslim', 'teslim', 'gec', 'teslim', 'eksik', 'teslim', 'bekliyor'] as const
+const durumlar = ['teslim', 'teslim', 'teslim', 'yapmadi', 'teslim', 'teslim', 'bekliyor'] as const
 
 export const ornekYoklama: readonly YoklamaHucresi[] = adlar.map((ad, i) => ({
   ogrenciId: `ornek-${i}`,
