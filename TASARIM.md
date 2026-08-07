@@ -163,6 +163,31 @@ animasyon. Hareket yalnız anlam taşıdığı yerde kullanılır.
 henüz yoktur. Faz 2'de öğrenci silme ve yeniden puanlama ekranlarıyla birlikte
 kapatılacaktır.
 
+---
+
+## 9. Faz 1 — Tasarım kalite kapıları denetimi
+
+Faz 1 ağırlıklı olarak sunucu tarafıdır; arayüzde giriş ekranı ve geçici panel var.
+
+| # | Kapı | Durum |
+|---|---|---|
+| 1 | Önce tasarım kararı | ✅ Giriş ekranının kararı yazıldı: iki kapı, tek ekran; gözün gideceği ilk yer kod alanı |
+| 2 | Ekran görüntüsüyle özdenetim | ✅ 360px'te giriş ekranı boş, dolu, bekliyor ve hata hâllerinde çekildi |
+| 3 | Aralık ölçeği | ✅ Yeni ekranlarda keyfi piksel değeri yok |
+| 4 | Tipografik ölçek | ✅ Mevcut ölçek kullanıldı, yeni boyut eklenmedi |
+| 5 | Hizalama | ✅ Panel'de etiket/değer iki sütun; sayılar tabular |
+| 6 | Dört hâl | ✅ Giriş: boş · bekliyor (düğmede tek nokta) · hata (kırmızı kutu) · başarılı (panele geçiş) |
+| 7 | Dokunma geri bildirimi | ✅ Düğme 150 ms'de tepki veriyor; bekleme durumunda metin "Giriş yapılıyor" oluyor |
+| 8 | Yıkıcı işlemler iki adımlı | ✅ **Bu fazda kapandı** — `sinif_sil` ve `ogrenci_sil` sunucuda iki adımlı: ilk çağrı ne olacağını yazıyla anlatır (kaç öğrenci sınıfsız kalacak, velinin erişimi kalkacak), ikinci çağrı uygular |
+| 9 | Performans bütçesi | ✅ Ana paket 78,8 KB gzip; resmî Supabase kütüphanesi çıkarılarak 132 KB'dan indirildi |
+| 10 | Tutarlılık | ✅ Tek `Buton`, tek `Alan`, tek `HataDurumu` kullanıldı |
+| 11 | Türkçe dizgi | ✅ Sunucu hata metinleri de Türkçe ve "ne yapılacağını" söylüyor |
+| 12 | Denetim ve rapor | ✅ Bu tablo |
+
+**Metin denetimi:** Sunucudan gelen hatalar da arayüz diline uyar. Öğrenciye "sen"
+("Bu kod bulunamadı. Kartındaki kodu kontrol et, sonra tekrar dene."), öğretmene
+"siz" ("Çok fazla hatalı deneme yapıldı. 15 dakika sonra tekrar deneyin.").
+
 **Erişilebilirlik tabanı:** 360px'te üç ekranda da yatay taşma yok (ölçüldü) ·
 klavye odağı görünür (`:focus-visible`, 2px `murekkep-500` halka) · dokunma hedefi
 en az 44px · renk tek anlam taşıyıcısı değil · `prefers-reduced-motion` destekli.

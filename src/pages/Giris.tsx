@@ -1,23 +1,52 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { Muhur } from '@/components/marka/Muhur'
 import { KilitSatiri } from '@/components/marka/KilitSatiri'
 import { Alan } from '@/components/ui/Alan'
 import { Buton } from '@/components/ui/Buton'
+import { HataDurumu } from '@/components/ui/HataDurumu'
+import { useOturum } from '@/hooks/useOturum'
 
 type Kapi = 'kod' | 'ogretmen'
 
 /**
- * Giriş ekranı — Faz 1'de sunucu tarafına bağlanacak (şu an yalnız arayüz).
+ * Giriş ekranı.
  *
  * Tasarım kararı: İki ayrı kapı var ama ekran tek. Öğrenci ve veli aynı kod
- * alanını kullanır (kodun kendisi kimin olduğunu söyler); öğretmen ayrı sekmede
- * PIN girer. Gözün gideceği ilk yer kod alanı — kullanıcıların %95'i oradan girer.
+ * alanını kullanır — kodun kime ait olduğuna sunucu karar verir, istemci
+ * "ben veliyim" diyemez. Gözün gideceği ilk yer kod alanı; kullanıcıların
+ * neredeyse tamamı oradan girer.
  */
 export function Giris() {
+  const { kimlik, kodlaGiris, pinleGiris } = useOturum()
   const [kapi, setKapi] = useState<Kapi>('kod')
-  const [kod, setKod] = useState('')
-  const [pin, setPin] = useState('')
+  const [deger, setDeger] = useState('')
+  const [hata, setHata] = useState<string | null>(null)
+  const [bekliyor, setBekliyor] = useState(false)
+
+  if (kimlik) return <Navigate to="/panel" replace />
+
+  async function gonder(olay: React.FormEvent) {
+    olay.preventDefault()
+    setHata(null)
+    setBekliyor(true)
+    try {
+      if (kapi === 'kod') {
+        await kodlaGiris(deger)
+      } else {
+        await pinleGiris(deger)
+      }
+    } catch (sorun) {
+      setHata(sorun instanceof Error ? sorun.message : 'Giriş yapılamadı.')
+      setBekliyor(false)
+    }
+  }
+
+  function kapiDegistir(yeni: Kapi) {
+    setKapi(yeni)
+    setDeger('')
+    setHata(null)
+  }
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-kagit px-4 py-12">
@@ -35,16 +64,16 @@ export function Giris() {
               ['kod', 'Öğrenci / Veli'],
               ['ogretmen', 'Öğretmen'],
             ] as const
-          ).map(([deger, etiket]) => (
+          ).map(([secenek, etiket]) => (
             <button
-              key={deger}
+              key={secenek}
               type="button"
               role="tab"
-              aria-selected={kapi === deger}
-              onClick={() => setKapi(deger)}
+              aria-selected={kapi === secenek}
+              onClick={() => kapiDegistir(secenek)}
               className={
                 'min-h-11 flex-1 rounded-sm text-kucuk font-semibold transition-colors duration-150 ' +
-                (kapi === deger
+                (kapi === secenek
                   ? 'bg-kagit-yuksek text-murekkep shadow-kart'
                   : 'text-kursun-koyu hover:text-murekkep')
               }
@@ -54,19 +83,17 @@ export function Giris() {
           ))}
         </div>
 
-        <form
-          className="mt-6 flex w-full flex-col gap-4"
-          onSubmit={(olay) => olay.preventDefault()}
-        >
+        <form className="mt-6 flex w-full flex-col gap-4" onSubmit={gonder}>
           {kapi === 'kod' ? (
             <Alan
               etiket="Giriş kodun"
               name="kod"
               autoComplete="off"
-              inputMode="text"
-              placeholder="ör. 9A-K7M2"
-              value={kod}
-              onChange={(o) => setKod(o.target.value)}
+              autoCapitalize="characters"
+              spellCheck={false}
+              placeholder="ör. K7M2-P4RT"
+              value={deger}
+              onChange={(o) => setDeger(o.target.value)}
               ipucu="Kodu öğretmeninden aldığın kartın üzerinde bulabilirsin."
             />
           ) : (
@@ -74,21 +101,25 @@ export function Giris() {
               etiket="Öğretmen PIN'i"
               name="pin"
               type="password"
-              inputMode="numeric"
               autoComplete="current-password"
               placeholder="••••••••"
-              value={pin}
-              onChange={(o) => setPin(o.target.value)}
+              value={deger}
+              onChange={(o) => setDeger(o.target.value)}
               ipucu="En az 8 hane. Beş hatalı denemeden sonra 15 dakika kilitlenir."
             />
           )}
 
-          <Buton vurgu="birincil" olcek="genis" type="submit" disabled>
-            Giriş yap
+          {hata && <HataDurumu mesaj={hata} />}
+
+          <Buton
+            vurgu="birincil"
+            olcek="genis"
+            type="submit"
+            bekliyor={bekliyor}
+            disabled={deger.trim().length === 0}
+          >
+            {bekliyor ? 'Giriş yapılıyor' : 'Giriş yap'}
           </Buton>
-          <p className="text-center text-kucuk text-kursun-koyu">
-            Giriş, veri modeli kurulduğunda açılacak.
-          </p>
         </form>
 
         <Link to="/" className="mt-8 text-kucuk text-murekkep-500 underline underline-offset-4">

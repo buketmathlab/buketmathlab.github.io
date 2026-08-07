@@ -12,14 +12,17 @@ Yayın adresi: <https://buketmathlab.github.io>
 
 - [MIMARI.md](./MIMARI.md) — teknoloji seçimleri, klasör düzeni, yayın yöntemi, anahtar yönetimi
 - [TASARIM.md](./TASARIM.md) — renk, tipografi, aralık, imza öğeleri ve kalite kapıları
+- [GUVENLIK.md](./GUVENLIK.md) — saldırı denemeleri ve sonuçları
+- [KURULUM-SQL.md](./KURULUM-SQL.md) — veritabanı kurulumu, telefondan adım adım
 
 ## Geliştirme
 
 ```bash
-npm install     # bağımlılıkları kur
-npm run dev     # geliştirme sunucusu
-npm run build   # tip denetimi + üretim derlemesi
-npm run onizle  # derlenmiş sürümü yerelde aç
+npm install       # bağımlılıkları kur
+npm run dev       # geliştirme sunucusu
+npm run build     # tip denetimi + üretim derlemesi
+npm run guvenlik  # güvenlik denemeleri (gerçek Postgres üzerinde)
+npm run onizle    # derlenmiş sürümü yerelde aç
 ```
 
 Tasarım sistemi vitrini: uygulama açıkken `/tasarim` adresi.

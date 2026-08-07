@@ -2,9 +2,11 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Tanitim } from '@/pages/Tanitim'
 import { Giris } from '@/pages/Giris'
+import { Panel } from '@/pages/Panel'
 import { Bulunamadi } from '@/pages/Bulunamadi'
 import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
 import { KurulumUyarisi } from '@/components/duzen/KurulumUyarisi'
+import { OturumSaglayici } from '@/hooks/useOturum'
 import { ortam } from '@/lib/ortam'
 
 // Performans bütçesi: yalnız öğretmenin göreceği ekranlar tembel yüklenir.
@@ -23,15 +25,18 @@ function SayfaBekleme() {
 export function App() {
   return (
     <BrowserRouter>
-      {!ortam.hazir && <KurulumUyarisi eksikler={ortam.eksikler} />}
-      <Suspense fallback={<SayfaBekleme />}>
-        <Routes>
-          <Route path="/" element={<Tanitim />} />
-          <Route path="/giris" element={<Giris />} />
-          <Route path="/tasarim" element={<TasarimSistemi />} />
-          <Route path="*" element={<Bulunamadi />} />
-        </Routes>
-      </Suspense>
+      <OturumSaglayici>
+        {!ortam.hazir && <KurulumUyarisi eksikler={ortam.eksikler} />}
+        <Suspense fallback={<SayfaBekleme />}>
+          <Routes>
+            <Route path="/" element={<Tanitim />} />
+            <Route path="/giris" element={<Giris />} />
+            <Route path="/panel" element={<Panel />} />
+            <Route path="/tasarim" element={<TasarimSistemi />} />
+            <Route path="*" element={<Bulunamadi />} />
+          </Routes>
+        </Suspense>
+      </OturumSaglayici>
     </BrowserRouter>
   )
 }

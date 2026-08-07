@@ -86,14 +86,40 @@ Secrets and variables → Actions → **Variables** altına `VITE_SUPABASE_URL` 
 
 ## 5. Veri erişim kuralı
 
-İstemci hiçbir tabloya doğrudan erişmez. `supabase.from('ogrenciler')` biçiminde bir
-çağrı bu projede **yoktur ve yazılmayacaktır**. Tüm okuma/yazma `src/lib/supabase.ts`
+İstemci hiçbir tabloya doğrudan erişmez. Tüm okuma/yazma `src/lib/supabase.ts`
 içindeki tek kapıdan (`cagir()`) geçer ve veritabanındaki `SECURITY DEFINER`
-fonksiyonlara gider.
+fonksiyonlara gider. Tablolarda RLS açıktır, politika yoktur ve `anon` rolünün
+tablo yetkisi geri alınmıştır — yani tarayıcıdaki anahtarla hiçbir satır okunamaz.
 
 Gerekçe: yetki mantığı istemcide durursa "cevap anahtarı gönderim yapılmadan
 dönmez" gibi kurallar uygulanamaz — ağ trafiğini açan herkes anahtarı görür. Kural
 sunucuda uygulanır.
+
+**Resmî Supabase kütüphanesi kullanılmıyor.** `@supabase/supabase-js` pakete ~55 KB
+(gzip) ekliyordu — toplamın %40'ı — ve bu mimaride yalnız `.rpc()` yüzeyi
+kullanılıyor. Yerine 40 satırlık bir `fetch` sarmalayıcı yazıldı; PostgREST'in RPC
+uç noktası zaten sıradan bir POST isteğidir. Ana paket 132 KB'dan 79 KB'a indi.
+
+**Oturum modeli.** Supabase Auth kullanılmıyor; kimlik doğrulama kod ve PIN ile
+yapılıyor. Giriş başarılı olunca rastgele bir jeton üretilir, veritabanında yalnız
+SHA-256 özeti saklanır. Öğretmen oturumu 12 saat, öğrenci/veli oturumu 30 gün
+yaşar. Kod yenilendiğinde o koda ait açık oturumlar da düşer.
+
+**Giriş fonksiyonları hata fırlatmaz, sonuç nesnesi döndürür.** Postgres'te
+`RAISE EXCEPTION` çağrının tamamını geri alır; hata fırlatan bir giriş
+fonksiyonunda "başarısız deneme" kaydı da silinir ve oran sınırlama hiç çalışmaz.
+Bu, güvenlik denemelerinde yakalanan gerçek bir hataydı (bkz. GUVENLIK.md, madde 4).
+
+## 5B. Güvenlik denemeleri
+
+`npm run guvenlik` komutu, `supabase/migrations/` altındaki göçlerin tamamını gerçek
+bir Postgres örneğine (PGlite/WASM) kurar ve 13 saldırı senaryosunu çalıştırır:
+yetki sızıntısı, cevap anahtarının erken alınması, kaba kuvvet, SQL enjeksiyonu,
+çift gönderim, geç teslim, okul öğrencisine ödeme kaydı… Ayrı bir test şeması yoktur;
+üretime gidecek SQL'in aynısı sınanır.
+
+Bu paket yayın iş akışının parçasıdır: denemeler kırmızıysa site yayınlanmaz.
+Sonuç raporu: [GUVENLIK.md](./GUVENLIK.md).
 
 ## 6. Ücretsiz katman kısıtlarına mimari yanıtlar
 
@@ -123,9 +149,9 @@ Faz 0 ölçümü:
 
 | Dosya | Ham | Gzip |
 |---|---|---|
-| Ana paket (JS) | 239 KB | **76,9 KB** |
-| Stil (CSS) | 22,4 KB | 5,5 KB |
-| Tasarım sistemi (tembel) | 14,2 KB | 5,0 KB |
+| Ana paket (JS) | 245 KB | **78,8 KB** |
+| Stil (CSS) | 23,2 KB | 5,6 KB |
+| Tasarım sistemi (tembel) | 12,8 KB | 4,7 KB |
 | Yazı tipleri (4 dosya, woff2) | 203 KB | — |
 
 Yazı tipleri kendi sunucumuzdan verilir (Google Fonts'a bağlanılmaz): üçüncü taraf

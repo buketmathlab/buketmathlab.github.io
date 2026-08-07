@@ -50,6 +50,11 @@ jobs:
             echo "VITE_SUPABASE_PUBLISHABLE_KEY=${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}"
           } > .env.production.local
 
+      # Güvenlik kuralları (cevap anahtarı kapısı, yetki ayrımı, oran sınırlama…)
+      # gerçek bir Postgres örneğinde sınanır. Kırmızıysa yayın durur.
+      - name: Güvenlik denemeleri
+        run: npm run guvenlik
+
       - name: Tip denetimi ve derleme
         run: npm run build
 

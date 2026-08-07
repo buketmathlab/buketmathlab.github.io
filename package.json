@@ -12,15 +12,16 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "onizle": "vite preview",
-    "denetle": "tsc --noEmit"
+    "denetle": "tsc --noEmit",
+    "guvenlik": "node supabase/testler/guvenlik.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
