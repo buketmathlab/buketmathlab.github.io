@@ -125,6 +125,12 @@ export function Giris() {
         <Link to="/" className="mt-8 text-kucuk text-murekkep-500 underline underline-offset-4">
           Ana sayfaya dön
         </Link>
+
+        {/* Okul kimliği: üstte ilçe, altında okul adı — açılış sayfasındakiyle aynı blok. */}
+        <div className="mt-8 text-center text-kursun-koyu">
+          <p className="text-etiket">Beşiktaş</p>
+          <p className="mt-1 text-kucuk">Arnavutköy Korkmaz Yiğit Anadolu Lisesi</p>
+        </div>
       </div>
     </div>
   )

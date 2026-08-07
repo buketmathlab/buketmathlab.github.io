@@ -13,6 +13,9 @@ import { ortam } from '@/lib/ortam'
 const TasarimSistemi = lazy(() =>
   import('@/pages/TasarimSistemi').then((m) => ({ default: m.TasarimSistemi })),
 )
+const PaletDenemesi = lazy(() =>
+  import('@/pages/PaletDenemesi').then((m) => ({ default: m.PaletDenemesi })),
+)
 
 function SayfaBekleme() {
   return (
@@ -33,6 +36,7 @@ export function App() {
             <Route path="/giris" element={<Giris />} />
             <Route path="/panel" element={<Panel />} />
             <Route path="/tasarim" element={<TasarimSistemi />} />
+            <Route path="/palet" element={<PaletDenemesi />} />
             <Route path="*" element={<Bulunamadi />} />
           </Routes>
         </Suspense>
