@@ -1,0 +1,141 @@
+/*
+ * SEKİZ — TASARIM TOKEN'LARI
+ * Tek kaynak burasıdır. Bileşenlerde çıplak renk kodu (#RRGGBB) veya rastgele
+ * piksel değeri kullanılmaz; her değer buradaki bir token'a dayanır.
+ */
+
+@theme {
+  /* ─────────────── RENK ───────────────
+   * Çıpa: okul mührünün laciverti. Altın cimri kullanılır (yalnız başarı/vurgu).
+   * WCAG AA notu: "kursun" (#8B93A5) kağıt üzerinde 2.8:1'dir — YALNIZ çizgi,
+   * ikon ve devre dışı öğe içindir. İkincil metin için "kursun-koyu" (5.1:1).
+   * Aynı biçimde "altin" metin rengi değildir (2.2:1); metinde "altin-koyu" (4.6:1).
+   */
+  --color-murekkep-900: #0c1526; /* en koyu zemin, üst bar */
+  --color-murekkep: #16233f; /* ana kurumsal renk, başlıklar */
+  --color-murekkep-700: #24365c; /* ikincil kurumsal, hover */
+  --color-murekkep-500: #3c5482; /* bağlantı, odak halkası */
+  --color-murekkep-100: #e6e9f0; /* çok açık lacivert zemin */
+
+  --color-kagit: #f7f5f0; /* sayfa zemini — sıcak beyaz */
+  --color-kagit-yuksek: #ffffff; /* kart yüzeyi */
+  --color-kagit-golge: #efebe2; /* ikincil zemin, tablo şeridi */
+  --color-kenar: #e2dcd0; /* kenarlık */
+  --color-kenar-koyu: #cfc7b7; /* vurgulu kenarlık */
+
+  --color-altin: #c8a24b; /* madalya, başarı vurgusu (dolgu) */
+  --color-altin-koyu: #8a6a22; /* altın tonunda METİN */
+  --color-altin-soluk: #f5ecd6; /* rozet zemini */
+
+  --color-yesil: #2e7d5b; /* tamamlandı, doğru cevap */
+  --color-yesil-metin: #216147; /* yeşil tonunda METİN (7.0:1) */
+  --color-yesil-soluk: #e3efe9;
+
+  --color-kirmizi: #b03a32; /* eksik ödev, yanlış cevap */
+  --color-kirmizi-metin: #97302a;
+  --color-kirmizi-soluk: #f8e8e6;
+
+  --color-kursun: #8b93a5; /* çizgi/ikon — metin DEĞİL */
+  --color-kursun-koyu: #5a6376; /* ikincil metin */
+
+  /* ─────────────── TİPOGRAFİ ───────────────
+   * Gövde: Inter (nötr, okunaklı, tabular rakam desteği).
+   * Başlık: Fraunces (karakterli serif — akademik ciddiyeti bu taşır).
+   */
+  --font-govde:
+    'Inter Degisken', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-baslik: 'Fraunces Degisken', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+
+  /* Tipografik ölçek — her ekranda aynı ölçek kullanılır.
+   * Satır uzunluğu 45–75 karakter (bkz. .olcu yardımcı sınıfı). */
+  --text-etiket: 0.75rem; /* 12px — üst etiket, tablo başlığı */
+  --text-etiket--line-height: 1.4;
+  --text-etiket--letter-spacing: 0.08em;
+  --text-etiket--font-weight: 600;
+
+  --text-kucuk: 0.875rem; /* 14px — yardımcı metin */
+  --text-kucuk--line-height: 1.5;
+
+  --text-govde: 1rem; /* 16px — gövde */
+  --text-govde--line-height: 1.6;
+
+  --text-b3: 1.125rem; /* 18px — kart başlığı */
+  --text-b3--line-height: 1.35;
+
+  --text-b2: 1.375rem; /* 22px — bölüm başlığı */
+  --text-b2--line-height: 1.25;
+
+  --text-b1: 1.75rem; /* 28px — sayfa başlığı */
+  --text-b1--line-height: 1.2;
+
+  --text-ekran: 2.25rem; /* 36px — giriş/tanıtım */
+  --text-ekran--line-height: 1.1;
+  --text-ekran--letter-spacing: -0.01em;
+
+  --text-rakam: 2rem; /* 32px — panodaki büyük sayı */
+  --text-rakam--line-height: 1;
+
+  /* ─────────────── ARALIK ───────────────
+   * Taban birim 4px'tir; kullanılan basamaklar: 1(4) 2(8) 3(12) 4(16) 6(24)
+   * 8(32) 12(48). Ara değer (p-5, p-7…) kullanılmaz — dikey ritim bundan doğar.
+   */
+  --spacing: 0.25rem;
+
+  /* ─────────────── BİÇİM ─────────────── */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Gölge yığını yasak: tek katman, düşük opaklık. Derinlik kenarlıkla anlatılır. */
+  --shadow-kart: 0 1px 2px rgb(22 35 63 / 0.06);
+  --shadow-yuzen: 0 8px 24px -10px rgb(22 35 63 / 0.22);
+
+  /* ─────────────── HAREKET ───────────────
+   * Tek imza hareketi 8 → ∞ dönüşümüdür. Diğer her yerde hareket kısadır
+   * ve yalnız anlam taşır (puan açıklanması, gönderim onayı).
+   */
+  --ease-sekiz: cubic-bezier(0.65, 0, 0.35, 1);
+  --animate-sekiz-sonsuz: sekiz-sonsuz 3.2s var(--ease-sekiz) infinite;
+  --animate-iskelet: iskelet 1.4s ease-in-out infinite;
+  --animate-nazik-giris: nazik-giris 0.24s var(--ease-sekiz) both;
+
+  @keyframes sekiz-sonsuz {
+    /* 8 durur → 90° döner → ∞ olur → geri döner. Aynı çizim, değişen bakış açısı. */
+    0%,
+    18% {
+      transform: rotate(0deg) scale(1);
+    }
+    42%,
+    62% {
+      transform: rotate(90deg) scale(1.06);
+    }
+    86%,
+    100% {
+      transform: rotate(0deg) scale(1);
+    }
+  }
+
+  @keyframes iskelet {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes nazik-giris {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

@@ -1,0 +1,115 @@
+/* Temel katman — token'ların sayfaya uygulanışı. Bileşen stili buraya yazılmaz. */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-kagit);
+    color: var(--color-murekkep);
+    font-family: var(--font-govde);
+    font-size: var(--text-govde);
+    line-height: 1.6;
+    /* Rakamlar her yerde eşit genişlikte: tablolar ve puanlar hizalı kalır. */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1, 'cv05' 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-baslik);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+
+  /* Görünür klavye odağı — fare tıklamasında görünmez, klavyede belirgin. */
+  :focus-visible {
+    outline: 2px solid var(--color-murekkep-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background-color: var(--color-altin-soluk);
+    color: var(--color-murekkep);
+  }
+
+  /* Sayı girişlerinde de tabular rakam ve doğru klavye davranışı */
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* iOS'ta 16px altı yazı tipi odaklanınca sayfayı yakınlaştırır — engelle. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, var(--text-govde));
+  }
+
+  hr {
+    border-color: var(--color-kenar);
+  }
+
+  /* Hareket azaltma tercihine saygı: imza animasyonu dahil her şey durur. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Okunabilir satır uzunluğu: 45–75 karakter */
+  .olcu {
+    max-width: 68ch;
+  }
+
+  /* Sekizgen hücre — markanın geometrisi. Izgarada ve rozetlerde kullanılır. */
+  .sekizgen {
+    clip-path: polygon(
+      30% 0%,
+      70% 0%,
+      100% 30%,
+      100% 70%,
+      70% 100%,
+      30% 100%,
+      0% 70%,
+      0% 30%
+    );
+  }
+
+  /* Ekran okuyucuya görünür, gözle görünmez */
+  .yalniz-okuyucu {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Yazdırma: panolar değil, raporlar basılır */
+  @media print {
+    .basilmaz {
+      display: none !important;
+    }
+  }
+}

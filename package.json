@@ -1,0 +1,33 @@
+{
+  "name": "sekiz",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "SEKİZ — Buket Topuzoğlu · Matematik. Ödev yönetimi, otomatik değerlendirme, veli iletişimi ve öğrenci gelişim analitiği platformu.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "onizle": "vite preview",
+    "denetle": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.1"
+  }
+}

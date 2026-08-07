@@ -1,0 +1,5 @@
+/* SEKİZ — stil giriş noktası. Sıra önemlidir: yazı tipleri → Tailwind → token → temel. */
+@import './yazitipleri.css';
+@import 'tailwindcss';
+@import './tokenlar.css';
+@import './temel.css';

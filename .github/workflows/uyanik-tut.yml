@@ -1,0 +1,46 @@
+# SEKİZ — Supabase projesini uyanık tutar
+#
+# NEDEN VAR: Ücretsiz katmanda 7 gün boyunca hiç istek almayan proje duraklatılır.
+# Yaz tatilinde veya sömestrde bu kolayca olur; proje durursa kimse giriş yapamaz
+# ve öğretmen elle yeniden başlatmak zorunda kalır.
+#
+# NE YAPAR: 3 günde bir Supabase REST uç noktasına küçük bir istek atar.
+# Veri okumaz, yazmaz; yalnız projenin "kullanılıyor" sayılmasını sağlar.
+#
+# AYAR: Depoda Settings → Secrets and variables → Actions → Variables altında
+# SUPABASE_URL ve SUPABASE_PUBLISHABLE_KEY tanımlı değilse aşağıdaki
+# varsayılanlar kullanılır.
+
+name: Uyanık tut
+
+on:
+  schedule:
+    # Her ayın 1, 4, 7, 10, 13, 16, 19, 22, 25, 28'inde 06:30 UTC (Türkiye 09:30)
+    - cron: '30 6 1,4,7,10,13,16,19,22,25,28 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Projeye dokun
+    runs-on: ubuntu-latest
+    steps:
+      - name: Supabase REST uç noktasına istek at
+        env:
+          URL: ${{ vars.SUPABASE_URL || 'https://oymueccauhprkgdrbqtv.supabase.co' }}
+          ANAHTAR: ${{ vars.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_u_qRv-nHkqNnbfWtBBy3eQ_hE9BedSg' }}
+        run: |
+          set -euo pipefail
+          durum=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "apikey: ${ANAHTAR}" \
+            -H "Authorization: Bearer ${ANAHTAR}" \
+            "${URL}/rest/v1/")
+          echo "Sunucu yanıtı: ${durum}"
+          # 2xx ve 4xx yanıtların ikisi de projenin ayakta olduğunu gösterir;
+          # asıl aranan şey isteğin ulaşmasıdır. 5xx veya bağlantı hatası uyarı sebebidir.
+          case "${durum}" in
+            5*|000) echo "::error::Supabase yanıt vermedi (${durum}). Proje duraklatılmış olabilir."; exit 1 ;;
+            *) echo "Proje ayakta." ;;
+          esac

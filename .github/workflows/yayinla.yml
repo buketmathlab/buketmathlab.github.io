@@ -1,0 +1,71 @@
+# SEKİZ — GitHub Pages'e otomatik yayın
+#
+# Yöntem: "GitHub Actions" kaynağı. `main` dalına her push'ta proje derlenir ve
+# çıktı (dist/) Pages'e yüklenir. Depoda derlenmiş dosya tutulmaz — bu yüzden
+# geçmiş temiz kalır ve iki kaynak arasında tutarsızlık olmaz.
+#
+# TEK SEFERLİK AYAR (öğretmenin yapacağı):
+# GitHub → depo → Settings → Pages → "Build and deployment" → Source = GitHub Actions
+
+name: Yayınla
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Aynı anda tek yayın çalışsın; sıradaki beklesin, çalışan iptal edilmesin.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  derle:
+    name: Derle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      # İleride Supabase projesi değişirse depoyu düzenlemeden buradan geçilebilir:
+      # Settings → Secrets and variables → Actions → Variables.
+      # Değişken tanımlı değilse bu adım atlanır ve depodaki .env kullanılır.
+      - name: Depo değişkenlerini uygula (tanımlıysa)
+        if: vars.VITE_SUPABASE_URL != ''
+        run: |
+          {
+            echo "VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}"
+            echo "VITE_SUPABASE_PUBLISHABLE_KEY=${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}"
+          } > .env.production.local
+
+      - name: Tip denetimi ve derleme
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  yayinla:
+    name: Yayınla
+    needs: derle
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.dagitim.outputs.page_url }}
+    steps:
+      - id: dagitim
+        uses: actions/deploy-pages@v4
