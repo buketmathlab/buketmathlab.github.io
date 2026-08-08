@@ -94,14 +94,29 @@ export function TasarimSistemi() {
 
         <Bolum
           baslik="8 → öğrenci"
-          aciklama="Sembolün üçüncü hâli. 8 yana yattığında sonsuz oluyordu; ayakta durduğunda bir öğrenciye dönüşüyor — üstteki halka baş, alttaki gövde, çevresine dört ince çizgi. Halkalara dokunulmuyor, yalnız çizgiler ekleniyor. Karikatür yüz ve gülümseme yok; yalnız öğrencinin selamlandığı yerde kullanılıyor."
+          aciklama="Sembolün üçüncü hâli. 8 yana yattığında sonsuz oluyordu; ayakta durduğunda öğrenciye dönüşüyor. İskelet birebir sekizdir: baş (36,24 r15) ve gövde (36,56 r17) tam teğet iki halka — hiçbiri bozulmuyor, yalnız çevresine çizgi ekleniyor. Figür küçüldükçe ayrıntı eleniyor: 64px altında gözlük sapları, 40px altında gözlük düşüyor. Karikatür yüz, gülümseme ve giysi yok."
         >
-          <div className="flex flex-wrap items-end gap-12 rounded-lg border border-kenar bg-yuzey p-8 shadow-kart text-vurgu">
-            <SekizFigur boyut={72} />
-            <SekizFigur boyut={52} hareketli={false} ekSinif="text-marka" />
-            <div className="text-marka">
+          <div className="flex flex-wrap items-end gap-12 rounded-lg border border-kenar bg-yuzey p-8 shadow-kart">
+            <figure className="text-center text-vurgu">
+              <SekizFigur boyut={104} />
+              <figcaption className="mt-4 text-etiket text-metin-ikincil">FİGÜR</figcaption>
+            </figure>
+            <figure className="text-center text-marka">
+              <SekizFigur boyut={56} />
+              <figcaption className="mt-4 text-etiket text-metin-ikincil">56PX · SAPSIZ</figcaption>
+            </figure>
+            <figure className="text-center text-marka">
+              <SekizFigur boyut={32} />
+              <figcaption className="mt-4 text-etiket text-metin-ikincil">32PX · GÖZLÜKSÜZ</figcaption>
+            </figure>
+            <figure className="text-center text-marka">
+              <SekizFigur boyut={96} rozetli />
+              <figcaption className="mt-4 text-etiket text-metin-ikincil">SİMGE TASLAĞI</figcaption>
+            </figure>
+            <figure className="text-center text-marka">
               <SekizSonsuz boyut="buyuk" hal="sekiz" />
-            </div>
+              <figcaption className="mt-4 text-etiket text-metin-ikincil">İSKELET: 8</figcaption>
+            </figure>
           </div>
         </Bolum>
 

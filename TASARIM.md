@@ -28,7 +28,7 @@ uyarı düşük doygunlukta durur; markanın enerjisini tek bir vurgu taşır. B
 | **8** | Sembol | Üst bar, gezinme işareti, bekleme, boş ekran |
 | **SEKİZ** | Kimlik | Wordmark; açılış, giriş, rapor başlığı |
 | **∞** | Fikir | Ayrı çizilmez — 8 yana döndüğünde ortaya çıkar |
-| **Öğrenci figürü** | Üçüncü hâl | 8 ayakta durduğunda: baş, gövde, dört ince çizgi. Yalnız öğrencinin selamlandığı yerde |
+| **Öğrenci figürü** | Üçüncü hâl | 8 ayakta durduğunda öğrenciye dönüşür. Selamlama, uygulama simgesi |
 
 **Kurumsal çıpa mühürdür, wordmark değil.** Açılış ekranını mühür açar; okul adı
 iki satır hâlinde onun altında durur; SEKİZ wordmark'ı bunların ardından ve daha
@@ -41,6 +41,36 @@ dönüşür ve markanın Türkçe olduğunu ilk bakışta söyler.
 kendi genişliğinin dörtte biri kadar boşluk bırakılır. Her ekrana tekrarlanmaz:
 yalnız tanıtım açılışı, kürsü bölümü, giriş ekranı, alt bilgi ve yazdırılan
 belgelerde görünür. Uygulama içi üst bar wordmark + 8 sembolü taşır.
+
+### 8 → öğrenci figürü
+
+Markanın üçüncü dönüşümü ve iskeleti **birebir sekizdir**:
+
+| Öğe | Geometri |
+|---|---|
+| Baş | merkez (36, 24) · yarıçap 15 |
+| Gövde | merkez (36, 56) · yarıçap 17 |
+| Teğetlik | 24 + 15 = 56 − 17 = **39** — iki halka tam teğet |
+| Kollar | gövde çemberi üzerinde y = 50 (x = 36 ± √(17²−6²)) |
+| Bacaklar | gövde çemberi üzerinde y = 71,5 (x = 29 / 43) |
+| Gözlük | camlar başın tam genişliğini kaplar (21 → 51) |
+
+Hiçbir halka bozulmaz, oynatılmaz, ovalleştirilmez — figür sekizin üstüne
+**yalnız çizgi ekler**. Bu yüzden yeni bir ikon gibi değil, aynı sekizin bir hâli
+gibi okunur.
+
+**Optik boyutlandırma.** Aynı çizimi ölçekleyip bırakmak amatör işidir: 32px'te
+gözlük camları başın çizgisiyle birleşir, saplar antene benzer. Ayrıntı üç
+kademede elenir:
+
+| Boyut | Ayrıntı |
+|---|---|
+| ≥ 64px | Gözlük + saplar |
+| 40–63px | Gözlük, sapsız |
+| < 40px | Gözlüksüz; yalnız iskelet ve uzuvlar |
+
+Karikatür yüz, gülümseme, ten rengi ve giysi yoktur. Tek renk, tek çizgi
+kalınlığı, yuvarlak uçlar — 24px'te de 200px'te de aynı netlikte okunur.
 
 ## 3. Renk
 

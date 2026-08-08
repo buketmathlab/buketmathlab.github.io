@@ -32,7 +32,7 @@ export function OgrenciBugun() {
       <div className="flex flex-col gap-12">
         {/* Selamlama: sekiz burada ayağa kalkıp öğrenciye dönüşüyor. */}
         <section className="-mt-4 flex items-center gap-4">
-          <SekizFigur boyut={52} ekSinif="text-vurgu" />
+          <SekizFigur boyut={64} hareketli ekSinif="text-vurgu" />
           <p className="font-marka text-ekran leading-none">Merhaba {ad}</p>
         </section>
         {/* Tek iş: bugünün ödevi */}
