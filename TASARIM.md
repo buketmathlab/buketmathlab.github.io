@@ -17,9 +17,9 @@ Selçuklu mirası **renkte değil geometride** yaşar: sekizgen, simetri, ızgar
 oranı. Çini turkuazı, kobalt ve firuze bilinçli olarak kullanılmaz — geleneksel
 bir çini estetiği değil, çağdaş bir renk dünyası hedeflenir.
 
-**Ayırt edici kural: anlam renkleri sakin, marka renkleri canlı.** Doğru, yanlış
-ve uyarı düşük doygunlukta durur; markanın enerjisini yüksek doygunluktaki iki
-vurgu taşır. Böylece "puanın açıklandı" ile "yanlış cevap" asla karışmaz.
+**Ayırt edici kural: anlam renkleri sakin, marka rengi canlı.** Doğru, yanlış ve
+uyarı düşük doygunlukta durur; markanın enerjisini tek bir vurgu taşır. Böylece
+"puanın açıklandı" ile "yanlış cevap" asla karışmaz.
 
 ## 2. Marka
 
@@ -27,14 +27,12 @@ vurgu taşır. Böylece "puanın açıklandı" ile "yanlış cevap" asla karış
 |---|---|---|
 | **8** | Sembol | Üst bar, gezinme işareti, bekleme, boş ekran |
 | **SEKİZ** | Kimlik | Wordmark; açılış, giriş, rapor başlığı |
-| **∞** | Fikir | Ayrı çizilmez — 8 dönünce ortaya çıkar |
+| **∞** | Fikir | Ayrı çizilmez — 8 yana döndüğünde ortaya çıkar |
+| **Öğrenci figürü** | Üçüncü hâl | 8 ayakta durduğunda: baş, gövde, dört ince çizgi. Yalnız öğrencinin selamlandığı yerde |
 
-**Wordmark ölçüyle dizilir.** Açılışta "SEKİZ" kabını tam doldurur: kelime SVG
-içinde çizilir ve `textLength` ile kabın genişliğine oturtulur
-(`lengthAdjust="spacing"` — harf biçimleri bozulmaz, yalnız harf arası açılır).
-Punto ölçümle seçildi: Instrument Serif'te "SEKİZ" 100 puntoda 202,6 birim;
-43,9 punto doğal genişliği 89 birime getirir, kalan %12 harf arasına dağılır.
-Sonuç: 360px telefonda da 1600px ekranda da wordmark ızgaraya milimetrik oturur.
+**Kurumsal çıpa mühürdür, wordmark değil.** Açılış ekranını mühür açar; okul adı
+iki satır hâlinde onun altında durur; SEKİZ wordmark'ı bunların ardından ve daha
+ölçülü bir puntoda gelir. Marka okulun içinde yaşar, önünde değil.
 
 **Noktalı İ korunur.** Afiş ölçeğinde bu nokta bağımsız bir geometrik öğeye
 dönüşür ve markanın Türkçe olduğunu ilk bakışta söyler.
@@ -74,8 +72,7 @@ blok olur.
 
 | Ad | Kod | Görev | Kontrast |
 |---|---|---|---|
-| **Nar** | `#D81E5B` | Canlı vurgu; metin olarak da kullanılabilir | 4,7:1 ✅ |
-| **Kükürt** | `#FFC400` | İkinci enerji; **yalnız dolgu**, üstünde mürekkep | 11,0:1 (mürekkep üstte) |
+| **Nar** | `#D81E5B` | Tek canlı vurgu; metin olarak da kullanılabilir | 4,7:1 ✅ |
 
 **Nar nerede görünür:** etkin gezinme öğesi · ilerleme çubuğunun dolan kısmı ·
 açıklanan puan · odaklanılan alanın kenarlığı · bölüm etiketleri · klavye odak
@@ -83,21 +80,20 @@ halkası. **Nerede görünmez:** düğmeler, zeminler, başlıklar, gövde metni
 Birincil düğme laciverttir — sık tekrarlanan bir eyleme canlı renk verilirse
 %5–10 kuralı çöker ve nar sıradanlaşır.
 
-**Kükürt** yalnız ödül bağlamında: seri rozeti, madalya, öne çıkan alan.
-Hiçbir zaman durum göstergesi olmaz.
+Doygun sarı dolgu (`#FFC400`) **kaldırıldı**: kağıt beyazı zeminde bağırıyordu ve
+uyarı renginin ailesine giriyordu. Ödül bağlamı artık tek bir sıcak aileyle —
+Bal — ve tint zemin + koyu metin biçiminde kuruluyor.
 
 ### Anlam renkleri — kontrollü
 
 | Ad | Kod | Görev | Kontrast |
 |---|---|---|---|
-| **Yaprak** | `#2E7D5B` | Doğru, tamamlandı | 4,9:1 ✅ |
-| **Kehribar** | `#8A5A0F` | Uyarı metni (dolgusu `#F5E6C8`) | 6,2:1 ✅ |
+| **Yaprak** | `#0F7A54` | Doğru, tamamlandı; temiz zümrüt | 5,1:1 ✅ |
+| **Bal** | `#9A6700` | Uyarı ve ödül metni (tint zemin `#FBF0D9`) | 5,3:1 ✅ |
 | **Kiremit** | `#B03A32` | Yanlış, eksik | 5,8:1 ✅ |
 
-**Bilinen gerilim ve önlemi:** Kükürt (marka) ile kehribar (uyarı) aynı hue
-ailesinde. Ayrım doygunlukla kurulur ve kuralla sabitlenir: kükürt hiçbir zaman
-durum göstergesi değildir; uyarı her zaman metinle birlikte gelir. Nar ile
-kiremit ton olarak açıkça ayrıdır ve hata durumları ayrıca ✕ simgesi taşır.
+Nar ile kiremit ton olarak açıkça ayrıdır ve hata durumları ayrıca ✕ simgesi
+taşır — renk tek anlam taşıyıcısı değildir.
 
 **Renk tek anlam taşıyıcısı değildir.** Yoklama şeridinde durum üç sinyalle
 anlatılır: doluluk (yaptı dolu / yapmadı boş), çizgi kalınlığı, ve ekran
@@ -182,7 +178,14 @@ gösteriyordu.
 yoktur** — gizlenmez, listeye girmez. Aynı sınır veritabanında bileşik yabancı
 anahtarla ayrıca zorlanır.
 
-## 9. Metin dili
+## 9. Üçüncü sekme kuralı — giriş
+
+Öğrenci, veli ve öğretmen **ayrı sekmelerden** girer. Rolü yine sunucu belirler;
+sekme yalnız beklentiyi söyler. Sekme ile sunucunun döndürdüğü rol uyuşmazsa
+oturum hemen kapatılır ve yön gösterilir: *"Bu kod öğrenci kodu. 'Öğrenci'
+sekmesinden gir."* Sekme bir yetki iddiası değil, bir yön levhasıdır.
+
+## 10. Metin dili
 
 Öğretmene **siz**, öğrenciye **sen**. Öğrenciye ceza dili yok: eksik ödev
 suçlama değil bilgi olarak yazılır. Veliye sayı değil cümle sunulur
@@ -194,7 +197,7 @@ Sözlük sabittir: **yayınla** (herkese açar) · **gönder** (geri dönüşü 
 **Geç teslim yoktur.** Durum üç değerdir: yaptı · yapmadı · süresi dolmadı.
 Uyarı tesliminden sonra değil önce gelir.
 
-## 10. Yasaklar
+## 11. Yasaklar
 
 Mor / eflatun / lavanta · mor-mavi gradyan · çini turkuazı, kobalt, firuze ·
 krem + terracotta + altın üçlüsü · glassmorphism · gölge yığını · neon ·
@@ -204,7 +207,7 @@ ikonları · her şeyi karta çevirmek · amaçsız animasyon · aşırı sekizg
 
 ---
 
-## 11. Faz 0 revizyonu — tasarım kalite kontrolü
+## 12. Faz 0 revizyonu — tasarım kalite kontrolü
 
 | # | Soru | Sonuç |
 |---|---|---|
@@ -229,6 +232,19 @@ ikonları · her şeyi karta çevirmek · amaçsız animasyon · aşırı sekizg
    kalınlığı farkıyla sağlandı.
 3. Rozetlerde harf aralığı fazlaydı ("9 A" gibi okunuyordu) → rozet için ayrı
    tipografi token'ı eklendi.
+
+**Müşteri geri bildirimiyle düzeltilenler (ikinci tur):**
+4. Açılış ekranında **mühür görünmüyordu**, wordmark ise afiş ölçeğindeydi →
+   kompozisyon tersine çevrildi: mührü ekranı açar, okul adı iki satır hâlinde
+   belirgin durur, SEKİZ ölçülü bir puntoda onların ardından gelir.
+5. "Sekiz yana yattığında sonsuz olur" cümlesi kaldırıldı — sembolün yaptığı işi
+   yazıyla tekrarlamak onu zayıflatıyordu.
+6. **Yeşil ve sarı tonları** değişti: yeşil temiz zümrüte (`#0F7A54`) çekildi,
+   doygun sarı dolgu tamamen kaldırılıp yerine tint zeminli Bal (`#9A6700`) geldi.
+7. Girişte **üç ayrı sekme** açıldı (öğrenci · veli · öğretmen); yanlış sekmeden
+   girilen kod oturumu kapatıp doğru sekmeyi söylüyor.
+8. **8 → öğrenci figürü** eklendi: öğrencinin selamlandığı yerde sekiz ayağa
+   kalkıp çizgi karaktere dönüşüyor.
 
 **Açık iş:** Ekranlar canlı veriye bağlı değil; veritabanı kurulumu
 (`KURULUM-SQL.md`) bekliyor. PDF görüntüleyici, grafik kütüphanesi, PWA ve

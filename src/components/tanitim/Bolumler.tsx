@@ -63,7 +63,7 @@ export function Kazanc() {
   return (
     <section className="bg-marka py-24 text-tebesir">
       <div className="kap">
-        <p className="text-etiket text-vurgu-2">ÖĞRETMEN NE KAZANIR</p>
+        <p className="text-etiket text-bal-sis">ÖĞRETMEN NE KAZANIR</p>
         <p className="mt-8 olcu font-marka text-ekran leading-tight">
           Ödev toplamak, tek tek puanlamak ve “yaptın mı?” diye sormak için harcanan
           zaman geri gelir.

@@ -6,12 +6,12 @@ type Ton = 'notr' | 'olumlu' | 'uyari' | 'olumsuz' | 'vurgu' | 'odul'
 const tonlar: Record<Ton, string> = {
   notr: 'bg-yuzey-yuksek text-metin-ikincil border-kenar',
   olumlu: 'bg-yaprak-sis text-olumlu border-yaprak/25',
-  uyari: 'bg-kehribar-sis text-uyari border-kehribar/25',
+  uyari: 'bg-bal-sis text-uyari border-bal/25',
   olumsuz: 'bg-kiremit-sis text-olumsuz border-kiremit/25',
   // Nar rozeti nadirdir: yeni açılan, dikkat çeken bir şey.
   vurgu: 'bg-nar-sis text-vurgu border-nar/25',
-  // Kükürt YALNIZ dolgu olarak; üstündeki metin mürekkeptir. Durum göstergesi değildir.
-  odul: 'bg-kukurt text-metin border-kukurt',
+  // Ödül rozeti sıcak ama sessiz: tint zemin, koyu metin. Doygun sarı dolgu yok.
+  odul: 'bg-bal-sis text-uyari border-bal/30',
 }
 
 type Ozellikler = {

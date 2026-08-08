@@ -2,39 +2,78 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Marka } from '@/components/marka/Marka'
 import { Muhur } from '@/components/marka/Muhur'
+import { OkulAdi } from '@/components/marka/OkulAdi'
 import { Alan } from '@/components/ui/Alan'
 import { Buton } from '@/components/ui/Buton'
 import { HataDurumu } from '@/components/ui/HataDurumu'
 import { useOturum } from '@/hooks/useOturum'
+import { sinif } from '@/lib/sinif'
+import type { Rol } from '@/types'
 
-type Kapi = 'kod' | 'ogretmen'
+const kapilar: ReadonlyArray<{ rol: Rol; ad: string }> = [
+  { rol: 'ogrenci', ad: 'Öğrenci' },
+  { rol: 'veli', ad: 'Veli' },
+  { rol: 'ogretmen', ad: 'Öğretmen' },
+]
+
+const alanMetni: Record<Rol, { etiket: string; ipucu: string; ornek: string }> = {
+  ogrenci: {
+    etiket: 'Öğrenci kodun',
+    ipucu: 'Kodu öğretmeninden aldığın kartın üzerinde bulabilirsin.',
+    ornek: 'ör. K7M2-P4RT',
+  },
+  veli: {
+    etiket: 'Veli kodunuz',
+    ipucu: 'Veli kodu öğrencininkinden farklıdır; kartın alt bölümünde yazar.',
+    ornek: 'ör. T3XA-9BQD',
+  },
+  ogretmen: {
+    etiket: "Öğretmen PIN'i",
+    ipucu: 'En az 8 hane. Beş hatalı denemeden sonra 15 dakika kilitlenir.',
+    ornek: '••••••••',
+  },
+}
 
 /**
- * Giriş ekranı.
+ * GİRİŞ EKRANI
  *
- * Tasarım kararı: İki ayrı kapı var ama ekran tek. Öğrenci ve veli aynı kod
- * alanını kullanır — kodun kime ait olduğuna sunucu karar verir, istemci
- * "ben veliyim" diyemez. Gözün gideceği ilk yer kod alanı; kullanıcıların
- * neredeyse tamamı oradan girer.
+ * Tasarım kararı: Üç kullanıcının üç ayrı sekmesi var. Öğrenci ve veli aynı
+ * alanı paylaşmıyor artık — veli "benim yerim neresi?" diye düşünmüyor ve
+ * yanlış kodu yapıştırdığında ne olduğunu anlıyor.
+ *
+ * Rolü yine SUNUCU belirler; sekme yalnız beklentiyi söyler. Sekme ile sunucunun
+ * döndürdüğü rol uyuşmazsa oturum hemen kapatılır ve ne yapılacağı yazılır.
+ * Böylece sekme bir yetki iddiası değil, bir yön levhası olur.
+ *
+ * Kurumsal çıpa mühürdür: ekranı o açar, okul adı iki satır hâlinde altında durur.
  */
 export function Giris() {
-  const { kimlik, kodlaGiris, pinleGiris } = useOturum()
-  const [kapi, setKapi] = useState<Kapi>('kod')
+  const { kimlik, kodlaGiris, pinleGiris, cikis } = useOturum()
+  const [kapi, setKapi] = useState<Rol>('ogrenci')
   const [deger, setDeger] = useState('')
   const [hata, setHata] = useState<string | null>(null)
   const [bekliyor, setBekliyor] = useState(false)
 
   if (kimlik) return <Navigate to="/panel" replace />
 
+  const metin = alanMetni[kapi]
+
   async function gonder(olay: React.FormEvent) {
     olay.preventDefault()
     setHata(null)
     setBekliyor(true)
     try {
-      if (kapi === 'kod') {
-        await kodlaGiris(deger)
-      } else {
+      if (kapi === 'ogretmen') {
         await pinleGiris(deger)
+        return
+      }
+      const giren = await kodlaGiris(deger)
+      if (giren.rol !== kapi) {
+        // Kod geçerli ama başka bir kapıya ait: oturumu kapat, yönünü söyle.
+        await cikis()
+        const dogru = giren.rol === 'ogrenci' ? 'Öğrenci' : 'Veli'
+        setHata(`Bu kod ${dogru.toLocaleLowerCase('tr')} kodu. "${dogru}" sekmesinden gir.`)
+        setBekliyor(false)
       }
     } catch (sorun) {
       setHata(sorun instanceof Error ? sorun.message : 'Giriş yapılamadı.')
@@ -42,72 +81,58 @@ export function Giris() {
     }
   }
 
-  function kapiDegistir(yeni: Kapi) {
+  function kapiDegistir(yeni: Rol) {
     setKapi(yeni)
     setDeger('')
     setHata(null)
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-zemin px-4 py-12">
-      <div className="flex w-full max-w-sm flex-col items-center">
-        <Muhur boyut={72} />
-        <Marka olcek="orta" ekSinif="mt-8 items-center text-center" />
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-zemin px-4 py-16">
+      <div className="flex w-full max-w-md flex-col items-center text-center">
+        <Muhur boyut={128} ekSinif="max-w-[38vw]" />
+        <OkulAdi olcek="orta" ekSinif="mt-8 items-center" />
+
+        <span className="mt-8 block h-px w-12 bg-kenar" aria-hidden="true" />
+        <Marka olcek="kucuk" ekSinif="mt-8 items-center" />
 
         <div
           className="mt-10 flex w-full rounded-md border border-kenar bg-yuzey-yuksek p-1"
           role="tablist"
           aria-label="Giriş yöntemi"
         >
-          {(
-            [
-              ['kod', 'Öğrenci / Veli'],
-              ['ogretmen', 'Öğretmen'],
-            ] as const
-          ).map(([secenek, etiket]) => (
+          {kapilar.map(({ rol, ad }) => (
             <button
-              key={secenek}
+              key={rol}
               type="button"
               role="tab"
-              aria-selected={kapi === secenek}
-              onClick={() => kapiDegistir(secenek)}
-              className={
-                'min-h-11 flex-1 rounded-sm text-kucuk font-semibold transition-colors duration-150 ' +
-                (kapi === secenek
+              aria-selected={kapi === rol}
+              onClick={() => kapiDegistir(rol)}
+              className={sinif(
+                'min-h-11 flex-1 rounded-sm text-kucuk font-semibold transition-colors duration-150',
+                kapi === rol
                   ? 'bg-yuzey text-metin shadow-kart'
-                  : 'text-metin-ikincil hover:text-metin')
-              }
+                  : 'text-metin-ikincil hover:text-metin',
+              )}
             >
-              {etiket}
+              {ad}
             </button>
           ))}
         </div>
 
-        <form className="mt-6 flex w-full flex-col gap-4" onSubmit={gonder}>
-          {kapi === 'kod' ? (
-            <Alan
-              etiket="Giriş kodun"
-              name="kod"
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              placeholder="ör. K7M2-P4RT"
-              value={deger}
-              onChange={(o) => setDeger(o.target.value)}
-              ipucu="Kodu öğretmeninden aldığın kartın üzerinde bulabilirsin."
-            />
-          ) : (
-            <Alan
-              etiket="Öğretmen PIN'i"
-              name="pin"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              value={deger}
-              onChange={(o) => setDeger(o.target.value)}
-              ipucu="En az 8 hane. Beş hatalı denemeden sonra 15 dakika kilitlenir."
-            />
-          )}
+        <form className="mt-6 flex w-full flex-col gap-4 text-left" onSubmit={gonder}>
+          <Alan
+            key={kapi}
+            etiket={metin.etiket}
+            name={kapi === 'ogretmen' ? 'pin' : 'kod'}
+            type={kapi === 'ogretmen' ? 'password' : 'text'}
+            autoComplete={kapi === 'ogretmen' ? 'current-password' : 'off'}
+            {...(kapi === 'ogretmen' ? {} : { autoCapitalize: 'characters', spellCheck: false })}
+            placeholder={metin.ornek}
+            value={deger}
+            onChange={(o) => setDeger(o.target.value)}
+            ipucu={metin.ipucu}
+          />
 
           {hata && <HataDurumu mesaj={hata} />}
 
@@ -122,15 +147,12 @@ export function Giris() {
           </Buton>
         </form>
 
-        <Link to="/" className="mt-8 text-kucuk text-metin-ikincil underline underline-offset-4 hover:text-vurgu">
+        <Link
+          to="/"
+          className="mt-10 text-kucuk text-metin-ikincil underline underline-offset-4 hover:text-vurgu"
+        >
           Ana sayfaya dön
         </Link>
-
-        {/* Okul kimliği: üstte ilçe, altında okul adı — açılış sayfasındakiyle aynı blok. */}
-        <div className="mt-12 text-center text-metin-ikincil">
-          <p className="text-etiket">Beşiktaş</p>
-          <p className="mt-1 text-kucuk">Arnavutköy Korkmaz Yiğit Anadolu Lisesi</p>
-        </div>
       </div>
     </div>
   )

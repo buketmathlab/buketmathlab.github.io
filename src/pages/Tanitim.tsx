@@ -1,23 +1,21 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Marka } from '@/components/marka/Marka'
-import { MarkaAfis } from '@/components/marka/MarkaAfis'
 import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
 import { SekizOrgu } from '@/components/marka/SekizOrgu'
 import { Muhur } from '@/components/marka/Muhur'
+import { OkulAdi } from '@/components/marka/OkulAdi'
 import { Aktorler, Yetenekler, Kazanc } from '@/components/tanitim/Bolumler'
 
 /**
  * AÇILIŞ EKRANI
  *
- * Tasarım kararı: İlk ekranda kart yok, üç kutu yok, özellik listesi yok.
- * Yalnız markanın kendisi var: afiş ölçeğinde wordmark, üstünde 8 sembolü,
- * arkada çok soluk sekiz örgüsü. Gözün gideceği ilk yer wordmark; ikincil bilgi
- * tek cümlelik tanım; eylem tek.
+ * Tasarım kararı: Kurumsal çıpa mühürdür; ekranı o açar. Gözün gideceği ilk yer
+ * okul mührü, hemen ardından iki satırlık okul adı, sonra platformun adı.
+ * SEKİZ wordmark mührü ezmez — marka okulun içinde yaşar, onun önünde değil.
  *
- * Zemin kireç beyazı — lacivert yalnız tipografide ve aşağıdaki tek koyu
- * bölümde görünür. Aşağı kaydırdıkça anlatı açılır ve her bölüm bir soruya
- * cevap verir: kim var, ne yapar, öğretmen ne kazanır, arkasında kim var.
+ * Ekranda markanın fikrini ANLATAN cümle yoktur. 8 → ∞ dönüşümü sembolün
+ * kendisinde yaşanır; ayrıca yazıyla açıklanması onu zayıflatıyordu.
  */
 export function Tanitim() {
   useEffect(() => {
@@ -31,50 +29,40 @@ export function Tanitim() {
         <div className="absolute inset-0 text-marka" aria-hidden="true">
           <SekizOrgu />
         </div>
-        {/* Örgü aşağı doğru kirece karışır: doku var, zemin ferah kalır. */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(120% 70% at 50% 0%, transparent 25%, var(--color-kirec) 80%)',
+              'radial-gradient(110% 65% at 50% 10%, transparent 20%, var(--color-kirec) 78%)',
           }}
           aria-hidden="true"
         />
 
-        <div className="kap relative flex flex-1 flex-col py-8">
-          <div className="flex items-start gap-3">
-            <Muhur boyut={32} ekSinif="shrink-0" />
-            <span className="text-etiket text-metin-ikincil">
-              Beşiktaş · Arnavutköy Korkmaz Yiğit Anadolu Lisesi
-            </span>
+        <div className="kap relative flex flex-1 flex-col items-center justify-center py-16 text-center">
+          <Muhur boyut={176} ekSinif="max-w-[45vw]" />
+
+          <OkulAdi olcek="buyuk" ekSinif="mt-10" />
+
+          {/* İnce ayraç: kurum yukarıda, platform aşağıda. */}
+          <span className="mt-10 block h-px w-16 bg-kenar" aria-hidden="true" />
+
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <SekizSonsuz boyut="orta" hal="donus" ekSinif="text-vurgu" />
+            <Marka olcek="orta" ekSinif="items-center" />
           </div>
 
-          <div className="flex flex-1 flex-col justify-center py-12">
-            <SekizSonsuz boyut="afis" hal="donus" ekSinif="text-vurgu" />
-            <h1 className="mt-6 text-marka">
-              <MarkaAfis />
-            </h1>
+          <p className="mt-8 olcu text-govde text-metin-ikincil">
+            Ödevler, çözümler ve notlar tek yerde. Öğrenci, veli ve öğretmen aynı sayfada.
+          </p>
 
-            <div className="mt-10 grid gap-8 sm:grid-cols-2 sm:items-end">
-              <p className="text-govde text-metin-ikincil">
-                Sekiz yana yattığında sonsuz olur. Ödev, çözüm, gelişim ve iletişim —
-                öğrenci, veli ve öğretmen için tek yerde.
-              </p>
-              <div className="flex flex-wrap items-center gap-4 sm:justify-end">
-                <Link
-                  to="/giris"
-                  className="inline-flex min-h-11 items-center rounded-md bg-marka px-6 py-3 text-kucuk font-semibold text-tebesir transition-colors duration-150 hover:bg-lacivert-duman"
-                >
-                  Giriş yap
-                </Link>
-                <span className="text-kucuk text-metin-ikincil">
-                  Kodun kartının üzerinde yazıyor.
-                </span>
-              </div>
-            </div>
-          </div>
+          <Link
+            to="/giris"
+            className="mt-10 inline-flex min-h-11 items-center rounded-md bg-marka px-8 py-3 text-kucuk font-semibold text-tebesir transition-colors duration-150 hover:bg-lacivert-duman"
+          >
+            Giriş yap
+          </Link>
 
-          <p className="text-etiket text-metin-ikincil">Aşağı kaydırın</p>
+          <p className="mt-16 text-etiket text-metin-ikincil">Aşağı kaydırın</p>
         </div>
       </section>
 
@@ -102,12 +90,12 @@ export function Tanitim() {
       </section>
 
       <footer className="border-t border-kenar py-12">
-        <div className="kap flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <Marka />
-          <div className="text-kucuk text-metin-ikincil">
-            <p className="text-etiket">Beşiktaş</p>
-            <p className="mt-1">Arnavutköy Korkmaz Yiğit Anadolu Lisesi</p>
+        <div className="kap flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <Muhur boyut={56} />
+            <OkulAdi olcek="kucuk" />
           </div>
+          <Marka />
         </div>
       </footer>
     </div>

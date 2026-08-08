@@ -7,11 +7,8 @@ const wordmark: Record<Olcek, string> = {
   orta: 'text-ekran',
   afis: 'text-afis',
 }
-const imza: Record<Olcek, string> = {
-  kucuk: 'text-etiket',
-  orta: 'text-kucuk',
-  afis: 'text-kucuk',
-}
+/** İmza her ölçekte aynı: küçük ve İNCE. Wordmark'tan ağır görünemez. */
+const imza = 'text-kucuk font-normal'
 
 type Ozellikler = {
   olcek?: Olcek
@@ -40,7 +37,7 @@ export function Marka({ olcek = 'kucuk', imzasiz = false, ekSinif }: Ozellikler)
         SEKİZ
       </span>
       {!imzasiz && (
-        <span className={sinif('mt-2 text-metin-ikincil', imza[olcek])}>
+        <span className={sinif('mt-2 text-metin-ikincil', imza)}>
           Buket Topuzoğlu · Matematik
         </span>
       )}

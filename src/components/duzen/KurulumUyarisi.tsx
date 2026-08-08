@@ -8,7 +8,7 @@ type Ozellikler = {
  */
 export function KurulumUyarisi({ eksikler }: Ozellikler) {
   return (
-    <div role="alert" className="border-b border-kehribar/25 bg-kehribar-sis px-4 py-3">
+    <div role="alert" className="border-b border-bal/25 bg-bal-sis px-4 py-3">
       <p className="mx-auto max-w-5xl olcu text-kucuk text-uyari">
         Bağlantı ayarı eksik: <span className="font-mono">{eksikler.join(', ')}</span>. Proje
         kökündeki <span className="font-mono">.env</span> dosyasını doldurup sayfayı yenileyin.

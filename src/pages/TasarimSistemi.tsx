@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { Sayfa } from '@/components/duzen/Sayfa'
 import { Bolum, RenkKarti, OlcekSatiri } from '@/components/tasarim/Parcalar'
 import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
+import { SekizFigur } from '@/components/marka/SekizFigur'
+import { OkulAdi } from '@/components/marka/OkulAdi'
 import { SekizOrgu } from '@/components/marka/SekizOrgu'
 import { Marka } from '@/components/marka/Marka'
 import { Muhur } from '@/components/marka/Muhur'
@@ -91,6 +93,29 @@ export function TasarimSistemi() {
         </Bolum>
 
         <Bolum
+          baslik="8 → öğrenci"
+          aciklama="Sembolün üçüncü hâli. 8 yana yattığında sonsuz oluyordu; ayakta durduğunda bir öğrenciye dönüşüyor — üstteki halka baş, alttaki gövde, çevresine dört ince çizgi. Halkalara dokunulmuyor, yalnız çizgiler ekleniyor. Karikatür yüz ve gülümseme yok; yalnız öğrencinin selamlandığı yerde kullanılıyor."
+        >
+          <div className="flex flex-wrap items-end gap-12 rounded-lg border border-kenar bg-yuzey p-8 shadow-kart text-vurgu">
+            <SekizFigur boyut={72} />
+            <SekizFigur boyut={52} hareketli={false} ekSinif="text-marka" />
+            <div className="text-marka">
+              <SekizSonsuz boyut="buyuk" hal="sekiz" />
+            </div>
+          </div>
+        </Bolum>
+
+        <Bolum
+          baslik="Kurum kimliği"
+          aciklama="Mühür değiştirilmez ve ekranı o açar. Okul adı her zaman iki satır: ilçe üstte sessiz ve harf aralığı açık, okul adı altta ağırlıkla. İkisi tek bir kurumsal blok gibi okunur."
+        >
+          <div className="flex flex-wrap items-center gap-10 rounded-lg border border-kenar bg-yuzey p-8 shadow-kart">
+            <Muhur boyut={112} />
+            <OkulAdi olcek="buyuk" />
+          </div>
+        </Bolum>
+
+        <Bolum
           baslik="Renk"
           aciklama="Oran: %65–75 nötr, %15–20 kurumsal lacivert, %5–10 vurgu. Nar yalnız olay anlarında görünür — etkin gezinme, ilerleme dolgusu, açıklanan puan, odaklanılan alan. Düğmelere ve zeminlere girmez; bu yüzden değerini korur. Ayırt edici kural: anlam renkleri sakin, marka renkleri canlı."
         >
@@ -104,8 +129,8 @@ export function TasarimSistemi() {
             <RenkKarti ad="Gece Laciverti" token="--color-lacivert" ornekSinif="bg-lacivert" kullanim="Logodan. Wordmark, birincil düğme, tek koyu bölüm. Zemin olmaz." kontrast="15,5:1" />
             <RenkKarti ad="Duman Lacivert" token="--color-lacivert-duman" ornekSinif="bg-lacivert-duman" kullanim="Bağlantı, ikincil yapı." kontrast="8,9:1" />
             <RenkKarti ad="Nar" token="--color-nar" ornekSinif="bg-nar" kullanim="Canlı vurgu. Metin olarak da kullanılabilir." kontrast="4,7:1" />
-            <RenkKarti ad="Kükürt" token="--color-kukurt" ornekSinif="bg-kukurt" kullanim="İkinci enerji. YALNIZ dolgu; üstünde mürekkep metin. Durum göstergesi değildir." kontrast="mürekkep üstte 11,0:1" />
-            <RenkKarti ad="Yaprak" token="--color-yaprak" ornekSinif="bg-yaprak" kullanim="Doğru, tamamlandı. Anlam taşır." kontrast="4,9:1" />
+            <RenkKarti ad="Bal" token="--color-bal" ornekSinif="bg-bal" kullanim="Uyarı ve ödül metni. Tint zemin üstünde kullanılır, dolgu olarak değil." kontrast="5,3:1" />
+            <RenkKarti ad="Yaprak" token="--color-yaprak" ornekSinif="bg-yaprak" kullanim="Doğru, tamamlandı. Anlam taşır." kontrast="5,1:1" />
             <RenkKarti ad="Kiremit" token="--color-kiremit" ornekSinif="bg-kiremit" kullanim="Yanlış, eksik. Anlam taşır." kontrast="5,8:1" />
           </div>
           <p className="mt-6 olcu text-kucuk text-metin-ikincil">

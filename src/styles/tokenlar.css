@@ -42,14 +42,15 @@
   --color-nar-koyu: #b01449; /* Nar'ın koyusu — hover */
   --color-nar-sis: #fce7ee; /* Nar'ın sisi — rozet zemini */
 
-  --color-kukurt: #ffc400; /* Kükürt — ikinci enerji; YALNIZ DOLGU, üstünde mürekkep */
-  --color-kukurt-sis: #fff3cc; /* Kükürt'ün sisi — öne çıkan alan zemini */
-
-  /* ─────────── ANLAM RENKLERİ (kontrollü, düşük doygunluk) ─────────── */
-  --color-yaprak: #2e7d5b; /* Yaprak — doğru, tamamlandı (4,9:1) */
-  --color-yaprak-sis: #e3f0e9;
-  --color-kehribar: #8a5a0f; /* Kehribar — uyarı METNİ (6,2:1) */
-  --color-kehribar-sis: #f5e6c8;
+  /* ─────────── ANLAM RENKLERİ (kontrollü, düşük doygunluk) ───────────
+   * Doygun sarı dolgu (#FFC400) kaldırıldı: kağıt beyazı zeminde bağırıyordu ve
+   * uyarı renginin ailesine giriyordu. Yerine tek bir sıcak aile var — Bal —
+   * ve o da tint zemin + koyu metin biçiminde kullanılıyor, dolgu olarak değil.
+   */
+  --color-yaprak: #0f7a54; /* Yaprak — doğru, tamamlandı; temiz zümrüt (5,1:1) */
+  --color-yaprak-sis: #e4f2ec;
+  --color-bal: #9a6700; /* Bal — uyarı ve ödül METNİ (5,3:1) */
+  --color-bal-sis: #fbf0d9;
   --color-kiremit: #b03a32; /* Kiremit — yanlış, eksik (5,8:1) */
   --color-kiremit-sis: #f9e8e6;
 
@@ -65,9 +66,8 @@
   --color-marka: var(--color-lacivert);
   --color-marka-2: var(--color-lacivert-duman);
   --color-vurgu: var(--color-nar);
-  --color-vurgu-2: var(--color-kukurt);
   --color-olumlu: var(--color-yaprak);
-  --color-uyari: var(--color-kehribar);
+  --color-uyari: var(--color-bal);
   --color-olumsuz: var(--color-kiremit);
 
   /* ─────────── TİPOGRAFİ ───────────

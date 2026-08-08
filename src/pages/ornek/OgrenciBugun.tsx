@@ -2,6 +2,7 @@ import { Sayfa } from '@/components/duzen/Sayfa'
 import { Buton } from '@/components/ui/Buton'
 import { Rozet } from '@/components/ui/Rozet'
 import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
+import { SekizFigur } from '@/components/marka/SekizFigur'
 import { OranSeridi } from '@/components/ornek/OranSeridi'
 import { gezinme } from '@/lib/gezinme'
 import { ogrencininGunu } from '@/lib/ornekVeri'
@@ -24,12 +25,16 @@ export function OgrenciBugun() {
 
   return (
     <Sayfa
-      ustEtiket={`MERHABA ${ad.toLocaleUpperCase('tr')}`}
       baslik="Bugün"
       ogeler={gezinme('ogrenci', 'okul')}
       aktif="bugun"
     >
       <div className="flex flex-col gap-12">
+        {/* Selamlama: sekiz burada ayağa kalkıp öğrenciye dönüşüyor. */}
+        <section className="-mt-4 flex items-center gap-4">
+          <SekizFigur boyut={52} ekSinif="text-vurgu" />
+          <p className="font-marka text-ekran leading-none">Merhaba {ad}</p>
+        </section>
         {/* Tek iş: bugünün ödevi */}
         <section className="rounded-lg border border-kenar bg-yuzey p-6 shadow-kart">
           <div className="flex flex-wrap items-center gap-2">

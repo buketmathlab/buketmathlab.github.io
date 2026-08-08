@@ -5,8 +5,8 @@ import { cikisYap, kimlikGetir, kodlaGir, pinleGir, type Kimlik } from '@/lib/ot
 type OturumDurumu = {
   kimlik: Kimlik | null
   yukleniyor: boolean
-  kodlaGiris: (kod: string) => Promise<void>
-  pinleGiris: (pin: string) => Promise<void>
+  kodlaGiris: (kod: string) => Promise<Kimlik>
+  pinleGiris: (pin: string) => Promise<Kimlik>
   cikis: () => Promise<void>
 }
 
@@ -32,11 +32,15 @@ export function OturumSaglayici({ children }: { children: ReactNode }) {
   }, [])
 
   const kodlaGiris = useCallback(async (kod: string) => {
-    setKimlik(await kodlaGir(kod))
+    const giren = await kodlaGir(kod)
+    setKimlik(giren)
+    return giren
   }, [])
 
   const pinleGiris = useCallback(async (pin: string) => {
-    setKimlik(await pinleGir(pin))
+    const giren = await pinleGir(pin)
+    setKimlik(giren)
+    return giren
   }, [])
 
   const cikis = useCallback(async () => {
