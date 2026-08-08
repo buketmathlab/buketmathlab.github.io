@@ -4,15 +4,14 @@ import { sinif } from '@/lib/sinif'
 
 type Ozellikler = InputHTMLAttributes<HTMLInputElement> & {
   etiket: string
-  /** Alanın altındaki açıklama — hata yoksa görünür. */
   ipucu?: string
-  /** Hata metni; ne olduğunu ve ne yapılacağını söyler. */
   hata?: string
 }
 
 /**
  * Metin alanı. Etiket her zaman görünür (yer tutucu etiket yerine geçmez).
- * Hata durumunda alan `aria-invalid` alır ve hata metni alanla ilişkilendirilir.
+ * Odaklandığında kenarlık camgöbeğine döner — canlı rengin arayüzdeki
+ * görevlerinden biri "şu an buradasın" demektir.
  */
 export function Alan({ etiket, ipucu, hata, className, id, ...kalan }: Ozellikler) {
   const uretilen = useId()
@@ -20,8 +19,8 @@ export function Alan({ etiket, ipucu, hata, className, id, ...kalan }: Ozellikle
   const yardimId = `${alanId}-yardim`
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={alanId} className="text-kucuk font-semibold text-murekkep">
+    <div className="flex flex-col gap-2">
+      <label htmlFor={alanId} className="text-etiket text-metin-ikincil">
         {etiket}
       </label>
       <input
@@ -30,17 +29,15 @@ export function Alan({ etiket, ipucu, hata, className, id, ...kalan }: Ozellikle
         aria-invalid={hata ? true : undefined}
         aria-describedby={hata || ipucu ? yardimId : undefined}
         className={sinif(
-          'min-h-11 rounded-md border bg-kagit-yuksek px-3 py-2 text-govde',
-          'placeholder:text-kursun',
-          hata ? 'border-kirmizi' : 'border-kenar-koyu',
+          'min-h-11 rounded-md border bg-yuzey px-3 py-2 text-govde text-metin',
+          'placeholder:text-mineral/70',
+          'focus:border-vurgu focus:outline-none focus-visible:outline-none',
+          hata ? 'border-kizil' : 'border-kenar',
           className,
         )}
       />
       {(hata || ipucu) && (
-        <p
-          id={yardimId}
-          className={sinif('text-kucuk', hata ? 'text-kirmizi-metin' : 'text-kursun-koyu')}
-        >
+        <p id={yardimId} className={sinif('text-kucuk', hata ? 'text-kizil' : 'text-metin-ikincil')}>
           {hata ?? ipucu}
         </p>
       )}

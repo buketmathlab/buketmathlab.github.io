@@ -1,126 +1,161 @@
-# SEKİZ — Tasarım sistemi
+# SEKİZ — Sanat yönetimi
 
-Token'ların tek kaynağı `src/styles/tokenlar.css` dosyasıdır. Bu belge o dosyanın
-gerekçesidir. Çalışan hâli tarayıcıda **`/tasarim`** adresindedir — ekranlar
-yazılırken oraya bakılır.
+Token'ların tek kaynağı `src/styles/tokenlar.css`. Bu belge o dosyanın
+gerekçesidir. Çalışan hâli **`/tasarim`** adresindedir; ekran yazarken oraya bakılır.
 
 ---
 
 ## 1. Marka
 
-**SEKİZ** iki kökten beslenir ve ikisi de arayüzde karşılık bulur:
+Markanın üç katmanı vardır ve üçü ayrı işler yapar:
 
-**Geometri.** Selçuklu yıldızı ve rub'ul hizb: iki karenin 45° döndürülmesiyle doğan
-sekiz köşeli form. Boş ekranların illüstrasyonu (`SelcukluYildizi`) ve sınıf
-panosunun yoklama hücreleri (`SekizgenHucre`) bu formdan çıkar. Süs değil, yapı öğesi.
+| | Nedir | Nerede |
+|---|---|---|
+| **8** | Sembol | Uygulama simgesi, üst bar, bekleme anı, boş ekran |
+| **SEKİZ** | Kimlik | Wordmark; açılış ekranı, giriş, rapor başlığı |
+| **∞** | Fikir | Hiçbir yerde çizilmez — 8 dönünce ortaya çıkar |
 
-**Sonsuzluk.** 8 yatay çevrildiğinde ∞ olur. Bu, `SekizSonsuz` bileşeninde
-**fiilen yaşanır**: iki eşit daire üst üste "8"i kurar, 90° dönünce yan yana gelip
-"∞" olur. Şekil değişmez — yalnız bakış açısı değişir. Uygulamanın tek süsleyici
-animasyonudur; bekleme anlarında görünür ve `prefers-reduced-motion` açıkken durur.
+**∞ hiçbir zaman ayrı bir işaret olarak kullanılmaz.** Sonsuzluk anlatılmaz,
+gösterilir: iki halka üst üste sekizi kurar, 90° dönünce yan yana gelip sonsuz
+olur. Şekil hiç değişmez, yalnız bakış açısı değişir. Uygulamanın tek süsleyici
+hareketi budur.
 
-**Kilit satırı.** "SEKİZ" markadır, altındaki satır imzadır. İkisi asla ayrılmaz;
-alt satır her zaman daha küçük ve daha ince. Üst barda, giriş ekranında, tanıtım
-sayfasında, raporların başlığında aynı bileşen kullanılır (`KilitSatiri`).
+**Wordmark ölçüyle dizilir.** Açılış ekranında "SEKİZ" kabını tam doldurur:
+kelime SVG içinde çizilir ve `textLength` ile kabın genişliğine oturtulur
+(`lengthAdjust="spacing"` — harf biçimleri bozulmaz, yalnız harf arası açılır).
+Punto tahminle değil ölçümle seçildi: Instrument Serif'te "SEKİZ" 100 puntoda
+202,6 birim; 43,9 punto doğal genişliği 89 birime getirir, kalan %12 harf arasına
+dağılır. Sonuç: 360px telefonda da 1600px ekranda da wordmark ızgaraya milimetrik
+oturur.
 
-```
-SEKİZ
-Buket Topuzoğlu · Matematik
-```
+**Noktalı İ korunur.** Wordmark'ta İ'nin noktası markanın en ayırt edici
+ayrıntısıdır — Türkçe bir marka olduğunu ilk bakışta söyler. Afiş ölçeğinde bu
+nokta bağımsız bir geometrik öğeye dönüşür.
+
+**Örgü.** 8'in halkaları bir ızgaraya yayıldığında sekizgen boşluklar doğar:
+tezyinatın ördüğü form ile bir koordinat sistemi aynı çizimde buluşur. Her zaman
+metnin arkasında ve düşük opaklıkta. Kullanıcı 8 görmez; tasarımın kendine ait
+bir geometrisi olduğunu hisseder.
+
+**Okul mührü arayüzün taşıyıcısı değildir.** Markayı SEKİZ taşır; mühür yalnız
+kurumsal yetkinin gerektiği yerde görünür: kürsü bölümü, alt bilgi, yazdırılan
+dönem raporu, veli onam metni, öğrenci kod kartı.
+
+---
 
 ## 2. Renk
 
-Kontrast oranları kağıt zemin (`#F7F5F0`) üzerine hesaplanmıştır. WCAG AA sınırı
-normal metinde 4,5:1'dir.
+**Ürün koyu zeminlidir.** Kullanıcıların %90'ı telefondan giriyor; OLED ekranda
+derin siyah hem enerji harcamıyor hem de camgöbeğini mücevher gibi gösteriyor.
+Açık zemin yalnız **yazdırılan** belgelerde kullanılır (rapor, kod kartı).
 
-| Token | Kod | Kullanım | Kontrast |
+Oran disiplini: **%60 nötr · %30 kurumsal petrol · %10 canlı camgöbeği.**
+
+| Ad | Kod | Görev | Kontrast (gece üstünde) |
 |---|---|---|---|
-| `murekkep` | `#16233F` | Ana kurumsal renk, başlık, üst bar, birincil düğme | 14,1:1 ✅ |
-| `murekkep-900` | `#0C1526` | En koyu zemin, üst bar kenarı | — |
-| `murekkep-700` | `#24365C` | Hover, ikincil kurumsal | 10,3:1 ✅ |
-| `murekkep-500` | `#3C5482` | Bağlantı, klavye odak halkası | 6,4:1 ✅ |
-| `kagit` | `#F7F5F0` | Sayfa zemini | — |
-| `kagit-yuksek` | `#FFFFFF` | Kart yüzeyi | — |
-| `kagit-golge` | `#EFEBE2` | İkincil zemin, tablo şeridi | — |
-| `kenar` | `#E2DCD0` | Kart ve tablo kenarı | — |
-| `altin` | `#C8A24B` | Madalya, başarı vurgusu — **dolgu olarak** | 2,2:1 ⚠️ metin değil |
-| `altin-koyu` | `#8A6A22` | Altın tonunda **yazı** | 4,6:1 ✅ |
-| `yesil` | `#2E7D5B` | Tamamlandı, doğru cevap | 4,7:1 ✅ |
-| `kirmizi` | `#B03A32` | Eksik ödev, yanlış cevap, uyarı | 5,5:1 ✅ |
-| `kursun` | `#8B93A5` | Çizgi, ikon, devre dışı öğe — **metin değil** | 2,8:1 ⚠️ |
-| `kursun-koyu` | `#5A6376` | İkincil metin | 5,1:1 ✅ |
+| **Gece** | `#07090C` | Zemin | — |
+| **Grafit** | `#12161C` | Kart ve panel yüzeyi | — |
+| **Duman** | `#1B212A` | Yükseltilmiş yüzey, tablo şeridi | — |
+| **Çizgi** | `#262F3A` | Kenarlık, ayraç | — |
+| **Mineral** | `#8B95A3` | İkincil metin | 6,4:1 ✅ |
+| **Fildişi** | `#F2EFE8` | Ana metin, birincil düğme | 16,8:1 ✅ |
+| **Derin Petrol** | `#0C3A42` | Kurumsal omurga, doku, geniş bloklar | — |
+| **Elektrik Camgöbeği** | `#21E0C8` | Tek canlı renk | 11,8:1 ✅ |
+| **Yeşim** | `#3FB98A` | Doğru, tamamlandı | 8,0:1 ✅ |
+| **Kızıl** | `#E86A78` | Yanlış, eksik | 6,3:1 ✅ |
 
-**Şartnameden sapma ve gerekçesi:** Şartnamedeki palette Mühür Altını ve Kurşun
-Kalem doğrudan metin rengi olarak sayılıyordu; ikisi de kağıt üzerinde AA'yı
-geçmiyor. Renkler korundu ama ikiye ayrıldı: dolgu tonu (`altin`, `kursun`) ve metin
-tonu (`altin-koyu`, `kursun-koyu`). Palet aynı kalıyor, erişilebilirlik sağlanıyor.
+**Camgöbeği nerede görünür:** ilerleme çubuğunun dolan kısmı · etkin sekmenin
+altı · açıklanan puan · odaklanılan alanın kenarlığı · seri ve madalya rozeti ·
+bölüm etiketleri. **Nerede görünmez:** düğmeler, zeminler, başlıklar, gövde
+metni. Ana eylem düğmesi sık tekrarlanır; canlı rengi oraya verirsek %10 kuralı
+çöker ve renk sıradanlaşır. Bu yüzden birincil düğme fildişidir.
 
-**Altın cimri kullanılır.** Tüm arayüzde yalnız başarı ve madalya bağlamında görünür.
+**Yeşim ve kızıl anlam taşır, dekorasyon değildir.** Doğru/yanlış ayrımı yalnız
+renge bırakılmaz: sekizgen hücrelerde doluluk farkı, onay/çarpı simgesi ve ekran
+okuyucuya giden metin de durumu söyler. Renk körü bir öğretmen şeridi aynı hızda
+okur.
 
-**Renk tek başına anlam taşımaz.** Yoklama hücrelerinde durum aynı zamanda dolgu/boş
-farkıyla ve ekran okuyucuya giden metinle anlatılır ("112 · Nil Aksoy — ödevi
-yapmadı").
+### Şartnameden sapmalar ve gerekçeleri
+
+1. **Lacivert `#16233F` bırakıldı, yerine Derin Petrol geldi.** İlk şartname
+   laciverti omurga yapıyordu; ikinci brief "klasik okul laciverti" ve
+   "geleneksel prestij klişeleri"nden kaçınmayı istiyor. Petrol laciverte komşu
+   ama okul portalı çağrışımı taşımıyor ve camgöbeğiyle aynı aileden — palet tek
+   bir hue ailesinde derinleşiyor, fildişi de sıcak karşı ağırlığı veriyor.
+2. **Mühür Altını kaldırıldı.** Altın + lacivert, ikinci brief'in adıyla saydığı
+   geleneksel prestij üçlüsünün parçası. Altın artık yalnız basılı mührün
+   kendisinde yaşıyor.
+3. **Selçuklu yıldızı illüstrasyonu kaldırıldı.** Boş ekranlarda çizim yerine
+   markanın kendi sembolü duruyor. Anadolu bağı kayboldu sayılmaz: sekizgen
+   hücre ve örgü aynı geometriden geliyor, camgöbeği ise firuzenin dijital
+   torunu.
+4. **A/B/C palet çalışması geçersiz.** B yönü (patlıcan moru) ikinci brief'in
+   mor yasağına takılıyordu; A ve C ise açık zemin varsayıyordu.
+
+---
 
 ## 3. Tipografi
 
-**Gövde:** Inter — nötr, ekranda okunaklı, tabular rakam desteği güçlü.
-**Başlık:** Fraunces — karakterli serif; akademik ciddiyeti bu taşır.
+İki aile, iki ayrı görev.
 
-Rakamlar her yerde **tabular**: puan ve ortalama sütunları hizalı durur, içerik
-değişince zıplamaz (`font-variant-numeric: tabular-nums`, `temel.css`).
+**Instrument Serif — markanın sesi.** Yalnız büyük puntoda görünür: afiş
+wordmark'ı, bölüm açılışları, açıklanan puan. Gövde metninde asla kullanılmaz.
+Yüksek kontrastlı bir display serifin ciddiyeti ancak ölçekte ortaya çıkar.
 
-| Token | Boyut / satır yüksekliği | Kullanım |
-|---|---|---|
-| `text-ekran` | 36 / 1.1 | Giriş ve tanıtım başlığı |
-| `text-b1` | 28 / 1.2 | Sayfa başlığı (h1) |
-| `text-b2` | 22 / 1.25 | Bölüm başlığı (h2) |
-| `text-b3` | 18 / 1.35 | Kart başlığı (h3) |
-| `text-govde` | 16 / 1.6 | Gövde metni |
-| `text-kucuk` | 14 / 1.5 | Yardımcı metin, rozet |
-| `text-etiket` | 12 / 1.4 | Tablo başlığı, üst etiket |
-| `text-rakam` | 32 / 1.0 | Panodaki büyük sayı |
+**Archivo — yapı, arayüz, veri.** Sıkı bir grotesk; başlık hiyerarşisi boyutla
+değil **ağırlıkla** kurulur, rakamlar her yerde tabular olduğu için puan ve
+ortalama sütunları hizalı durur.
 
-Satır uzunluğu 45–75 karakter arasında tutulur (`.olcu` = `max-width: 68ch`).
-Aynı seviyedeki iki başlık asla farklı boyutta olmaz.
+| Token | Boyut | Aile | Kullanım |
+|---|---|---|---|
+| `text-afis` | 64 | serif | Açılış ekranı |
+| `text-ekran` | 40 | serif | Bölüm açılışı |
+| `text-b1` | 28 / 600 | grotesk | Sayfa başlığı |
+| `text-b2` | 20 / 500 | grotesk | Bölüm başlığı |
+| `text-b3` | 16 / 600 | grotesk | Kart başlığı |
+| `text-govde` | 16 / 1.6 | grotesk | Gövde |
+| `text-kucuk` | 14 / 1.5 | grotesk | Yardımcı metin |
+| `text-etiket` | 11 / 0.14em | grotesk | Üst etiket, tablo başlığı |
+| `text-rakam` | 48 | serif | Panodaki büyük sayı |
 
-**Türkçe:** Her iki yazı tipinde de `latin-ext` alt kümesi yüklenir; ğ İ ı ş ç ö ü
-eksiksiz görünür. Büyük harf dönüşümü CSS ile değil `bicim.ts` içindeki `buyuk()`
-ile yapılır — `toLocaleUpperCase('tr')` kullanılır, böylece "istanbul" → "İSTANBUL"
-olur, "ISTANBUL" olmaz. Tarih, sayı ve yüzde biçimleri `tr-TR` üzerinden geçer.
+Satır uzunluğu 45–75 karakter (`.olcu` = 66ch). Türkçe: ğ İ ı ş ç ö ü — iki
+ailede de `latin-ext` alt kümesi yüklü. Büyük harf dönüşümü CSS ile değil
+`bicim.ts` içindeki `buyuk()` ile yapılır (`toLocaleUpperCase('tr')`).
 
-## 4. Aralık
+Yazı tipleri kendi sunucumuzdan verilir; dört dosya toplam **100 KB** (önceki
+sistemde 203 KB'dı).
 
-Taban birim **4px**. Kullanılan basamaklar: 4 · 8 · 12 · 16 · 24 · 32 · 48.
-Ara değer (20px, 28px) kullanılmaz — dikey ritim bu kısıttan doğar.
+---
 
-| Değer | Nerede |
-|---|---|
-| 4px | İkon–metin arası |
-| 8px | Satır arası, rozet iç boşluğu |
-| 12px | Kart içi öğeler |
-| 16px | Kart iç boşluğu, sayfa kenarı |
-| 24px | Bölümler arası |
-| 32px | Büyük bölüm arası |
-| 48px | Sayfa üstü/altı boşluk |
+## 4. Aralık ve geometri
 
-Köşe yarıçapları: 2 / 4 / 8 / 12 / 16 px. Gölge tek katmandır, düşük opaklıkta —
-derinlik kenarlıkla anlatılır, gölge yığınıyla değil.
+Taban birim **4px**. Kullanılan basamaklar: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 96.
+Ara değer kullanılmaz; dikey ritim bu kısıttan doğar.
 
-## 5. Dört hâl
+Köşe yarıçapları 8'in halkasından türer: 2 · 4 · 8 · 16 · tam daire.
 
-Her etkileşim dört durumda tasarlanır: **boş · yükleniyor · hata · dolu.**
+**Koyu zeminde derinlik gölgeyle değil yüzey farkıyla anlatılır** (gece → grafit
+→ duman). Tüm sistemde iki gölge vardır: yüzen katman için bir, camgöbeğinin
+ışıması için bir — ikincisi yalnız olay kartında kullanılır.
 
-- **Boş** (`BosDurum`): bir davettir. "Veri yok" yazılmaz; ne yapılacağı söylenir ve
-  tek bir eylem sunulur. İllüstrasyon ince çizgili Selçuklu yıldızıdır.
-- **Yükleniyor** (`Iskelet`, `KartIskeleti`): dönen çark değil iskelet. Gelecek
-  içeriğin biçimini önceden gösterir; sayfa dolunca yerleşim zıplamaz.
-- **Hata** (`HataDurumu`): özür dilemez. Ne olduğunu ve ne yapılacağını söyler.
-- **Dolu**: asıl içerik.
+---
+
+## 5. Hareket
+
+- **8 → ∞** : tek imza hareketi. 4,5 saniyelik döngü; 8 durur, döner, sonsuz
+  olur, durur, geri döner. Yalnız bekleme anlarında ve açılış ekranında.
+- **Belirme** : yeni gelen bilgi 8px aşağıdan, 0,5 saniyede yerine oturur.
+- **Dokunma** : her düğme 150 ms içinde küçülerek yanıt verir.
+- **İskelet** : yükleme opaklık nefesiyle anlatılır; dönen çark yok.
+
+`prefers-reduced-motion` açıkken imza hareketi dahil her şey durur.
+
+---
 
 ## 6. Metin dili
 
-Öğretmene **siz**, öğrenciye **sen** — tutarlı. Düğmeler ne yaptığını söyler:
-"Ödevi yayınla", "Çözümümü gönder". Sözlük sabittir ve karıştırılmaz:
+Öğretmene **siz**, öğrenciye **sen** — tutarlı. Sunucudan gelen hata metinleri de
+bu dile uyar. Sözlük sabittir:
 
 | Kelime | Anlamı |
 |---|---|
@@ -129,65 +164,37 @@ Her etkileşim dört durumda tasarlanır: **boş · yükleniyor · hata · dolu.
 | **Kaydet** | Taslak; henüz kimse görmüyor |
 | **Onayla** | Öğretmenin son imzası |
 
-**Geç teslim yoktur.** Ödevin durumu üç değerdir: **yaptı · yapmadı · süresi
-dolmadı**. Son tarih geçtiğinde gönderim kapanır ve ödev yapılmamış sayılır; "geç"
-diye bir ara durum, ara renk veya ara rozet bulunmaz. Bu yüzden uyarı, tesliminden
-*sonra* değil *önce* gelir: "Bugün son gün" rozeti ve son gün bildirimi.
+**Geç teslim yoktur.** Durum üç değerdir: yaptı · yapmadı · süresi dolmadı.
+Uyarı tesliminden sonra değil önce gelir.
+
+---
 
 ## 7. Yasaklar
 
-Krem zemin + terracotta üçlüsü · mor-mavi gradyanlar · glassmorphism · gölge
-yığınları · anlamsız numaralandırma (01/02/03) · serpiştirilmiş emoji · amaçsız
-animasyon. Hareket yalnız anlam taşıdığı yerde kullanılır.
+Mor / eflatun / lavanta · mor-mavi gradyan · glassmorphism · gölge yığını · neon ·
+gökkuşağı paleti · çocuksu yuvarlak yazı tipleri · karikatür öğrenci ve mezuniyet
+külahı çizimleri · anlamsız numaralandırma (01/02/03) · serpiştirilmiş emoji ·
+amaçsız animasyon · her şeyi karta çevirmek.
 
 ---
 
-## 8. Faz 0 — Tasarım kalite kapıları denetimi
+## 8. Faz 2 (sanat yönetimi) — kalite kapıları denetimi
 
 | # | Kapı | Durum |
 |---|---|---|
-| 1 | Önce tasarım kararı, sonra kod | ✅ Her ekran ve imza öğesinin başında karar yorumu var (`YoklamaSeridi`, `BosDurum`, `Giris`, `Tanitim`) |
-| 2 | Ekran görüntüsüyle özdenetim | ✅ 360px ve 1280px'te üç ekran çekildi; iki düzeltme yapıldı (retina'da bulanık mühür, sekizgende keyfi piksel değeri) |
-| 3 | Tek aralık ölçeği (4/8/12/16/24/32/48) | ✅ Taban birim 4px; kodda keyfi piksel değeri kalmadı |
-| 4 | Belirli tipografik ölçek | ✅ 8 basamaklı ölçek; satır uzunluğu `.olcu` ile 68ch |
-| 5 | Hizalama disiplini | ✅ Tabular rakamlar açık; sayılar sağa, metinler sola |
-| 6 | Dört hâl tasarlanmış | ✅ Dördü de bileşen olarak var ve `/tasarim` sayfasında görülüyor |
-| 7 | Dokunma geri bildirimi | ✅ Düğmelerde 150 ms `active:scale`; dokunma hedefi en az 44px |
-| 8 | Yıkıcı işlemler iki adımlı | ⏳ `yikici` düğme tonu hazır; iki adımlı onay akışı Faz 2'de (silme/yeniden puanlama ekranlarıyla birlikte) |
-| 9 | Performans bütçesi | ✅ Ana paket 76,9 KB gzip (sınır 200 KB); tasarım sayfası tembel yükleniyor |
-| 10 | Tutarlılık denetimi | ✅ Tek `Buton` bileşeni; sözlük yukarıda sabitlendi |
-| 11 | Türkçe dizgi | ✅ `bicim.ts` — `toLocaleUpperCase('tr')`, `tr-TR` tarih/sayı, doğal sınıf sıralaması (9A < 10A) |
-| 12 | Faz sonunda denetim ve rapor | ✅ Bu tablo |
-
-**Geçmeyen madde:** 8 numaralı kapı Faz 0 kapsamında tamamlanamaz — yıkıcı bir işlem
-henüz yoktur. Faz 2'de öğrenci silme ve yeniden puanlama ekranlarıyla birlikte
-kapatılacaktır.
-
----
-
-## 9. Faz 1 — Tasarım kalite kapıları denetimi
-
-Faz 1 ağırlıklı olarak sunucu tarafıdır; arayüzde giriş ekranı ve geçici panel var.
-
-| # | Kapı | Durum |
-|---|---|---|
-| 1 | Önce tasarım kararı | ✅ Giriş ekranının kararı yazıldı: iki kapı, tek ekran; gözün gideceği ilk yer kod alanı |
-| 2 | Ekran görüntüsüyle özdenetim | ✅ 360px'te giriş ekranı boş, dolu, bekliyor ve hata hâllerinde çekildi |
-| 3 | Aralık ölçeği | ✅ Yeni ekranlarda keyfi piksel değeri yok |
-| 4 | Tipografik ölçek | ✅ Mevcut ölçek kullanıldı, yeni boyut eklenmedi |
-| 5 | Hizalama | ✅ Panel'de etiket/değer iki sütun; sayılar tabular |
-| 6 | Dört hâl | ✅ Giriş: boş · bekliyor (düğmede tek nokta) · hata (kırmızı kutu) · başarılı (panele geçiş) |
-| 7 | Dokunma geri bildirimi | ✅ Düğme 150 ms'de tepki veriyor; bekleme durumunda metin "Giriş yapılıyor" oluyor |
-| 8 | Yıkıcı işlemler iki adımlı | ✅ **Bu fazda kapandı** — `sinif_sil` ve `ogrenci_sil` sunucuda iki adımlı: ilk çağrı ne olacağını yazıyla anlatır (kaç öğrenci sınıfsız kalacak, velinin erişimi kalkacak), ikinci çağrı uygular |
-| 9 | Performans bütçesi | ✅ Ana paket 78,8 KB gzip; resmî Supabase kütüphanesi çıkarılarak 132 KB'dan indirildi |
-| 10 | Tutarlılık | ✅ Tek `Buton`, tek `Alan`, tek `HataDurumu` kullanıldı |
-| 11 | Türkçe dizgi | ✅ Sunucu hata metinleri de Türkçe ve "ne yapılacağını" söylüyor |
+| 1 | Önce tasarım kararı | ✅ Açılış ekranı, olay kartı, boş ekran ve wordmark için karar yorumları kodda |
+| 2 | Ekran görüntüsüyle özdenetim | ✅ 390px ve 1280px'te çekildi; iki düzeltme yapıldı (wordmark harf arası %64'ten %12'ye, İ noktasının kırpılması) |
+| 3 | Aralık ölçeği | ✅ Keyfi piksel değeri yok |
+| 4 | Tipografik ölçek | ✅ Dokuz basamak, her ekranda aynı |
+| 5 | Hizalama | ✅ Wordmark ölçüyle kaba oturuyor; rakamlar tabular |
+| 6 | Dört hâl | ✅ Dördü de `/tasarim` sayfasında görülüyor |
+| 7 | Dokunma geri bildirimi | ✅ 150 ms |
+| 8 | Yıkıcı işlemler iki adımlı | ✅ Sunucuda uygulanıyor (Faz 1) |
+| 9 | Performans bütçesi | ✅ Ana paket 80,4 KB gzip; yazı tipleri 203 KB'dan 100 KB'a indi |
+| 10 | Tutarlılık | ✅ Tek Buton, tek Alan, tek Rozet; sözlük yukarıda |
+| 11 | Türkçe dizgi | ✅ İ/ı, tr-TR biçimler, latin-ext |
 | 12 | Denetim ve rapor | ✅ Bu tablo |
 
-**Metin denetimi:** Sunucudan gelen hatalar da arayüz diline uyar. Öğrenciye "sen"
-("Bu kod bulunamadı. Kartındaki kodu kontrol et, sonra tekrar dene."), öğretmene
-"siz" ("Çok fazla hatalı deneme yapıldı. 15 dakika sonra tekrar deneyin.").
-
-**Erişilebilirlik tabanı:** 360px'te üç ekranda da yatay taşma yok (ölçüldü) ·
-klavye odağı görünür (`:focus-visible`, 2px `murekkep-500` halka) · dokunma hedefi
-en az 44px · renk tek anlam taşıyıcısı değil · `prefers-reduced-motion` destekli.
+**Açık iş:** Öğrenci ve öğretmen panoları henüz bu sistemle çizilmedi (Faz 2–3).
+Sistem `/tasarim` sayfasında parça parça kanıtlandı; ürün ekranlarında sınanması
+sıradaki fazın işi.

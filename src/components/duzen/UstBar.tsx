@@ -1,28 +1,24 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Muhur } from '@/components/marka/Muhur'
-import { KilitSatiri } from '@/components/marka/KilitSatiri'
+import { Marka } from '@/components/marka/Marka'
+import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
 
 type Ozellikler = {
-  /** Sağ tarafta rol menüsü, çıkış düğmesi vb. */
   yan?: ReactNode
 }
 
 /**
- * Üst bar — kilit satırı her ekranda buradadır.
- * Yükseklik sabittir; içerik değişse de sayfa zıplamaz.
+ * Üst bar. Yükseklik sabittir; içerik değişse de sayfa zıplamaz.
+ * Sembol + wordmark birlikte durur; camgöbeği buraya girmez — üst bar
+ * mimaridir, olay değil.
  */
 export function UstBar({ yan }: Ozellikler) {
   return (
-    <header className="sticky top-0 z-10 border-b border-murekkep-900 bg-murekkep text-kagit basilmaz">
+    <header className="basilmaz sticky top-0 z-10 border-b border-kenar bg-zemin/85 backdrop-blur-sm">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-        <Link
-          to="/"
-          className="flex items-center gap-3 rounded-md"
-          aria-label="SEKİZ ana sayfa"
-        >
-          <Muhur boyut={40} />
-          <KilitSatiri koyuZemin />
+        <Link to="/" className="flex items-center gap-3 rounded-md" aria-label="SEKİZ ana sayfa">
+          <SekizSonsuz boyut="kucuk" duragan ekSinif="text-vurgu" />
+          <Marka />
         </Link>
         {yan && <div className="ml-auto flex items-center gap-2">{yan}</div>}
       </div>

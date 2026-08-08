@@ -1,7 +1,8 @@
 import { Sayfa } from '@/components/duzen/Sayfa'
 import { Bolum, RenkKarti, OlcekSatiri } from '@/components/tasarim/Parcalar'
 import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
-import { SelcukluYildizi } from '@/components/marka/SelcukluYildizi'
+import { SekizOrgu } from '@/components/marka/SekizOrgu'
+import { Marka } from '@/components/marka/Marka'
 import { YoklamaSeridi } from '@/components/marka/YoklamaSeridi'
 import { Buton } from '@/components/ui/Buton'
 import { Rozet } from '@/components/ui/Rozet'
@@ -10,165 +11,134 @@ import { Alan } from '@/components/ui/Alan'
 import { Iskelet, KartIskeleti } from '@/components/ui/Iskelet'
 import { BosDurum } from '@/components/ui/BosDurum'
 import { HataDurumu } from '@/components/ui/HataDurumu'
+import { OlayKarti } from '@/components/tasarim/OlayKarti'
 import { ornekYoklama } from '@/lib/ornekVeri'
 
 const aralikOlcegi = [
-  ['1', '4px', 'ikon–metin arası'],
-  ['2', '8px', 'satır arası, rozet iç boşluğu'],
-  ['3', '12px', 'kart içi öğeler'],
-  ['4', '16px', 'kart iç boşluğu, sayfa kenarı'],
-  ['6', '24px', 'bölümler arası'],
-  ['8', '32px', 'büyük bölüm arası'],
-  ['12', '48px', 'sayfa üstü/altı boşluk'],
+  ['4px', 'ikon–metin arası'],
+  ['8px', 'satır arası, rozet iç boşluğu'],
+  ['12px', 'kart içi öğeler'],
+  ['16px', 'kart iç boşluğu, sayfa kenarı'],
+  ['24px', 'bölümler arası'],
+  ['32px', 'başlık ile içerik arası'],
+  ['48px', 'büyük bölüm arası'],
+  ['96px', 'tanıtım bölümleri arası'],
 ] as const
 
 /**
- * FAZ 0 onay ekranı — tasarım token'larının tek yerde görülebildiği vitrin.
- * Bu sayfa üretimde kalır: yeni bir ekran yazılırken buradaki ölçeklerin
- * dışına çıkılmadığı buradan denetlenir.
+ * SANAT YÖNETİMİ — SEKİZ
+ * Sistemin tek yerde görülebildiği vitrin. Yeni ekran yazılırken buradaki
+ * ölçeklerin dışına çıkılmadığı buradan denetlenir.
  */
 export function TasarimSistemi() {
   return (
     <Sayfa
-      baslik="Tasarım sistemi"
-      aciklama="SEKİZ'in görsel dili: renk, tipografi, aralık ve imza öğeleri. Her ekran bu ölçeklerden çıkar; buradaki değerlerin dışına çıkılmaz."
+      baslik="Sanat yönetimi"
+      aciklama="SEKİZ'in görsel dili: 8'in geometrisi, renk, tipografi, aralık ve olay anları. Her ekran bu sistemden çıkar."
     >
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-10">
         <Bolum
-          baslik="İmza hareketi — 8 → ∞"
-          aciklama="Aynı çizim 90° dönünce sekiz sonsuza dönüşür. Uygulamanın tek süsleyici animasyonudur; bekleme anlarında görünür. Hareket azaltma tercihi açıksa durur."
+          baslik="8 → ∞"
+          aciklama="İki halka üst üste sekizi kurar; 90° döndüğünde yan yana gelip sonsuz olur. Şekil değişmez, bakış açısı değişir. Uygulamanın tek süsleyici hareketi budur ve yalnız bekleme anlarında görünür."
         >
-          <div className="flex flex-wrap items-center gap-8 rounded-lg border border-kenar bg-kagit-yuksek p-6 text-murekkep">
+          <div className="flex flex-wrap items-center gap-12 rounded-lg border border-kenar bg-yuzey p-8 text-vurgu">
             <SekizSonsuz boyut="buyuk" />
             <SekizSonsuz boyut="orta" />
             <SekizSonsuz boyut="kucuk" />
-            <div className="text-kursun-koyu">
-              <SekizSonsuz boyut="orta" duragan etiket="Sekiz" />
+            <div className="text-kenar">
+              <SekizSonsuz boyut="buyuk" duragan />
             </div>
+            <Marka olcek="orta" ekSinif="ml-auto" />
           </div>
         </Bolum>
 
         <Bolum
-          baslik="İmza öğesi — sekizgen yoklama şeridi"
-          aciklama="Sınıf panosunun tepesinde durur. Her öğrenci bir sekizgen hücredir; sınıfın nabzı tek bakışta okunur. Numara hücrenin içindedir — 200 öğrencide ad-soyad değil numara ayırt eder. Üç durum vardır: yaptı, yapmadı, süresi dolmadı."
+          baslik="Doku"
+          aciklama="Sekizin halkaları bir ızgaraya yayıldığında sekizgen boşluklar doğar: tezyinat ile koordinat sistemi aynı çizimde buluşur. Her zaman metnin arkasında ve düşük opaklıkta durur — kullanıcı 8 görmez, geometriyi hisseder."
         >
-          <YoklamaSeridi baslik="9A · Türev — 1. Ödev" hucreler={ornekYoklama} />
+          <div className="relative h-48 overflow-hidden rounded-lg border border-kenar bg-yuzey text-petrol-acik">
+            <SekizOrgu ton="okunur" />
+          </div>
         </Bolum>
 
         <Bolum
           baslik="Renk"
-          aciklama="Lacivert kurumsal omurgadır, altın cimri kullanılır. Kontrast oranları kağıt zemin (#F7F5F0) üzerinedir; WCAG AA sınırı normal metinde 4,5:1'dir."
+          aciklama="Oran: %60 nötr, %30 kurumsal petrol, %10 canlı camgöbeği. Camgöbeği yalnız olay anlarında görünür — ilerleme dolgusu, etkin sekme, açıklanan puan, odaklanılan alan. Düğmelere ve zeminlere girmez; bu yüzden değerini korur."
         >
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <RenkKarti
-              ad="Mürekkep Laciverti"
-              token="--color-murekkep"
-              ornekSinif="bg-murekkep"
-              kullanim="Başlık, üst bar, birincil düğme"
-              kontrast="14,1:1"
-            />
-            <RenkKarti
-              ad="Kağıt"
-              token="--color-kagit"
-              ornekSinif="bg-kagit"
-              kullanim="Sayfa zemini"
-            />
-            <RenkKarti
-              ad="Mühür Altını"
-              token="--color-altin"
-              ornekSinif="bg-altin"
-              kullanim="Madalya, vurgu — dolgu olarak"
-              kontrast="2,2:1 · metin değil"
-            />
-            <RenkKarti
-              ad="Altın (metin)"
-              token="--color-altin-koyu"
-              ornekSinif="bg-altin-koyu"
-              kullanim="Altın tonunda yazı"
-              kontrast="4,6:1"
-            />
-            <RenkKarti
-              ad="Onay Yeşili"
-              token="--color-yesil"
-              ornekSinif="bg-yesil"
-              kullanim="Tamamlandı, doğru cevap"
-              kontrast="4,7:1"
-            />
-            <RenkKarti
-              ad="Kırmızı Kalem"
-              token="--color-kirmizi"
-              ornekSinif="bg-kirmizi"
-              kullanim="Eksik ödev, yanlış cevap"
-              kontrast="5,5:1"
-            />
-            <RenkKarti
-              ad="Kurşun Kalem"
-              token="--color-kursun"
-              ornekSinif="bg-kursun"
-              kullanim="Çizgi ve ikon — metin değil"
-              kontrast="2,8:1 · metin değil"
-            />
-            <RenkKarti
-              ad="Kurşun (metin)"
-              token="--color-kursun-koyu"
-              ornekSinif="bg-kursun-koyu"
-              kullanim="İkincil metin"
-              kontrast="5,1:1"
-            />
-            <RenkKarti
-              ad="Kenarlık"
-              token="--color-kenar"
-              ornekSinif="bg-kenar"
-              kullanim="Kart ve tablo kenarı"
-            />
+            <RenkKarti ad="Gece" token="--color-gece" ornekSinif="bg-gece" kullanim="Zemin. OLED ekranda gerçek siyaha yakın." />
+            <RenkKarti ad="Grafit" token="--color-grafit" ornekSinif="bg-grafit" kullanim="Kart ve panel yüzeyi." />
+            <RenkKarti ad="Duman" token="--color-duman" ornekSinif="bg-duman" kullanim="Yükseltilmiş yüzey, tablo şeridi." />
+            <RenkKarti ad="Mineral" token="--color-mineral" ornekSinif="bg-mineral" kullanim="İkincil metin." kontrast="Gece üstünde 6,4:1" />
+            <RenkKarti ad="Fildişi" token="--color-fildisi" ornekSinif="bg-fildisi" kullanim="Ana metin ve birincil düğme. Saf beyaz değil, sıcak." kontrast="Gece üstünde 16,8:1" />
+            <RenkKarti ad="Derin Petrol" token="--color-petrol" ornekSinif="bg-petrol" kullanim="Kurumsal omurga. Geniş bloklar, doku." />
+            <RenkKarti ad="Elektrik Camgöbeği" token="--color-camgobegi" ornekSinif="bg-camgobegi" kullanim="Tek canlı renk. Yalnız olay anlarında." kontrast="Gece üstünde 11,8:1" />
+            <RenkKarti ad="Yeşim" token="--color-yesim" ornekSinif="bg-yesim" kullanim="Doğru, tamamlandı. Anlam taşır, süs değildir." kontrast="Gece üstünde 8,0:1" />
+            <RenkKarti ad="Kızıl" token="--color-kizil" ornekSinif="bg-kizil" kullanim="Yanlış, eksik. Anlam taşır, süs değildir." kontrast="Gece üstünde 6,3:1" />
           </div>
         </Bolum>
 
         <Bolum
           baslik="Tipografi"
-          aciklama="Başlıklarda Fraunces (karakterli serif), gövdede Inter. Rakamlar her yerde tabular — puan ve ortalama sütunları hizalı durur."
+          aciklama="İki aile, iki görev. Instrument Serif yalnız büyük puntoda: markanın sesi odur, iş gücü değil. Archivo yapıyı, arayüzü ve veriyi taşır; rakamlar her yerde tabular, sütunlar hizalı."
         >
-          <div className="rounded-lg border border-kenar bg-kagit-yuksek p-4">
-            <OlcekSatiri ad="ekran" deger="36 / 1.1" sinifAdi="text-ekran font-baslik" ornek="SEKİZ" />
-            <OlcekSatiri ad="b1" deger="28 / 1.2" sinifAdi="text-b1 font-baslik" ornek="Sınıf panosu" />
-            <OlcekSatiri ad="b2" deger="22 / 1.25" sinifAdi="text-b2 font-baslik" ornek="9A · Türev" />
-            <OlcekSatiri ad="b3" deger="18 / 1.35" sinifAdi="text-b3 font-baslik" ornek="Bugün ne oldu?" />
-            <OlcekSatiri ad="gövde" deger="16 / 1.6" sinifAdi="text-govde" ornek="Çözüm kağıdını yükle." />
-            <OlcekSatiri ad="küçük" deger="14 / 1.5" sinifAdi="text-kucuk" ornek="Son teslim: 12 Eylül" />
-            <OlcekSatiri
-              ad="etiket"
-              deger="12 / 1.4"
-              sinifAdi="text-etiket text-kursun-koyu"
-              ornek="ÖĞRENCİ NO"
-            />
-            <OlcekSatiri ad="rakam" deger="32 / 1.0" sinifAdi="text-rakam font-baslik" ornek="%86" />
+          <div className="rounded-lg border border-kenar bg-yuzey px-4">
+            <OlcekSatiri ad="afiş" deger="64 / serif" sinifAdi="font-marka text-afis leading-none" ornek="SEKİZ" />
+            <OlcekSatiri ad="ekran" deger="40 / serif" sinifAdi="font-marka text-ekran leading-none" ornek="Öğrenci" />
+            <OlcekSatiri ad="b1" deger="28 / 600" sinifAdi="text-b1 font-semibold" ornek="Sınıf panosu" />
+            <OlcekSatiri ad="b2" deger="20 / 500" sinifAdi="text-b2" ornek="Bugün ne yapmam gerekiyor?" />
+            <OlcekSatiri ad="b3" deger="16 / 600" sinifAdi="text-b3 font-semibold" ornek="9A · Türev" />
+            <OlcekSatiri ad="gövde" deger="16 / 1.6" sinifAdi="text-govde" ornek="Çözüm kağıdının fotoğrafını ekle." />
+            <OlcekSatiri ad="küçük" deger="14 / 1.5" sinifAdi="text-kucuk text-metin-ikincil" ornek="Son teslim 12 Eylül, 23.59" />
+            <OlcekSatiri ad="etiket" deger="11 / 0.14em" sinifAdi="text-etiket text-metin-ikincil" ornek="ÖĞRENCİ NO" />
+            <OlcekSatiri ad="rakam" deger="48 / tabular" sinifAdi="font-marka text-rakam text-vurgu" ornek="86" />
           </div>
-          <p className="mt-3 text-kucuk text-kursun-koyu olcu">
-            Türkçe denetimi: ğ İ ı ş ç ö ü Ğ Ş Ç Ö Ü — her iki yazı tipinde de latin-ext alt kümesi
-            yüklendiği için eksiksiz görünür.
+          <p className="mt-4 olcu text-kucuk text-metin-ikincil">
+            Türkçe denetimi: ğ İ ı ş ç ö ü Ğ Ş Ç Ö Ü — iki ailede de latin-ext alt kümesi yüklü.
+            Wordmark'taki noktalı İ bilinçli korunur: markanın Türkçe olduğunu ilk bakışta söyler.
           </p>
         </Bolum>
 
         <Bolum
-          baslik="Aralık"
-          aciklama="Taban birim 4px. Yalnız aşağıdaki basamaklar kullanılır; ara değer (20px, 28px) kullanılmaz — dikey ritim bundan doğar."
+          baslik="Olay anı"
+          aciklama="Enerji her yere yayılmaz, tek anda patlar: puanın açıklandığı saniye. Camgöbeği burada ışır — ekranın hafızada kalan yeri burasıdır."
         >
-          <div className="rounded-lg border border-kenar bg-kagit-yuksek p-4">
-            {aralikOlcegi.map(([basamak, piksel, kullanim]) => (
-              <div key={basamak} className="flex items-center gap-4 border-b border-kenar py-2 last:border-b-0">
-                <span className="w-16 shrink-0 font-mono text-kucuk text-kursun-koyu">{piksel}</span>
-                <span className="h-3 shrink-0 bg-murekkep-500" style={{ width: piksel }} />
-                <span className="text-kucuk text-kursun-koyu">{kullanim}</span>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <OlayKarti />
+            <Kart baslik="Sıradan hâl" aciklama="Aynı bilgi, olay geçtikten sonra. Canlı renk çekilir, sayı sakinleşir.">
+              <p className="font-marka text-rakam text-metin">78</p>
+              <p className="mt-2 text-kucuk text-metin-ikincil">Limit · 2. ödev · 14 Ekim</p>
+            </Kart>
+          </div>
+        </Bolum>
+
+        <Bolum
+          baslik="Sekizgen yoklama şeridi"
+          aciklama="Sınıf panosunun imza öğesi. Her öğrenci bir sekizgen hücre; sınıfın nabzı tek bakışta okunur. Renk tek başına konuşmaz: doluluk ve simge de durumu söyler."
+        >
+          <YoklamaSeridi baslik="9A · Türev — 1. Ödev" hucreler={ornekYoklama} />
+        </Bolum>
+
+        <Bolum
+          baslik="Aralık"
+          aciklama="Taban birim 4px. Ara değer kullanılmaz; dikey ritim bu kısıttan doğar."
+        >
+          <div className="rounded-lg border border-kenar bg-yuzey px-4">
+            {aralikOlcegi.map(([piksel, kullanim]) => (
+              <div key={piksel} className="flex items-center gap-4 border-b border-kenar py-3 last:border-b-0">
+                <span className="w-14 shrink-0 font-mono text-kucuk text-metin-ikincil">{piksel}</span>
+                <span className="h-2 shrink-0 bg-vurgu" style={{ width: piksel }} />
+                <span className="text-kucuk text-metin-ikincil">{kullanim}</span>
               </div>
             ))}
           </div>
         </Bolum>
 
         <Bolum
-          baslik="Düğmeler ve etiketler"
-          aciklama="Sözlük sabittir: yayınla (herkese açar), gönder (geri dönüşü yok), kaydet (taslak), onayla (öğretmen imzası). Her düğme en az 44px yüksekliğindedir."
+          baslik="Parçalar"
+          aciklama="Sözlük sabittir: yayınla (herkese açar), gönder (geri dönüşü yok), kaydet (taslak), onayla (öğretmen imzası). Ana düğme camgöbeği değildir — sık tekrarlanan bir eyleme canlı renk verilmez."
         >
-          <div className="flex flex-col gap-4 rounded-lg border border-kenar bg-kagit-yuksek p-4">
+          <div className="flex flex-col gap-6 rounded-lg border border-kenar bg-yuzey p-4">
             <div className="flex flex-wrap gap-3">
               <Buton vurgu="birincil">Ödevi yayınla</Buton>
               <Buton vurgu="ikincil">Taslak kaydet</Buton>
@@ -179,19 +149,13 @@ export function TasarimSistemi() {
               </Buton>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Rozet ton="olumlu">Yapıldı</Rozet>
-              <Rozet ton="uyari">Bugün son gün</Rozet>
-              <Rozet ton="olumsuz">Yapılmadı</Rozet>
-              <Rozet ton="notr">Onay bekliyor</Rozet>
-              <Rozet ton="altin">Özel ders</Rozet>
+              <Rozet ton="olumlu">YAPILDI</Rozet>
+              <Rozet ton="olumsuz">YAPILMADI</Rozet>
+              <Rozet ton="notr">ONAY BEKLİYOR</Rozet>
+              <Rozet ton="vurgu">4 ÖDEVLİK SERİ</Rozet>
             </div>
             <div className="max-w-sm">
-              <Alan
-                etiket="Öğrenci numarası"
-                placeholder="ör. 142"
-                inputMode="numeric"
-                ipucu="200 öğrencide numara birincil ayırt edicidir."
-              />
+              <Alan etiket="Öğrenci numarası" placeholder="ör. 142" inputMode="numeric" ipucu="200 öğrencide numara birincil ayırt edicidir." />
             </div>
           </div>
         </Bolum>
@@ -207,30 +171,19 @@ export function TasarimSistemi() {
             <Kart baslik="Hata">
               <HataDurumu mesaj="Sınıf listesi alınamadı. İnternet bağlantınızı kontrol edin, sonra tekrar deneyin." />
             </Kart>
+            <KartIskeleti />
             <Kart baslik="Dolu">
               <p className="text-govde">
-                9A · 28 öğrenci · not ortalaması <span className="font-semibold">78,4</span>
+                9A · 28 öğrenci · ortalama <span className="font-semibold">78,4</span>
               </p>
             </Kart>
-            <KartIskeleti />
           </div>
-          <div className="mt-4 rounded-lg border border-kenar bg-kagit-yuksek">
+          <div className="mt-4 rounded-lg border border-kenar bg-yuzey">
             <BosDurum
               baslik="Henüz sınıf oluşturmadınız"
               aciklama="İlk sınıfınızı oluşturun; ödevler, öğrenciler ve panolar bunun üzerine kurulur."
               eylem={<Buton vurgu="birincil">Sınıf oluştur</Buton>}
             />
-          </div>
-        </Bolum>
-
-        <Bolum
-          baslik="Geometri"
-          aciklama="Selçuklu yıldızı: iki karenin 45° döndürülmesiyle doğar. Boş ekranlarda ve rozetlerde yapı öğesidir, süs değil."
-        >
-          <div className="flex flex-wrap items-center gap-8 rounded-lg border border-kenar bg-kagit-yuksek p-6 text-kenar-koyu">
-            <SelcukluYildizi boyut={120} />
-            <SelcukluYildizi boyut={72} ekSinif="text-murekkep-500" />
-            <SelcukluYildizi boyut={44} ekSinif="text-altin" />
           </div>
         </Bolum>
       </div>

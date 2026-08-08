@@ -12,7 +12,7 @@ export function Bulunamadi() {
         eylem={
           <Link
             to="/"
-            className="inline-flex min-h-11 items-center rounded-md bg-murekkep px-6 py-3 text-govde font-semibold text-kagit"
+            className="inline-flex min-h-11 items-center rounded-md bg-metin px-6 py-3 text-kucuk font-semibold text-zemin"
           >
             Ana sayfaya dön
           </Link>

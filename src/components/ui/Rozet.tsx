@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react'
 import { sinif } from '@/lib/sinif'
 
-type Ton = 'notr' | 'olumlu' | 'uyari' | 'olumsuz' | 'altin'
+type Ton = 'notr' | 'olumlu' | 'olumsuz' | 'vurgu'
 
 const tonlar: Record<Ton, string> = {
-  notr: 'bg-kagit-golge text-kursun-koyu border-kenar-koyu',
-  olumlu: 'bg-yesil-soluk text-yesil-metin border-yesil/40',
-  uyari: 'bg-altin-soluk text-altin-koyu border-altin/50',
-  olumsuz: 'bg-kirmizi-soluk text-kirmizi-metin border-kirmizi/40',
-  altin: 'bg-altin text-murekkep border-altin',
+  notr: 'bg-yuzey-yuksek text-metin-ikincil border-kenar',
+  olumlu: 'bg-yesim-sis text-yesim border-yesim/30',
+  olumsuz: 'bg-kizil-sis text-kizil border-kizil/30',
+  // Camgöbeği rozeti nadirdir: seri, madalya, yeni açılan bir şey.
+  vurgu: 'bg-camgobegi-sis text-vurgu border-vurgu/30',
 }
 
 type Ozellikler = {
@@ -22,7 +22,7 @@ export function Rozet({ ton = 'notr', children, ekSinif }: Ozellikler) {
   return (
     <span
       className={sinif(
-        'inline-flex items-center rounded-sm border px-2 py-0.5 text-kucuk font-semibold',
+        'inline-flex items-center rounded-sm border px-2 py-1 text-etiket',
         tonlar[ton],
         ekSinif,
       )}

@@ -149,14 +149,16 @@ Faz 0 ölçümü:
 
 | Dosya | Ham | Gzip |
 |---|---|---|
-| Ana paket (JS) | 245 KB | **78,8 KB** |
-| Stil (CSS) | 23,2 KB | 5,6 KB |
-| Tasarım sistemi (tembel) | 12,8 KB | 4,7 KB |
-| Yazı tipleri (4 dosya, woff2) | 203 KB | — |
+| Ana paket (JS) | 250 KB | **80,4 KB** |
+| Stil (CSS) | 25,1 KB | 6,0 KB |
+| Sanat yönetimi sayfası (tembel) | 14,6 KB | 5,3 KB |
+| Yazı tipleri (4 dosya, woff2) | 100 KB | — |
 
 Yazı tipleri kendi sunucumuzdan verilir (Google Fonts'a bağlanılmaz): üçüncü taraf
 isteği yok, çevrimdışı çalışır, gecikme düşer. Yalnız `latin` ve `latin-ext` alt
-kümeleri taşınır; `latin-ext` Türkçe için zorunludur (ğ, ş, İ).
+kümeleri taşınır; `latin-ext` Türkçe için zorunludur (ğ, ş, İ). Sanat yönetimi
+yenilenirken yazı tipi ailesi de değişti (Fraunces + Inter → Instrument Serif +
+Archivo) ve toplam yük 203 KB'dan 100 KB'a indi.
 
 Grafik kütüphanesi (`recharts`) ve PDF görüntüleyici (`pdf.js`) geldiklerinde tembel
 yüklenecektir — ana pakete girmeyecekler.

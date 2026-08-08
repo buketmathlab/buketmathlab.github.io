@@ -1,27 +1,27 @@
 import type { ReactNode } from 'react'
-import { SelcukluYildizi } from '@/components/marka/SelcukluYildizi'
+import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
 
 type Ozellikler = {
   baslik: string
   /** Ne yapılacağını söyleyen tek cümle. "Veri yok" yazmak yasak. */
   aciklama: string
-  /** Kullanıcıyı ilk adıma çağıran düğme. */
   eylem?: ReactNode
 }
 
 /**
  * Boş ekran bir davettir.
- * Tasarım kararı: Ekranın tek işi kullanıcıyı ilk adıma çağırmak. Gözün gideceği
- * ilk yer başlık, ikincil bilgi açıklama, eylem en altta ve tek.
- * İllüstrasyon ince çizgili Selçuklu yıldızıdır — markanın geometrisi.
+ *
+ * İllüstrasyon yok, çizim yok: markanın kendi sembolü duruyor. Boş bir ekranda
+ * 8 hareketsizdir — hikâye henüz başlamamıştır. İlk kayıt girildiğinde ekran
+ * dolar ve sembol yalnız bekleme anlarında, dönerken görünür.
  */
 export function BosDurum({ baslik, aciklama, eylem }: Ozellikler) {
   return (
-    <div className="flex flex-col items-center px-6 py-12 text-center">
-      <SelcukluYildizi boyut={88} ekSinif="text-kenar-koyu" />
-      <h3 className="mt-6 text-b2">{baslik}</h3>
-      <p className="mt-2 max-w-sm text-govde text-kursun-koyu">{aciklama}</p>
-      {eylem && <div className="mt-6">{eylem}</div>}
+    <div className="flex flex-col items-center px-6 py-16 text-center">
+      <SekizSonsuz boyut="buyuk" duragan ekSinif="text-kenar" />
+      <h3 className="mt-8 text-b2 font-semibold">{baslik}</h3>
+      <p className="mt-2 max-w-sm text-kucuk text-metin-ikincil">{aciklama}</p>
+      {eylem && <div className="mt-8">{eylem}</div>}
     </div>
   )
 }

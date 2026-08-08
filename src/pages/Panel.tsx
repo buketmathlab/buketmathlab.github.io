@@ -32,21 +32,21 @@ export function Panel() {
     >
       <Kart baslik="Oturum bilgisi">
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-govde">
-          <dt className="text-kucuk text-kursun-koyu">Rol</dt>
+          <dt className="text-etiket text-metin-ikincil">Rol</dt>
           <dd>{rolAdi[kimlik.rol]}</dd>
 
           {kimlik.ogrenci_no && (
             <>
-              <dt className="text-kucuk text-kursun-koyu">Öğrenci no</dt>
+              <dt className="text-etiket text-metin-ikincil">Öğrenci no</dt>
               <dd>{kimlik.ogrenci_no}</dd>
             </>
           )}
 
           {kimlik.tip && (
             <>
-              <dt className="text-kucuk text-kursun-koyu">Öğrenci tipi</dt>
+              <dt className="text-etiket text-metin-ikincil">Öğrenci tipi</dt>
               <dd>
-                <Rozet ton={kimlik.tip === 'ozel' ? 'altin' : 'notr'}>
+                <Rozet ton={kimlik.tip === 'ozel' ? 'vurgu' : 'notr'}>
                   {kimlik.tip === 'ozel' ? 'Özel ders' : 'Okul öğrencisi'}
                 </Rozet>
               </dd>

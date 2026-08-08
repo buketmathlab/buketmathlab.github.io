@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { Muhur } from '@/components/marka/Muhur'
-import { KilitSatiri } from '@/components/marka/KilitSatiri'
+import { Marka } from '@/components/marka/Marka'
+import { SekizSonsuz } from '@/components/marka/SekizSonsuz'
 import { Alan } from '@/components/ui/Alan'
 import { Buton } from '@/components/ui/Buton'
 import { HataDurumu } from '@/components/ui/HataDurumu'
@@ -49,13 +49,13 @@ export function Giris() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-kagit px-4 py-12">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-zemin px-4 py-12">
       <div className="flex w-full max-w-sm flex-col items-center">
-        <Muhur boyut={64} />
-        <KilitSatiri olcek="buyuk" ekSinif="mt-4 items-center text-center" />
+        <SekizSonsuz boyut="buyuk" etiket="SEKİZ" ekSinif="text-vurgu" />
+        <Marka olcek="orta" ekSinif="mt-8 items-center text-center" />
 
         <div
-          className="mt-8 flex w-full rounded-md border border-kenar-koyu bg-kagit-golge p-1"
+          className="mt-10 flex w-full rounded-md border border-kenar bg-yuzey p-1"
           role="tablist"
           aria-label="Giriş yöntemi"
         >
@@ -74,8 +74,8 @@ export function Giris() {
               className={
                 'min-h-11 flex-1 rounded-sm text-kucuk font-semibold transition-colors duration-150 ' +
                 (kapi === secenek
-                  ? 'bg-kagit-yuksek text-murekkep shadow-kart'
-                  : 'text-kursun-koyu hover:text-murekkep')
+                  ? 'bg-yuzey-yuksek text-metin'
+                  : 'text-metin-ikincil hover:text-metin')
               }
             >
               {etiket}
@@ -122,12 +122,12 @@ export function Giris() {
           </Buton>
         </form>
 
-        <Link to="/" className="mt-8 text-kucuk text-murekkep-500 underline underline-offset-4">
+        <Link to="/" className="mt-8 text-kucuk text-metin-ikincil underline underline-offset-4 hover:text-vurgu">
           Ana sayfaya dön
         </Link>
 
         {/* Okul kimliği: üstte ilçe, altında okul adı — açılış sayfasındakiyle aynı blok. */}
-        <div className="mt-8 text-center text-kursun-koyu">
+        <div className="mt-12 text-center text-metin-ikincil">
           <p className="text-etiket">Beşiktaş</p>
           <p className="mt-1 text-kucuk">Arnavutköy Korkmaz Yiğit Anadolu Lisesi</p>
         </div>

@@ -1,137 +1,159 @@
 /*
  * SEKİZ — TASARIM TOKEN'LARI
- * Tek kaynak burasıdır. Bileşenlerde çıplak renk kodu (#RRGGBB) veya rastgele
- * piksel değeri kullanılmaz; her değer buradaki bir token'a dayanır.
+ *
+ * Tek kaynak burasıdır. Bileşenlerde çıplak renk kodu veya rastgele piksel
+ * değeri kullanılmaz.
+ *
+ * RENK STRATEJİSİ — "sakin zemin, canlı olay"
+ *   %60 nötr    : gece, grafit, mineral, fildişi
+ *   %30 kurumsal: derin petrol (mimariyi taşır)
+ *   %10 canlı   : elektrik camgöbeği (yalnız olay anlarında)
+ *
+ * Ürün koyu zeminlidir. Gerekçe: kullanıcıların %90'ı telefondan giriyor,
+ * OLED ekranda derin siyah hem enerji harcamıyor hem de camgöbeğini mücevher
+ * gibi gösteriyor. Açık zemin yalnız YAZDIRILAN belgelerde kullanılır
+ * (dönem raporu, kod kartı) — bkz. temel.css içindeki @media print.
  */
 
 @theme {
-  /* ─────────────── RENK ───────────────
-   * Çıpa: okul mührünün laciverti. Altın cimri kullanılır (yalnız başarı/vurgu).
-   * WCAG AA notu: "kursun" (#8B93A5) kağıt üzerinde 2.8:1'dir — YALNIZ çizgi,
-   * ikon ve devre dışı öğe içindir. İkincil metin için "kursun-koyu" (5.1:1).
-   * Aynı biçimde "altin" metin rengi değildir (2.2:1); metinde "altin-koyu" (4.6:1).
+  /* ─────────── HAM PALET (adlandırma kimliğin parçasıdır) ─────────── */
+  --color-gece: #07090c; /* Gece — OLED zemini, mürekkebin en dibi */
+  --color-grafit: #12161c; /* Grafit — kart ve panel yüzeyi */
+  --color-duman: #1b212a; /* Duman — yükseltilmiş yüzey, tablo şeridi */
+  --color-cizgi: #262f3a; /* Çizgi — kenarlık, ayraç */
+  --color-mineral: #8b95a3; /* Mineral — ikincil metin (gece üstünde 6,4:1) */
+  --color-fildisi: #f2efe8; /* Fildişi — ana metin; sıcak beyaz, saf beyaz değil */
+
+  --color-petrol: #0c3a42; /* Derin Petrol — kurumsal omurga */
+  --color-petrol-acik: #14555f; /* Petrol'ün aydınlığı — hover, dolgu */
+  --color-petrol-sis: #0a2429; /* Petrol'ün dibi — geniş blok zemini */
+
+  --color-camgobegi: #21e0c8; /* Elektrik Camgöbeği — tek canlı renk */
+  --color-camgobegi-sis: #0e3f3b; /* Camgöbeğinin gölgesi — rozet zemini */
+  --color-camgobegi-koyu: #08695f; /* Açık zeminde camgöbeği METNİ (5,7:1) */
+
+  /* Anlam renkleri: doğru ve yanlış. Sessiz tutulur; enerjiyi camgöbeği taşır. */
+  --color-yesim: #3fb98a; /* Yeşim — doğru, tamamlandı */
+  --color-yesim-sis: #10352a;
+  --color-kizil: #e86a78; /* Kızıl — yanlış, eksik (koyu zeminde okunur ton) */
+  --color-kizil-sis: #3a1219;
+  --color-kizil-koyu: #8c2230; /* Yazdırılan belgede kırmızı kalem */
+
+  /* ─────────── ROL TOKEN'LARI ───────────
+   * Bileşenler ham renk değil ROL kullanır. Tema değişimi tek yerden olur.
    */
-  --color-murekkep-900: #0c1526; /* en koyu zemin, üst bar */
-  --color-murekkep: #16233f; /* ana kurumsal renk, başlıklar */
-  --color-murekkep-700: #24365c; /* ikincil kurumsal, hover */
-  --color-murekkep-500: #3c5482; /* bağlantı, odak halkası */
-  --color-murekkep-100: #e6e9f0; /* çok açık lacivert zemin */
+  --color-zemin: var(--color-gece);
+  --color-yuzey: var(--color-grafit);
+  --color-yuzey-yuksek: var(--color-duman);
+  --color-kenar: var(--color-cizgi);
+  --color-metin: var(--color-fildisi);
+  --color-metin-ikincil: var(--color-mineral);
+  --color-marka: var(--color-petrol);
+  --color-vurgu: var(--color-camgobegi);
+  --color-olumlu: var(--color-yesim);
+  --color-olumsuz: var(--color-kizil);
 
-  --color-kagit: #f7f5f0; /* sayfa zemini — sıcak beyaz */
-  --color-kagit-yuksek: #ffffff; /* kart yüzeyi */
-  --color-kagit-golge: #efebe2; /* ikincil zemin, tablo şeridi */
-  --color-kenar: #e2dcd0; /* kenarlık */
-  --color-kenar-koyu: #cfc7b7; /* vurgulu kenarlık */
-
-  --color-altin: #c8a24b; /* madalya, başarı vurgusu (dolgu) */
-  --color-altin-koyu: #8a6a22; /* altın tonunda METİN */
-  --color-altin-soluk: #f5ecd6; /* rozet zemini */
-
-  --color-yesil: #2e7d5b; /* tamamlandı, doğru cevap */
-  --color-yesil-metin: #216147; /* yeşil tonunda METİN (7.0:1) */
-  --color-yesil-soluk: #e3efe9;
-
-  --color-kirmizi: #b03a32; /* eksik ödev, yanlış cevap */
-  --color-kirmizi-metin: #97302a;
-  --color-kirmizi-soluk: #f8e8e6;
-
-  --color-kursun: #8b93a5; /* çizgi/ikon — metin DEĞİL */
-  --color-kursun-koyu: #5a6376; /* ikincil metin */
-
-  /* ─────────────── TİPOGRAFİ ───────────────
-   * Gövde: Inter (nötr, okunaklı, tabular rakam desteği).
-   * Başlık: Fraunces (karakterli serif — akademik ciddiyeti bu taşır).
+  /* ─────────── TİPOGRAFİ ───────────
+   * Serif YALNIZ büyük puntoda görünür: marka sesi odur, iş gücü değil.
    */
-  --font-govde:
-    'Inter Degisken', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-baslik: 'Fraunces Degisken', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-marka: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-govde: 'Archivo Degisken', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
 
-  /* Tipografik ölçek — her ekranda aynı ölçek kullanılır.
-   * Satır uzunluğu 45–75 karakter (bkz. .olcu yardımcı sınıfı). */
-  --text-etiket: 0.75rem; /* 12px — üst etiket, tablo başlığı */
-  --text-etiket--line-height: 1.4;
-  --text-etiket--letter-spacing: 0.08em;
-  --text-etiket--font-weight: 600;
+  /* Ölçek — her ekranda aynı. Aynı seviyedeki iki başlık asla farklı boyutta olmaz. */
+  --text-afis: 4rem; /* 64 — yalnız açılış ekranı, serif */
+  --text-afis--line-height: 0.95;
+  --text-afis--letter-spacing: -0.02em;
 
-  --text-kucuk: 0.875rem; /* 14px — yardımcı metin */
-  --text-kucuk--line-height: 1.5;
+  --text-ekran: 2.5rem; /* 40 — bölüm açılışı, serif */
+  --text-ekran--line-height: 1.05;
+  --text-ekran--letter-spacing: -0.015em;
 
-  --text-govde: 1rem; /* 16px — gövde */
-  --text-govde--line-height: 1.6;
+  --text-b1: 1.75rem; /* 28 — sayfa başlığı */
+  --text-b1--line-height: 1.15;
+  --text-b1--letter-spacing: -0.01em;
 
-  --text-b3: 1.125rem; /* 18px — kart başlığı */
-  --text-b3--line-height: 1.35;
-
-  --text-b2: 1.375rem; /* 22px — bölüm başlığı */
+  --text-b2: 1.25rem; /* 20 — bölüm başlığı */
   --text-b2--line-height: 1.25;
 
-  --text-b1: 1.75rem; /* 28px — sayfa başlığı */
-  --text-b1--line-height: 1.2;
+  --text-b3: 1rem; /* 16 — kart başlığı (ağırlıkla ayrışır, boyutla değil) */
+  --text-b3--line-height: 1.35;
 
-  --text-ekran: 2.25rem; /* 36px — giriş/tanıtım */
-  --text-ekran--line-height: 1.1;
-  --text-ekran--letter-spacing: -0.01em;
+  --text-govde: 1rem; /* 16 */
+  --text-govde--line-height: 1.6;
 
-  --text-rakam: 2rem; /* 32px — panodaki büyük sayı */
-  --text-rakam--line-height: 1;
+  --text-kucuk: 0.875rem; /* 14 */
+  --text-kucuk--line-height: 1.5;
 
-  /* ─────────────── ARALIK ───────────────
-   * Taban birim 4px'tir; kullanılan basamaklar: 1(4) 2(8) 3(12) 4(16) 6(24)
-   * 8(32) 12(48). Ara değer (p-5, p-7…) kullanılmaz — dikey ritim bundan doğar.
+  --text-etiket: 0.6875rem; /* 11 — üst etiket, tablo başlığı */
+  --text-etiket--line-height: 1.3;
+  --text-etiket--letter-spacing: 0.14em;
+  --text-etiket--font-weight: 600;
+
+  --text-rakam: 3rem; /* 48 — panodaki büyük sayı, tabular */
+  --text-rakam--line-height: 0.9;
+  --text-rakam--letter-spacing: -0.03em;
+
+  /* ─────────── ARALIK ───────────
+   * Taban 4px. Kullanılan basamaklar: 1 2 3 4 6 8 12 16 24.
+   * Ara değer kullanılmaz; dikey ritim bu kısıttan doğar.
    */
   --spacing: 0.25rem;
 
-  /* ─────────────── BİÇİM ─────────────── */
+  /* ─────────── GEOMETRİ ───────────
+   * Yarıçaplar 8'in halkasından türer: 2 · 4 · 8 · 16 · tam daire.
+   */
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-lg: 16px;
 
-  /* Gölge yığını yasak: tek katman, düşük opaklık. Derinlik kenarlıkla anlatılır. */
-  --shadow-kart: 0 1px 2px rgb(22 35 63 / 0.06);
-  --shadow-yuzen: 0 8px 24px -10px rgb(22 35 63 / 0.22);
+  /* Koyu zeminde derinlik gölgeyle değil YÜZEY FARKIYLA anlatılır.
+   * Tek gölge, yalnız yüzen katman için. */
+  --shadow-yuzen: 0 16px 40px -16px rgb(0 0 0 / 0.7);
+  /* Camgöbeğinin ışıması — yalnız olay anında, tek yerde. */
+  --shadow-vurgu: 0 0 0 1px rgb(33 224 200 / 0.35), 0 8px 32px -12px rgb(33 224 200 / 0.45);
 
-  /* ─────────────── HAREKET ───────────────
-   * Tek imza hareketi 8 → ∞ dönüşümüdür. Diğer her yerde hareket kısadır
-   * ve yalnız anlam taşır (puan açıklanması, gönderim onayı).
+  /* ─────────── HAREKET ───────────
+   * Tek imza hareketi: 8 → ∞. Diğer her yerde hareket kısa ve amaçlıdır.
    */
   --ease-sekiz: cubic-bezier(0.65, 0, 0.35, 1);
-  --animate-sekiz-sonsuz: sekiz-sonsuz 3.2s var(--ease-sekiz) infinite;
-  --animate-iskelet: iskelet 1.4s ease-in-out infinite;
-  --animate-nazik-giris: nazik-giris 0.24s var(--ease-sekiz) both;
+  --ease-yumusak: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-sekiz-sonsuz: sekiz-sonsuz 4.5s var(--ease-sekiz) infinite;
+  --animate-iskelet: iskelet 1.6s ease-in-out infinite;
+  --animate-belir: belir 0.5s var(--ease-yumusak) both;
 
   @keyframes sekiz-sonsuz {
-    /* 8 durur → 90° döner → ∞ olur → geri döner. Aynı çizim, değişen bakış açısı. */
+    /* 8 durur → 90° döner → ∞ olur → durur → geri döner.
+     * Şekil değişmez; yalnız bakış açısı değişir. Markanın tezi budur. */
     0%,
-    18% {
-      transform: rotate(0deg) scale(1);
+    16% {
+      transform: rotate(0deg);
     }
-    42%,
+    38%,
     62% {
-      transform: rotate(90deg) scale(1.06);
+      transform: rotate(90deg);
     }
-    86%,
+    84%,
     100% {
-      transform: rotate(0deg) scale(1);
+      transform: rotate(0deg);
     }
   }
 
   @keyframes iskelet {
     0%,
     100% {
-      opacity: 0.55;
+      opacity: 0.35;
     }
     50% {
-      opacity: 1;
+      opacity: 0.75;
     }
   }
 
-  @keyframes nazik-giris {
+  @keyframes belir {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;

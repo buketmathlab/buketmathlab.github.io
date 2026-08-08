@@ -22,9 +22,9 @@ const isimler: Record<YoklamaDurumu, string> = {
   bekliyor: 'Süresi dolmadı',
 }
 const noktaRengi: Record<YoklamaDurumu, string> = {
-  teslim: 'bg-yesil',
-  yapmadi: 'bg-kirmizi',
-  bekliyor: 'bg-kenar-koyu',
+  teslim: 'bg-yesim',
+  yapmadi: 'bg-kizil',
+  bekliyor: 'bg-kenar',
 }
 
 /**
@@ -41,15 +41,15 @@ export function YoklamaSeridi({ baslik, hucreler, onSecim }: Ozellikler) {
   const oran = toplam === 0 ? 0 : teslimEden / toplam
 
   return (
-    <section className="rounded-lg border border-kenar bg-kagit-yuksek p-4 shadow-kart">
+    <section className="rounded-lg border border-kenar bg-yuzey p-4">
       <header className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-b3">{baslik}</h3>
-          <p className="text-kucuk text-kursun-koyu">
+          <h3 className="text-b3 font-semibold">{baslik}</h3>
+          <p className="text-kucuk text-metin-ikincil">
             {sayi(teslimEden)} / {sayi(toplam)} öğrenci yaptı
           </p>
         </div>
-        <p className="text-rakam font-baslik text-murekkep" aria-hidden="true">
+        <p className="font-marka text-rakam text-vurgu" aria-hidden="true">
           {yuzde(oran)}
         </p>
       </header>
@@ -67,7 +67,7 @@ export function YoklamaSeridi({ baslik, hucreler, onSecim }: Ozellikler) {
         ))}
       </ul>
 
-      <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-kucuk text-kursun-koyu" role="list">
+      <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-kucuk text-metin-ikincil" role="list">
         {sira.map((durum) => (
           <li key={durum} className="flex items-center gap-2">
             <span className={`size-2 rounded-xs ${noktaRengi[durum]}`} aria-hidden="true" />

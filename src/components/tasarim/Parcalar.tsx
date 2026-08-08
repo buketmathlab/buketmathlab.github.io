@@ -12,10 +12,10 @@ export function Bolum({
   children: ReactNode
 }) {
   return (
-    <section className="border-t border-kenar pt-8">
-      <h2 className="text-b2">{baslik}</h2>
-      {aciklama && <p className="mt-2 text-govde text-kursun-koyu olcu">{aciklama}</p>}
-      <div className="mt-6">{children}</div>
+    <section className="border-t border-kenar pt-10">
+      <h2 className="font-marka text-ekran leading-none">{baslik}</h2>
+      {aciklama && <p className="mt-4 olcu text-kucuk text-metin-ikincil">{aciklama}</p>}
+      <div className="mt-8">{children}</div>
     </section>
   )
 }
@@ -35,17 +35,12 @@ export function RenkKarti({
   kontrast?: string
 }) {
   return (
-    <div className="rounded-md border border-kenar bg-kagit-yuksek p-3">
-      <div
-        className={sinif('mb-3 h-14 rounded-sm border border-kenar', ornekSinif)}
-        aria-hidden="true"
-      />
-      <p className="text-kucuk font-semibold text-murekkep">{ad}</p>
-      <p className="font-mono text-kucuk text-kursun-koyu">{token}</p>
-      <p className="mt-2 text-kucuk text-kursun-koyu">{kullanim}</p>
-      {kontrast && (
-        <p className="mt-1 text-kucuk font-semibold text-murekkep-700">Kontrast {kontrast}</p>
-      )}
+    <div className="rounded-md border border-kenar bg-yuzey p-3">
+      <div className={sinif('mb-3 h-16 rounded-sm border border-kenar', ornekSinif)} aria-hidden="true" />
+      <p className="text-b3 font-semibold text-metin">{ad}</p>
+      <p className="font-mono text-kucuk text-metin-ikincil">{token}</p>
+      <p className="mt-2 text-kucuk text-metin-ikincil">{kullanim}</p>
+      {kontrast && <p className="mt-2 text-etiket text-vurgu">{kontrast}</p>}
     </div>
   )
 }
@@ -63,9 +58,9 @@ export function OlcekSatiri({
   ornek: string
 }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-kenar py-3 last:border-b-0">
+    <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-kenar py-4 last:border-b-0">
       <p className={sinifAdi}>{ornek}</p>
-      <p className="shrink-0 font-mono text-kucuk text-kursun-koyu">
+      <p className="shrink-0 font-mono text-kucuk text-metin-ikincil">
         {ad} · {deger}
       </p>
     </div>
