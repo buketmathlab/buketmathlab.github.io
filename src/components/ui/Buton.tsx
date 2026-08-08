@@ -17,17 +17,17 @@ type Ozellikler = ButtonHTMLAttributes<HTMLButtonElement> & {
  *   sessiz   : liste içi eylem
  *   yikici   : geri alınamaz eylem; iki adımlı onayın son düğmesi
  *
- * Camgöbeği BURADA KULLANILMAZ. Ana eylem sık tekrarlanır; canlı rengi düğmeye
- * verirsek %10 kuralı çöker ve renk sıradanlaşır. Camgöbeği yalnız olay
- * anlarında görünür — bu yüzden bir değer taşır.
+ * Birincil düğme LACİVERTTİR, nar değil. Ana eylem sık tekrarlanır; canlı rengi
+ * düğmeye verirsek %5–10 kuralı çöker ve nar sıradanlaşır. Nar yalnız etkin
+ * gezinme, ilerleme ve açıklanan puan gibi olay anlarında görünür.
  */
 const vurgular: Record<Vurgu, string> = {
   birincil:
-    'bg-metin text-zemin border-transparent hover:bg-white disabled:bg-mineral disabled:text-zemin',
-  ikincil: 'bg-transparent text-metin border-kenar hover:bg-yuzey-yuksek disabled:text-mineral',
+    'bg-marka text-tebesir border-marka hover:bg-lacivert-duman disabled:bg-kursun disabled:border-kursun',
+  ikincil: 'bg-yuzey text-metin border-kenar hover:bg-yuzey-yuksek disabled:text-kursun',
   sessiz:
     'bg-transparent text-metin-ikincil border-transparent hover:bg-yuzey-yuksek hover:text-metin',
-  yikici: 'bg-kizil-sis text-kizil border-kizil/40 hover:bg-kizil/20 disabled:text-mineral',
+  yikici: 'bg-yuzey text-olumsuz border-kiremit/40 hover:bg-kiremit-sis disabled:text-kursun',
 }
 
 const olcekler: Record<Olcek, string> = {
@@ -58,8 +58,8 @@ export function Buton({
         className,
       )}
     >
-      {/* Dönen çark yok: bekleme, yanıp sönen tek nokta ile anlatılır. */}
-      {bekliyor && <span className="size-1.5 animate-iskelet rounded-full bg-current" aria-hidden="true" />}
+      {/* Dönen çark yok: bekleme, nefes alan tek nokta ile anlatılır. */}
+      {bekliyor && <span className="size-1.5 animate-nefes rounded-full bg-current" aria-hidden="true" />}
       {children}
     </button>
   )

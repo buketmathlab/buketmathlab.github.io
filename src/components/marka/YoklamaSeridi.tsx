@@ -21,10 +21,11 @@ const isimler: Record<YoklamaDurumu, string> = {
   yapmadi: 'Yapmadı',
   bekliyor: 'Süresi dolmadı',
 }
-const noktaRengi: Record<YoklamaDurumu, string> = {
-  teslim: 'bg-yesim',
-  yapmadi: 'bg-kizil',
-  bekliyor: 'bg-kenar',
+/** Efsane işareti durumu renkle DEĞİL doluluk farkıyla anlatır. */
+const noktaStili: Record<YoklamaDurumu, string> = {
+  teslim: 'bg-olumlu border-olumlu',
+  yapmadi: 'bg-yuzey border-olumsuz border-2',
+  bekliyor: 'bg-yuzey-yuksek border-kenar',
 }
 
 /**
@@ -41,7 +42,7 @@ export function YoklamaSeridi({ baslik, hucreler, onSecim }: Ozellikler) {
   const oran = toplam === 0 ? 0 : teslimEden / toplam
 
   return (
-    <section className="rounded-lg border border-kenar bg-yuzey p-4">
+    <section className="rounded-lg border border-kenar bg-yuzey p-4 shadow-kart">
       <header className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h3 className="text-b3 font-semibold">{baslik}</h3>
@@ -70,7 +71,7 @@ export function YoklamaSeridi({ baslik, hucreler, onSecim }: Ozellikler) {
       <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-kucuk text-metin-ikincil" role="list">
         {sira.map((durum) => (
           <li key={durum} className="flex items-center gap-2">
-            <span className={`size-2 rounded-xs ${noktaRengi[durum]}`} aria-hidden="true" />
+            <span className={`sekizgen size-3 border ${noktaStili[durum]}`} aria-hidden="true" />
             {isimler[durum]}
           </li>
         ))}

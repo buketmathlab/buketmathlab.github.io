@@ -11,44 +11,51 @@ type Ozellikler = {
 }
 
 /**
- * Durum → görsel dil. Renk TEK BAŞINA anlam taşımaz: doluluk, simge ve ekran
- * okuyucuya giden metin de durumu söyler. Renk körü bir öğretmen şeridi aynı
- * hızda okur.
+ * Durum → görsel dil.
+ *
+ * Tasarım kararı: Hücrede ÖĞRENCİ NUMARASI durur, simge değil. 200 öğrencide
+ * numara birincil ayırt edicidir; öğretmenin "kim yapmadı" sorusuna cevabı
+ * şeridin kendisi vermelidir, ipucu balonu değil.
+ *
+ * Renk tek anlam taşıyıcısı olmasın diye durum üç ayrı sinyalle anlatılır:
+ *   1. DOLULUK  — yaptı dolu, yapmadı boş (renk körlüğünde okunan sinyal budur)
+ *   2. ÇİZGİ    — yapmadıda kalın kırmızı çerçeve, beklemede ince gri
+ *   3. METİN    — ekran okuyucuya "ödevi yapmadı" olarak gider
  */
 const gorunum: Record<
   YoklamaDurumu,
-  { dolgu: string; cizgi: string; yazi: string; ad: string; simge: 'onay' | 'capraz' | null }
+  { dolgu: string; cizgi: string; yazi: string; kalinlik: number; ad: string }
 > = {
   teslim: {
-    dolgu: 'fill-yesim',
-    cizgi: 'stroke-yesim',
-    yazi: 'fill-gece',
+    dolgu: 'fill-yaprak',
+    cizgi: 'stroke-yaprak',
+    yazi: 'fill-tebesir',
+    kalinlik: 2,
     ad: 'ödevi yaptı',
-    simge: 'onay',
   },
   yapmadi: {
-    dolgu: 'fill-kizil-sis',
-    cizgi: 'stroke-kizil',
-    yazi: 'fill-kizil',
+    dolgu: 'fill-tebesir',
+    cizgi: 'stroke-kiremit',
+    yazi: 'fill-kiremit',
+    kalinlik: 3.5,
     ad: 'ödevi yapmadı',
-    simge: 'capraz',
   },
   bekliyor: {
     dolgu: 'fill-yuzey-yuksek',
     cizgi: 'stroke-kenar',
-    yazi: 'fill-metin-ikincil',
+    yazi: 'fill-kursun',
+    kalinlik: 1.5,
     ad: 'süresi dolmadı, henüz göndermedi',
-    simge: null,
   },
 }
 
-/** Düzgün sekizgen — 48×48 kutuda, 1,5 birim içeriden (çizgi taşmasın). */
-const SEKIZGEN = '15,1.5 33,1.5 46.5,15 46.5,33 33,46.5 15,46.5 1.5,33 1.5,15'
+/** Düzgün sekizgen — 48×48 kutuda, 2 birim içeriden (kalın çizgi taşmasın). */
+const SEKIZGEN = '15,2 33,2 46,15 46,33 33,46 15,46 2,33 2,15'
 
 /**
  * Sekizgen hücre — 8'in geometrisinin işlevselleştiği yer.
- * Kağıt yoklama defterindeki kareyi sekizgene çevirir; yaptı / yapmadı /
- * süresi dolmadı tek bakışta okunur. Dokunma hedefi 44px'in altına düşmez.
+ * Kağıt yoklama defterindeki kareyi sekizgene çevirir; sınıfın nabzı tek
+ * bakışta okunur. Dokunma hedefi 44px'in altına düşmez.
  */
 export function SekizgenHucre({ durum, kisaMetin, tamMetin, onTiklama }: Ozellikler) {
   const stil = gorunum[durum]
@@ -56,35 +63,21 @@ export function SekizgenHucre({ durum, kisaMetin, tamMetin, onTiklama }: Ozellik
 
   const govde = (
     <svg viewBox="0 0 48 48" className="size-11" aria-hidden="true" focusable="false">
-      <polygon points={SEKIZGEN} className={sinif(stil.dolgu, stil.cizgi)} strokeWidth={2} />
-      {stil.simge === null ? (
-        <text
-          x="24"
-          y="25"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          className={sinif('text-kucuk font-semibold', stil.yazi)}
-          style={{ fontFamily: 'var(--font-govde)' }}
-        >
-          {kisaMetin}
-        </text>
-      ) : stil.simge === 'onay' ? (
-        <path
-          d="M16 24.5 L21.5 30 L32 18.5"
-          fill="none"
-          strokeWidth={3.5}
-          strokeLinecap="round"
-          className="stroke-gece"
-        />
-      ) : (
-        <path
-          d="M18 18 L30 30 M30 18 L18 30"
-          fill="none"
-          strokeWidth={3.5}
-          strokeLinecap="round"
-          className="stroke-kizil"
-        />
-      )}
+      <polygon
+        points={SEKIZGEN}
+        className={sinif(stil.dolgu, stil.cizgi)}
+        strokeWidth={stil.kalinlik}
+      />
+      <text
+        x="24"
+        y="25"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className={sinif('text-kucuk font-semibold', stil.yazi)}
+        style={{ fontFamily: 'var(--font-govde)' }}
+      >
+        {kisaMetin}
+      </text>
     </svg>
   )
 

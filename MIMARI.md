@@ -17,20 +17,22 @@ altyapı kısıtlarına verilen mimari yanıtlar. Tasarım token'ları ayrı bel
 | Veri | Supabase (Postgres + Storage) | Mevcut proje korunuyor; erişim yalnız RPC üzerinden |
 
 **Tek dosyalık HTML yasağı uygulandı.** Her bileşen kendi dosyasında, tek işi olan
-ve 250 satırı geçmeyen bir parçadır. En büyük dosya şu an 239 satırdır
-(`src/pages/TasarimSistemi.tsx` — vitrin sayfası).
+ve 250 satırı geçmeyen bir parçadır. Tek istisna tasarım sistemi vitrinidir
+(`src/pages/TasarimSistemi.tsx`) — üretim ekranı değil, sistemin kataloğudur.
 
 ## 2. Klasör düzeni
 
 ```
 src/
-  pages/        Ekranlar (yönlendirme hedefleri)
+  pages/        Ekranlar (yönlendirme hedefleri); pages/ornek/ tasarım kanıtı ekranları
   components/
-    marka/      Kimlik öğeleri: mühür, kilit satırı, 8→∞, sekizgen, yıldız
+    marka/      Kimlik: mühür, wordmark, afiş wordmark, 8→∞, sekizgen, örgü
     ui/         Genel parçalar: düğme, kart, alan, rozet, iskelet, boş/hata hâli
-    duzen/      Üst bar, sayfa iskeleti, kurulum uyarısı
+    duzen/      Üst bar, sayfa iskeleti, mobil alt gezinme, kurulum uyarısı
+    tanitim/    Tanıtım sayfasının anlatı bölümleri
     tasarim/    Yalnız tasarım sistemi vitrininde kullanılan parçalar
-  lib/          supabase istemcisi, ortam, Türkçe biçimlendirme, sınıf yardımcısı
+    ornek/      Örnek ekranların paylaştığı parçalar
+  lib/          supabase istemcisi, ortam, oturum, gezinme modeli, Türkçe biçimlendirme
   hooks/        React kancaları (Faz 1'de dolacak)
   types/        Alan modeli tipleri
   styles/       yazitipleri · tokenlar · temel · ana (giriş noktası)
@@ -149,9 +151,10 @@ Faz 0 ölçümü:
 
 | Dosya | Ham | Gzip |
 |---|---|---|
-| Ana paket (JS) | 250 KB | **80,4 KB** |
-| Stil (CSS) | 25,1 KB | 6,0 KB |
-| Sanat yönetimi sayfası (tembel) | 14,6 KB | 5,3 KB |
+| Ana paket (JS) | 255 KB | **81,7 KB** |
+| Stil (CSS) | 30,0 KB | 6,7 KB |
+| Tasarım sistemi sayfası (tembel) | 16,3 KB | 5,4 KB |
+| Örnek ekranlar (tembel, dördü) | 10,1 KB | 4,0 KB |
 | Yazı tipleri (4 dosya, woff2) | 100 KB | — |
 
 Yazı tipleri kendi sunucumuzdan verilir (Google Fonts'a bağlanılmaz): üçüncü taraf

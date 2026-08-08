@@ -4,64 +4,81 @@
  * Tek kaynak burasıdır. Bileşenlerde çıplak renk kodu veya rastgele piksel
  * değeri kullanılmaz.
  *
- * RENK STRATEJİSİ — "sakin zemin, canlı olay"
- *   %60 nötr    : gece, grafit, mineral, fildişi
- *   %30 kurumsal: derin petrol (mimariyi taşır)
- *   %10 canlı   : elektrik camgöbeği (yalnız olay anlarında)
+ * FELSEFE — "Kireç ve Nar"
+ * Ferah kireç beyazı bir zemin, üzerinde az ama cesur renk. Enerji büyük renk
+ * bloklarından değil, doğru noktadaki tek vurgudan gelir. Ekranın çoğu nefes
+ * alanıdır. Lacivert kurumsal ciddiyeti taşır ama ZEMİN OLMAZ.
  *
- * Ürün koyu zeminlidir. Gerekçe: kullanıcıların %90'ı telefondan giriyor,
- * OLED ekranda derin siyah hem enerji harcamıyor hem de camgöbeğini mücevher
- * gibi gösteriyor. Açık zemin yalnız YAZDIRILAN belgelerde kullanılır
- * (dönem raporu, kod kartı) — bkz. temel.css içindeki @media print.
+ * ORAN
+ *   %65–75 nötr    : kireç, tebeşir, kil, kurşun, mürekkep
+ *   %15–20 kurumsal: gece laciverti (tipografi, birincil düğme, tek koyu bölüm)
+ *   %5–10  vurgu   : nar (canlı) + kükürt (ikinci enerji)
+ *
+ * AYIRT EDİCİ KURAL: anlam renkleri sakin, marka renkleri canlı.
+ * Doğru/yanlış/uyarı düşük doygunlukta durur; markanın enerjisini yüksek
+ * doygunluktaki iki vurgu taşır. Böylece "puanın açıklandı" ile "yanlış cevap"
+ * asla karışmaz.
+ *
+ * Selçuklu mirası RENKTE DEĞİL GEOMETRİDE yaşar: sekizgen, sekiz köşeli yıldız,
+ * simetri, ızgara oranı. Çini turkuazı, kobalt ve firuze kullanılmaz.
  */
 
 @theme {
-  /* ─────────── HAM PALET (adlandırma kimliğin parçasıdır) ─────────── */
-  --color-gece: #07090c; /* Gece — OLED zemini, mürekkebin en dibi */
-  --color-grafit: #12161c; /* Grafit — kart ve panel yüzeyi */
-  --color-duman: #1b212a; /* Duman — yükseltilmiş yüzey, tablo şeridi */
-  --color-cizgi: #262f3a; /* Çizgi — kenarlık, ayraç */
-  --color-mineral: #8b95a3; /* Mineral — ikincil metin (gece üstünde 6,4:1) */
-  --color-fildisi: #f2efe8; /* Fildişi — ana metin; sıcak beyaz, saf beyaz değil */
+  /* ─────────── NÖTRLER (%65–75) ─────────── */
+  --color-kirec: #fbfaf8; /* Kireç — sayfa zemini, sıcak beyaz */
+  --color-tebesir: #ffffff; /* Tebeşir — kart yüzeyi */
+  --color-kil: #f2f1ed; /* Kil — ikincil yüzey, tablo şeridi */
+  --color-cizgi: #e6e3dd; /* Çizgi — kenarlık, ayraç */
+  --color-murekkep: #141a24; /* Mürekkep — ana metin (16,5:1) */
+  --color-kursun: #69707e; /* Kurşun — ikincil metin (4,7:1) */
 
-  --color-petrol: #0c3a42; /* Derin Petrol — kurumsal omurga */
-  --color-petrol-acik: #14555f; /* Petrol'ün aydınlığı — hover, dolgu */
-  --color-petrol-sis: #0a2429; /* Petrol'ün dibi — geniş blok zemini */
+  /* ─────────── KURUMSAL (%15–20) ─────────── */
+  --color-lacivert: #16233f; /* Gece Laciverti — logodan; wordmark, birincil düğme */
+  --color-lacivert-duman: #3c4a63; /* Duman Lacivert — bağlantı, ikincil yapı (8,9:1) */
+  --color-lacivert-sis: #eceef2; /* Laciverdin en açığı — sakin bilgi zemini */
 
-  --color-camgobegi: #21e0c8; /* Elektrik Camgöbeği — tek canlı renk */
-  --color-camgobegi-sis: #0e3f3b; /* Camgöbeğinin gölgesi — rozet zemini */
-  --color-camgobegi-koyu: #08695f; /* Açık zeminde camgöbeği METNİ (5,7:1) */
+  /* ─────────── VURGULAR (%5–10) ─────────── */
+  --color-nar: #d81e5b; /* Nar — canlı vurgu; metin olarak da kullanılabilir (4,7:1) */
+  --color-nar-koyu: #b01449; /* Nar'ın koyusu — hover */
+  --color-nar-sis: #fce7ee; /* Nar'ın sisi — rozet zemini */
 
-  /* Anlam renkleri: doğru ve yanlış. Sessiz tutulur; enerjiyi camgöbeği taşır. */
-  --color-yesim: #3fb98a; /* Yeşim — doğru, tamamlandı */
-  --color-yesim-sis: #10352a;
-  --color-kizil: #e86a78; /* Kızıl — yanlış, eksik (koyu zeminde okunur ton) */
-  --color-kizil-sis: #3a1219;
-  --color-kizil-koyu: #8c2230; /* Yazdırılan belgede kırmızı kalem */
+  --color-kukurt: #ffc400; /* Kükürt — ikinci enerji; YALNIZ DOLGU, üstünde mürekkep */
+  --color-kukurt-sis: #fff3cc; /* Kükürt'ün sisi — öne çıkan alan zemini */
+
+  /* ─────────── ANLAM RENKLERİ (kontrollü, düşük doygunluk) ─────────── */
+  --color-yaprak: #2e7d5b; /* Yaprak — doğru, tamamlandı (4,9:1) */
+  --color-yaprak-sis: #e3f0e9;
+  --color-kehribar: #8a5a0f; /* Kehribar — uyarı METNİ (6,2:1) */
+  --color-kehribar-sis: #f5e6c8;
+  --color-kiremit: #b03a32; /* Kiremit — yanlış, eksik (5,8:1) */
+  --color-kiremit-sis: #f9e8e6;
 
   /* ─────────── ROL TOKEN'LARI ───────────
-   * Bileşenler ham renk değil ROL kullanır. Tema değişimi tek yerden olur.
+   * Bileşenler ham renk değil ROL kullanır; palet değişimi tek yerden olur.
    */
-  --color-zemin: var(--color-gece);
-  --color-yuzey: var(--color-grafit);
-  --color-yuzey-yuksek: var(--color-duman);
+  --color-zemin: var(--color-kirec);
+  --color-yuzey: var(--color-tebesir);
+  --color-yuzey-yuksek: var(--color-kil);
   --color-kenar: var(--color-cizgi);
-  --color-metin: var(--color-fildisi);
-  --color-metin-ikincil: var(--color-mineral);
-  --color-marka: var(--color-petrol);
-  --color-vurgu: var(--color-camgobegi);
-  --color-olumlu: var(--color-yesim);
-  --color-olumsuz: var(--color-kizil);
+  --color-metin: var(--color-murekkep);
+  --color-metin-ikincil: var(--color-kursun);
+  --color-marka: var(--color-lacivert);
+  --color-marka-2: var(--color-lacivert-duman);
+  --color-vurgu: var(--color-nar);
+  --color-vurgu-2: var(--color-kukurt);
+  --color-olumlu: var(--color-yaprak);
+  --color-uyari: var(--color-kehribar);
+  --color-olumsuz: var(--color-kiremit);
 
   /* ─────────── TİPOGRAFİ ───────────
-   * Serif YALNIZ büyük puntoda görünür: marka sesi odur, iş gücü değil.
+   * Serif YALNIZ büyük puntoda: markanın sesi odur, iş gücü değil.
+   * Başlık hiyerarşisi boyutla değil AĞIRLIKLA kurulur.
    */
   --font-marka: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-govde: 'Archivo Degisken', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
 
-  /* Ölçek — her ekranda aynı. Aynı seviyedeki iki başlık asla farklı boyutta olmaz. */
-  --text-afis: 4rem; /* 64 — yalnız açılış ekranı, serif */
+  --text-afis: 4rem; /* 64 — yalnız açılış, serif */
   --text-afis--line-height: 0.95;
   --text-afis--letter-spacing: -0.02em;
 
@@ -74,9 +91,9 @@
   --text-b1--letter-spacing: -0.01em;
 
   --text-b2: 1.25rem; /* 20 — bölüm başlığı */
-  --text-b2--line-height: 1.25;
+  --text-b2--line-height: 1.3;
 
-  --text-b3: 1rem; /* 16 — kart başlığı (ağırlıkla ayrışır, boyutla değil) */
+  --text-b3: 1rem; /* 16 — kart başlığı */
   --text-b3--line-height: 1.35;
 
   --text-govde: 1rem; /* 16 */
@@ -90,70 +107,78 @@
   --text-etiket--letter-spacing: 0.14em;
   --text-etiket--font-weight: 600;
 
+  --text-rozet: 0.6875rem; /* 11 — rozet; etiketten daha sıkı harf aralığı */
+  --text-rozet--line-height: 1.2;
+  --text-rozet--letter-spacing: 0.04em;
+  --text-rozet--font-weight: 600;
+
   --text-rakam: 3rem; /* 48 — panodaki büyük sayı, tabular */
   --text-rakam--line-height: 0.9;
   --text-rakam--letter-spacing: -0.03em;
 
   /* ─────────── ARALIK ───────────
-   * Taban 4px. Kullanılan basamaklar: 1 2 3 4 6 8 12 16 24.
+   * Taban 4px. Kullanılan basamaklar: 4 8 12 16 24 32 48 64.
    * Ara değer kullanılmaz; dikey ritim bu kısıttan doğar.
    */
   --spacing: 0.25rem;
 
-  /* ─────────── GEOMETRİ ───────────
-   * Yarıçaplar 8'in halkasından türer: 2 · 4 · 8 · 16 · tam daire.
+  /* ─────────── BİÇİM ───────────
+   * "Aşırı rounded" yasak: yarıçaplar ölçülü. Tam daire yalnız avatarda.
    */
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 16px;
+  --radius-lg: 12px;
 
-  /* Koyu zeminde derinlik gölgeyle değil YÜZEY FARKIYLA anlatılır.
-   * Tek gölge, yalnız yüzen katman için. */
-  --shadow-yuzen: 0 16px 40px -16px rgb(0 0 0 / 0.7);
-  /* Camgöbeğinin ışıması — yalnız olay anında, tek yerde. */
-  --shadow-vurgu: 0 0 0 1px rgb(33 224 200 / 0.35), 0 8px 32px -12px rgb(33 224 200 / 0.45);
+  /* Tek katman gölge. Derinlik kenarlık ve yüzey farkıyla anlatılır. */
+  --shadow-kart: 0 1px 2px rgb(20 26 36 / 0.06);
+  --shadow-yuzen: 0 12px 32px -12px rgb(20 26 36 / 0.18);
 
   /* ─────────── HAREKET ───────────
-   * Tek imza hareketi: 8 → ∞. Diğer her yerde hareket kısa ve amaçlıdır.
+   * Tek imza hareketi: 8 → ∞. SÜREKLİ DÖNMEZ — anlamlı anda bir kez döner ve
+   * sonsuz olarak durur. Bekleme uzarsa yalnız nefes alır.
    */
   --ease-sekiz: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-yumusak: cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-sekiz-sonsuz: sekiz-sonsuz 4.5s var(--ease-sekiz) infinite;
+  --animate-sekiz-donus: sekiz-donus 0.45s var(--ease-sekiz) forwards;
+  --animate-nefes: nefes 2.4s ease-in-out infinite;
   --animate-iskelet: iskelet 1.6s ease-in-out infinite;
-  --animate-belir: belir 0.5s var(--ease-yumusak) both;
+  --animate-belir: belir 0.4s var(--ease-yumusak) both;
 
-  @keyframes sekiz-sonsuz {
-    /* 8 durur → 90° döner → ∞ olur → durur → geri döner.
-     * Şekil değişmez; yalnız bakış açısı değişir. Markanın tezi budur. */
-    0%,
-    16% {
+  @keyframes sekiz-donus {
+    /* Aynı çizim 90° döner: 8 sonsuza dönüşür ve orada kalır. */
+    from {
       transform: rotate(0deg);
     }
-    38%,
-    62% {
+    to {
       transform: rotate(90deg);
     }
-    84%,
+  }
+
+  @keyframes nefes {
+    0%,
     100% {
-      transform: rotate(0deg);
+      opacity: 0.45;
+    }
+    50% {
+      opacity: 1;
     }
   }
 
   @keyframes iskelet {
     0%,
     100% {
-      opacity: 0.35;
+      opacity: 0.5;
     }
     50% {
-      opacity: 0.75;
+      opacity: 0.9;
     }
   }
 
   @keyframes belir {
     from {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateY(6px);
     }
     to {
       opacity: 1;

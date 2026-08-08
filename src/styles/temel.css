@@ -3,7 +3,7 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
@@ -19,7 +19,7 @@
     min-height: 100dvh;
   }
 
-  /* Serif yalnız marka sesidir; başlık hiyerarşisi ağırlık ve boşlukla kurulur. */
+  /* Serif yalnız marka sesidir; hiyerarşi ağırlık ve boşlukla kurulur. */
   h1,
   h2,
   h3 {
@@ -27,6 +27,7 @@
     letter-spacing: -0.01em;
   }
 
+  /* Klavye odağı canlı vurguyla işaretlenir — kaybolmaz, aranmaz. */
   :focus-visible {
     outline: 2px solid var(--color-vurgu);
     outline-offset: 2px;
@@ -34,7 +35,7 @@
   }
 
   ::selection {
-    background-color: var(--color-camgobegi-sis);
+    background-color: var(--color-nar-sis);
     color: var(--color-metin);
   }
 
@@ -53,7 +54,7 @@
     font-size: max(16px, var(--text-govde));
   }
 
-  /* Hareket azaltma tercihine saygı: imza animasyonu dahil her şey durur. */
+  /* Hareket azaltma tercihine saygı: imza hareketi dahil her şey durur. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -71,7 +72,20 @@
     max-width: 66ch;
   }
 
-  /* Sekizgen — 8'in geometrisi. Izgarada, rozette, maskede kullanılır. */
+  /* İçerik ızgarası: mobilde 16px kenar, tablet ve üstünde 24px, en fazla 1120px */
+  .kap {
+    width: 100%;
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+  @media (min-width: 640px) {
+    .kap {
+      padding-inline: 24px;
+    }
+  }
+
+  /* Sekizgen — 8'in geometrisi. Yoklama hücresinde, rozette, avatarda. */
   .sekizgen {
     clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
   }
@@ -89,17 +103,13 @@
     border-width: 0;
   }
 
-  /*
-   * Yazdırma: panolar değil, belgeler basılır. Kağıda koyu zemin basılmaz —
-   * rapor ve kod kartı beyaz zemin, siyah mürekkeple çıkar.
-   */
+  /* Yazdırma: rapor ve kod kartı beyaz zemin, siyah mürekkeple çıkar. */
   @media print {
     .basilmaz {
       display: none !important;
     }
     body {
       background: #fff;
-      color: #111;
     }
   }
 }

@@ -13,11 +13,23 @@ import { ortam } from '@/lib/ortam'
 const TasarimSistemi = lazy(() =>
   import('@/pages/TasarimSistemi').then((m) => ({ default: m.TasarimSistemi })),
 )
+const OgretmenBugun = lazy(() =>
+  import('@/pages/ornek/OgretmenBugun').then((m) => ({ default: m.OgretmenBugun })),
+)
+const SinifPanosu = lazy(() =>
+  import('@/pages/ornek/SinifPanosu').then((m) => ({ default: m.SinifPanosu })),
+)
+const OgrenciBugun = lazy(() =>
+  import('@/pages/ornek/OgrenciBugun').then((m) => ({ default: m.OgrenciBugun })),
+)
+const VeliOzet = lazy(() =>
+  import('@/pages/ornek/VeliOzet').then((m) => ({ default: m.VeliOzet })),
+)
 
 function SayfaBekleme() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-zemin text-vurgu">
-      <SekizSonsuz boyut="buyuk" />
+      <SekizSonsuz boyut="buyuk" hal="donus" bekliyor etiket="Yükleniyor" />
     </div>
   )
 }
@@ -33,6 +45,10 @@ export function App() {
             <Route path="/giris" element={<Giris />} />
             <Route path="/panel" element={<Panel />} />
             <Route path="/tasarim" element={<TasarimSistemi />} />
+            <Route path="/ornek/ogretmen" element={<OgretmenBugun />} />
+            <Route path="/ornek/sinif" element={<SinifPanosu />} />
+            <Route path="/ornek/ogrenci" element={<OgrenciBugun />} />
+            <Route path="/ornek/veli" element={<VeliOzet />} />
             <Route path="*" element={<Bulunamadi />} />
           </Routes>
         </Suspense>

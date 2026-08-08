@@ -10,8 +10,8 @@ type Ozellikler = InputHTMLAttributes<HTMLInputElement> & {
 
 /**
  * Metin alanı. Etiket her zaman görünür (yer tutucu etiket yerine geçmez).
- * Odaklandığında kenarlık camgöbeğine döner — canlı rengin arayüzdeki
- * görevlerinden biri "şu an buradasın" demektir.
+ * Odaklandığında kenarlık nara döner — canlı rengin arayüzdeki görevlerinden
+ * biri "şu an buradasın" demektir.
  */
 export function Alan({ etiket, ipucu, hata, className, id, ...kalan }: Ozellikler) {
   const uretilen = useId()
@@ -30,14 +30,14 @@ export function Alan({ etiket, ipucu, hata, className, id, ...kalan }: Ozellikle
         aria-describedby={hata || ipucu ? yardimId : undefined}
         className={sinif(
           'min-h-11 rounded-md border bg-yuzey px-3 py-2 text-govde text-metin',
-          'placeholder:text-mineral/70',
+          'placeholder:text-kursun/60',
           'focus:border-vurgu focus:outline-none focus-visible:outline-none',
-          hata ? 'border-kizil' : 'border-kenar',
+          hata ? 'border-kiremit' : 'border-kenar',
           className,
         )}
       />
       {(hata || ipucu) && (
-        <p id={yardimId} className={sinif('text-kucuk', hata ? 'text-kizil' : 'text-metin-ikincil')}>
+        <p id={yardimId} className={sinif('text-kucuk', hata ? 'text-olumsuz' : 'text-metin-ikincil')}>
           {hata ?? ipucu}
         </p>
       )}

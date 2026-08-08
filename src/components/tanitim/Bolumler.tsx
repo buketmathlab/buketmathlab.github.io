@@ -30,21 +30,21 @@ const yetenekler = [
   ['Değerlendirme', 'Test puanı sunucuda anında hesaplanır; açık uçlunun son imzası öğretmende kalır.'],
   ['Gelişim', 'Konu bazlı güçlü ve zayıf taraflar; üç tarafa da kendi diliyle anlatılır.'],
   ['İletişim', 'Öğrenciyle ve veliyle birebir yazışma; duyurular ve bildirimler tek akışta.'],
-  ['Takvim', 'Yaklaşan teslimler ve süresi dolanlar; geç teslim yok, tarih tarihtir.'],
+  ['Takvim', 'Yaklaşan teslimler; geç teslim yok, tarih tarihtir.'],
   ['Kaynak', 'Çözümlü anlatım PDF’i gönderimden hemen sonra açılır.'],
 ] as const
 
 export function Aktorler() {
   return (
-    <section className="border-t border-kenar px-4 py-24">
-      <div className="mx-auto max-w-5xl">
+    <section className="border-t border-kenar py-24">
+      <div className="kap">
         <p className="text-etiket text-vurgu">TEK EKOSİSTEM, ÜÇ BAKIŞ</p>
         <div className="mt-12 flex flex-col divide-y divide-kenar border-y border-kenar">
           {aktorler.map((a) => (
             <article key={a.kim} className="grid gap-4 py-10 sm:grid-cols-[10rem_1fr] sm:gap-12">
-              <h2 className="font-marka text-ekran leading-none text-metin">{a.kim}</h2>
+              <h2 className="font-marka text-ekran leading-none">{a.kim}</h2>
               <div>
-                <p className="text-b2 text-metin">{a.ne}</p>
+                <p className="text-b2">{a.ne}</p>
                 <p className="mt-3 olcu text-kucuk text-metin-ikincil">{a.ayrinti}</p>
               </div>
             </article>
@@ -55,15 +55,54 @@ export function Aktorler() {
   )
 }
 
+/**
+ * Tek koyu bölüm. Lacivert tüm arayüzde zemin olmaz; yalnız burada, bir kez,
+ * tam genişlik blok olarak görünür — kurumsal ağırlığı bu tek an taşır.
+ */
+export function Kazanc() {
+  return (
+    <section className="bg-marka py-24 text-tebesir">
+      <div className="kap">
+        <p className="text-etiket text-vurgu-2">ÖĞRETMEN NE KAZANIR</p>
+        <p className="mt-8 olcu font-marka text-ekran leading-tight">
+          Ödev toplamak, tek tek puanlamak ve “yaptın mı?” diye sormak için harcanan
+          zaman geri gelir.
+        </p>
+        <div className="mt-12 grid gap-8 sm:grid-cols-3">
+          <div>
+            <p className="font-marka text-rakam">3 dk</p>
+            <p className="mt-2 text-kucuk text-tebesir/70">
+              Soru ve anahtar PDF’i yüklenir, önizleme onaylanır, ödev yayında.
+            </p>
+          </div>
+          <div>
+            <p className="font-marka text-rakam">0</p>
+            <p className="mt-2 text-kucuk text-tebesir/70">
+              Testlerde elle puanlama. Puan sunucuda hesaplanır, anahtar öğrenciye
+              gönderimden önce hiç gitmez.
+            </p>
+          </div>
+          <div>
+            <p className="font-marka text-rakam">200</p>
+            <p className="mt-2 text-kucuk text-tebesir/70">
+              Öğrenci Excel ile tek seferde eklenir; giriş kartları basılabilir.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function Yetenekler() {
   return (
-    <section className="border-t border-kenar px-4 py-24">
-      <div className="mx-auto max-w-5xl">
+    <section className="border-t border-kenar py-24">
+      <div className="kap">
         <p className="text-etiket text-vurgu">NE YAPAR</p>
         <ul className="mt-12 grid gap-px overflow-hidden rounded-lg border border-kenar bg-kenar sm:grid-cols-2 lg:grid-cols-3">
           {yetenekler.map(([ad, aciklama]) => (
             <li key={ad} className="bg-zemin p-6">
-              <h3 className="text-b3 font-semibold text-metin">{ad}</h3>
+              <h3 className="text-b3 font-semibold">{ad}</h3>
               <p className="mt-2 text-kucuk text-metin-ikincil">{aciklama}</p>
             </li>
           ))}

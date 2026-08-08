@@ -35,7 +35,7 @@ export function RenkKarti({
   kontrast?: string
 }) {
   return (
-    <div className="rounded-md border border-kenar bg-yuzey p-3">
+    <div className="rounded-md border border-kenar bg-yuzey p-3 shadow-kart">
       <div className={sinif('mb-3 h-16 rounded-sm border border-kenar', ornekSinif)} aria-hidden="true" />
       <p className="text-b3 font-semibold text-metin">{ad}</p>
       <p className="font-mono text-kucuk text-metin-ikincil">{token}</p>

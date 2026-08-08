@@ -30,7 +30,7 @@ export function Iskelet({ satir = 3, ekSinif }: Ozellikler) {
 /** Kart biçiminde iskelet — pano ve liste yüklenirken. */
 export function KartIskeleti() {
   return (
-    <div className="rounded-lg border border-kenar bg-yuzey p-4" aria-hidden="true">
+    <div className="rounded-lg border border-kenar bg-yuzey p-4 shadow-kart" aria-hidden="true">
       <div className="mb-4 h-4 w-5/12 animate-iskelet rounded-xs bg-yuzey-yuksek" />
       <Iskelet satir={2} />
     </div>

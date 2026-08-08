@@ -18,7 +18,7 @@ type Ozellikler = {
 export function BosDurum({ baslik, aciklama, eylem }: Ozellikler) {
   return (
     <div className="flex flex-col items-center px-6 py-16 text-center">
-      <SekizSonsuz boyut="buyuk" duragan ekSinif="text-kenar" />
+      <SekizSonsuz boyut="buyuk" hal="sekiz" ekSinif="text-kenar" />
       <h3 className="mt-8 text-b2 font-semibold">{baslik}</h3>
       <p className="mt-2 max-w-sm text-kucuk text-metin-ikincil">{aciklama}</p>
       {eylem && <div className="mt-8">{eylem}</div>}
