@@ -9,6 +9,8 @@ import { Kabuk } from '@/components/layout/Kabuk';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
+import { Odevler } from '@/features/ogretmen/Odevler';
+import { OdevOlustur } from '@/features/ogretmen/OdevOlustur';
 // Tasarım vitrini nadiren açılır ve büyüktür; ayrı parçaya alınıyor.
 const TasarimSistemi = lazy(() =>
   import('@/pages/TasarimSistemi').then((m) => ({ default: m.TasarimSistemi })),
@@ -53,6 +55,8 @@ function Yonlendirme() {
         <Route index element={<Pano />} />
         <Route path="siniflar" element={<Siniflar />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
+        <Route path="odevler" element={<Odevler />} />
+        <Route path="odevler/yeni" element={<OdevOlustur />} />
       </Route>
       <Route
         path="/tasarim"
