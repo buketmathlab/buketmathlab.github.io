@@ -110,3 +110,54 @@ describe('anahtariCikar', () => {
     expect(s.eksik).toContain(24);
   });
 });
+
+describe('öğretmenin biçimi — "1C 2B"', () => {
+  // Öğretmen cevap anahtarını bu biçimde yazacağını bildirdi. Gerçek PDF'lerle
+  // uçtan uca ölçüldü; burada biçimin kendisi regresyona karşı kilitleniyor.
+  const CEVAPLAR = 'CBADECABDEACEBDCAEBD';
+  const bekle = (s: ReturnType<typeof anahtariCikar>) =>
+    Array.from({ length: 20 }, (_, i) => s.anahtar[i + 1] ?? '_').join('');
+
+  it('tek satır, ayraçsız: "1C 2B 3A…"', () => {
+    const metin = CEVAPLAR.split('')
+      .map((h, i) => `${i + 1}${h}`)
+      .join(' ');
+    expect(bekle(anahtariCikar(metin, { soruSayisi: 20 }))).toBe(CEVAPLAR);
+  });
+
+  it('alt alta, her satırda bir cevap', () => {
+    const satirlar = CEVAPLAR.split('').map((h, i) => `${i + 1}${h}`);
+    expect(bekle(anahtariCikar(satirlar, { soruSayisi: 20 }))).toBe(CEVAPLAR);
+  });
+
+  it('başlık satırı ve tarih anahtarı bozmuyor', () => {
+    const satirlar = [
+      'MATEMATİK — CEVAP ANAHTARI',
+      '9A / 9B    Son teslim: 20.08.2026',
+      ...CEVAPLAR.split('').map((h, i) => `${i + 1}${h}`),
+    ];
+    expect(bekle(anahtariCikar(satirlar, { soruSayisi: 20 }))).toBe(CEVAPLAR);
+  });
+
+  it('boşluklu yazım: "1 C  2 B"', () => {
+    const metin = CEVAPLAR.split('')
+      .map((h, i) => `${i + 1} ${h}`)
+      .join('  ');
+    expect(bekle(anahtariCikar(metin, { soruSayisi: 20 }))).toBe(CEVAPLAR);
+  });
+
+  it('tek/çift haneli geçişte kayma yok (9 → 10)', () => {
+    const s = anahtariCikar('8B 9D 10E 11A', { soruSayisi: 12 });
+    expect(s.anahtar[8]).toBe('B');
+    expect(s.anahtar[9]).toBe('D');
+    expect(s.anahtar[10]).toBe('E');
+    expect(s.anahtar[11]).toBe('A');
+  });
+
+  it('PDF eksik kalırsa uydurmaz, eksiği bildirir', () => {
+    // Gerçekte yaşandı: metin sayfa kenarından taştı, son cevap PDF'te yoktu.
+    const s = anahtariCikar('1C 2B 3A', { soruSayisi: 5 });
+    expect(s.eksik).toEqual([4, 5]);
+    expect(s.anahtar[4]).toBeUndefined();
+  });
+});
