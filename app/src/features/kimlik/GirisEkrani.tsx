@@ -119,7 +119,7 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
         <p className="text-[13px] text-muted">
           Ödevini görürsün, çözersin, gönderirsin.
           <br />
-          Puanın anında gelir.
+          Puanını anında hesaplarım.
         </p>
       </div>
 
