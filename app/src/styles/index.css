@@ -1,0 +1,143 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   SEKİZ — TASARIM TOKENLARI
+   Renk kaynağı iki gerçek varlıktan türetildi:
+     1) Okul mührünün laciverti — piksel örneklemesiyle ÖLÇÜLDÜ (#001737,
+        görselin koyu piksellerinin %40'ı bu kümede)
+     2) Ewalu'nun kıyafet paleti — haki ceket, krem gömlek, altın "8" arması
+   Geleneksel çini renkleri (turkuaz/kobalt/mercan) bilinçli olarak KULLANILMADI.
+   Selçuklu referansı geometriktir, koloristik değildir.
+   ============================================================ */
+
+@theme {
+  /* --- Renk --- */
+  --color-ink: #001737; /* okul mühründen ölçülen lacivert */
+  --color-ink-soft: #1b3260; /* hover, ikincil vurgu */
+  --color-paper: #fbfaf7; /* sayfa zemini, krem */
+  --color-surface: #ffffff; /* kart yüzeyi */
+  --color-muted: #5d6577; /* ikincil metin */
+  --color-line: #e2e6ee; /* kenarlık */
+  --color-line-soft: #eef1f6; /* iç ayırıcı */
+  --color-olive: #4f5a3e; /* ikincil aksiyon (Ewalu ceket) */
+  --color-amber: #8a6318; /* YALNIZ 8 arması / rozet — ölçülü altın */
+  --color-success: #256b4c;
+  --color-warning: #8a5510;
+  --color-danger: #a72f26;
+  --color-link: #1a4894;
+
+  /* Zemin tonları — etiket ve durum kutuları için */
+  --color-success-bg: #e6f2ec;
+  --color-warning-bg: #fdf2dd;
+  --color-danger-bg: #fbeae8;
+  --color-info-bg: #eaeff8;
+
+  /* --- Tipografi ---
+     Fraunces: başlık (karakterli serif). Manrope: arayüz (okunaklı grotesk).
+     Google Fonts CDN yerine self-host: hem performans hem KVKK
+     (CDN, ziyaretçi IP'sini üçüncü tarafa taşır). */
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, serif;
+  --font-sans: 'Manrope Variable', 'Manrope', system-ui, -apple-system, sans-serif;
+
+  /* --- Yarıçap --- */
+  --radius-sk-sm: 8px;
+  --radius-sk-md: 12px;
+  --radius-sk-lg: 16px;
+
+  /* --- Gölge: yalnız iki seviye, fazlası yok --- */
+  --shadow-sk-sm: 0 1px 2px rgb(0 23 55 / 0.06);
+  --shadow-sk-md: 0 8px 24px rgb(0 23 55 / 0.12);
+
+  /* --- Kırılım noktaları --- */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px; /* iPad dikey */
+  --breakpoint-lg: 1024px; /* iPad yatay */
+  --breakpoint-xl: 1280px;
+
+  /* --- Hareket --- */
+  --ease-sk: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================
+   TEMEL KATMAN
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* Dokunma hedefi tabanı — Part XVII: minimum 44px */
+    --sk-touch: 44px;
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px; /* gövde 16px altına inmez */
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  /* Sayılar hizalı olsun — puan, sayaç, tablo (Part XXXVI) */
+  .sk-sayi,
+  table td,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Görünür focus her yerde zorunlu (Part XXXIV) */
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Hareket azaltma tercihi mutlak saygı görür.
+     8 → ∞ animasyonunun erişilebilir karşılığı Sekiz8Mark içinde tanımlı. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Ekran okuyucuya görünür, göze görünmez */
+  .sk-gizli-metin {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Mobil alt çubuk için güvenli alan */
+  .sk-alt-guvenli {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
