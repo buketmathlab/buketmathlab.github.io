@@ -270,3 +270,40 @@ begin
   raise notice 'ODEV_DOSYA_YOLU TESTLERİ GEÇTİ';
 end;
 $$;
+
+-- =============================================================================
+-- service_role — Edge Function'ın yetki sorabilmesi
+--
+-- CANLIDA YAKALANAN HATA, buraya kilitleniyor.
+-- 0005 tüm fonksiyon haklarını PUBLIC'ten çekiyordu; `service_role` erişimini
+-- PUBLIC üzerinden aldığı için o da kaybetti. Sonuç: Edge Function
+-- `dosya_erisim_izni`'ni çağıramıyor, her dosya isteği 500 dönüyordu.
+-- Bu testsiz bir boşluktu.
+-- =============================================================================
+do $$
+begin
+  raise notice '--- 11. service_role yetkisi ---';
+
+  if not has_function_privilege('service_role', 'public.dosya_erisim_izni(text, text)', 'execute') then
+    raise exception 'HATA: service_role dosya_erisim_izni''ni ÇAĞIRAMIYOR! Edge Function çalışmaz.';
+  end if;
+  raise notice '    service_role dosya_erisim_izni''ni çağırabiliyor: OK';
+
+  -- Gereğinden fazlası verilmemeli: service_role çok yetkili bir rol, ona
+  -- toptan EXECUTE vermek Edge Function'ın erişimini gereksiz genişletir.
+  if has_function_privilege('service_role', 'public._oturum_ac(text, uuid, interval)', 'execute') then
+    raise exception 'HATA: service_role dahili _oturum_ac''ı da çağırabiliyor — fazla yetki!';
+  end if;
+  raise notice '    dahili fonksiyonlar service_role''e de kapalı: OK';
+
+  -- anon hâlâ çağırabilmeli (istemci de bu fonksiyonu kullanmıyor ama
+  -- 0007 grant''i onu da kapsıyor; yanlışlıkla düşmediğini doğrula).
+  if not has_function_privilege('anon', 'public.dosya_erisim_izni(text, text)', 'execute') then
+    raise exception 'HATA: anon dosya_erisim_izni''ni kaybetti!';
+  end if;
+  raise notice '    anon erişimi korunuyor: OK';
+
+  raise notice '';
+  raise notice 'SERVICE_ROLE TESTLERİ GEÇTİ';
+end;
+$$;

@@ -72,7 +72,17 @@ async function fonksiyonuCagir<T>(govde: Record<string, unknown>): Promise<T> {
   try {
     yanit = await fetch(`${url}/functions/v1/dosya-url`, {
       method: 'POST',
-      headers: { apikey: anonKey, 'Content-Type': 'application/json' },
+      // İKİ BAŞLIK DA GEREKLİ. Supabase ağ geçidi `Authorization` olmadan
+      // isteği fonksiyona hiç ulaştırmıyor: 401 UNAUTHORIZED_NO_AUTH_HEADER.
+      // Yalnız `apikey` gönderiyordum; canlı uç noktaya gerçek istek atınca
+      // ortaya çıktı — birim testi yakalayamazdı, çünkü bu kontrol bizim
+      // kodumuzda değil, Supabase'in önündeki katmanda.
+      // `rpc()` bunu zaten doğru yapıyor (supabase.ts).
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ token: oturum.token, ...govde }),
     });
   } catch (e) {

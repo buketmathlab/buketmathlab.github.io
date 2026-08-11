@@ -329,3 +329,24 @@ grant execute on function public.odev_dosya_yolu(text, uuid, text) to anon, auth
 -- Dahili yardımcıların kapalı kaldığını teyit et (0005'in güvencesi).
 revoke all on function public._oturum(text)              from public, anon, authenticated;
 revoke all on function public._ogretmen(text)            from public, anon, authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 8. service_role — Edge Function'ın yetki sorabilmesi için
+--
+-- CANLIDA YAKALANAN HATA. 0005 şunu yapıyordu:
+--
+--   revoke all on all functions in schema public from public, anon, authenticated;
+--
+-- `service_role` açıkça çekilmemişti ama erişimini PUBLIC üzerinden
+-- alıyordu; PUBLIC gidince o da gitti. Sonuç: Edge Function
+-- `dosya_erisim_izni`'ni çağıramıyor, her dosya isteği 500 dönüyordu.
+--
+-- Güvenlik açısından "kapalı" tarafta bir arıza — yani kimse fazladan bir
+-- şey göremiyordu, yalnız hiçbir dosya çalışmıyordu. Yine de akışın
+-- tamamını bloke ediyor.
+--
+-- YALNIZ BU FONKSİYON veriliyor. `service_role` zaten çok yetkili bir rol;
+-- ona toptan EXECUTE vermek yerine Edge Function'ın gerçekten çağırdığı
+-- tek fonksiyonla sınırlı tutuluyor.
+-- -----------------------------------------------------------------------------
+grant execute on function public.dosya_erisim_izni(text, text) to service_role;

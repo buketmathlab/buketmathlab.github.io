@@ -28,9 +28,14 @@ echo "==> Supabase ortamı taklit ediliyor (roller + extensions + storage)"
 # "function digest(text, unknown) does not exist" hatası yerelde yakalanmadı,
 # ancak canlıda ortaya çıktı. Taklit artık gerçeğe sadık.
 psql_ -q -d "$DB" <<'SQL'
+-- `service_role` de taklit edilmeli. Yoksa Edge Function'ın yetkisi
+-- yerelde hiç ölçülmez — nitekim ölçülmediği için, 0005'in service_role'ün
+-- EXECUTE hakkını PUBLIC üzerinden düşürdüğü CANLIDA anlaşıldı.
+-- Taklit gerçeğe ne kadar yakınsa, hata o kadar erken yakalanır.
 do $$ begin
   if not exists (select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
   if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
+  if not exists (select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if;
 end $$;
 create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
