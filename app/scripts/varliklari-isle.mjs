@@ -137,14 +137,25 @@ async function okulMuhru() {
     .toFile(join(HEDEF_MARKA, 'okul-muhru-512.png'));
 }
 
-/** Ewalu tanıtım videosu için poster — video yüklenmeden gösterilir. */
+/**
+ * Ewalu tanıtım videosunun posteri — video oynatılana kadar görünen kare.
+ *
+ * POSTER VİDEONUN KENDİSİNDEN ALINMIŞTIR. Önceki sürümde ffmpeg olmadığı
+ * için Ewalu'nun Paris sokağındaki görselini yer tutucu olarak koymuştum;
+ * video ise okul önünde takım elbiseli Ewalu'yu gösteriyor. Yani poster
+ * videoyu YANLIŞ TANITIYORDU — öğretmen fark etti, haklıydı.
+ *
+ * Kaynak kare `kaynak-varliklar/ewalu-tanitim-kare.jpg` olarak depoda
+ * duruyor; böylece hattın çalışması için ffmpeg gerekmiyor. Kare şu
+ * komutla videonun 2. saniyesinden çıkarıldı (okul tabelası, bayrak ve
+ * karakter birlikte görünen en iyi kadraj):
+ *
+ *   ffmpeg -ss 2 -i ewalu-tanitim.mp4 -frames:v 1 -q:v 2 ewalu-tanitim-kare.jpg
+ */
 async function videoPosteri() {
-  // ffmpeg bu ortamda yok; videodan kare çıkaramıyoruz. Poster olarak
-  // Ewalu'nun karşılama görselini kullanıyoruz — marka açısından tutarlı
-  // ve videonun kendisiyle aynı karakteri gösteriyor.
-  await sharp(join(KAYNAK, 'ewalu-karsilama.jpeg'))
+  await sharp(join(KAYNAK, 'ewalu-tanitim-kare.jpg'))
     .resize(1200, null, { fit: 'inside' })
-    .webp({ quality: 74 })
+    .webp({ quality: 78 })
     .toFile(join(HEDEF_MARKA, 'ewalu-tanitim-poster.webp'));
 }
 
