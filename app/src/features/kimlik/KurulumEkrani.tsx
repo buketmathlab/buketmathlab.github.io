@@ -30,11 +30,16 @@ export function KurulumEkrani({ onKuruldu, onVazgec }: Props) {
   async function gonder(e: FormEvent) {
     e.preventDefault();
 
-    if (pin1.length < 6) {
+    // Giriş ekranı kodu `trim()`liyor. Kurulum trim'lemezse başta/sonda
+    // boşlukla belirlenen bir PIN'e sonradan HİÇ girilemez — hash boşluklu
+    // hâlin, giriş ise boşluksuz hâlin olur. İki ekran aynı metni üretmeli.
+    const pin = pin1.trim();
+
+    if (pin.length < 6) {
       setHata('PIN en az 6 haneli olmalı.');
       return;
     }
-    if (pin1 !== pin2) {
+    if (pin !== pin2.trim()) {
       setHata('İki PIN aynı değil. Kontrol edip tekrar yazın.');
       return;
     }
@@ -42,7 +47,7 @@ export function KurulumEkrani({ onKuruldu, onVazgec }: Props) {
     setHata(null);
     setYukleniyor(true);
     try {
-      const sonuc = await rpc<{ rol: 'ogretmen'; token: string }>('pin_ayarla', { p_yeni: pin1 });
+      const sonuc = await rpc<{ rol: 'ogretmen'; token: string }>('pin_ayarla', { p_yeni: pin });
       onKuruldu({ rol: 'ogretmen', token: sonuc.token });
     } catch (e) {
       setHata(e instanceof Error ? e.message : 'PIN kaydedilemedi. Tekrar deneyin.');

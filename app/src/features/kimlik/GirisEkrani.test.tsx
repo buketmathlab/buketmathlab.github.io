@@ -26,6 +26,32 @@ describe('GirisEkrani', () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
+  it('giriş kutusu yazılanı BÜYÜTMEZ — PIN birebir karşılaştırılıyor', async () => {
+    // GERÇEK ARIZA, tekrarlamasın diye burada kilitleniyor.
+    // Kutuda bir zamanlar autoCapitalize="characters" vardı. iPad'de bu,
+    // yazılan harfleri anında büyütüyordu; öğretmen PIN'i ise sunucuda
+    // birebir karşılaştırılıyor (0003_guvenlik_fonksiyonlari.sql:355).
+    // Sonuç: harf içeren PIN'le giriş imkânsızdı.
+    // Öğrenci/veli kodları için de gereksizdi — sunucu `upper(p_kod)`
+    // uyguluyor (aynı dosya:366).
+    render(<GirisEkrani onGiris={vi.fn()} onKurulum={vi.fn()} />);
+    const kutu = screen.getByLabelText(/giriş kodunuz/i);
+
+    expect(kutu).not.toHaveAttribute('autocapitalize');
+  });
+
+  it('yazılan karma karakterli PIN sunucuya olduğu gibi gider', async () => {
+    // Harf + rakam + noktalama: öğretmenin PIN'i bu türden.
+    rpcMock.mockImplementation(async () => ({ rol: 'ogretmen', token: 'b'.repeat(64) }));
+    const k = userEvent.setup();
+    render(<GirisEkrani onGiris={vi.fn()} onKurulum={vi.fn()} />);
+
+    await k.type(screen.getByLabelText(/giriş kodunuz/i), 'Buket.8sekiz');
+    await k.click(screen.getByRole('button', { name: /giriş yap/i }));
+
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('giris', { p_kod: 'Buket.8sekiz' }));
+  });
+
   it('bulunamayan kod için eyleme dönük mesaj gösterir', async () => {
     // Part XLI: "bir şeyler ters gitti" yasak; kullanıcı ne yapacağını bilmeli.
     rpcMock.mockImplementation(async () => ({ rol: 'yok' }));
