@@ -38,7 +38,7 @@ export function EwaluVideo({ className }: Props) {
         </a>
       </video>
       <figcaption className="mt-2 text-center text-[13px] text-muted">
-        Ewalu'yu tanıyın — SEKİZ'in yardımcısı
+        Ewalu'yu tanıyın · SEKİZ'in asistanı
       </figcaption>
     </figure>
   );
