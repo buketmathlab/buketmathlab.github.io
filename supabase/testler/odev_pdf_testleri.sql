@@ -164,3 +164,63 @@ begin
   raise notice '=========================================';
 end;
 $$;
+
+-- =============================================================================
+-- odevler_listesi — öğretmenin ödev listesi
+-- =============================================================================
+do $$
+declare
+  t_ogretmen text;
+  t_ogrenci  text;
+  v_sinif    uuid;
+  r          jsonb;
+  liste      jsonb;
+begin
+  raise notice '--- 9. odevler_listesi ---';
+  update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+  t_ogretmen := (public.pin_ayarla('liste-test-PIN.2')) ->> 'token';
+  r := public.sinif_ekle(t_ogretmen, 11::smallint, 'Z'); v_sinif := (r ->> 'id')::uuid;
+
+  r := public.odev_olustur(t_ogretmen, 'LISTE Taslak', null, v_sinif, 'test',
+                           current_date + 3, 1, '{"1":"A"}'::jsonb,
+                           'anahtar/l.pdf', 'odev/l.pdf');
+
+  liste := public.odevler_listesi(t_ogretmen, v_sinif, null);
+  if jsonb_array_length(liste) <> 1 then
+    raise exception 'HATA: sınıf filtresi çalışmadı (% kayıt)', jsonb_array_length(liste);
+  end if;
+  if (liste -> 0 ->> 'yayinda')::boolean then
+    raise exception 'HATA: yeni ödev yayında görünüyor!';
+  end if;
+  if not (liste -> 0 ->> 'odev_pdf_var')::boolean
+     or not (liste -> 0 ->> 'anahtar_pdf_var')::boolean then
+    raise exception 'HATA: PDF varlık bayrakları yanlış!';
+  end if;
+  raise notice '    liste, sınıf filtresi ve PDF bayrakları: OK';
+
+  -- Cevap anahtarı listede DÖNMEMELİ.
+  if (liste -> 0) ? 'cevap_anahtari' or (liste -> 0) ? 'anahtar_url' then
+    raise exception 'HATA: cevap anahtarı ödev listesinde dönüyor!';
+  end if;
+  raise notice '    liste cevap anahtarını taşımıyor: OK';
+
+  -- Yayında filtresi
+  if jsonb_array_length(public.odevler_listesi(t_ogretmen, v_sinif, true)) <> 0 then
+    raise exception 'HATA: yayında filtresi taslağı getirdi!';
+  end if;
+  raise notice '    yayında filtresi: OK';
+
+  -- Öğrenci bu fonksiyonu çağıramamalı.
+  r := public.ogrenci_ekle(t_ogretmen, 'Liste Test Öğrencisi', 'okul', v_sinif);
+  t_ogrenci := (public.giris(r ->> 'ogrenci_kodu')) ->> 'token';
+  begin
+    perform public.odevler_listesi(t_ogrenci, null, null);
+    raise exception 'HATA: ÖĞRENCİ ÖDEV LİSTESİNİ ÇAĞIRABİLDİ!';
+  exception when insufficient_privilege then
+    raise notice '    öğrenci reddedildi: OK';
+  end;
+
+  raise notice '';
+  raise notice 'ODEVLER_LISTESI TESTLERİ GEÇTİ';
+end;
+$$;

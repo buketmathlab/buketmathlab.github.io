@@ -203,7 +203,63 @@ end;
 $$;
 
 -- -----------------------------------------------------------------------------
--- 5. YETKİLER
+-- 5. odevler_listesi — öğretmenin ödev listesi
+--
+-- Faz 1'de atlanmıştı: `ogretmen_panosu` yalnız sayı ve son gönderimleri
+-- veriyor, ödevlerin kendisini listeleyen bir uç yoktu. Ödev ekranı bunsuz
+-- yazılamıyor.
+--
+-- CEVAP ANAHTARI DÖNMÜYOR. Öğretmen görebilir ama listede işi yok; liste
+-- ekranının anahtarı taşıması, ileride aynı yanıtın başka bir yere
+-- verilmesi hâlinde gereksiz risk olur. Yalnız "anahtar var mı" bilgisi
+-- dönüyor.
+-- -----------------------------------------------------------------------------
+create or replace function public.odevler_listesi(
+  p_token text,
+  p_sinif_id uuid default null,
+  p_yayinda boolean default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+begin
+  perform public._ogretmen(p_token);
+
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', d.id,
+      'baslik', d.baslik,
+      'aciklama', d.aciklama,
+      'tur', d.tur,
+      'sinif_id', d.sinif_id,
+      'sinif', s.ad,
+      'son_tarih', d.son_tarih,
+      'soru_sayisi', d.soru_sayisi,
+      'yayinda', d.yayinda,
+      'olusturma', d.created_at,
+      -- Dosyaların kendisi değil, varlıkları.
+      'odev_pdf_var', (d.odev_url is not null),
+      'anahtar_pdf_var', (d.anahtar_url is not null),
+      'gonderim_sayisi', (
+        select count(*) from public.gonderimler g where g.odev_id = d.id
+      ),
+      'sinif_mevcudu', (
+        select count(*) from public.ogrenciler o
+        where o.sinif_id = d.sinif_id and o.aktif
+      )
+    ) order by d.son_tarih desc, d.created_at desc)
+    from public.odevler d
+    join public.siniflar s on s.id = d.sinif_id
+    where (p_sinif_id is null or d.sinif_id = p_sinif_id)
+      and (p_yayinda is null or d.yayinda = p_yayinda)
+  ), '[]'::jsonb);
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 6. YETKİLER
 --
 -- `odev_olustur`un yeni imzası YENİ bir fonksiyondur. 0005'teki
 -- `alter default privileges ... revoke all on functions from public`
@@ -222,6 +278,10 @@ grant execute on function
 
 grant execute on function public.ogrenci_odevleri(text)          to anon, authenticated;
 grant execute on function public.dosya_erisim_izni(text, text)   to anon, authenticated;
+
+revoke all on function public.odevler_listesi(text, uuid, boolean)
+  from public, anon, authenticated;
+grant execute on function public.odevler_listesi(text, uuid, boolean) to anon, authenticated;
 
 -- Dahili yardımcıların kapalı kaldığını teyit et (0005'in güvencesi).
 revoke all on function public._oturum(text)              from public, anon, authenticated;
