@@ -140,20 +140,37 @@ async function okulMuhru() {
 /**
  * Ewalu tanıtım videosunun posteri — video oynatılana kadar görünen kare.
  *
- * POSTER VİDEONUN KENDİSİNDEN ALINMIŞTIR. Önceki sürümde ffmpeg olmadığı
- * için Ewalu'nun Paris sokağındaki görselini yer tutucu olarak koymuştum;
- * video ise okul önünde takım elbiseli Ewalu'yu gösteriyor. Yani poster
- * videoyu YANLIŞ TANITIYORDU — öğretmen fark etti, haklıydı.
+ * Kaynak: `kaynak-varliklar/ewalu-tanitim-kare.jpg` — öğretmenin seçtiği
+ * kadraj. Atatürk büstü, Türk bayrağı, okul binası, tabelanın tam metni ve
+ * üniformalı Ewalu birlikte görünüyor.
  *
- * Kaynak kare `kaynak-varliklar/ewalu-tanitim-kare.jpg` olarak depoda
- * duruyor; böylece hattın çalışması için ffmpeg gerekmiyor. Kare şu
- * komutla videonun 2. saniyesinden çıkarıldı (okul tabelası, bayrak ve
- * karakter birlikte görünen en iyi kadraj):
+ * ORAN UYUMU ÖNEMLİ: Poster videoyla aynı en-boy oranında olmalı. Kaynak
+ * görsel 16:9 (1.778), video ise 1168×784 (1.490). Poster olduğu gibi
+ * konsaydı tarayıcı onu video kutusuna sığdırırken üstte ve altta siyah
+ * bant bırakırdı. Bu yüzden ortadan kırpılıp videonun oranına getiriliyor —
+ * kenarlardaki boş ağaç/zemin gidiyor, anlamlı hiçbir öğe kaybolmuyor.
  *
- *   ffmpeg -ss 2 -i ewalu-tanitim.mp4 -frames:v 1 -q:v 2 ewalu-tanitim-kare.jpg
+ * Önceki sürümde poster olarak Ewalu'nun Paris sokağındaki görseli
+ * kullanılıyordu; video ise okul önünde geçiyor. Poster videoyu yanlış
+ * tanıtıyordu — öğretmen fark etti.
  */
+const VIDEO_ORANI = 1168 / 784;
+
 async function videoPosteri() {
-  await sharp(join(KAYNAK, 'ewalu-tanitim-kare.jpg'))
+  const girdi = join(KAYNAK, 'ewalu-tanitim-kare.jpg');
+  const { width = 0, height = 0 } = await sharp(girdi).metadata();
+
+  // Videonun oranına ortadan kırp.
+  const hedefEn = Math.min(width, Math.round(height * VIDEO_ORANI));
+  const hedefBoy = Math.round(hedefEn / VIDEO_ORANI);
+
+  await sharp(girdi)
+    .extract({
+      left: Math.round((width - hedefEn) / 2),
+      top: Math.round((height - hedefBoy) / 2),
+      width: hedefEn,
+      height: hedefBoy,
+    })
     .resize(1200, null, { fit: 'inside' })
     .webp({ quality: 78 })
     .toFile(join(HEDEF_MARKA, 'ewalu-tanitim-poster.webp'));
