@@ -91,6 +91,59 @@ function satirdakiCiftler(satir: string, sonSecenek: SonSecenek) {
 }
 
 /**
+ * "Çözümlü anahtar" biçimi — öğretmenin gerçekte kullandığı biçim.
+ *
+ * Onun PDF'inden okunan satırlar şöyle:
+ *
+ *     6·6·6·6=6⁴ doğru; … → I ve II doğru   Cevap: C) I ve II
+ *     01
+ *     -3²=-9 (yanlış); … → yalnız II doğru  Cevap: B) Yalnız II
+ *     02
+ *
+ * Yani cevap bir satırda `Cevap: X)` olarak yazılı, **soru numarası ayrı
+ * bir satırda** ve cevaptan SONRA geliyor (numara rozeti metnin biraz
+ * altında konumlandığı için y sıralaması böyle çıkıyor).
+ *
+ * Ana desen ("numara sonra harf, aynı satırda") bunu göremez. İlk
+ * sürümde 0/10 çıkmasının sebebi buydu — kendi ürettiğim beş örnek
+ * biçimin hiçbiri böyle değildi.
+ *
+ * Numara önce mi sonra mı gelir diye varsayım yapmıyoruz: önce sonraki
+ * satıra, bulunamazsa önceki satıra bakılıyor.
+ */
+function cozumluAnahtardan(
+  satirlar: readonly string[],
+  soruSayisi: number,
+  sonSecenek: SonSecenek,
+): { anahtar: Record<number, string>; celiskili: Set<number> } {
+  // `Cevap:` iki nokta ZORUNLU. Böylece "CEVAP ANAHTARI" gibi başlıklar
+  // eşleşmiyor. Harf yoksa (örn. "Cevap: -17") eşleşme de olmuyor —
+  // o soru eksik kalır, uydurulmaz.
+  const cevapDeseni = new RegExp(`cevap\\s*:\\s*([A-${sonSecenek}a-${sonSecenek.toLowerCase()}])\\b`, 'i');
+  const sadeceNumara = /^0*(\d{1,3})$/;
+
+  const anahtar: Record<number, string> = {};
+  const celiskili = new Set<number>();
+
+  for (let i = 0; i < satirlar.length; i++) {
+    const m = satirlar[i]!.match(cevapDeseni);
+    if (!m) continue;
+
+    const sonraki = satirlar[i + 1]?.match(sadeceNumara);
+    const onceki = satirlar[i - 1]?.match(sadeceNumara);
+    const no = Number.parseInt((sonraki ?? onceki)?.[1] ?? '', 10);
+    if (!Number.isInteger(no) || no < 1 || no > soruSayisi) continue;
+
+    const sik = m[1]!.toUpperCase();
+    const mevcut = anahtar[no];
+    if (mevcut === undefined) anahtar[no] = sik;
+    else if (mevcut !== sik) celiskili.add(no);
+  }
+
+  return { anahtar, celiskili };
+}
+
+/**
  * Numara bulunamadığında son çare: metindeki şık harflerini sırayla eşle.
  * Yalnız harf sayısı soru sayısına **tam eşitse** uygulanır — fazlaysa
  * hangi harfin hangi soruya ait olduğu belirsizdir ve tahmin etmeyiz.
@@ -161,6 +214,14 @@ export function anahtariCikar(
   }
 
   let yontem: Cikarim['yontem'] = 'numarali';
+
+  // Ana desen bir şey bulamadıysa "çözümlü anahtar" biçimini dene.
+  // Sıra önemli: ana desen daha kesin, o tuttuysa buna gerek yok.
+  if (Object.keys(anahtar).length === 0) {
+    const c = cozumluAnahtardan(satirlar, soruSayisi, sonSecenek);
+    Object.assign(anahtar, c.anahtar);
+    for (const no of c.celiskili) celiskili.add(no);
+  }
 
   if (Object.keys(anahtar).length === 0) {
     const dizi = harfDizisinden(satirlar, soruSayisi, sonSecenek);
