@@ -153,7 +153,14 @@ export function Odevler() {
             <Card key={o.id} vurgu={o.yayinda ? 'yok' : 'uyari'}>
               <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-display text-[18px] font-semibold text-ink">{o.baslik}</p>
+                  {/* Öğretmen "ödevin üzerine tıklayıp" düzenlemek istedi. */}
+                  <button
+                    type="button"
+                    onClick={() => git(`/ogretmen/odevler/${o.id}`)}
+                    className="text-left font-display text-[18px] font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  >
+                    {o.baslik}
+                  </button>
                   <p className="text-[13px] text-muted">
                     {o.sinif} · {o.tur === 'test' ? 'Test' : 'Açık uçlu'}
                     {o.soru_sayisi !== null && (
@@ -190,6 +197,9 @@ export function Odevler() {
                     Anahtarı aç
                   </Button>
                 )}
+                <Button tur="sade" olcu="sm" onClick={() => git(`/ogretmen/odevler/${o.id}`)}>
+                  Düzenle
+                </Button>
                 {!o.yayinda && (
                   <Button olcu="sm" onClick={() => yayinla(o)} disabled={islemde}>
                     Yayınla
