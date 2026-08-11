@@ -26,18 +26,25 @@ describe('GirisEkrani', () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('giriş kutusu yazılanı BÜYÜTMEZ — PIN birebir karşılaştırılıyor', async () => {
-    // GERÇEK ARIZA, tekrarlamasın diye burada kilitleniyor.
-    // Kutuda bir zamanlar autoCapitalize="characters" vardı. iPad'de bu,
-    // yazılan harfleri anında büyütüyordu; öğretmen PIN'i ise sunucuda
-    // birebir karşılaştırılıyor (0003_guvenlik_fonksiyonlari.sql:355).
-    // Sonuç: harf içeren PIN'le giriş imkânsızdı.
-    // Öğrenci/veli kodları için de gereksizdi — sunucu `upper(p_kod)`
-    // uyguluyor (aynı dosya:366).
+  it('giriş kutusu yazılanı hiçbir şekilde dönüştürmez', async () => {
+    // GERÇEK ARIZA — iki turda iki kez ısırdı, o yüzden burada kilitli.
+    //
+    // 1. tur: autoCapitalize="characters" vardı, iPad tüm harfleri büyütüyordu.
+    // 2. tur: özniteliği SİLDİM — yetmedi. Silmek kapatmak değil; karar
+    //    tarayıcıya kalıyor ve iOS metin kutularında varsayılan cümle başı
+    //    büyütmedir, yani ilk harf yine büyüyordu.
+    //
+    // Bu yüzden test "yok" değil, açıkça "off" arıyor. autoCorrect="off" da
+    // iOS'un akıllı noktalamasını kapatıyor (' → ' dönüşümü).
+    //
+    // Öğretmen PIN'i sunucuda birebir karşılaştırılıyor
+    // (0003_guvenlik_fonksiyonlari.sql:355); tek karakter sapma girişi bitirir.
     render(<GirisEkrani onGiris={vi.fn()} onKurulum={vi.fn()} />);
     const kutu = screen.getByLabelText(/giriş kodunuz/i);
 
-    expect(kutu).not.toHaveAttribute('autocapitalize');
+    expect(kutu).toHaveAttribute('autocapitalize', 'off');
+    expect(kutu).toHaveAttribute('autocorrect', 'off');
+    expect(kutu).toHaveAttribute('spellcheck', 'false');
   });
 
   it('yazılan karma karakterli PIN sunucuya olduğu gibi gider', async () => {

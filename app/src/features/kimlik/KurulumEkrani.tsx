@@ -74,12 +74,14 @@ export function KurulumEkrani({ onKuruldu, onVazgec }: Props) {
         </div>
 
         <form onSubmit={gonder} noValidate>
-          <Field etiket="Yeni PIN" zorunlu ipucu="En az 6 hane.">
+          {/* `inputMode="numeric"` YOK: PIN yalnız rakam değil, harf ve
+              noktalama da içerebilir. Sayı tuş takımını zorlamak yanıltıcıydı.
+              İpucu metni de "hane" değil "karakter" diyor artık. */}
+          <Field etiket="Yeni PIN" zorunlu ipucu="En az 6 karakter. Harf, rakam ve noktalama kullanabilirsiniz.">
             {(k) => (
               <Input
                 {...k}
                 type="password"
-                inputMode="numeric"
                 autoComplete="new-password"
                 value={pin1}
                 onChange={(e) => setPin1(e.target.value)}
@@ -92,7 +94,6 @@ export function KurulumEkrani({ onKuruldu, onVazgec }: Props) {
               <Input
                 {...k}
                 type="password"
-                inputMode="numeric"
                 autoComplete="new-password"
                 value={pin2}
                 onChange={(e) => setPin2(e.target.value)}

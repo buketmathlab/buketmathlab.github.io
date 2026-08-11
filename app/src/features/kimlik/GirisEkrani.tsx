@@ -99,13 +99,25 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
                 value={kod}
                 onChange={(e) => setKod(e.target.value)}
                 autoComplete="off"
-                /* autoCapitalize YOK — bilinçli.
-                   Bir zamanlar burada `autoCapitalize="characters"` vardı ve
-                   öğretmen PIN'iyle girişi imkânsız kılıyordu: iPad harfleri
-                   anında büyütüyor, PIN ise sunucuda birebir karşılaştırılıyor
-                   (0003_guvenlik_fonksiyonlari.sql:355). Öğrenci/veli kodları
-                   için de gereksizdi — sunucu zaten `upper(p_kod)` uyguluyor
-                   (aynı dosya:366). Yani yalnız zarar veriyordu. */
+                /* Bu üç öznitelik BİRLİKTE gerekli. Kutuya yazılan metin
+                   sunucuya birebir gitmek zorunda: öğretmen PIN'i bcrypt ile
+                   birebir karşılaştırılıyor (0003_guvenlik_fonksiyonlari.sql:355).
+                   Tek bir karakteri değişen PIN, giriş yapılamaz PIN'dir.
+
+                   `off` yazmak ŞART — özniteliği silmek kapatmaz. Silince
+                   karar tarayıcıya kalır ve iOS metin kutularında varsayılan
+                   cümle başı büyütmedir; yani ilk harf yine büyür. Bu hata
+                   bir kez yapıldı, tekrarlanmasın.
+
+                   autoCorrect="off" ayrıca iOS'un "akıllı noktalama"sını da
+                   kapatır: metin kutusunda ' işaretini ' yapıyor, -- işaretini
+                   — yapıyor. Kurulum ekranı type="password" olduğu için orada
+                   bunların hiçbiri çalışmıyordu — asimetri buradan doğuyordu.
+
+                   Öğrenci/veli kodlarını büyütmeye gerek yok: sunucu zaten
+                   `upper(p_kod)` uyguluyor (aynı dosya:366). */
+                autoCapitalize="off"
+                autoCorrect="off"
                 spellCheck={false}
                 placeholder="Örn. K7RM2XPQ"
                 enterKeyHint="go"
