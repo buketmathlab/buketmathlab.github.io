@@ -1,6 +1,12 @@
 type Props = {
   /** Piksel cinsinden kenar. 96'nın altına inilemez — aşağıdaki nota bakın. */
   boyut?: 96 | 120 | 160 | 240 | 320;
+  /**
+   * Okul adı mührün hemen yanında/altında GÖRÜNÜR METİN olarak varsa true
+   * verin: mühür `alt=""` ile dekoratif işaretlenir. Aksi hâlde ekran
+   * okuyucu okulun adını iki kez okur.
+   */
+  dekoratif?: boolean;
   className?: string;
 };
 
@@ -21,7 +27,7 @@ const TAM_AD = 'Beşiktaş Arnavutköy Korkmaz Yiğit Anadolu Lisesi';
  * Görsel, beyaz kutu zemini dairesel maskeyle kaldırılmış hâlde üretilir
  * (bkz. scripts/varliklari-isle.mjs) — çizimin kendisine dokunulmaz.
  */
-export function SchoolCrest({ boyut = 120, className }: Props) {
+export function SchoolCrest({ boyut = 120, dekoratif = false, className }: Props) {
   const taban = import.meta.env.BASE_URL;
   // En yakın üst çözünürlüğü seç, retina için 2 kat pay bırak.
   const kaynak = boyut <= 128 ? 256 : boyut <= 256 ? 512 : 1024;
@@ -31,7 +37,8 @@ export function SchoolCrest({ boyut = 120, className }: Props) {
       src={`${taban}marka/okul-muhru-${kaynak}.webp`}
       width={boyut}
       height={boyut}
-      alt={TAM_AD}
+      alt={dekoratif ? '' : TAM_AD}
+      aria-hidden={dekoratif || undefined}
       loading="lazy"
       decoding="async"
       className={className}

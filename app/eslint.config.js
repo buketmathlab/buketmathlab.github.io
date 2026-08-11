@@ -32,7 +32,7 @@ export default tseslint.config(
     // Playwright betikleri: page.evaluate() gövdeleri Node'da değil,
     // tarayıcı içinde çalışır. Bu yüzden hem Node hem tarayıcı globalleri
     // geçerli — aksi hâlde `document` tanımsız görünüyor.
-    files: ['scripts/*-denetimi.mjs', 'scripts/*-ekran*.mjs'],
+    files: ['scripts/erisilebilirlik-denetimi.mjs', 'scripts/ekran-goruntuleri.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 );

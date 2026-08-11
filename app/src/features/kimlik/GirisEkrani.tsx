@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { SchoolCrest } from '@/components/brand/SchoolCrest';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
+import { EwaluVideo } from '@/components/brand/EwaluVideo';
+import { GeometricDivider } from '@/components/brand/GeometricDivider';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
@@ -59,14 +61,32 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col justify-center px-4 py-10">
-      <div className="mb-8 text-center">
-        <div className="flex justify-center">
-          <SekizWordmark boyut="lg" acilistaDonsun />
-        </div>
+    /* Dikey ortalama YOK: sekiz blok + video viewport'tan uzun, sayfa akıyor. */
+    <main className="mx-auto w-full max-w-[440px] px-4 py-8">
+      {/* 1 — Okul mührü. Okul adı hemen altında görünür metin olduğu için
+             mühür dekoratif: ekran okuyucu adı iki kez okumasın. */}
+      <div className="flex justify-center">
+        <SchoolCrest boyut={120} dekoratif />
       </div>
 
-      <Card>
+      {/* 2 ve 3 — Okul adı iki satır */}
+      <div className="mt-3 text-center">
+        <p className="text-[13px] font-bold tracking-[0.22em] text-muted">BEŞİKTAŞ</p>
+        <p className="mt-0.5 text-[14px] font-semibold text-ink">
+          Arnavutköy Korkmaz Yiğit Anadolu Lisesi
+        </p>
+      </div>
+
+      <GeometricDivider className="my-6" />
+
+      {/* 4 ve 5 — ∞ işareti + SEKİZ, altında öğretmen kimliği.
+             Sayfanın tek h1'i burası. */}
+      <h1 className="flex justify-center">
+        <SekizWordmark boyut="lg" acilistaDonsun />
+      </h1>
+
+      {/* 6 — Giriş formu */}
+      <Card className="mt-7">
         <form onSubmit={gonder} noValidate>
           <Field
             etiket="Giriş kodunuz"
@@ -93,8 +113,9 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
         </form>
       </Card>
 
-      <div className="mt-8 flex items-center justify-center gap-3 text-center">
-        <EwaluFigure poz="karsilama" boyut={44} dekoratif />
+      {/* 7 — Ewalu ve mesajı */}
+      <div className="mt-7 flex items-center justify-center gap-3">
+        <EwaluFigure poz="karsilama" boyut={52} dekoratif />
         <p className="text-[13px] text-muted">
           Ödevini görürsün, çözersin, gönderirsin.
           <br />
@@ -102,11 +123,12 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
         </p>
       </div>
 
-      <footer className="mt-10 flex flex-col items-center gap-3">
-        <SchoolCrest boyut={96} />
-        <p className="text-center text-[12px] text-muted">
-          Beşiktaş Arnavutköy Korkmaz Yiğit Anadolu Lisesi
-        </p>
+      {/* 8 — Tanıtım videosu. KALICI (öğretmen kararı): Faz 9'da tanıtım
+             sayfası gelse bile buradan kaldırılmayacak. preload="none"
+             olduğu için sayfa açılışında indirilmiyor. */}
+      <footer className="mt-9">
+        <GeometricDivider className="mb-6" />
+        <EwaluVideo />
       </footer>
     </main>
   );
