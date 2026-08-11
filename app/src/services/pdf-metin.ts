@@ -21,6 +21,8 @@
  * `lib/cevap-anahtari.ts` bu yapıya dayanarak soru metnini eliyor.
  */
 
+import { withResolversKur } from '@/lib/promise-polyfill';
+
 /** Aynı satır sayılmak için y koordinatları arasındaki en büyük fark (punto). */
 const SATIR_TOLERANSI = 3;
 
@@ -62,16 +64,29 @@ export function parcalariSatirlaraBol(parcalar: readonly MetinParcasi[]): string
  * @throws Okunamayan, şifreli ya da bozuk dosyada Türkçe, eyleme dönük hata.
  */
 export async function pdfSatirlariniOku(dosya: File): Promise<string[]> {
+  // pdf.js YÜKLENMEDEN ÖNCE. Aksi hâlde Safari 17.4 öncesinde modülün
+  // kendisi değerlendirilirken çöküyor (bkz. lib/promise-polyfill.ts).
+  withResolversKur();
+
   const pdfjs = await import('pdfjs-dist');
 
   // Worker dosyası Vite tarafından paketlenir; dışarıdan indirilmez.
+  //
+  // Worker'ın KENDİ global kapsamı var ve oraya polyfill koyamıyoruz
+  // (pdf.js'in worker dosyasını biz yazmıyoruz). Eski Safari'de worker
+  // çökecek — ama bu kabul edilebilir: pdf.js worker başarısız olunca
+  // `_setupFakeWorker` ile ana iş parçacığına düşüyor, orası da
+  // polyfill'li. Sonuç: biraz daha yavaş, ama çalışıyor.
+  //
+  // Sarmalayıcı bir worker denendi ve BIRAKILDI: dinamik import top-level
+  // await gerektiriyor, pdf.js'in test mesajına yanıt gecikince akış
+  // donuyordu (ölçüldü). Basit yol daha sağlam.
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url,
   ).toString();
 
-  // `destroy()` yükleme görevinde, belge nesnesinde değil — worker'ı da o
-  // kapatıyor. Görevi tutuyoruz ki `finally` içinde serbest bırakabilelim.
+  // `destroy()` yükleme görevinde, belge nesnesinde değil.
   const gorev = pdfjs.getDocument({ data: new Uint8Array(await dosya.arrayBuffer()) });
 
   try {
@@ -109,6 +124,8 @@ export async function pdfSatirlariniOku(dosya: File): Promise<string[]> {
 
     return tumSatirlar;
   } finally {
+    // Görevi ve worker'ı birlikte serbest bırak: her çağrıda yeni bir
+    // worker açıldığı için kapatılmazsa birikir.
     await gorev.destroy();
   }
 }

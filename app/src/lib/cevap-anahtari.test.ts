@@ -161,3 +161,67 @@ describe('öğretmenin biçimi — "1C 2B"', () => {
     expect(s.anahtar[4]).toBeUndefined();
   });
 });
+
+describe('öğretmenin gerçek biçimi — çözümlü anahtar', () => {
+  // Öğretmenin PDF'inden BİREBİR okunan satırlar (10C üslü-köklü, 2026).
+  // Cevap bir satırda "Cevap: C)", soru numarası BİR SONRAKİ satırda "01".
+  // İlk sürüm bu biçimde 0/10 buluyordu; kendi ürettiğim örneklerin hiçbiri
+  // böyle değildi. Gerçek dosya gelince ortaya çıktı.
+  const SATIRLAR = [
+    'B E Ş İ K T A Ş',
+    'ARNAVUTKÖY KORKMAZ YİĞİT ANADOLU LİSESİ',
+    'Üslü ve Köklü Sayılar · Cevap Anahtarı · 10. Sınıf · 2026',
+    'Cevap Anahtarı',
+    '6·6·6·6=6⁴ doğru; (1/3)³=3⁻³ doğru → I ve II doğru Cevap: C) I ve II',
+    '01',
+    '-3²=-9 (yanlış); (-3)⁻³=-1/27 (doğru) → yalnız II doğru Cevap: B) Yalnız II',
+    '02',
+    '√200-√288+√98 = 5√2 Cevap: B) 5√2',
+    '03',
+    'm⁻ⁿ-n⁻ᵐ = (-2)³-(-3)² = -17 Cevap: -17',
+    '04',
+    '⁵√-32=-2, ³√64=4 → -4 Cevap: B) -4',
+    '05',
+    'Buket Topuzoğlu · Matematik Öğretmeni MATEMATİK · 10C · CEVAP ANAHTARI 01',
+  ];
+
+  it('cevabı bir sonraki satırdaki numarayla eşler', () => {
+    const s = anahtariCikar(SATIRLAR, { soruSayisi: 5 });
+    expect(s.anahtar[1]).toBe('C');
+    expect(s.anahtar[2]).toBe('B');
+    expect(s.anahtar[3]).toBe('B');
+    expect(s.anahtar[5]).toBe('B');
+  });
+
+  it('harf içermeyen cevabı UYDURMAZ, eksik bırakır', () => {
+    // 4. soruda "Cevap: -17" var — şık harfi yok. Anahtarın kendisinde
+    // eksik; sistem burayı boş bırakıp öğretmene göstermeli.
+    const s = anahtariCikar(SATIRLAR, { soruSayisi: 5 });
+    expect(s.anahtar[4]).toBeUndefined();
+    expect(s.eksik).toEqual([4]);
+  });
+
+  it('"CEVAP ANAHTARI" başlığını cevap sanmaz', () => {
+    // Alt bilgi satırında "CEVAP ANAHTARI 01" geçiyor ama iki nokta yok.
+    const s = anahtariCikar(['CEVAP ANAHTARI 01', 'MATEMATİK · CEVAP ANAHTARI'], {
+      soruSayisi: 3,
+    });
+    expect(s.anahtar).toEqual({});
+  });
+
+  it('sıfırla başlayan numarayı doğru okur (01 → 1)', () => {
+    const s = anahtariCikar(['… Cevap: D) 5', '07'], { soruSayisi: 10 });
+    expect(s.anahtar[7]).toBe('D');
+  });
+
+  it('numara cevaptan ÖNCE gelirse de eşler', () => {
+    const s = anahtariCikar(['03', 'çözüm … Cevap: E) 12'], { soruSayisi: 5 });
+    expect(s.anahtar[3]).toBe('E');
+  });
+
+  it('ana desen tuttuğunda çözümlü yola hiç gitmez', () => {
+    // Karışık bir dosyada ana desen daha kesin; öncelik onda kalmalı.
+    const s = anahtariCikar(['1A 2B 3C'], { soruSayisi: 3 });
+    expect(s.anahtar).toEqual({ 1: 'A', 2: 'B', 3: 'C' });
+  });
+});
