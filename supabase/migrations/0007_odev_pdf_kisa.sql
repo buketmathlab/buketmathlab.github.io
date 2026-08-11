@@ -228,3 +228,4 @@ revoke all on function public.odev_dosya_yolu(text, uuid, text)
 grant execute on function public.odev_dosya_yolu(text, uuid, text) to anon, authenticated;
 revoke all on function public._oturum(text)              from public, anon, authenticated;
 revoke all on function public._ogretmen(text)            from public, anon, authenticated;
+grant execute on function public.dosya_erisim_izni(text, text) to service_role;
