@@ -99,7 +99,13 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
                 value={kod}
                 onChange={(e) => setKod(e.target.value)}
                 autoComplete="off"
-                autoCapitalize="characters"
+                /* autoCapitalize YOK — bilinçli.
+                   Bir zamanlar burada `autoCapitalize="characters"` vardı ve
+                   öğretmen PIN'iyle girişi imkânsız kılıyordu: iPad harfleri
+                   anında büyütüyor, PIN ise sunucuda birebir karşılaştırılıyor
+                   (0003_guvenlik_fonksiyonlari.sql:355). Öğrenci/veli kodları
+                   için de gereksizdi — sunucu zaten `upper(p_kod)` uyguluyor
+                   (aynı dosya:366). Yani yalnız zarar veriyordu. */
                 spellCheck={false}
                 placeholder="Örn. K7RM2XPQ"
                 enterKeyHint="go"
