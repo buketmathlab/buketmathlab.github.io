@@ -1,15 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
-
 /**
- * Supabase istemcisi.
+ * Supabase erişimi — SDK'sız, düz `fetch` ile.
  *
- * ANON ANAHTARI GİZLİ DEĞİLDİR. Statik bir sitede paket içine gömülür ve
- * tarayıcıdan zaten görülebilir. Koruma anahtarın gizliliğinden gelmez;
- * şunlardan gelir:
+ * NEDEN SDK YOK: `@supabase/supabase-js` pakete ~280 KB ekliyordu (paket
+ * 224 KB → 504 KB). Oysa bu üründe SDK'nın tek kullanılan yeteneği
+ * `rpc()` — yani `/rest/v1/rpc/<fonksiyon>` adresine bir POST isteği.
+ * Auth kullanılmıyor (kendi jeton katmanımız var), realtime kullanılmıyor,
+ * storage erişimi imzalı URL üzerinden gidiyor. Kullanılmayan 280 KB'yi
+ * mobil bağlantıya ödetmek için sebep yok (Part XVIII, Part XL).
  *
+ * ANON ANAHTARI GİZLİ DEĞİLDİR. Statik sitede pakete gömülür ve tarayıcıdan
+ * görülebilir. Koruma anahtarın gizliliğinden gelmez:
  *   1. Tablolara doğrudan erişim `anon` rolünden çekilmiştir (migration 0002)
  *   2. Fonksiyon çağırma hakkı yalnız izin listesindekilere verilmiştir (0005)
- *   3. Her RPC yetkiyi jetondan doğrular, parametreden gelen kimliğe güvenmez
+ *   3. Her RPC yetkiyi jetondan doğrular, parametreye güvenmez
  *
  * SERVICE_ROLE ANAHTARI BU DOSYAYA — ya da istemci tarafındaki başka
  * herhangi bir dosyaya — HİÇBİR KOŞULDA KONMAZ.
@@ -25,15 +28,7 @@ if (!url || !anonKey) {
   );
 }
 
-export const sb = createClient(url, anonKey, {
-  auth: {
-    // Supabase Auth kullanılmıyor; oturum yönetimi kendi jeton katmanımızda.
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
-
-/** Oturum jetonunun tarayıcıdaki saklandığı anahtar. */
+/** Oturum jetonunun tarayıcıda saklandığı anahtar. */
 const JETON_ANAHTARI = 'sekiz_oturum';
 
 export type Rol = 'ogretmen' | 'ogrenci' | 'veli';
@@ -61,41 +56,76 @@ export function oturumSil(): void {
   localStorage.removeItem(JETON_ANAHTARI);
 }
 
-/**
- * RPC çağrısı.
- *
- * Hata mesajları Türkçe ve eyleme dönük olmalı (Part XLI). Veritabanından
- * gelen mesajlar zaten Türkçe yazıldı; buradaki dönüşüm ağ/altyapı
- * hatalarını insan diline çevirir. Teknik ayrıntı kullanıcıya gösterilmez,
- * yalnız konsola yazılır.
- */
-export async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
-  const { data, error } = await sb.rpc(fn, args);
-
-  if (error) {
-    console.error(`RPC hatası (${fn}):`, error);
-
-    // Oturum düşmüşse çağıran taraf bunu ayırt edebilsin.
-    if (error.code === '28000') {
-      oturumSil();
-      throw new OturumHatasi(error.message || 'Oturumunuz sona erdi. Tekrar giriş yapın.');
-    }
-
-    // Veritabanının kendi Türkçe mesajı varsa onu kullan.
-    if (error.message && !/^(TypeError|NetworkError|Failed to fetch)/.test(error.message)) {
-      throw new Error(error.message);
-    }
-
-    throw new Error('Bağlantı kurulamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.');
-  }
-
-  return data as T;
-}
-
 /** Oturumun geçersizleştiğini belirtir; arayüz giriş ekranına döner. */
 export class OturumHatasi extends Error {
   constructor(mesaj: string) {
     super(mesaj);
     this.name = 'OturumHatasi';
   }
+}
+
+/** PostgREST hata gövdesi. */
+type PostgrestHata = {
+  code?: string;
+  message?: string;
+  details?: string | null;
+  hint?: string | null;
+};
+
+/**
+ * RPC çağrısı.
+ *
+ * Hata mesajları Türkçe ve eyleme dönük olmalı (Part XLI). Veritabanı
+ * fonksiyonları zaten Türkçe mesaj fırlatıyor; buradaki iş ağ/altyapı
+ * hatalarını insan diline çevirmek. Teknik ayrıntı kullanıcıya gitmez,
+ * yalnız konsola yazılır.
+ */
+export async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
+  let yanit: Response;
+
+  try {
+    yanit = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(args),
+    });
+  } catch (e) {
+    console.error(`RPC ağ hatası (${fn}):`, e);
+    throw new Error('Bağlantı kurulamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+  }
+
+  if (!yanit.ok) {
+    let hata: PostgrestHata = {};
+    try {
+      hata = (await yanit.json()) as PostgrestHata;
+    } catch {
+      /* gövde okunamadıysa boş bırak */
+    }
+    console.error(`RPC hatası (${fn}):`, yanit.status, hata);
+
+    // Oturum düşmüşse jetonu sil ve arayüzü haberdar et. Olay yayınlamak,
+    // her çağrı noktasında ayrı kontrol yazmaktan güvenilir — bir yerde
+    // unutulursa kullanıcı kilitli ekranda kalırdı.
+    if (hata.code === '28000') {
+      oturumSil();
+      window.dispatchEvent(new CustomEvent('sekiz:oturum-dustu'));
+      throw new OturumHatasi(hata.message || 'Oturumunuz sona erdi. Tekrar giriş yapın.');
+    }
+
+    // Veritabanının kendi Türkçe mesajı varsa onu göster.
+    if (hata.message) throw new Error(hata.message);
+
+    if (yanit.status >= 500) {
+      throw new Error('Sunucuya ulaşılamıyor. Biraz sonra tekrar deneyin.');
+    }
+    throw new Error('İşlem tamamlanamadı. Tekrar deneyin.');
+  }
+
+  // Fonksiyonlarımız her zaman JSON döndürür; boş gövde `null` sayılır.
+  const metin = await yanit.text();
+  return (metin ? JSON.parse(metin) : null) as T;
 }

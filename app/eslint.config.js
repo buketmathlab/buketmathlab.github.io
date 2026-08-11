@@ -28,4 +28,11 @@ export default tseslint.config(
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
   },
+  {
+    // Playwright betikleri: page.evaluate() gövdeleri Node'da değil,
+    // tarayıcı içinde çalışır. Bu yüzden hem Node hem tarayıcı globalleri
+    // geçerli — aksi hâlde `document` tanımsız görünüyor.
+    files: ['scripts/*-denetimi.mjs', 'scripts/*-ekran*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
 );
