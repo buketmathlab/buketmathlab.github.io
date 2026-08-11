@@ -55,3 +55,21 @@ export type YeniOgrenci = {
 };
 
 export type Kodlar = { ogrenci?: string; veli?: string };
+
+export type OdevSatiri = {
+  id: string;
+  baslik: string;
+  aciklama: string | null;
+  tur: 'test' | 'acik';
+  sinif_id: string;
+  sinif: string;
+  son_tarih: string;
+  soru_sayisi: number | null;
+  yayinda: boolean;
+  olusturma: string;
+  /** Dosyanın kendisi değil, varlığı. Yol yalnız gerektiğinde istenir. */
+  odev_pdf_var: boolean;
+  anahtar_pdf_var: boolean;
+  gonderim_sayisi: number;
+  sinif_mevcudu: number;
+};

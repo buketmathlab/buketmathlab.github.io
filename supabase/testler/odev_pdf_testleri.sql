@@ -224,3 +224,49 @@ begin
   raise notice 'ODEVLER_LISTESI TESTLERİ GEÇTİ';
 end;
 $$;
+
+-- =============================================================================
+-- odev_dosya_yolu — yol tek tek, istendiğinde
+-- =============================================================================
+do $$
+declare
+  t_ogretmen text; t_ogrenci text; v_sinif uuid; v_odev uuid; r jsonb;
+begin
+  raise notice '--- 10. odev_dosya_yolu ---';
+  update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+  t_ogretmen := (public.pin_ayarla('yol-test-PIN.3')) ->> 'token';
+  r := public.sinif_ekle(t_ogretmen, 12::smallint, 'Y'); v_sinif := (r ->> 'id')::uuid;
+  r := public.odev_olustur(t_ogretmen, 'YOL Testi', null, v_sinif, 'test',
+                           current_date + 5, 1, '{"1":"A"}'::jsonb,
+                           'anahtar/y.pdf', 'odev/y.pdf');
+  v_odev := (r ->> 'id')::uuid;
+
+  if (public.odev_dosya_yolu(t_ogretmen, v_odev, 'odev') ->> 'yol') <> 'odev/y.pdf' then
+    raise exception 'HATA: soru PDF yolu yanlış!';
+  end if;
+  if (public.odev_dosya_yolu(t_ogretmen, v_odev, 'anahtar') ->> 'yol') <> 'anahtar/y.pdf' then
+    raise exception 'HATA: anahtar PDF yolu yanlış!';
+  end if;
+  raise notice '    öğretmen iki yolu da alıyor: OK';
+
+  begin
+    perform public.odev_dosya_yolu(t_ogretmen, v_odev, 'baska');
+    raise exception 'HATA: geçersiz tür kabul edildi!';
+  exception when others then
+    if sqlstate = '22023' then raise notice '    geçersiz tür reddedildi: OK';
+    else raise; end if;
+  end;
+
+  r := public.ogrenci_ekle(t_ogretmen, 'Yol Test Öğrencisi', 'okul', v_sinif);
+  t_ogrenci := (public.giris(r ->> 'ogrenci_kodu')) ->> 'token';
+  begin
+    perform public.odev_dosya_yolu(t_ogrenci, v_odev, 'anahtar');
+    raise exception 'HATA: ÖĞRENCİ ANAHTAR YOLUNU ALDI!';
+  exception when insufficient_privilege then
+    raise notice '    öğrenci reddedildi: OK';
+  end;
+
+  raise notice '';
+  raise notice 'ODEV_DOSYA_YOLU TESTLERİ GEÇTİ';
+end;
+$$;

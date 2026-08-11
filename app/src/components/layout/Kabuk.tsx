@@ -18,6 +18,9 @@ const ikon = {
   ogrenci: (
     <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4 0-8 2-8 4.5V21h16v-2.5C20 16 16 14 12 14Z" />
   ),
+  odev: (
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 2.5L17.5 8H14V4.5ZM8 13h8v2H8v-2Zm0 4h8v2H8v-2Z" />
+  ),
 };
 
 const SEKMELER: Sekme[] = [
@@ -30,6 +33,11 @@ const SEKMELER: Sekme[] = [
     yol: '/ogretmen/siniflar',
     etiket: 'Sınıflar',
     ikon: <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ikon.sinif}</svg>,
+  },
+  {
+    yol: '/ogretmen/odevler',
+    etiket: 'Ödevler',
+    ikon: <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ikon.odev}</svg>,
   },
   {
     yol: '/ogretmen/ogrenciler',

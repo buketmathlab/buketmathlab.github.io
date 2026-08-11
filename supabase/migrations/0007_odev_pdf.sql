@@ -259,7 +259,46 @@ end;
 $$;
 
 -- -----------------------------------------------------------------------------
--- 6. YETKİLER
+-- 6. odev_dosya_yolu — öğretmen bir dosyayı açmak istediğinde
+--
+-- `odevler_listesi` yolları bilinçli olarak taşımıyor. Öğretmen bir dosyayı
+-- açmak istediğinde yol TEK TEK, o an isteniyor. Böylece liste yanıtı
+-- dosya yollarını taşımıyor ve yol yalnız gerçekten gerektiğinde görünüyor.
+-- -----------------------------------------------------------------------------
+create or replace function public.odev_dosya_yolu(
+  p_token text,
+  p_id uuid,
+  p_tur text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  v_yol text;
+begin
+  perform public._ogretmen(p_token);
+
+  if p_tur not in ('odev', 'anahtar') then
+    raise exception 'Geçersiz dosya türü.' using errcode = '22023';
+  end if;
+
+  select case when p_tur = 'odev' then d.odev_url else d.anahtar_url end
+    into v_yol
+  from public.odevler d
+  where d.id = p_id;
+
+  if not found then
+    raise exception 'Ödev bulunamadı.' using errcode = 'P0002';
+  end if;
+
+  return jsonb_build_object('yol', v_yol);
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 7. YETKİLER
 --
 -- `odev_olustur`un yeni imzası YENİ bir fonksiyondur. 0005'teki
 -- `alter default privileges ... revoke all on functions from public`
@@ -282,6 +321,10 @@ grant execute on function public.dosya_erisim_izni(text, text)   to anon, authen
 revoke all on function public.odevler_listesi(text, uuid, boolean)
   from public, anon, authenticated;
 grant execute on function public.odevler_listesi(text, uuid, boolean) to anon, authenticated;
+
+revoke all on function public.odev_dosya_yolu(text, uuid, text)
+  from public, anon, authenticated;
+grant execute on function public.odev_dosya_yolu(text, uuid, text) to anon, authenticated;
 
 -- Dahili yardımcıların kapalı kaldığını teyit et (0005'in güvencesi).
 revoke all on function public._oturum(text)              from public, anon, authenticated;
