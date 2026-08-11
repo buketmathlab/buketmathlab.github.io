@@ -10,13 +10,19 @@ for (const [ad,yol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogre
   if(yol!=='/') await p.addInitScript(()=>localStorage.setItem('sekiz_oturum',JSON.stringify({rol:'ogretmen',token:'t'.repeat(64)})));
   await p.goto('http://127.0.0.1:8788/yeni/#'+yol,{waitUntil:'networkidle'});
   await p.waitForTimeout(900);
-  let odak=0, halka=0;
+  let odak=0, halka=0, yerel=0;
   for(let i=0;i<30;i++){
     await p.keyboard.press('Tab');
     const r=await p.evaluate(()=>{const e=document.activeElement;
       if(!e||e===document.body)return null;const s=getComputedStyle(e);
-      return {h:s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0};});
-    if(r){odak++; if(r.h)halka++;}
+      return {tag:e.tagName, h:s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0};});
+    if(!r) continue;
+    // <video controls> kontrolleri shadow DOM'da yaşar. Tarayıcı kendi odak
+    // göstergesini çizer (Chromium'da oynat düğmesinde beyaz halka — ekran
+    // görüntüsüyle doğrulandı) ama activeElement host'u bildirdiği için
+    // dışarıdan ölçülemez. Başarısızlık saymak yanlış olur; ayrı sayılıyor.
+    if(r.tag==='VIDEO'){ yerel++; continue; }
+    odak++; if(r.h)halka++;
   }
   // Gerçek dokunma hedefi: onay kutusu/radyo bir etiketin içindeyse
   // tıklanabilir alan etikettir, kutunun kendisi değil.
@@ -29,7 +35,7 @@ for (const [ad,yol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogre
     .filter(x=>x.h>0&&x.h<44));
   const etiketsiz=await p.evaluate(()=>[...document.querySelectorAll('input,select,textarea')]
     .filter(e=>!e.labels?.length&&!e.getAttribute('aria-label')).length);
-  console.log(`${ad.padEnd(11)} odak ${halka}/${odak}  | 44px altı: ${kucuk.length} ${kucuk.length?JSON.stringify(kucuk):''} | etiketsiz alan: ${etiketsiz}`);
+  console.log(`${ad.padEnd(11)} odak ${halka}/${odak}${yerel?` (+${yerel} yerel video kontrolü, tarayıcı yönetiyor)`:''}  | 44px altı: ${kucuk.length} ${kucuk.length?JSON.stringify(kucuk):''} | etiketsiz alan: ${etiketsiz}`);
   await p.close();
 }
 await b.close();

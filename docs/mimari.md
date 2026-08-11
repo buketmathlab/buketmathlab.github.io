@@ -117,3 +117,45 @@ Faz 10'da kod bölme ve PDF görüntüleyicinin tembel yüklenmesi gelecek.
 | 7–8 | Analitik, iletişim, bildirimler | |
 | 9 | Landing + Ewalu deneyimi | |
 | 10–12 | PWA, güvenlik denetimi, son QA | |
+
+## Video varlığı
+
+`app/public/marka/ewalu-tanitim.mp4` — Ewalu'nun okul önünde, üniformayla
+kendini tanıttığı 15 saniyelik tanıtım. Giriş ekranında **kalıcı** olarak
+bulunur (öğretmen kararı; Faz 9'da tanıtım sayfası gelse bile kaldırılmaz).
+
+| Konu | Değer |
+|---|---|
+| Yayınlanan | 2.4 MB, H.264 CRF 26, faststart, AAC 96k |
+| Orijinal | 8.5 MB — `kaynak-varliklar/ewalu-tanitim-orijinal.mp4` |
+| Süre / çözünürlük | 15.0 sn / 1168×784, 24 fps |
+| Poster | 87 KB WebP, 1200×805 — **öğretmenin seçtiği kadraj**, videonun oranına kırpılmış |
+
+Sıkıştırma kararı ölçülerek verildi: CRF 26 ve CRF 30 karşılaştırıldı, okul
+tabelasındaki yazı ve kürk dokusu üzerinde gözle fark bulunamadı. CRF 30
+1.6 MB'ye iniyordu ama marka varlığı olduğu için kalite payı bırakıldı;
+`preload="none"` sayesinde 900 KB fark zaten talep anında iniyor.
+
+**Poster geçmişi — kayda değer bir hata.** İlk sürümde ffmpeg bulunmadığı
+için poster olarak Ewalu'nun Paris sokağındaki görseli konmuştu. Video ise
+okul önünde üniformalı Ewalu'yu gösteriyor; yani poster videoyu yanlış
+tanıtıyordu. Öğretmen fark etti. Ders: yer tutucu varlık, temsil ettiği
+şeyden görsel olarak farklıysa "marka açısından tutarlı" savunması geçerli
+değildir — ya gerçeği çıkarılır ya da eksik olduğu açıkça söylenir.
+
+Sonraki sürümde poster videonun 2. saniyesinden çıkarılmış gerçek bir
+kareydi. **Bugünkü poster o da değil:** öğretmen kendi seçtiği kadrajı
+gönderdi (`kaynak-varliklar/ewalu-tanitim-kare.jpg`, 1792×1008) ve posterin
+bu görsel olmasını istedi. Karesinde Atatürk büstü, Türk bayrağı, okul
+binası, tabelanın tam metni ve üniformalı Ewalu birlikte görünüyor.
+
+**Kırpma öğretmenin kararı.** Kaynak 16:9 (1.778), video ise 1168×784
+(1.490). Görsel olduğu gibi konsaydı tarayıcı onu video kutusuna
+sığdırırken üstte ve altta bant bırakırdı. Öğretmen "kırparak hazırla"
+dedi; hat kaynağı ortadan videonun oranına kırpıyor (1200×805, 1.491).
+Giden kısım yalnızca kenarlardaki ağaç ve zemin — sayılan hiçbir öğe
+kaybolmuyor.
+
+ffmpeg bu ortamda `imageio-ffmpeg` paketiyle sağlandı
+(`python3 -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"`).
+Varlık hattı ffmpeg'e bağımlı değil: poster kaynağı depoda duruyor.
