@@ -9,7 +9,16 @@
 -- kusurlar düzeltilmiş hâldedir. Her düzeltmenin gerekçesi yanında yazılıdır.
 -- =============================================================================
 
-create extension if not exists pgcrypto;
+-- pgcrypto: Supabase'de bu eklenti `extensions` şemasında kuruludur,
+-- `public`'te değil. Fonksiyonlarımızda search_path güvenlik gereği
+-- sabitlendiği için `extensions` de yola dahil edilmek zorunda; aksi hâlde
+-- digest/crypt/gen_random_bytes bulunamaz.
+--
+-- Yerel PostgreSQL'de `extensions` şeması yoktur; burada oluşturup eklentiyi
+-- oraya kuruyoruz ki yerel ortam Supabase ile aynı şekilde davransın.
+-- (Yolda var olmayan şema bulunması Postgres'te hata değildir, yok sayılır.)
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
 
 -- -----------------------------------------------------------------------------
 -- Ortak: updated_at tetikleyicisi
@@ -18,7 +27,7 @@ create extension if not exists pgcrypto;
 create or replace function public.tetik_updated_at()
 returns trigger
 language plpgsql
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   new.updated_at := now();

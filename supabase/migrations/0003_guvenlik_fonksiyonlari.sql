@@ -21,7 +21,7 @@ returns text
 language sql
 immutable
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
   select encode(digest(p_token, 'sha256'), 'hex');
 $$;
@@ -40,7 +40,7 @@ create or replace function public._yeni_kod()
 returns text
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   alfabe constant text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -75,7 +75,7 @@ create or replace function public._denetim(
 returns void
 language sql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
   insert into public.denetim_izi (islem, tablo, kayit_id, aktor, eski, yeni)
   values (p_islem, p_tablo, p_kayit_id, p_aktor, p_eski, p_yeni);
@@ -92,7 +92,7 @@ returns text
 language plpgsql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   basliklar json;
@@ -119,7 +119,7 @@ returns boolean
 language plpgsql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   basarisiz integer;
@@ -142,7 +142,7 @@ create or replace function public._deneme_kaydet(
 returns void
 language sql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
   insert into public.giris_denemeleri (kimlik, kod_ipucu, basarili)
   values (p_kimlik, left(coalesce(p_kod, ''), 2), p_basarili);
@@ -159,7 +159,7 @@ create or replace function public._oturum_ac(
 returns text
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   ham_token text;
@@ -184,7 +184,7 @@ create or replace function public._oturum(p_token text)
 returns table (rol text, ogrenci_id uuid)
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   kayit record;
@@ -220,7 +220,7 @@ create or replace function public._ogretmen(p_token text)
 returns void
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o record;
@@ -246,7 +246,7 @@ create or replace function public.pin_ayarla(p_yeni text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   mevcut text;
@@ -282,7 +282,7 @@ create or replace function public.pin_degistir(p_token text, p_eski text, p_yeni
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   mevcut text;
@@ -323,7 +323,7 @@ create or replace function public.giris(p_kod text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   kimlik   text;
@@ -397,7 +397,7 @@ create or replace function public.cikis(p_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   update public.oturumlar
@@ -414,7 +414,7 @@ create or replace function public.oturum_temizle()
 returns integer
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   silinen integer;

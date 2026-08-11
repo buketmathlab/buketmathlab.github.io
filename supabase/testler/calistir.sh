@@ -22,12 +22,18 @@ psql_() { psql -h "$SOCK" -p "$PORT" -U sekiz -v ON_ERROR_STOP=1 "$@"; }
 echo "==> Veritabanı sıfırlanıyor"
 psql_ -d postgres -qc "drop database if exists $DB;" -c "create database $DB;"
 
-echo "==> Supabase ortamı taklit ediliyor (roller + storage şeması)"
+echo "==> Supabase ortamı taklit ediliyor (roller + extensions + storage)"
+# ÖNEMLİ: Supabase'de pgcrypto `extensions` şemasında kuruludur, `public`'te
+# DEĞİL. İlk taklidimizde eklentiyi public'e kurmuştuk ve bu yüzden
+# "function digest(text, unknown) does not exist" hatası yerelde yakalanmadı,
+# ancak canlıda ortaya çıktı. Taklit artık gerçeğe sadık.
 psql_ -q -d "$DB" <<'SQL'
 do $$ begin
   if not exists (select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
   if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
 end $$;
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
 create schema if not exists storage;
 create table if not exists storage.buckets (
   id text primary key, name text, public boolean,

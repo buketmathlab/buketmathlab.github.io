@@ -25,7 +25,7 @@ returns table (dogru integer, yanlis integer, bos integer, puan numeric)
 language plpgsql
 immutable
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   i integer;
@@ -70,7 +70,7 @@ create or replace function public.siniflar_listesi(p_token text, p_arsiv boolean
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   perform public._ogretmen(p_token);
@@ -90,7 +90,7 @@ create or replace function public.sinif_ekle(p_token text, p_seviye smallint, p_
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   yeni public.siniflar;
@@ -113,7 +113,7 @@ create or replace function public.sinif_arsivle(p_token text, p_id uuid, p_arsiv
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   perform public._ogretmen(p_token);
@@ -137,7 +137,7 @@ create or replace function public.ogrenci_ekle(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   yeni_id uuid;
@@ -177,7 +177,7 @@ create or replace function public.ogrenci_pasiflestir(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   perform public._ogretmen(p_token);
@@ -195,7 +195,7 @@ create or replace function public.ogrenci_kodlari(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   sonuc jsonb;
@@ -214,7 +214,7 @@ create or replace function public.ogretmen_panosu(p_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   bugun date := current_date;
@@ -264,7 +264,7 @@ create or replace function public.ogrenciler_listesi(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   toplam integer;
@@ -319,7 +319,7 @@ create or replace function public.odev_olustur(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   yeni_id uuid;
@@ -346,7 +346,7 @@ create or replace function public.odev_yayinla(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o public.odevler;
@@ -382,7 +382,7 @@ create or replace function public.odev_sil(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o public.odevler;
@@ -412,7 +412,7 @@ create or replace function public.ogrenci_odevleri(p_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o record;
@@ -480,7 +480,7 @@ create or replace function public.odev_gonder(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o record;
@@ -559,7 +559,7 @@ create or replace function public.acik_puanla(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   eski public.gonderimler;
@@ -600,7 +600,7 @@ create or replace function public.veli_paneli(p_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o record;
@@ -653,7 +653,7 @@ create or replace function public.okundu_isaretle(p_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o record;
@@ -684,7 +684,7 @@ create or replace function public.mesaj_gonder(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o record;
@@ -722,7 +722,7 @@ create or replace function public.mesajlar_ogretmen(p_token text, p_ogrenci_id u
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   perform public._ogretmen(p_token);
@@ -743,7 +743,7 @@ create or replace function public._ozel_ders_ogrencisi(p_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   if not exists (select 1 from public.ogrenciler where id = p_id and tur = 'ozel') then
@@ -760,7 +760,7 @@ create or replace function public.ders_ekle(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare yeni uuid;
 begin
@@ -777,7 +777,7 @@ create or replace function public.ders_sil(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   perform public._ogretmen(p_token);
@@ -792,7 +792,7 @@ create or replace function public.odeme_ekle(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare yeni uuid;
 begin
@@ -809,7 +809,7 @@ create or replace function public.odeme_degistir(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   perform public._ogretmen(p_token);
@@ -823,7 +823,7 @@ create or replace function public.odeme_sil(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare eski public.odemeler;
 begin
@@ -853,7 +853,7 @@ create or replace function public.dosya_erisim_izni(p_token text, p_yol text)
 returns boolean
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 declare
   o record;
@@ -902,7 +902,7 @@ create or replace function public.disa_aktar(p_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = public, extensions, pg_temp
 as $$
 begin
   perform public._ogretmen(p_token);
