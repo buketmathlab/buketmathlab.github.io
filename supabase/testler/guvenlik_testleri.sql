@@ -131,7 +131,7 @@ begin
   raise notice '    teslim öncesi anahtar gizli: OK';
 
   raise notice '--- 9. Teslim ve puanlama ---';
-  r := public.odev_gonder(t_ogrenci, v_odev, 'ogrenci/cozum1.jpg',
+  r := public.odev_gonder(t_ogrenci, v_odev, 'cozum/' || v_odev || '/' || v_ogrenci || '.jpg',
                           '{"1":"B","2":"A","3":"A","4":"C","5":"E"}'::jsonb);
   assert (r ->> 'puan')::numeric = 80.00, 'Teslimde puan 80 olmalı';
   raise notice '    teslim puanı 80: OK';
@@ -144,7 +144,7 @@ begin
 
   raise notice '--- 11. MÜKERRER TESLİM engelleniyor mu? ---';
   begin
-    perform public.odev_gonder(t_ogrenci, v_odev, 'ogrenci/cozum2.jpg',
+    perform public.odev_gonder(t_ogrenci, v_odev, 'cozum/' || v_odev || '/' || v_ogrenci || '.jpg',
                                '{"1":"B","2":"D","3":"A","4":"C","5":"E"}'::jsonb);
     raise exception 'HATA: mükerrer teslim kabul edildi!';
   exception when unique_violation then
