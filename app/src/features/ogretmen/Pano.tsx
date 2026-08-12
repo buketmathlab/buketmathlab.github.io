@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
@@ -8,14 +8,26 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import type { Pano as PanoVerisi } from '@/types/api';
 
+/**
+ * Pano kutusu — artık TIKLANABİLİR.
+ *
+ * Sayı tek başına eyleme dönüşmüyordu: "11 öğrenci göndermemiş" bilgisi,
+ * o on bir ismin kim olduğunu söylemeden öğretmene bir şey yaptırmıyor.
+ * Kutu artık listenin kapısı.
+ *
+ * Tüm kart bir düğme: 360 px'de dörde bölünmüş bir ızgarada küçük bir
+ * bağlantı metnini hedeflemek zor, kartın tamamı rahat bir hedef.
+ */
 function Sayi({
   deger,
   etiket,
   vurgu,
+  onAc,
 }: {
   deger: number;
   etiket: string;
   vurgu?: 'tehlike' | 'uyari';
+  onAc: () => void;
 }) {
   const renk =
     vurgu === 'tehlike' && deger > 0
@@ -24,10 +36,16 @@ function Sayi({
         ? 'text-warning'
         : 'text-ink';
   return (
-    <Card className="text-center">
-      <p className={`sk-sayi font-display text-[30px] font-semibold ${renk}`}>{deger}</p>
-      <p className="mt-1 text-[13px] text-muted">{etiket}</p>
-    </Card>
+    <button
+      type="button"
+      onClick={onAc}
+      className="rounded-sk-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+    >
+      <Card className="h-full text-center transition-colors hover:border-ink-soft">
+        <p className={`sk-sayi font-display text-[30px] font-semibold ${renk}`}>{deger}</p>
+        <p className="mt-1 text-[13px] text-muted">{etiket}</p>
+      </Card>
+    </button>
   );
 }
 
@@ -40,6 +58,7 @@ function Sayi({
  */
 export function Pano() {
   const { oturum } = useOturum();
+  const git = useNavigate();
   const { veri, durum, hata, yenile } = useVeri<PanoVerisi>('ogretmen_panosu', {
     p_token: oturum?.token,
   });
@@ -58,13 +77,30 @@ export function Pano() {
         {veri && (
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Sayi deger={veri.ogrenci_sayisi} etiket="Öğrenci" />
-              <Sayi deger={veri.acik_odev} etiket="Açık ödev" />
-              <Sayi deger={veri.gecikmis_eksik} etiket="Göndermeyen" vurgu="tehlike" />
+              {/* Öğrenci kutusu artık TOPLAM değil, ödev verilen öğrenci
+                  sayısı — öğretmenin isteği. Toplam öğrenci sayısını zaten
+                  biliyor; anlamlı olan sistemin kaç öğrenciye ulaştığı. */}
+              <Sayi
+                deger={veri.odev_verilen_ogrenci}
+                etiket="Ödev verilen öğrenci"
+                onAc={() => git('/ogretmen/bugun/ogrenci')}
+              />
+              <Sayi
+                deger={veri.acik_odev}
+                etiket="Açık ödev"
+                onAc={() => git('/ogretmen/bugun/acik_odev')}
+              />
+              <Sayi
+                deger={veri.gecikmis_eksik}
+                etiket="Göndermeyen"
+                vurgu="tehlike"
+                onAc={() => git('/ogretmen/bugun/gondermeyen')}
+              />
               <Sayi
                 deger={veri.bekleyen_degerlendirme}
                 etiket="Puan bekliyor"
                 vurgu="uyari"
+                onAc={() => git('/ogretmen/bugun/puan_bekleyen')}
               />
             </div>
 
