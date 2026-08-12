@@ -34,10 +34,9 @@ const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},ders
   {id:'a4',baslik:'Arşivlenmiş sınıfın ödevi',aciklama:null,tur:'test',son_tarih:gun(3),soru_sayisi:5,
    gec_teslim:true,sik_sayisi:5,sinif_arsiv:true,
    odev_yolu:'odev/w.pdf',gonderim:null,cevap_anahtari:null,anahtar_yolu:null}]};
-const SINIF_KODLARI={sinif:{id:'11B',ad:'11B',ozel:false,arsiv:false},ogrenciler:[
-  {id:'o1',ad:'Ali Yıldırım',tur:'okul',ogrenci_kodu:'K7001XQ',veli_kodu:'K7051XQ'},
-  {id:'o2',ad:'Ece Güneş',tur:'ozel',ogrenci_kodu:'K7002XQ',veli_kodu:null}]};
-const CEVAP={sinif_kodlari:SINIF_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
+// Kod artık ÖĞRENCİ BAŞINA geliyor (0018); toplu uç kaldırıldı.
+const OGRENCI_KODLARI={ogrenci:'K7001XQ',veli:'K7051XQ'};
+const CEVAP={ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],

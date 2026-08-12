@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import type { Sinif, SinifKodlari } from '@/types/api';
+import type { Kodlar as KodlarTipi, OgrenciListesi, Sinif } from '@/types/api';
 
 /**
  * Kodlar sekmesi — SINIF LİSTESİ.
@@ -88,11 +88,18 @@ export function Kodlar() {
 }
 
 /**
- * Bir sınıfın kodları.
+ * Bir sınıfın öğrencileri — kodlar ÖĞRENCİ ÖĞRENCİ açılıyor.
  *
- * KODLAR VARSAYILAN GİZLİ. Ekran açılırken kod ÇEKİLMİYOR bile — sunucuya
- * istek ancak öğretmen "Kodları göster"e bastığında gidiyor. Ortak bir
- * tablette sekme açık unutulsa ekranda kod olmaz; ağ günlüğüne de düşmez.
+ * ÖĞRETMENİN İSTEĞİ: "Bir öğrenciye kodunu gösterirken diğer öğrencilerin
+ * kodunu göremesin."
+ *
+ * Bunu ekranda gizleyerek yapmıyoruz. Kod, dokunulan öğrenci için O AN
+ * sunucudan isteniyor (`ogrenci_kodlari`); diğerlerinin kodu tarayıcıya hiç
+ * inmiyor. Toplu indirip birini göstermek, kodları ağ yanıtında ve bellekte
+ * bırakırdı — cevap anahtarında reddettiğimiz desenin aynısı (Part XXI).
+ *
+ * AYNI ANDA TEK ÖĞRENCİ: ikinci bir isme dokunmak birincinin kodunu
+ * state'ten de düşürür, yalnız ekrandan değil.
  */
 export function SinifKodlari() {
   const { id = '' } = useParams();
@@ -100,17 +107,37 @@ export function SinifKodlari() {
   const { bildir } = useToast();
   const git = useNavigate();
 
-  const [veri, setVeri] = useState<SinifKodlari | null>(null);
-  const [yukleniyor, setYukleniyor] = useState(false);
+  // Tek kayıt: açık olan öğrencinin kimliği ve kodları. İki öğrencinin
+  // kodunu aynı anda tutabilecek bir yapı (dizi, sözlük) bilerek yok —
+  // tutamayacağı için sızdıramaz.
+  const [acik, setAcik] = useState<{ id: string; kodlar: KodlarTipi } | null>(null);
+  const [bekleyen, setBekleyen] = useState<string | null>(null);
 
-  async function goster() {
-    setYukleniyor(true);
+  const { veri, durum, hata, yenile } = useVeri<OgrenciListesi>(
+    'ogrenciler_listesi',
+    { p_token: oturum?.token, p_arama: null, p_sinif_id: id, p_sayfa: 1, p_boyut: 100 },
+    (v) => v.kayitlar.length === 0,
+  );
+
+  async function ac(ogrenciId: string) {
+    if (acik?.id === ogrenciId) {
+      setAcik(null);
+      return;
+    }
+    // Öncekini HEMEN düşür: ağ beklerken iki öğrencinin kodu bir arada
+    // durmasın.
+    setAcik(null);
+    setBekleyen(ogrenciId);
     try {
-      setVeri(await rpc<SinifKodlari>('sinif_kodlari', { p_token: oturum?.token, p_sinif_id: id }));
+      const k = await rpc<KodlarTipi>('ogrenci_kodlari', {
+        p_token: oturum?.token,
+        p_id: ogrenciId,
+      });
+      setAcik({ id: ogrenciId, kodlar: k });
     } catch (e) {
       bildir(e instanceof Error ? e.message : 'Kodlar alınamadı.', 'hata');
     } finally {
-      setYukleniyor(false);
+      setBekleyen(null);
     }
   }
 
@@ -122,68 +149,73 @@ export function SinifKodlari() {
         </Button>
       </div>
 
-      {!veri ? (
-        <Card>
-          <h1 className="font-display text-[22px] font-semibold text-ink">Kodlar gizli</h1>
-          <p className="mt-2 text-[14px] text-muted">
-            Giriş kodları birer şifredir. Bu yüzden ekran açılırken getirilmiyor; görmek için
-            aşağıdaki düğmeye basın. Ortak bir cihazda bu sayfayı açık bırakmayın.
-          </p>
-          <div className="mt-4">
-            <Button onClick={goster} yukleniyor={yukleniyor} yuklenmeMetni="Getiriliyor">
-              Kodları göster
-            </Button>
-          </div>
-        </Card>
-      ) : (
-        <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div>
+      <AsyncBoundary
+        durum={durum}
+        bosBaslik="Bu sınıfta öğrenci yok"
+        bosAciklama="Öğrenciler bölümünden bu sınıfa öğrenci ekleyebilirsiniz."
+        {...(hata ? { hataAciklama: hata } : {})}
+        tekrarDene={yenile}
+      >
+        {veri && (
+          <>
+            <div className="mb-4">
               <h1 className="font-display text-[24px] font-semibold text-ink">
-                {veri.sinif.ad}
+                {veri.kayitlar[0]?.sinif ?? 'Sınıf'}
               </h1>
               <p className="mt-1 text-[14px] text-muted">
-                <span className="sk-sayi">{veri.ogrenciler.length}</span> öğrenci · koda
-                dokununca kopyalanır
+                <span className="sk-sayi">{veri.kayitlar.length}</span> öğrenci · kodu görmek
+                için öğrencinin adına dokunun
               </p>
             </div>
-            {/* Gizlemek geri getirmek kadar kolay olmalı: öğretmen sınıfa
-                kodları gösterip hemen kapatabilsin. */}
-            <Button tur="sade" olcu="sm" onClick={() => setVeri(null)}>
-              Gizle
-            </Button>
-          </div>
 
-          {veri.ogrenciler.length === 0 ? (
             <Card>
-              <p className="text-[14px] text-muted">Bu sınıfta aktif öğrenci yok.</p>
+              <ul className="divide-y divide-line">
+                {veri.kayitlar.map((o) => {
+                  const bu = acik?.id === o.id;
+                  return (
+                    <li key={o.id} className="py-1 first:pt-0 last:pb-0">
+                      <button
+                        type="button"
+                        onClick={() => ac(o.id)}
+                        aria-expanded={bu}
+                        className="flex min-h-[44px] w-full items-center justify-between gap-3 py-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                      >
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-ink">{o.ad}</span>
+                          {o.tur === 'ozel' && <Tag tur="notr">Özel ders</Tag>}
+                        </span>
+                        <span className="text-[13px] text-muted">
+                          {bekleyen === o.id ? 'Getiriliyor…' : bu ? 'Kapat' : 'Kodu göster'}
+                        </span>
+                      </button>
+
+                      {bu && (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {acik.kodlar.ogrenci ? (
+                            <KodKutusu etiket="Öğrenci kodu" kod={acik.kodlar.ogrenci} />
+                          ) : (
+                            <Eksik etiket="Öğrenci kodu" />
+                          )}
+                          {acik.kodlar.veli ? (
+                            <KodKutusu etiket="Veli kodu" kod={acik.kodlar.veli} />
+                          ) : (
+                            <Eksik etiket="Veli kodu" />
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </Card>
-          ) : (
-            <div className="space-y-2">
-              {veri.ogrenciler.map((o) => (
-                <Card key={o.id}>
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-ink">{o.ad}</span>
-                    {o.tur === 'ozel' && <Tag tur="notr">Özel ders</Tag>}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {o.ogrenci_kodu ? (
-                      <KodKutusu etiket="Öğrenci kodu" kod={o.ogrenci_kodu} />
-                    ) : (
-                      <Eksik etiket="Öğrenci kodu" />
-                    )}
-                    {o.veli_kodu ? (
-                      <KodKutusu etiket="Veli kodu" kod={o.veli_kodu} />
-                    ) : (
-                      <Eksik etiket="Veli kodu" />
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+
+            <p className="mt-3 text-[13px] text-muted">
+              Aynı anda yalnız bir öğrencinin kodu açılır; başka bir isme dokununca öncekiler
+              kapanır.
+            </p>
+          </>
+        )}
+      </AsyncBoundary>
     </>
   );
 }
