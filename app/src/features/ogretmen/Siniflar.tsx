@@ -17,8 +17,15 @@ import type { Sinif } from '@/types/api';
  * Sınıf yönetimi.
  *
  * Sınıflar SİLİNMEZ, arşivlenir: geçmiş ödev kayıtları sınıfa bağlı, silmek
- * tarihi bozar. Arşivli sınıf yeni ödev/öğrenci seçimlerinde çıkmaz ama
- * eski kayıtlar okunabilir kalır.
+ * tarihi bozar.
+ *
+ * ARŞİV ARTIK HER YERDE GEÇERLİ (migration 0016). Arşivdeki sınıf Pano
+ * sayılarında, Pano listelerinde, Ödevler'de ve Öğrenciler'de görünmez ve o
+ * sınıfa yeni gönderim kabul edilmez. Önceden yalnız BU ekranın süzgeciydi;
+ * öğretmen "bir yerde arşivlediğimde başka yerde de görünmemeli" dedi.
+ *
+ * Veri silinmiyor: geri alındığı anda her şey aynen dönüyor, kurtarma yolu
+ * da bu ekranda (aşağıdaki "Göster ve geri al").
  */
 export function Siniflar() {
   const { oturum } = useOturum();
@@ -92,7 +99,7 @@ export function Siniflar() {
     <>
       <SayfaBasligi
         baslik="Sınıflar"
-        aciklama="Sınıf silinmez, arşivlenir — geçmiş ödev kayıtları korunur."
+        aciklama="Arşivlenen sınıf hiçbir listede görünmez; hiçbir şey silinmez, geri alabilirsiniz."
         eylem={<Button onClick={() => setEkleAcik(true)}>Sınıf ekle</Button>}
       />
 

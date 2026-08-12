@@ -179,7 +179,10 @@ function OdevIcerigi({
 }: IcerikProps) {
   const sure = sureDurumu(odev.son_tarih);
   const gonderildi = odev.gonderim !== null;
-  const kapali = sure.gecti && !odev.gec_teslim;
+  // İki AYRI kapanma sebebi. Aynı kutuya sıkıştırmıyoruz: "süren doldu" ile
+  // "sınıfın kapandı" öğrenci için bambaşka iki şey, ilki onun elindeydi.
+  const sinifKapali = odev.sinif_arsiv;
+  const kapali = sinifKapali || (sure.gecti && !odev.gec_teslim);
   const testMi = odev.tur === 'test';
   const soruSayisi = odev.soru_sayisi ?? 0;
   // Şık sayısı ödevde saklı (migration 0010). Tahmin etmiyoruz: A–D'lik bir
@@ -216,7 +219,8 @@ function OdevIcerigi({
           ) : (
             <Tag tur={sure.gecti ? 'notr' : sure.acil ? 'uyari' : 'notr'}>{sure.metin}</Tag>
           )}
-          {!gonderildi && !odev.gec_teslim && (
+          {!gonderildi && sinifKapali && <Tag tur="notr">Sınıf kapandı</Tag>}
+          {!gonderildi && !sinifKapali && !odev.gec_teslim && (
             <Tag tur="uyari">Geç teslim kabul edilmiyor</Tag>
           )}
         </div>
@@ -230,6 +234,15 @@ function OdevIcerigi({
 
       {gonderildi ? (
         <Sonuc odev={odev} onPdf={onPdf} />
+      ) : sinifKapali ? (
+        <Card vurgu="uyari">
+          <p className="mb-2 font-semibold text-ink">Bu sınıf kapatılmış.</p>
+          <p className="text-[14px] text-muted">
+            Öğretmenin sınıfı arşivlemiş, bu yüzden şu an ödev gönderemiyorsun. Sorulara ve
+            eski puanlarına bakmayı sürdürebilirsin; öğretmenin sınıfı geri açarsa
+            gönderebilirsin.
+          </p>
+        </Card>
       ) : kapali ? (
         <Card vurgu="uyari">
           <p className="mb-2 font-semibold text-ink">Bu ödevin süresi doldu.</p>

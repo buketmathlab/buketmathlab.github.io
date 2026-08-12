@@ -127,6 +127,14 @@ export type OgrenciOdev = {
   gec_teslim: boolean;
   /** 4 (A–D) ya da 5 (A–E). Öğrenci ızgarası kaç düğme çizeceğini buradan bilir. */
   sik_sayisi: number;
+  /**
+   * Öğrencinin sınıfı arşivde mi (migration 0016).
+   *
+   * Ödev GİZLENMİYOR — öğrenci geçmişini ve puanını görmeye devam ediyor.
+   * Yalnız yeni gönderim kapalı; arayüz nedenini önden söylesin diye burada.
+   * Kararın kendisi sunucuda: `odev_gonder` arşivdeki sınıfı reddediyor.
+   */
+  sinif_arsiv: boolean;
   /** Soru PDF'i. Teslimden bağımsız, yayındaki ödevde her zaman var. */
   odev_yolu: string | null;
   gonderim: OgrenciGonderim | null;
