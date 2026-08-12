@@ -154,10 +154,13 @@ export function Odevler() {
               <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
                   {/* Öğretmen "ödevin üzerine tıklayıp" düzenlemek istedi. */}
+                  {/* `min-h-[44px]`: başlık 28 px'ti ve kartın ana dokunma
+                      hedefi bu. Erişilebilirlik denetimi Ödevler ekranını
+                      kapsamadığı için ölçülmemişti; kapsama alınınca çıktı. */}
                   <button
                     type="button"
                     onClick={() => git(`/ogretmen/odevler/${o.id}`)}
-                    className="text-left font-display text-[18px] font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="flex min-h-[44px] items-center text-left font-display text-[18px] font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   >
                     {o.baslik}
                   </button>
@@ -182,14 +185,22 @@ export function Odevler() {
                 {!o.gec_teslim && (
                   <span className="text-warning"> · geç teslim kapalı</span>
                 )}
-                {o.yayinda && (
-                  <>
-                    {' · '}
-                    <span className="sk-sayi">{o.gonderim_sayisi}</span>/
-                    <span className="sk-sayi">{o.sinif_mevcudu}</span> gönderdi
-                  </>
-                )}
               </p>
+
+              {/* Gönderim sayısı tıklanabilir: öğretmenin bir sonraki sorusu
+                  "kim gönderdi, kim göndermedi" ve cevabı o ekranda. */}
+              {o.yayinda && (
+                <p className="mb-3 -mt-2">
+                  <button
+                    type="button"
+                    onClick={() => git(`/ogretmen/odevler/${o.id}/gonderimler`)}
+                    className="min-h-[44px] text-[13px] font-semibold text-link underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  >
+                    <span className="sk-sayi">{o.gonderim_sayisi}</span>/
+                    <span className="sk-sayi">{o.sinif_mevcudu}</span> gönderdi — kimler?
+                  </button>
+                </p>
+              )}
 
               {/* Geç teslime izin vermek, gecikmeyi görmezden gelmek değil.
                   Öğretmenin isteği: geç gelen teslim listede mutlaka

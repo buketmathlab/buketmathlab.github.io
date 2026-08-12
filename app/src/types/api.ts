@@ -128,3 +128,43 @@ export type OgrenciOdevleri = {
   odevler: OgrenciOdev[];
   dersler: Array<{ zaman: string; mod: string; link: string | null }>;
 };
+
+/** `odev_gonderimleri` içindeki tek satır — sınıftaki HER öğrenci için bir tane. */
+export type GonderimSatiri = {
+  ogrenci_id: string;
+  ogrenci: string;
+  /** Göndermeyen öğrencide null. Satır yine de listede yer alır. */
+  gonderim_id: string | null;
+  gonderdi: boolean;
+  zaman: string | null;
+  gecikmeli: boolean;
+  durum: 'incelemede' | 'onaylandi' | 'puanlandi' | null;
+  dogru: number | null;
+  yanlis: number | null;
+  bos: number | null;
+  puan: number | null;
+  ogretmen_puan: number | null;
+  ogretmen_yorum: string | null;
+  /** Dosyanın kendisi değil, varlığı. Yol `gonderim_foto_yolu` ile istenir. */
+  foto_var: boolean;
+};
+
+export type OdevGonderimleri = {
+  odev: {
+    id: string;
+    baslik: string;
+    tur: 'test' | 'acik';
+    sinif: string;
+    son_tarih: string;
+    soru_sayisi: number | null;
+    gec_teslim: boolean;
+    yayinda: boolean;
+  };
+  ozet: {
+    mevcut: number;
+    gonderen: number;
+    gecikmeli: number;
+    puan_bekleyen: number;
+  };
+  satirlar: GonderimSatiri[];
+};

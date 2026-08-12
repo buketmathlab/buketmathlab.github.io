@@ -2,6 +2,19 @@ import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 const SINIFLAR=[9,10,11].flatMap(s=>['A','B'].map(h=>({id:`${s}${h}`,ad:`${s}${h}`,seviye:s,sube:h,arsiv:false,ogrenci_sayisi:12})));
 const OGR={toplam:40,sayfa:1,toplam_sayfa:2,kayitlar:[{id:'a',ad:'Elif Yıldırım',tur:'okul',sinif:'9A'},{id:'b',ad:'Ece Güneş',tur:'ozel',sinif:null}]};
 const bugun=new Date(); const gun=n=>{const d=new Date(bugun);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
+const ODEVLER_LISTESI=[{id:'a1',baslik:'Türev testi — sayfa 84',aciklama:null,tur:'test',sinif_id:'11B',sinif:'11B',
+  son_tarih:gun(8),soru_sayisi:10,gec_teslim:true,sik_sayisi:5,yayinda:true,olusturma:gun(-10),
+  odev_pdf_var:true,anahtar_pdf_var:true,gonderim_sayisi:12,gec_gonderim_sayisi:3,sinif_mevcudu:20}];
+const GONDERIMLER={odev:{id:'a1',baslik:'Limit — açık uçlu',tur:'acik',sinif:'11B',son_tarih:gun(-2),
+   soru_sayisi:null,gec_teslim:true,yayinda:true},
+  ozet:{mevcut:3,gonderen:2,gecikmeli:1,puan_bekleyen:1},
+  satirlar:[
+   {ogrenci_id:'o1',ogrenci:'Ali Yıldırım',gonderim_id:'g1',gonderdi:true,zaman:gun(-1)+'T14:20:00Z',gecikmeli:true,
+    durum:'incelemede',dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:null,ogretmen_yorum:null,foto_var:true},
+   {ogrenci_id:'o2',ogrenci:'Mehmet Kaya',gonderim_id:null,gonderdi:false,zaman:null,gecikmeli:false,
+    durum:null,dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:null,ogretmen_yorum:null,foto_var:false},
+   {ogrenci_id:'o3',ogrenci:'Ece Güneş',gonderim_id:'g3',gonderdi:true,zaman:gun(-4)+'T18:40:00Z',gecikmeli:false,
+    durum:'onaylandi',dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:90,ogretmen_yorum:'Güzel.',foto_var:true}]};
 const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},dersler:[],odevler:[
   {id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',son_tarih:gun(2),soru_sayisi:5,gec_teslim:true,sik_sayisi:5,
    odev_yolu:'odev/x.pdf',gonderim:null,cevap_anahtari:null,anahtar_yolu:null},
@@ -9,10 +22,12 @@ const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},ders
    odev_yolu:'odev/z.pdf',
    gonderim:{id:'g1',zaman:gun(-7),durum:'puanlandi',dogru:1,yanlis:1,bos:0,puan:50,ogretmen_puan:null,ogretmen_yorum:null,cevaplar:{1:'A',2:'D'},gecikmeli:true},
    cevap_anahtari:{1:'A',2:'B'},anahtar_yolu:'odev/z-anahtar.pdf'}]};
-const CEVAP={ogretmen_panosu:{ogrenci_sayisi:40,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI};
+const CEVAP={ogretmen_panosu:{ogrenci_sayisi:40,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER};
 const b=await chromium.launch();
 for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],
+                            ['Ödevler','/ogretmen/odevler'],
+                            ['Gönderimler','/ogretmen/odevler/a1/gonderimler'],
                             ['Ödevlerim','/ogrenci','ogrenci'],
                             ['Teslim','/ogrenci/odev/a1','ogrenci'],
                             ['Teslim sonucu','/ogrenci/odev/a3','ogrenci']]) {
