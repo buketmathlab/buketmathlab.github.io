@@ -105,6 +105,41 @@ yazılıp yalnız latin + latin-ext bırakıldı — Türkçe'nin tamamı bu iki
 
 Faz 10'da kod bölme ve PDF görüntüleyicinin tembel yüklenmesi gelecek.
 
+## Arşiv
+
+Sınıf **silinmez, arşivlenir** — geçmiş ödevler, gönderimler ve notlar sınıfa
+bağlı; silmek tarihi bozar.
+
+`arsiv` başlangıçta yalnız `siniflar_listesi`'nin süzgeciydi. Öğretmen bunu
+fark etti ("bir yerde arşivlediğimde artık o sınıf başka bir yerde
+görünmemeli") ve ölçüm onu doğruladı: arşivdeki sınıf Pano sayılarında,
+Pano listelerinde, Ödevler'de ve Öğrenciler'de duruyordu; öğrenci hâlâ ödev
+gönderebiliyordu. **0016** bunu ürün kuralına çevirdi.
+
+**Süzülenler** — arşivdeki sınıf hiçbirinde görünmez:
+`ogretmen_panosu` (dört sayı ve son gönderimler), `pano_detay` (dört türün
+hepsi), `odevler_listesi`, `ogrenciler_listesi`.
+
+**Süzülmeyen iki uç, bilerek:** `sinif_ogrencileri(p_sinif_id)` ve
+`odev_gonderimleri(p_id)`. İkisi de listeleme değil, kimlikle çağrılıyor ve
+**arşivden geri dönüş yolunun üzerindeler** — öğretmen Sınıflar'da
+"Arşivdekileri de göster" deyip eski sınıfın karnesine bakabilmeli.
+
+**Gönderim de kapanıyor.** `odev_gonder` arşivdeki sınıfı `22023` ile
+reddediyor. Sebep: arşivden sonra ödev öğretmenin hiçbir ekranında
+görünmüyor; gönderimi açık bıraksaydık öğrenci ödev yollar, ödev hiçbir yere
+düşmez ve kimse fark etmez. Öğrenci **ödevlerini ve puanlarını görmeye devam
+ediyor** (`ogrenci_odevleri` `sinif_arsiv` bayrağıyla nedenini söylüyor);
+gizlenen bir şey yok, kapanan yalnız yeni gönderim.
+
+**Hiçbir veri silinmiyor.** Geri alındığı anda dört liste de, gönderim de
+aynen dönüyor — `arsiv_testleri.sql` 7. grubu bunu ölçüyor.
+
+`_sinif_arsivde(uuid)` yardımcısı NULL'ı `false` sayar: `ogrenciler.sinif_id`
+boş olabildiği için (sınıfa bağlanmamış özel ders öğrencisi) düz `not
+s.arsiv` yazmak LEFT JOIN'de NULL üretir ve o öğrenciyi **sessizce** listeden
+düşürürdü.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |

@@ -5,6 +5,10 @@ const bugun=new Date(); const gun=n=>{const d=new Date(bugun);d.setDate(d.getDat
 const ODEVLER_LISTESI=[{id:'a1',baslik:'Türev testi — sayfa 84',aciklama:null,tur:'test',sinif_id:'11B',sinif:'11B',
   son_tarih:gun(8),soru_sayisi:10,gec_teslim:true,sik_sayisi:5,yayinda:true,olusturma:gun(-10),
   odev_pdf_var:true,anahtar_pdf_var:true,gonderim_sayisi:12,gec_gonderim_sayisi:3,sinif_mevcudu:20}];
+const PANO_DETAY={tur:'gondermeyen',baslik:'Göndermeyen öğrenciler',
+  aciklama:'Süresi dolmuş ödevlerden en az birini göndermemiş öğrenciler.',toplam:3,
+  gruplar:[{sinif:'9A',ozel:false,satirlar:[{ad:'Mehmet Kaya',eksik:3},{ad:'Zeynep Şahin',eksik:1}]},
+           {sinif:'Özel ders',ozel:true,satirlar:[{ad:'Ozan Demir',eksik:1}]}]};
 const SINIF_DETAY={sinif:{id:'11B',ad:'11B',ozel:false,arsiv:false},degerlendirilen_odev:8,
   ogrenciler:[
    {id:'o1',ad:'Ali Yıldırım',tur:'okul',yapti:8,yapmadi:0,ortalama_yapan:86.5,ortalama_tum:86.5},
@@ -21,22 +25,28 @@ const GONDERIMLER={odev:{id:'a1',baslik:'Limit — açık uçlu',tur:'acik',sini
    {ogrenci_id:'o3',ogrenci:'Ece Güneş',gonderim_id:'g3',gonderdi:true,zaman:gun(-4)+'T18:40:00Z',gecikmeli:false,
     durum:'onaylandi',dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:90,ogretmen_yorum:'Güzel.',foto_var:true}]};
 const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},dersler:[],odevler:[
-  {id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',son_tarih:gun(2),soru_sayisi:5,gec_teslim:true,sik_sayisi:5,
+  {id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',son_tarih:gun(2),soru_sayisi:5,gec_teslim:true,sik_sayisi:5,sinif_arsiv:false,
    odev_yolu:'odev/x.pdf',gonderim:null,cevap_anahtari:null,anahtar_yolu:null},
-  {id:'a3',baslik:'Üslü Sayılar',aciklama:null,tur:'test',son_tarih:gun(-6),soru_sayisi:2,gec_teslim:true,sik_sayisi:4,
+  {id:'a3',baslik:'Üslü Sayılar',aciklama:null,tur:'test',son_tarih:gun(-6),soru_sayisi:2,gec_teslim:true,sik_sayisi:4,sinif_arsiv:false,
    odev_yolu:'odev/z.pdf',
    gonderim:{id:'g1',zaman:gun(-7),durum:'puanlandi',dogru:1,yanlis:1,bos:0,puan:50,ogretmen_puan:null,ogretmen_yorum:null,cevaplar:{1:'A',2:'D'},gecikmeli:true},
-   cevap_anahtari:{1:'A',2:'B'},anahtar_yolu:'odev/z-anahtar.pdf'}]};
-const CEVAP={ogretmen_panosu:{ogrenci_sayisi:40,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY};
+   cevap_anahtari:{1:'A',2:'B'},anahtar_yolu:'odev/z-anahtar.pdf'},
+  {id:'a4',baslik:'Arşivlenmiş sınıfın ödevi',aciklama:null,tur:'test',son_tarih:gun(3),soru_sayisi:5,
+   gec_teslim:true,sik_sayisi:5,sinif_arsiv:true,
+   odev_yolu:'odev/w.pdf',gonderim:null,cevap_anahtari:null,anahtar_yolu:null}]};
+const CEVAP={ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],
                             ['Ödevler','/ogretmen/odevler'],
                             ['Gönderimler','/ogretmen/odevler/a1/gonderimler'],
                             ['Sınıf karnesi','/ogretmen/siniflar/11B'],
+                            ['Pano detayı','/ogretmen/bugun/gondermeyen'],
+                            ['Pano sınıfı','/ogretmen/bugun/gondermeyen/9A'],
                             ['Ödevlerim','/ogrenci','ogrenci'],
                             ['Teslim','/ogrenci/odev/a1','ogrenci'],
-                            ['Teslim sonucu','/ogrenci/odev/a3','ogrenci']]) {
+                            ['Teslim sonucu','/ogrenci/odev/a3','ogrenci'],
+                            ['Kapalı sınıf','/ogrenci/odev/a4','ogrenci']]) {
   const p=await b.newPage({viewport:{width:360,height:780}});
   await p.route('**/rest/v1/rpc/*',r=>r.fulfill({status:200,contentType:'application/json',
     body:JSON.stringify(CEVAP[r.request().url().split('/').pop().split('?')[0]]??{})}));

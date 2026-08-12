@@ -14,6 +14,8 @@ export type GirisSonucu =
 
 export type Pano = {
   ogrenci_sayisi: number;
+  /** Sınıfına en az bir ödev yayınlanmış öğrenci sayısı (migration 0015). */
+  odev_verilen_ogrenci: number;
   acik_odev: number;
   bekleyen_degerlendirme: number;
   gecikmis_eksik: number;
@@ -125,6 +127,14 @@ export type OgrenciOdev = {
   gec_teslim: boolean;
   /** 4 (A–D) ya da 5 (A–E). Öğrenci ızgarası kaç düğme çizeceğini buradan bilir. */
   sik_sayisi: number;
+  /**
+   * Öğrencinin sınıfı arşivde mi (migration 0016).
+   *
+   * Ödev GİZLENMİYOR — öğrenci geçmişini ve puanını görmeye devam ediyor.
+   * Yalnız yeni gönderim kapalı; arayüz nedenini önden söylesin diye burada.
+   * Kararın kendisi sunucuda: `odev_gonder` arşivdeki sınıfı reddediyor.
+   */
+  sinif_arsiv: boolean;
   /** Soru PDF'i. Teslimden bağımsız, yayındaki ödevde her zaman var. */
   odev_yolu: string | null;
   gonderim: OgrenciGonderim | null;
@@ -196,4 +206,27 @@ export type SinifDetayi = {
   /** Ortalamaların hesaplandığı ödev sayısı: yayında VE süresi dolmuş. */
   degerlendirilen_odev: number;
   ogrenciler: SinifOgrencisi[];
+};
+
+/** `pano_detay` satırı. Alanlar türe göre dolu; zarf dört tür için aynı. */
+export type PanoSatiri = {
+  ad: string;
+  /** gondermeyen: eksik ödev sayısı */
+  eksik?: number;
+  /** acik_odev */
+  id?: string;
+  son_tarih?: string;
+  gonderim_sayisi?: number;
+  /** puan_bekleyen */
+  odev?: string;
+  odev_id?: string;
+  zaman?: string;
+};
+
+export type PanoDetayi = {
+  tur: string;
+  baslik: string;
+  aciklama: string;
+  toplam: number;
+  gruplar: Array<{ sinif: string; ozel: boolean; satirlar: PanoSatiri[] }>;
 };

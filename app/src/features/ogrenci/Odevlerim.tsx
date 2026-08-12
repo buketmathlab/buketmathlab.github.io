@@ -42,6 +42,8 @@ export function Odevlerim() {
    */
   function oncelik(o: OgrenciOdev): number {
     if (o.gonderim) return 2;
+    // Sınıf arşivdeyse hiçbir ödev gönderilemez; hepsi aşağı iner.
+    if (o.sinif_arsiv) return 1;
     return sureDurumu(o.son_tarih).gecti && !o.gec_teslim ? 1 : 0;
   }
 
@@ -111,7 +113,11 @@ export function Odevlerim() {
                         <Tag tur={s.acil ? 'uyari' : 'notr'}>{s.metin}</Tag>
                         {/* Kapanmış ödevi "yapılacak" gibi göstermek boş umut
                             olurdu; öğrenci neden gönderemediğini burada görsün. */}
-                        {s.gecti && !o.gec_teslim && <Tag tur="notr">Teslim kapandı</Tag>}
+                        {o.sinif_arsiv ? (
+                          <Tag tur="notr">Sınıf kapandı</Tag>
+                        ) : (
+                          s.gecti && !o.gec_teslim && <Tag tur="notr">Teslim kapandı</Tag>
+                        )}
                       </div>
                     )}
                   </div>

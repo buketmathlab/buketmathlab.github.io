@@ -10,6 +10,7 @@ import { OgrenciKabuk } from '@/components/layout/OgrenciKabuk';
 import { Odevlerim } from '@/features/ogrenci/Odevlerim';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
+import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
 import { SinifDetay } from '@/features/ogretmen/SinifDetay';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
@@ -71,6 +72,10 @@ function Yonlendirme() {
     <Routes>
       <Route path="/ogretmen" element={<Kabuk />}>
         <Route index element={<Pano />} />
+        <Route path="bugun/:tur" element={<PanoDetay />} />
+        {/* İkinci kademe: sınıfın kendi listesi. Aynı bileşen — veri de
+            gruplama da aynı; ayrı bir bileşen iki yerde bakım isterdi. */}
+        <Route path="bugun/:tur/:sinif" element={<PanoDetay />} />
         <Route path="siniflar" element={<Siniflar />} />
         <Route path="siniflar/:id" element={<SinifDetay />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
