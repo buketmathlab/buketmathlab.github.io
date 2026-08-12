@@ -14,6 +14,7 @@ import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
+import { SikSayisiSecimi } from './SikSayisiSecimi';
 import type { Sinif } from '@/types/api';
 
 type Adim = 1 | 2 | 3;
@@ -265,37 +266,22 @@ export function OdevOlustur() {
             </Field>
 
             {tur === 'test' && (
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="flex-1">
-                  <Field etiket="Soru sayısı" zorunlu>
-                    {(k) => (
-                      <Input
-                        {...k}
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={200}
-                        value={soruSayisi}
-                        onChange={(e) => setSoruSayisi(e.target.value)}
-                      />
-                    )}
-                  </Field>
-                </div>
-                <div className="flex-1">
-                  <Field etiket="Şık sayısı">
-                    {(k) => (
-                      <Select
-                        {...k}
-                        value={sonSecenek}
-                        onChange={(e) => setSonSecenek(e.target.value as SonSecenek)}
-                      >
-                        <option value="E">5 şık (A–E)</option>
-                        <option value="D">4 şık (A–D)</option>
-                      </Select>
-                    )}
-                  </Field>
-                </div>
-              </div>
+              <>
+                <Field etiket="Soru sayısı" zorunlu>
+                  {(k) => (
+                    <Input
+                      {...k}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={200}
+                      value={soruSayisi}
+                      onChange={(e) => setSoruSayisi(e.target.value)}
+                    />
+                  )}
+                </Field>
+                <SikSayisiSecimi deger={sonSecenek} onDegis={setSonSecenek} />
+              </>
             )}
 
             <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />

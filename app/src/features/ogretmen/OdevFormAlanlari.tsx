@@ -1,4 +1,5 @@
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { SikSayisiSecimi } from './SikSayisiSecimi';
 import type { SonSecenek } from '@/lib/cevap-anahtari';
 import type { Sinif } from '@/types/api';
 
@@ -113,37 +114,25 @@ export function OdevFormAlanlari({
       )}
 
       {testMi && (
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="flex-1">
-            <Field etiket="Soru sayısı" zorunlu>
-              {(k) => (
-                <Input
-                  {...k}
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={200}
-                  value={degerler.soruSayisi}
-                  onChange={(e) => onDegis('soruSayisi', e.target.value)}
-                />
-              )}
-            </Field>
-          </div>
-          <div className="flex-1">
-            <Field etiket="Şık sayısı">
-              {(k) => (
-                <Select
-                  {...k}
-                  value={degerler.sonSecenek}
-                  onChange={(e) => onDegis('sonSecenek', e.target.value as SonSecenek)}
-                >
-                  <option value="E">5 şık (A–E)</option>
-                  <option value="D">4 şık (A–D)</option>
-                </Select>
-              )}
-            </Field>
-          </div>
-        </div>
+        <>
+          <Field etiket="Soru sayısı" zorunlu>
+            {(k) => (
+              <Input
+                {...k}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={200}
+                value={degerler.soruSayisi}
+                onChange={(e) => onDegis('soruSayisi', e.target.value)}
+              />
+            )}
+          </Field>
+          <SikSayisiSecimi
+            deger={degerler.sonSecenek}
+            onDegis={(v) => onDegis('sonSecenek', v)}
+          />
+        </>
       )}
     </>
   );
