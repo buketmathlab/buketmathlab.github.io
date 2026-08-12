@@ -9,37 +9,12 @@ import { Field, Input, Select } from '@/components/ui/Field';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Pagination } from '@/components/ui/Pagination';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
+import { KodKutusu } from '@/components/ui/KodKutusu';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import type { Kodlar, OgrenciListesi, OgrenciSatiri, Sinif, YeniOgrenci } from '@/types/api';
-
-/** Kodu panoya kopyalar; pano API'si yoksa kullanıcıya kodu gösterir. */
-async function kopyala(kod: string, bildir: (m: string, t?: 'basari' | 'hata') => void) {
-  try {
-    await navigator.clipboard.writeText(kod);
-    bildir(`Kod kopyalandı: ${kod}`, 'basari');
-  } catch {
-    bildir(`Kod: ${kod}`);
-  }
-}
-
-function KodKutusu({ etiket, kod }: { etiket: string; kod: string }) {
-  const { bildir } = useToast();
-  return (
-    <button
-      type="button"
-      onClick={() => kopyala(kod, bildir)}
-      className="min-h-[44px] flex-1 rounded-sk-sm bg-line-soft px-3 py-2 text-left hover:bg-line"
-    >
-      <span className="block text-[11px] font-bold text-muted">{etiket}</span>
-      <span className="sk-sayi block text-[15px] font-extrabold tracking-[2px] text-ink">
-        {kod} ⧉
-      </span>
-    </button>
-  );
-}
 
 export function Ogrenciler() {
   const { oturum } = useOturum();

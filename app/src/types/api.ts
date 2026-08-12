@@ -61,6 +61,27 @@ export type YeniOgrenci = {
 
 export type Kodlar = { ogrenci?: string; veli?: string };
 
+/**
+ * `sinif_kodlari` — bir sınıfın giriş kodları (migration 0017).
+ *
+ * TOPLU KOD DÖNDÜREN TEK UÇ bu; hiçbir liste ucu kod taşımıyor. Arayüz
+ * bunu ekran açılırken değil, yalnız öğretmen "Kodları göster"e basınca
+ * çağırır.
+ */
+export type SinifKodu = {
+  id: string;
+  ad: string;
+  tur: 'okul' | 'ozel';
+  /** Kod yoksa null — satır yine listede, öğretmen eksiği görsün. */
+  ogrenci_kodu: string | null;
+  veli_kodu: string | null;
+};
+
+export type SinifKodlari = {
+  sinif: { id: string; ad: string; ozel: boolean; arsiv: boolean };
+  ogrenciler: SinifKodu[];
+};
+
 export type OdevSatiri = {
   id: string;
   baslik: string;

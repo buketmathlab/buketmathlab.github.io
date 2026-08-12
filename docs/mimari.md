@@ -140,6 +140,26 @@ boş olabildiği için (sınıfa bağlanmamış özel ders öğrencisi) düz `no
 s.arsiv` yazmak LEFT JOIN'de NULL üretir ve o öğrenciyi **sessizce** listeden
 düşürürdü.
 
+## Giriş kodları
+
+Öğrenci ve veli kodları birer **şifredir**. Üç kural:
+
+1. **Hiçbir liste ucu kod taşımaz.** `ogrenciler_listesi`, `sinif_ogrencileri`,
+   `pano_detay` — hiçbiri. `kodlar_testleri.sql` 5. grubu bunu ölçüyor ve
+   denetimin kendisinin işe yaradığını da ayrıca kanıtlıyor.
+2. **Kodun tek çıkış kapısı iki uç:** `ogrenci_kodlari(p_token, p_id)` tek
+   öğrenci için, `sinif_kodlari(p_token, p_sinif_id)` (0017) bir sınıf için.
+   "Bütün kodları ver" diye bir uç **yok** — en geniş sızıntı yüzeyi bir
+   sınıfla sınırlı.
+3. **Arayüz kodu ekran açılırken çekmez.** Kodlar sekmesi sınıfı açtığında
+   sunucuya kod isteği gitmez; istek ancak "Kodları göster"e basılınca gider
+   ve "Gizle" ile ekrandan kalkar. Ortak bir tablette sekme açık unutulsa
+   ekranda kod olmaz. Bu davranış ölçüldü: sınıf açıldığında
+   `sinif_kodlari` istek sayısı **0**.
+
+Pasif öğrencinin kodu yoktur: `ogrenci_pasiflestir` `giris_kodlari`
+satırlarını siler ve oturumlarını iptal eder.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
