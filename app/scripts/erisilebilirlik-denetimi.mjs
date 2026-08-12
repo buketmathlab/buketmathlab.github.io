@@ -5,6 +5,11 @@ const bugun=new Date(); const gun=n=>{const d=new Date(bugun);d.setDate(d.getDat
 const ODEVLER_LISTESI=[{id:'a1',baslik:'Türev testi — sayfa 84',aciklama:null,tur:'test',sinif_id:'11B',sinif:'11B',
   son_tarih:gun(8),soru_sayisi:10,gec_teslim:true,sik_sayisi:5,yayinda:true,olusturma:gun(-10),
   odev_pdf_var:true,anahtar_pdf_var:true,gonderim_sayisi:12,gec_gonderim_sayisi:3,sinif_mevcudu:20}];
+const SINIF_DETAY={sinif:{id:'11B',ad:'11B',ozel:false,arsiv:false},degerlendirilen_odev:8,
+  ogrenciler:[
+   {id:'o1',ad:'Ali Yıldırım',tur:'okul',yapti:8,yapmadi:0,ortalama_yapan:86.5,ortalama_tum:86.5},
+   {id:'o2',ad:'Ayşe Demir',tur:'okul',yapti:2,yapmadi:6,ortalama_yapan:90.0,ortalama_tum:22.5},
+   {id:'o3',ad:'Mehmet Kaya',tur:'okul',yapti:0,yapmadi:8,ortalama_yapan:null,ortalama_tum:0.0}]};
 const GONDERIMLER={odev:{id:'a1',baslik:'Limit — açık uçlu',tur:'acik',sinif:'11B',son_tarih:gun(-2),
    soru_sayisi:null,gec_teslim:true,yayinda:true},
   ozet:{mevcut:3,gonderen:2,gecikmeli:1,puan_bekleyen:1},
@@ -22,12 +27,13 @@ const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},ders
    odev_yolu:'odev/z.pdf',
    gonderim:{id:'g1',zaman:gun(-7),durum:'puanlandi',dogru:1,yanlis:1,bos:0,puan:50,ogretmen_puan:null,ogretmen_yorum:null,cevaplar:{1:'A',2:'D'},gecikmeli:true},
    cevap_anahtari:{1:'A',2:'B'},anahtar_yolu:'odev/z-anahtar.pdf'}]};
-const CEVAP={ogretmen_panosu:{ogrenci_sayisi:40,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER};
+const CEVAP={ogretmen_panosu:{ogrenci_sayisi:40,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY};
 const b=await chromium.launch();
 for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],
                             ['Ödevler','/ogretmen/odevler'],
                             ['Gönderimler','/ogretmen/odevler/a1/gonderimler'],
+                            ['Sınıf karnesi','/ogretmen/siniflar/11B'],
                             ['Ödevlerim','/ogrenci','ogrenci'],
                             ['Teslim','/ogrenci/odev/a1','ogrenci'],
                             ['Teslim sonucu','/ogrenci/odev/a3','ogrenci']]) {

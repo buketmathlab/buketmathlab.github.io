@@ -177,3 +177,23 @@ export type OdevGonderimleri = {
   };
   satirlar: GonderimSatiri[];
 };
+
+/** `sinif_ogrencileri` — bir öğrencinin ödev karnesi (migration 0013). */
+export type SinifOgrencisi = {
+  id: string;
+  ad: string;
+  tur: 'okul' | 'ozel';
+  yapti: number;
+  yapmadi: number;
+  /** Yalnız yaptığı ödevlerin ortalaması. Hiç yapmadıysa null — 0 değil. */
+  ortalama_yapan: number | null;
+  /** Yapmadıkları 0 sayılarak tüm ödevlerin ortalaması. */
+  ortalama_tum: number | null;
+};
+
+export type SinifDetayi = {
+  sinif: { id: string; ad: string; ozel: boolean; arsiv: boolean };
+  /** Ortalamaların hesaplandığı ödev sayısı: yayında VE süresi dolmuş. */
+  degerlendirilen_odev: number;
+  ogrenciler: SinifOgrencisi[];
+};

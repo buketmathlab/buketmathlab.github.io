@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -43,6 +44,7 @@ function KodKutusu({ etiket, kod }: { etiket: string; kod: string }) {
 export function Ogrenciler() {
   const { oturum } = useOturum();
   const { bildir } = useToast();
+  const git = useNavigate();
 
   const [arama, setArama] = useState('');
   const [sinifId, setSinifId] = useState('');
@@ -167,6 +169,18 @@ export function Ogrenciler() {
           ))}
         </select>
       </div>
+
+      {/* Bir sınıf seçildiğinde karneye geçiş. Öğretmen bu sekmede de
+          "sınıfa tıklayınca öğrenci listesi ve ödev karnesi" istedi;
+          Sınıflar sekmesindeki AYNI ekrana gidiyor, ikinci bir kopya
+          yazılmadı. */}
+      {sinifId && (
+        <div className="mb-4">
+          <Button tur="sade" onClick={() => git(`/ogretmen/siniflar/${sinifId}`)}>
+            {`${siniflar.veri?.find((s) => s.id === sinifId)?.ad ?? 'Sınıf'} karnesi — kim ne yaptı`}
+          </Button>
+        </div>
+      )}
 
       <AsyncBoundary
         durum={liste.durum}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -22,6 +23,7 @@ import type { Sinif } from '@/types/api';
 export function Siniflar() {
   const { oturum } = useOturum();
   const { bildir } = useToast();
+  const git = useNavigate();
   const [arsivGoster, setArsivGoster] = useState(false);
   const [ekleAcik, setEkleAcik] = useState(false);
   const [seviye, setSeviye] = useState('9');
@@ -107,12 +109,20 @@ export function Siniflar() {
           {veri?.map((s) => (
             <Card key={s.id} vurgu={s.arsiv ? 'uyari' : 'yok'}>
               <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="font-display text-[20px] font-semibold text-ink">{s.ad}</p>
-                  <p className="text-[13px] text-muted">
+                {/* Sınıfa tıklayınca öğrenci listesi ve ödev karnesi
+                    açılıyor — öğretmenin açık isteği. */}
+                <button
+                  type="button"
+                  onClick={() => git(`/ogretmen/siniflar/${s.id}`)}
+                  className="min-h-[44px] text-left underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <span className="block font-display text-[20px] font-semibold text-ink">
+                    {s.ad}
+                  </span>
+                  <span className="block text-[13px] text-muted">
                     <span className="sk-sayi">{s.ogrenci_sayisi}</span> öğrenci
-                  </p>
-                </div>
+                  </span>
+                </button>
                 <div className="flex flex-col items-end gap-2">
                   {s.arsiv && <Tag tur="uyari">Arşivde</Tag>}
                   <Button tur="sade" olcu="sm" onClick={() => arsivle(s)}>
