@@ -99,6 +99,10 @@ echo "==> Kodlar testleri (0017 kaldırıldı, 0018)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/kodlar_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Veliler ve mesajlaşma testleri (0019)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/veliler_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Anon izolasyon testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/anon_izolasyon.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

@@ -218,6 +218,81 @@ export type SinifDetayi = {
   ogrenciler: SinifOgrencisi[];
 };
 
+/** `veliler_listesi` — öğretmenin veli sekmesi (migration 0019). */
+export type VeliBekleyen = {
+  ogrenci_id: string;
+  ad: string;
+  sinif: string;
+  okunmamis: number;
+  son_mesaj: string | null;
+};
+
+export type VeliGrubu = {
+  sinif_id: string;
+  sinif: string;
+  ozel: boolean;
+  veli_sayisi: number;
+  okunmamis: number;
+};
+
+export type VelilerListesi = {
+  toplam_okunmamis: number;
+  /** Yanıt bekleyenler sınıf ayrımı olmadan, en eski bekleyen üstte. */
+  yanit_bekleyen: VeliBekleyen[];
+  gruplar: VeliGrubu[];
+};
+
+export type SinifVelisi = {
+  ogrenci_id: string;
+  ad: string;
+  tur: 'okul' | 'ozel';
+  /** Veli kodu yoksa veli hiç giriş yapamaz; öğretmen bunu önden bilsin. */
+  veli_kodu_var: boolean;
+  mesaj_sayisi: number;
+  son_mesaj: string | null;
+  okunmamis: number;
+};
+
+export type SinifVelileri = {
+  sinif: { id: string; ad: string; ozel: boolean };
+  veliler: SinifVelisi[];
+};
+
+/** Tek bir mesaj. Yazışma iki yönlü; `kimden` hangi tarafın yazdığını söyler. */
+export type Mesaj = { kimden: 'ogretmen' | 'veli'; metin: string; zaman: string };
+
+export type Yazisma = {
+  ogrenci: { id: string; ad: string; sinif: string | null };
+  veli_kodu_var: boolean;
+  mesajlar: Mesaj[];
+};
+
+/**
+ * `veli_paneli` — velinin gördüğü her şey.
+ *
+ * KURAL 6: cevap anahtarı BURADA YOK ve olmayacak. Ödev satırında yalnız
+ * başlık, tarih, teslim durumu ve puan var; anahtar alanı, anahtar dosya
+ * yolu ya da anahtarın içeriği hiçbir biçimde dönmüyor —
+ * `veliler_testleri.sql` 7. grubu dördünü de ayrı ayrı ölçüyor.
+ */
+export type VeliOdevi = {
+  baslik: string;
+  son_tarih: string;
+  olusturma: string;
+  gonderildi: boolean;
+  gonderim_zamani: string | null;
+  puan: number | null;
+  durum: string | null;
+};
+
+export type VeliPaneli = {
+  ogrenci: { ad: string; sinif: string | null; tur: 'okul' | 'ozel' };
+  odevler: VeliOdevi[];
+  mesajlar: Mesaj[];
+  odemeler: Array<{ tutar: number; tarih: string; odendi: boolean }>;
+  son_gorulme: string | null;
+};
+
 /** `pano_detay` satırı. Alanlar türe göre dolu; zarf dört tür için aynı. */
 export type PanoSatiri = {
   ad: string;

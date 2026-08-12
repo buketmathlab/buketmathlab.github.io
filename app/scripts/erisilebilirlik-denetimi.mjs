@@ -36,7 +36,24 @@ const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},ders
    odev_yolu:'odev/w.pdf',gonderim:null,cevap_anahtari:null,anahtar_yolu:null}]};
 // Kod artık ÖĞRENCİ BAŞINA geliyor (0018); toplu uç kaldırıldı.
 const OGRENCI_KODLARI={ogrenci:'K7001XQ',veli:'K7051XQ'};
-const CEVAP={ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
+const VELILER={toplam_okunmamis:2,
+  yanit_bekleyen:[{ogrenci_id:'o1',ad:'Ada Yıldırım',sinif:'9A',okunmamis:2,son_mesaj:gun(-2)+'T09:15:00Z'}],
+  gruplar:[{sinif_id:'9A',sinif:'9A',ozel:false,veli_sayisi:12,okunmamis:2},
+           {sinif_id:'ozel',sinif:'Özel ders',ozel:true,veli_sayisi:3,okunmamis:0}]};
+const SINIF_VELILERI={sinif:{id:'9A',ad:'9A',ozel:false},veliler:[
+  {ogrenci_id:'o1',ad:'Ada Yıldırım',tur:'okul',veli_kodu_var:true,mesaj_sayisi:3,son_mesaj:gun(-2)+'T09:15:00Z',okunmamis:2},
+  {ogrenci_id:'o2',ad:'Cem Şahin',tur:'okul',veli_kodu_var:false,mesaj_sayisi:0,son_mesaj:null,okunmamis:0}]};
+const YAZISMA={ogrenci:{id:'o1',ad:'Ada Yıldırım',sinif:'9A'},veli_kodu_var:true,mesajlar:[
+  {kimden:'veli',metin:'Merhaba hocam.',zaman:gun(-2)+'T09:15:00Z'},
+  {kimden:'ogretmen',metin:'Merhaba, buyurun.',zaman:gun(-2)+'T10:02:00Z'}]};
+const VELI_PANEL={ogrenci:{ad:'Ada Yıldırım',sinif:'9A',tur:'okul'},
+  odevler:[{baslik:'Türev testi',son_tarih:gun(-5),olusturma:gun(-12),gonderildi:true,
+            gonderim_zamani:gun(-6)+'T20:10:00Z',puan:85,durum:'puanlandi'},
+           {baslik:'Üslü sayılar',son_tarih:gun(-1),olusturma:gun(-7),gonderildi:false,
+            gonderim_zamani:null,puan:null,durum:null}],
+  mesajlar:YAZISMA.mesajlar,odemeler:[],son_gorulme:gun(-1)+'T20:00:00Z'};
+const CEVAP={veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+  veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],
@@ -47,6 +64,10 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Pano sınıfı','/ogretmen/bugun/gondermeyen/9A'],
                             ['Kodlar','/ogretmen/kodlar'],
                             ['Kod sınıfı','/ogretmen/kodlar/9A'],
+                            ['Veliler','/ogretmen/veliler'],
+                            ['Sınıf velileri','/ogretmen/veliler/sinif/9A'],
+                            ['Yazışma','/ogretmen/veliler/yazisma/o1'],
+                            ['Veli paneli','/veli','veli'],
                             ['Ödevlerim','/ogrenci','ogrenci'],
                             ['Teslim','/ogrenci/odev/a1','ogrenci'],
                             ['Teslim sonucu','/ogrenci/odev/a3','ogrenci'],
@@ -56,6 +77,7 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
     body:JSON.stringify(CEVAP[r.request().url().split('/').pop().split('?')[0]]??{})}));
   if(yol!=='/') await p.addInitScript((r)=>localStorage.setItem('sekiz_oturum',JSON.stringify(
     r==='ogrenci' ? {rol:'ogrenci',token:'t'.repeat(64),ogrenci:{id:'o1',ad:'Elif Yıldırım',tur:'okul',sinif:'11B'}}
+  : r==='veli'    ? {rol:'veli',token:'t'.repeat(64),ogrenci:{id:'o1',ad:'Ada Yıldırım',tur:'okul',sinif:'9A'}}
                   : {rol:'ogretmen',token:'t'.repeat(64)})), rol??'ogretmen');
   await p.goto('http://127.0.0.1:8788/yeni/#'+yol,{waitUntil:'networkidle'});
   await p.waitForTimeout(900);
