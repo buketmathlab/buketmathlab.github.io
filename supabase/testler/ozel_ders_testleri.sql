@@ -178,6 +178,41 @@ begin
   end if;
   raise notice '    sınıf adı ve özel bayrağı doğru: OK';
 
+  ------------------------------------------------------------------
+  raise notice '--- 9. ÖZEL DERS GRUBU ARŞİVLENEMEZ (0014) ---';
+  -- Canlıda yaşandı: arşivlenince ödev verme ekranındaki sınıf listesinden
+  -- düşüyor ve özel ders öğrencilerine ödev verilemez hâle geliyor.
+  begin
+    perform public.sinif_arsivle(t_ogretmen, v_ozel_sinif, true);
+    raise exception 'HATA: ÖZEL DERS GRUBU ARŞİVLENDİ — özel ders öğrencilerine ödev verilemez!';
+  exception when others then
+    if sqlstate = '22023' then raise notice '    arşivleme reddedildi: OK';
+    else raise; end if;
+  end;
+  if (select arsiv from public.siniflar where id = v_ozel_sinif) then
+    raise exception 'HATA: reddedilmesine rağmen arşive düştü!';
+  end if;
+
+  -- Kural FAZLA GENİŞLEMEMELİ: sayısal sınıf hâlâ arşivlenip geri alınabilir.
+  perform public.sinif_arsivle(t_ogretmen, v_9a, true);
+  if not (select arsiv from public.siniflar where id = v_9a) then
+    raise exception 'HATA: normal sınıf arşivlenemedi — kural fazla genişledi!';
+  end if;
+  perform public.sinif_arsivle(t_ogretmen, v_9a, false);
+  if (select arsiv from public.siniflar where id = v_9a) then
+    raise exception 'HATA: normal sınıf geri alınamadı!';
+  end if;
+  raise notice '    sayısal sınıf hâlâ arşivlenip geri alınabiliyor: OK';
+
+  -- Geri alma özel grupta da açık kalmalı (elle arşivlenmiş bir kayıt
+  -- kurtarılabilsin).
+  update public.siniflar set arsiv = true where id = v_ozel_sinif;
+  perform public.sinif_arsivle(t_ogretmen, v_ozel_sinif, false);
+  if (select arsiv from public.siniflar where id = v_ozel_sinif) then
+    raise exception 'HATA: özel grup geri alınamıyor — kurtarma yolu kapalı!';
+  end if;
+  raise notice '    özel grup geri alınabiliyor: OK';
+
   raise notice '';
   raise notice '=========================================';
   raise notice 'ÖZEL DERS TESTLERİ GEÇTİ';

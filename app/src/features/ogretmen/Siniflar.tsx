@@ -31,11 +31,23 @@ export function Siniflar() {
   const [kaydediyor, setKaydediyor] = useState(false);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
 
+  /**
+   * Liste HER ZAMAN arşivdekilerle birlikte çekiliyor, süzme istemcide.
+   *
+   * Önce `p_arsiv` sunucuya gönderiliyordu ve arşivde sınıf olduğu ekranda
+   * hiç belli olmuyordu. Öğretmen Özel ders grubunu arşivleyince onu
+   * bulamadı, "Sınıf ekle"ye gitti ve orada da yoktu. Kaç sınıfın arşivde
+   * olduğunu bilmek için verinin tamamı gerekiyor — tek istek, ek maliyet
+   * yok (sınıf sayısı on üç).
+   */
   const { veri, durum, hata, yenile } = useVeri<Sinif[]>(
     'siniflar_listesi',
-    { p_token: oturum?.token, p_arsiv: arsivGoster },
+    { p_token: oturum?.token, p_arsiv: true },
     (v) => v.length === 0,
   );
+
+  const arsivdekiler = veri?.filter((s) => s.arsiv) ?? [];
+  const gorunen = (veri ?? []).filter((s) => arsivGoster || !s.arsiv);
 
   async function ekle() {
     const temiz = sube.trim().toLocaleUpperCase('tr-TR');
@@ -84,18 +96,21 @@ export function Siniflar() {
         eylem={<Button onClick={() => setEkleAcik(true)}>Sınıf ekle</Button>}
       />
 
-      {/* Etiketin kendisi 44px yüksekliğinde: onay kutusu görsel olarak 20px
-          ama dokunma hedefi tüm satır olmalı (Part XVII). Kutuyu büyütmek
-          yerine tıklanabilir alanı büyütüyoruz — görsel denge bozulmuyor. */}
-      <label className="mb-2 -ml-2 inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-sk-sm px-2 text-[14px] text-muted hover:bg-line-soft">
-        <input
-          type="checkbox"
-          checked={arsivGoster}
-          onChange={(e) => setArsivGoster(e.target.checked)}
-          className="size-5"
-        />
-        Arşivdekileri de göster
-      </label>
+      {/* ARŞİVDEKİLER GÖRÜNÜR OLMALI. Eskiden burada yalnız küçük bir onay
+          kutusu vardı ve arşivde sınıf olup olmadığı hiç belli olmuyordu;
+          kaybettiği sınıfı arayan öğretmen bunu kurtarma yolu olarak
+          okuyamadı. Artık sayıyla birlikte söyleniyor. */}
+      {arsivdekiler.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-sk-sm bg-line-soft p-3">
+          <p className="text-[14px] text-ink">
+            <span className="sk-sayi font-semibold">{arsivdekiler.length}</span> sınıf arşivde:{' '}
+            <span className="text-muted">{arsivdekiler.map((s) => s.ad).join(', ')}</span>
+          </p>
+          <Button tur="sade" olcu="sm" onClick={() => setArsivGoster((a) => !a)}>
+            {arsivGoster ? 'Gizle' : 'Göster ve geri al'}
+          </Button>
+        </div>
+      )}
 
       <AsyncBoundary
         durum={durum}
@@ -106,7 +121,7 @@ export function Siniflar() {
         tekrarDene={yenile}
       >
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {veri?.map((s) => (
+          {gorunen.map((s) => (
             <Card key={s.id} vurgu={s.arsiv ? 'uyari' : 'yok'}>
               <div className="flex items-center justify-between gap-2">
                 {/* Sınıfa tıklayınca öğrenci listesi ve ödev karnesi
@@ -125,9 +140,20 @@ export function Siniflar() {
                 </button>
                 <div className="flex flex-col items-end gap-2">
                   {s.arsiv && <Tag tur="uyari">Arşivde</Tag>}
-                  <Button tur="sade" olcu="sm" onClick={() => arsivle(s)}>
-                    {s.arsiv ? 'Geri al' : 'Arşivle'}
-                  </Button>
+                  {/* Özel ders grubu arşivlenemez: arşivlenirse ödev verme
+                      ekranındaki sınıf listesinden düşer ve özel ders
+                      öğrencilerine ödev verilemez. Kural sunucuda da var
+                      (0014); düğmeyi gizlemek tek başına yeterli değil. */}
+                  {s.ozel && !s.arsiv ? (
+                    <p className="max-w-[150px] text-right text-[12px] text-muted">
+                      Bu grup arşivlenemez — arşivlenirse özel ders
+                      öğrencilerinize ödev veremezsiniz.
+                    </p>
+                  ) : (
+                    <Button tur="sade" olcu="sm" onClick={() => arsivle(s)}>
+                      {s.arsiv ? 'Geri al' : 'Arşivle'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
