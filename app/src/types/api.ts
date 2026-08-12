@@ -62,25 +62,14 @@ export type YeniOgrenci = {
 export type Kodlar = { ogrenci?: string; veli?: string };
 
 /**
- * `sinif_kodlari` — bir sınıfın giriş kodları (migration 0017).
+ * KOD TOPLU GELMEZ. `sinif_kodlari` (0017) bir sınıfın tüm kodlarını tek
+ * yanıtta döndürüyordu; 0018 ile KALDIRILDI ve tipi de silindi.
  *
- * TOPLU KOD DÖNDÜREN TEK UÇ bu; hiçbir liste ucu kod taşımıyor. Arayüz
- * bunu ekran açılırken değil, yalnız öğretmen "Kodları göster"e basınca
- * çağırır.
+ * Öğretmenin isteği "bir öğrenciye kodunu gösterirken diğerlerininki
+ * görünmesin"di. Toplu indirip birini göstermek kodları ağ yanıtında ve
+ * bellekte bırakırdı. Artık tek yol `ogrenci_kodlari` → `Kodlar`, öğrenci
+ * başına ve dokunuşla.
  */
-export type SinifKodu = {
-  id: string;
-  ad: string;
-  tur: 'okul' | 'ozel';
-  /** Kod yoksa null — satır yine listede, öğretmen eksiği görsün. */
-  ogrenci_kodu: string | null;
-  veli_kodu: string | null;
-};
-
-export type SinifKodlari = {
-  sinif: { id: string; ad: string; ozel: boolean; arsiv: boolean };
-  ogrenciler: SinifKodu[];
-};
 
 export type OdevSatiri = {
   id: string;

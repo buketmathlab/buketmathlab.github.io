@@ -147,15 +147,23 @@ düşürürdü.
 1. **Hiçbir liste ucu kod taşımaz.** `ogrenciler_listesi`, `sinif_ogrencileri`,
    `pano_detay` — hiçbiri. `kodlar_testleri.sql` 5. grubu bunu ölçüyor ve
    denetimin kendisinin işe yaradığını da ayrıca kanıtlıyor.
-2. **Kodun tek çıkış kapısı iki uç:** `ogrenci_kodlari(p_token, p_id)` tek
-   öğrenci için, `sinif_kodlari(p_token, p_sinif_id)` (0017) bir sınıf için.
-   "Bütün kodları ver" diye bir uç **yok** — en geniş sızıntı yüzeyi bir
-   sınıfla sınırlı.
-3. **Arayüz kodu ekran açılırken çekmez.** Kodlar sekmesi sınıfı açtığında
-   sunucuya kod isteği gitmez; istek ancak "Kodları göster"e basılınca gider
-   ve "Gizle" ile ekrandan kalkar. Ortak bir tablette sekme açık unutulsa
-   ekranda kod olmaz. Bu davranış ölçüldü: sınıf açıldığında
-   `sinif_kodlari` istek sayısı **0**.
+2. **Kodun tek çıkış kapısı `ogrenci_kodlari(p_token, p_id)`** — öğrenci
+   başına. Bir sınıfın ya da tümünün kodlarını döndüren uç **yok**.
+3. **Arayüz kodu ekran açılırken çekmez.** Kodlar sekmesinde sınıf açılınca
+   yalnız isimler görünür; kod, dokunulan öğrenci için o an istenir. Aynı
+   anda tek öğrencinin kodu açık kalır — ikinci bir isme dokunmak öncekini
+   hem ekrandan hem state'ten düşürür.
+
+**0017 bu yüzden geri alındı.** İlk sürümde `sinif_kodlari` bir sınıfın tüm
+kodlarını tek yanıtta döndürüyordu. Öğretmenin isteği — "bir öğrenciye
+kodunu gösterirken diğerlerininki görünmesin" — bunu hem gereksiz hem yanlış
+kıldı: ekranda birini gösterip diğerlerini gizlemek, kodları ağ yanıtında ve
+bellekte bırakırdı. Cevap anahtarında en baştan reddettiğimiz desenin
+aynısı (Part XXI). `0018` fonksiyonu kaldırdı.
+
+Ölçüldü: sınıf açıldığında kod isteği **0**; bir öğrenciye dokununca **tam
+bir** istek ve gövdesinde yalnız o öğrencinin kimliği; ikinciye geçince
+öncekinin kodu **DOM'da bile kalmıyor**.
 
 Pasif öğrencinin kodu yoktur: `ogrenci_pasiflestir` `giris_kodlari`
 satırlarını siler ve oturumlarını iptal eder.
