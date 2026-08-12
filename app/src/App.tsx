@@ -73,6 +73,9 @@ function Yonlendirme() {
       <Route path="/ogretmen" element={<Kabuk />}>
         <Route index element={<Pano />} />
         <Route path="bugun/:tur" element={<PanoDetay />} />
+        {/* İkinci kademe: sınıfın kendi listesi. Aynı bileşen — veri de
+            gruplama da aynı; ayrı bir bileşen iki yerde bakım isterdi. */}
+        <Route path="bugun/:tur/:sinif" element={<PanoDetay />} />
         <Route path="siniflar" element={<Siniflar />} />
         <Route path="siniflar/:id" element={<SinifDetay />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
