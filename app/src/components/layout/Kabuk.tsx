@@ -21,6 +21,9 @@ const ikon = {
   odev: (
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 2.5L17.5 8H14V4.5ZM8 13h8v2H8v-2Zm0 4h8v2H8v-2Z" />
   ),
+  veli: (
+    <path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 2c-2.7 0-6 1.3-6 3.5V19h8v-2.5c0-.9.5-1.7 1.3-2.4A9.7 9.7 0 0 0 8 13Zm8 0c-.6 0-1.3.1-2 .2 1.2.8 2 1.8 2 3.3V19h6v-2.5c0-2.2-3.3-3.5-6-3.5Z" />
+  ),
   // Anahtar: kod bir şifredir, ikon da bunu söylesin.
   kod: (
     <path d="M14 2a6 6 0 0 0-5.7 7.9L2 16.2V22h5.8l1.4-1.4v-2h2v-2h2l1.3-1.3A6 6 0 1 0 14 2Zm2.5 5.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z" />
@@ -47,6 +50,11 @@ const SEKMELER: Sekme[] = [
     yol: '/ogretmen/ogrenciler',
     etiket: 'Öğrenciler',
     ikon: <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ikon.ogrenci}</svg>,
+  },
+  {
+    yol: '/ogretmen/veliler',
+    etiket: 'Veliler',
+    ikon: <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ikon.veli}</svg>,
   },
   {
     yol: '/ogretmen/kodlar',

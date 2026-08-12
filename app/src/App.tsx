@@ -7,6 +7,8 @@ import { GirisEkrani } from '@/features/kimlik/GirisEkrani';
 import { KurulumEkrani } from '@/features/kimlik/KurulumEkrani';
 import { Kabuk } from '@/components/layout/Kabuk';
 import { OgrenciKabuk } from '@/components/layout/OgrenciKabuk';
+import { VeliKabuk } from '@/components/layout/VeliKabuk';
+import { VeliPanel } from '@/features/veli/VeliPanel';
 import { Odevlerim } from '@/features/ogrenci/Odevlerim';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
@@ -16,6 +18,7 @@ import { SinifDetay } from '@/features/ogretmen/SinifDetay';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { Odevler } from '@/features/ogretmen/Odevler';
 import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
+import { Veliler, SinifVelileriEkrani, VeliYazismasi } from '@/features/ogretmen/Veliler';
 import { OdevOlustur } from '@/features/ogretmen/OdevOlustur';
 import { OdevDuzenle } from '@/features/ogretmen/OdevDuzenle';
 import { OdevGonderimleri } from '@/features/ogretmen/OdevGonderimleri';
@@ -63,9 +66,20 @@ function Yonlendirme() {
     );
   }
 
+  if (oturum.rol === 'veli') {
+    return (
+      <Routes>
+        <Route path="/veli" element={<VeliKabuk />}>
+          <Route index element={<VeliPanel />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/veli" replace />} />
+      </Routes>
+    );
+  }
+
   if (oturum.rol !== 'ogretmen') {
-    // Veli ekranı Faz 4'te gelecek. Olmayan bir ekranı varmış gibi
-    // göstermek yerine durumu açıkça söylüyoruz.
+    // Bilinmeyen bir rol: üç bilinen rolün dışında bir şey dönerse kullanıcı
+    // boş ekranla kalmasın.
     return <HenuzYok />;
   }
 
@@ -87,6 +101,12 @@ function Yonlendirme() {
         {/* Kodlar da iki kademeli: önce sınıf, sonra o sınıfın kodları. */}
         <Route path="kodlar" element={<Kodlar />} />
         <Route path="kodlar/:id" element={<SinifKodlari />} />
+        {/* Veliler üç kademeli: sınıf → o sınıfın velileri → yazışma.
+            Yazışmaya yanıt bekleyenler listesinden tek dokunuşla da
+            gidilebiliyor; acil olan sınıfın altına gömülmesin. */}
+        <Route path="veliler" element={<Veliler />} />
+        <Route path="veliler/sinif/:id" element={<SinifVelileriEkrani />} />
+        <Route path="veliler/yazisma/:id" element={<VeliYazismasi />} />
       </Route>
       <Route
         path="/tasarim"
@@ -109,8 +129,8 @@ function HenuzYok() {
         Merhaba{oturum?.ogrenci ? `, ${oturum.ogrenci.ad}` : ''}
       </h1>
       <p className="mt-2 text-[15px] text-muted">
-        Veli ekranı henüz hazır değil. Öğretmeniniz sistemi kurmayı sürdürüyor; çok yakında
-        burada olacak.
+        Hesabınız için bir ekran bulunamadı. Öğretmeninize durumu bildirin; giriş kodunuz
+        yenilenmiş olabilir.
       </p>
       <button
         type="button"

@@ -168,6 +168,53 @@ bir** istek ve gövdesinde yalnız o öğrencinin kimliği; ikinciye geçince
 Pasif öğrencinin kodu yoktur: `ogrenci_pasiflestir` `giris_kodlari`
 satırlarını siler ve oturumlarını iptal eder.
 
+## Veli ve mesajlaşma
+
+Öğretmenin kararı: **veliye mesaj uygulama içinde gider** — SMS ya da
+WhatsApp yok. Bunun doğrudan sonucu, veli ekranının da olması: mesaj
+yazılıp hiçbir yere düşmemesi olmaz.
+
+**Veliler sekmesi iki soruya birden cevap veriyor.** Üstte *Yanıt
+bekleyenler* (sınıf ayrımı olmadan, en uzun süredir cevapsız duran üstte),
+altında sınıf listesi. Diğer sekmelerdeki "önce sınıf" deseni korunuyor ama
+acil olan yukarı çıkıyor; sınıfların altına gömseydik öğretmen bekleyen bir
+veliyi ancak o sınıfa girerse görürdü.
+
+**Okunmamış sayımı:** veliden gelen ve öğretmenin o yazışmayı en son
+okuduğu andan sonra yazılmış mesajlar. Yazışma ekranı açılınca
+`ogretmen_okudu` kendiliğinden çağrılıyor — ayrı bir "okundu işaretle"
+düğmesi öğretmene iş çıkarmaktan başka bir şey yapmazdı.
+
+**Mesaj metni listelerde yok**, yalnız sayı ve zaman. Kod listesindeki
+kuralın aynısı: ortak bir ekranda bütün velilerin yazdıkları yan yana
+durmasın.
+
+### Şema kusuru — 0019'da düzeltildi
+
+`okundu` tablosunun birincil anahtarı yalnız `ogrenci_id`'ydi; bir öğrenci
+için tek satır vardı ve veli okuduğunda öğrencinin kaydı, öğrenci
+okuduğunda velininki eziliyordu. Öğretmenin okuma durumuna ise hiç yer
+yoktu. Bugüne kadar görünmemesinin sebebi basit: `okundu_isaretle` Faz
+1'den beri **hiç çağrılmamıştı**. Anahtar `(ogrenci_id, rol)` yapıldı ve
+`ogretmen` rolü eklendi.
+
+Bu değişiklik `veli_paneli`'ni **kırdı**: `son_gorulme` alt sorgusu rol
+süzgeci olmadığı için üç satır dönüp fonksiyonu çökertti. Bunu tahmin değil
+test yakaladı; onarım aynı migration'da duruyor ki biri uygulanıp öbürü
+unutulmasın.
+
+### Kural 6 sınırı
+
+**Veliye cevap anahtarı hiçbir koşulda gitmez.** `veli_paneli` anahtarı,
+anahtar dosya yolunu ve anahtarın içeriğini döndürmüyor; veli
+`dosya_erisim_izni` ile anahtar PDF'ini de açamıyor.
+`veliler_testleri.sql` 7. grubu dördünü **ayrı ayrı** ölçüyor ve denetimin
+kendisinin çalıştığını öğretmen ucuyla karşılaştırarak kanıtlıyor. En sert
+durum seçildi: ödev yayında, süresi dolmuş, öğrenci teslim etmemiş.
+
+Velinin gördüğü şey **süreç**: çocuğu ödevini yapmış mı, kaçını kaçırmış,
+aldığı puan ne. Çözümler değil.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
