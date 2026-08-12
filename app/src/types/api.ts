@@ -31,6 +31,8 @@ export type Sinif = {
   ad: string;
   seviye: number;
   sube: string;
+  /** Özel ders grubu. Kimlik değil, ödev hedefleme aracı (migration 0012). */
+  ozel: boolean;
   arsiv: boolean;
   ogrenci_sayisi: number;
 };
@@ -64,6 +66,7 @@ export type OdevSatiri = {
   tur: 'test' | 'acik';
   sinif_id: string;
   sinif: string;
+  sinif_ozel: boolean;
   son_tarih: string;
   soru_sayisi: number | null;
   /** Son tarih geçtikten sonra teslim alınıyor mu (migration 0010). */
@@ -79,6 +82,12 @@ export type OdevSatiri = {
   /** Son tarihten SONRA gelen teslim sayısı (migration 0010). */
   gec_gonderim_sayisi: number;
   sinif_mevcudu: number;
+  /**
+   * Ortalamalar YALNIZ son tarih geçtikten sonra dolu; öncesinde `null`.
+   * `yapan` gönderenlerin ortalaması, `tum` göndermeyeni 0 sayar.
+   */
+  ortalama_yapan: number | null;
+  ortalama_tum: number | null;
 };
 
 /** Öğrencinin kendi gönderimi. Puan yalnız test ödevinde dolu olur. */
@@ -127,4 +136,64 @@ export type OgrenciOdevleri = {
   ogrenci: { id: string; ad: string; sinif: string | null };
   odevler: OgrenciOdev[];
   dersler: Array<{ zaman: string; mod: string; link: string | null }>;
+};
+
+/** `odev_gonderimleri` içindeki tek satır — sınıftaki HER öğrenci için bir tane. */
+export type GonderimSatiri = {
+  ogrenci_id: string;
+  ogrenci: string;
+  /** Göndermeyen öğrencide null. Satır yine de listede yer alır. */
+  gonderim_id: string | null;
+  gonderdi: boolean;
+  zaman: string | null;
+  gecikmeli: boolean;
+  durum: 'incelemede' | 'onaylandi' | 'puanlandi' | null;
+  dogru: number | null;
+  yanlis: number | null;
+  bos: number | null;
+  puan: number | null;
+  ogretmen_puan: number | null;
+  ogretmen_yorum: string | null;
+  /** Dosyanın kendisi değil, varlığı. Yol `gonderim_foto_yolu` ile istenir. */
+  foto_var: boolean;
+};
+
+export type OdevGonderimleri = {
+  odev: {
+    id: string;
+    baslik: string;
+    tur: 'test' | 'acik';
+    sinif: string;
+    son_tarih: string;
+    soru_sayisi: number | null;
+    gec_teslim: boolean;
+    yayinda: boolean;
+  };
+  ozet: {
+    mevcut: number;
+    gonderen: number;
+    gecikmeli: number;
+    puan_bekleyen: number;
+  };
+  satirlar: GonderimSatiri[];
+};
+
+/** `sinif_ogrencileri` — bir öğrencinin ödev karnesi (migration 0013). */
+export type SinifOgrencisi = {
+  id: string;
+  ad: string;
+  tur: 'okul' | 'ozel';
+  yapti: number;
+  yapmadi: number;
+  /** Yalnız yaptığı ödevlerin ortalaması. Hiç yapmadıysa null — 0 değil. */
+  ortalama_yapan: number | null;
+  /** Yapmadıkları 0 sayılarak tüm ödevlerin ortalaması. */
+  ortalama_tum: number | null;
+};
+
+export type SinifDetayi = {
+  sinif: { id: string; ad: string; ozel: boolean; arsiv: boolean };
+  /** Ortalamaların hesaplandığı ödev sayısı: yayında VE süresi dolmuş. */
+  degerlendirilen_odev: number;
+  ogrenciler: SinifOgrencisi[];
 };

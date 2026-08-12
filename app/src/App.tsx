@@ -11,10 +11,12 @@ import { Odevlerim } from '@/features/ogrenci/Odevlerim';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
+import { SinifDetay } from '@/features/ogretmen/SinifDetay';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { Odevler } from '@/features/ogretmen/Odevler';
 import { OdevOlustur } from '@/features/ogretmen/OdevOlustur';
 import { OdevDuzenle } from '@/features/ogretmen/OdevDuzenle';
+import { OdevGonderimleri } from '@/features/ogretmen/OdevGonderimleri';
 // Tasarım vitrini nadiren açılır ve büyüktür; ayrı parçaya alınıyor.
 const TasarimSistemi = lazy(() =>
   import('@/pages/TasarimSistemi').then((m) => ({ default: m.TasarimSistemi })),
@@ -70,10 +72,12 @@ function Yonlendirme() {
       <Route path="/ogretmen" element={<Kabuk />}>
         <Route index element={<Pano />} />
         <Route path="siniflar" element={<Siniflar />} />
+        <Route path="siniflar/:id" element={<SinifDetay />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
         <Route path="odevler" element={<Odevler />} />
         <Route path="odevler/yeni" element={<OdevOlustur />} />
         <Route path="odevler/:id" element={<OdevDuzenle />} />
+        <Route path="odevler/:id/gonderimler" element={<OdevGonderimleri />} />
       </Route>
       <Route
         path="/tasarim"
