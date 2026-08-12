@@ -15,6 +15,7 @@ import { Siniflar } from '@/features/ogretmen/Siniflar';
 import { SinifDetay } from '@/features/ogretmen/SinifDetay';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { Odevler } from '@/features/ogretmen/Odevler';
+import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
 import { OdevOlustur } from '@/features/ogretmen/OdevOlustur';
 import { OdevDuzenle } from '@/features/ogretmen/OdevDuzenle';
 import { OdevGonderimleri } from '@/features/ogretmen/OdevGonderimleri';
@@ -83,6 +84,9 @@ function Yonlendirme() {
         <Route path="odevler/yeni" element={<OdevOlustur />} />
         <Route path="odevler/:id" element={<OdevDuzenle />} />
         <Route path="odevler/:id/gonderimler" element={<OdevGonderimleri />} />
+        {/* Kodlar da iki kademeli: önce sınıf, sonra o sınıfın kodları. */}
+        <Route path="kodlar" element={<Kodlar />} />
+        <Route path="kodlar/:id" element={<SinifKodlari />} />
       </Route>
       <Route
         path="/tasarim"
