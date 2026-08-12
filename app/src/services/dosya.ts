@@ -11,14 +11,20 @@
  * Yetki kararı SQL'de kalır; fonksiyon yalnız imzalar. Kurallar değişirse
  * tek yerde, veritabanında değişir.
  *
- * ## BİLİNEN BOŞLUK — öğrenci çözüm fotoğrafı yükleyemez (Faz 2C)
- * `dosya_erisim_izni` öğrenci için `gonderimler.foto_yolu = p_yol` arıyor.
- * Yeni bir fotoğraf yüklenirken o kayıt HENÜZ YOK, dolayısıyla yükleme izni
- * reddedilir. Öğretmen etkilenmiyor (öğretmene her yol açık).
- * Öğrenci teslim akışı yazılırken çözülmesi gereken bir eksik: öğrenciye
- * yalnız kendi kimliğine ve yayındaki bir ödeve bağlı, henüz teslim
- * edilmemiş bir yola yükleme izni verilmeli. Buraya not düşülüyor ki
- * "sonra bakarız" diye kaybolmasın.
+ * ## Öğrenci çözüm fotoğrafı — yol hesaplanır, uydurulmaz
+ * Bir dönem burada açık bir boşluk vardı: `dosya_erisim_izni` öğrenci için
+ * `gonderimler.foto_yolu = p_yol` arıyordu, ama fotoğraf YÜKLENİRKEN o kayıt
+ * henüz yok — yükleme izni hep reddediliyordu.
+ *
+ * Migration 0009 bunu kapattı: öğrencinin yükleyebileceği yol tek ve
+ * hesaplanabilir —
+ *
+ *   cozum/<odev_id>/<ogrenci_id>.<uzanti>
+ *
+ * Yol kendi kimliğini taşıdığı için başkasının yoluna yükleme imkânsız;
+ * ödevin yayında ve öğrencinin sınıfına ait olması da ayrıca aranıyor.
+ * `odev_gonder` kayda yazılan yolu aynı denetimden geçiriyor, yani geçerli
+ * bir yola yükleyip kayda başka bir yol yazdırmak da mümkün değil.
  */
 
 import { oturumOku } from './supabase';

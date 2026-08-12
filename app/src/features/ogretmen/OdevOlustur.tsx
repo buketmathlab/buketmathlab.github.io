@@ -13,6 +13,7 @@ import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
+import { GecTeslimSecimi } from './GecTeslimSecimi';
 import type { Sinif } from '@/types/api';
 
 type Adim = 1 | 2 | 3;
@@ -48,6 +49,7 @@ export function OdevOlustur() {
   const [sonTarih, setSonTarih] = useState('');
   const [soruSayisi, setSoruSayisi] = useState('20');
   const [sonSecenek, setSonSecenek] = useState<SonSecenek>('E');
+  const [gecTeslim, setGecTeslim] = useState(true);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
 
   // 2. adım
@@ -140,6 +142,8 @@ export function OdevOlustur() {
         p_cevap_anahtari: tur === 'test' ? anahtar : null,
         p_anahtar_yolu: anahtarYolu,
         p_odev_yolu: odevYolu,
+        p_gec_teslim: gecTeslim,
+        p_sik_sayisi: tur === 'test' ? (sonSecenek === 'D' ? 4 : 5) : 5,
       });
 
       bildir('Ödev taslak olarak kaydedildi', 'basari');
@@ -293,6 +297,8 @@ export function OdevOlustur() {
                 </div>
               </div>
             )}
+
+            <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 
             {formHatasi && (
               <p role="alert" className="mb-3 text-[13px] font-semibold text-danger">

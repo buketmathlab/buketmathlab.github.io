@@ -177,6 +177,11 @@ export function Odevler() {
               <p className="mb-3 text-[13px] text-muted">
                 Son tarih: {tarihYaz(o.son_tarih)}
                 {gecti(o.son_tarih) && <span className="text-danger"> · süresi doldu</span>}
+                {/* Geç teslim yalnız KAPALIYKEN yazılıyor: açık olan
+                    varsayılan durum, her karta not düşmek gürültü olurdu. */}
+                {!o.gec_teslim && (
+                  <span className="text-warning"> · geç teslim kapalı</span>
+                )}
                 {o.yayinda && (
                   <>
                     {' · '}

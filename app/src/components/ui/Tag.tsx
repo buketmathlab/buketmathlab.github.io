@@ -27,7 +27,10 @@ export function Tag({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-bold',
+        // `word-spacing`: Manrope'un boşluğu 12 px kalında çok dar kalıyor ve
+        // "Süresi doldu" bitişik okunuyordu. Etiket metinleri kısa olduğu için
+        // burada biraz açmak hizayı bozmuyor, okunaklılığı belirgin artırıyor.
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-bold [word-spacing:0.12em]',
         TURLER[tur],
         className,
       )}
