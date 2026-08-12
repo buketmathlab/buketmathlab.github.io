@@ -31,6 +31,8 @@ export type Sinif = {
   ad: string;
   seviye: number;
   sube: string;
+  /** Özel ders grubu. Kimlik değil, ödev hedefleme aracı (migration 0012). */
+  ozel: boolean;
   arsiv: boolean;
   ogrenci_sayisi: number;
 };
@@ -64,6 +66,7 @@ export type OdevSatiri = {
   tur: 'test' | 'acik';
   sinif_id: string;
   sinif: string;
+  sinif_ozel: boolean;
   son_tarih: string;
   soru_sayisi: number | null;
   /** Son tarih geçtikten sonra teslim alınıyor mu (migration 0010). */
@@ -79,6 +82,12 @@ export type OdevSatiri = {
   /** Son tarihten SONRA gelen teslim sayısı (migration 0010). */
   gec_gonderim_sayisi: number;
   sinif_mevcudu: number;
+  /**
+   * Ortalamalar YALNIZ son tarih geçtikten sonra dolu; öncesinde `null`.
+   * `yapan` gönderenlerin ortalaması, `tum` göndermeyeni 0 sayar.
+   */
+  ortalama_yapan: number | null;
+  ortalama_tum: number | null;
 };
 
 /** Öğrencinin kendi gönderimi. Puan yalnız test ödevinde dolu olur. */

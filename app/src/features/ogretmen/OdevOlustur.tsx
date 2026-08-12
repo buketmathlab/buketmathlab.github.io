@@ -50,7 +50,10 @@ export function OdevOlustur() {
   const [sonTarih, setSonTarih] = useState('');
   const [soruSayisi, setSoruSayisi] = useState('20');
   const [sonSecenek, setSonSecenek] = useState<SonSecenek>('E');
-  const [gecTeslim, setGecTeslim] = useState(true);
+  // VARSAYILAN KAPALI. Öğretmen: "Ben genelde süre dolduktan sonra ödev
+  // kabul etmiyorum. Nadiren bu seçimi işaretlerim." Varsayılan, sık olanı
+  // temsil etmeli; nadir olanı her ödevde elle kapatmak zorunda kalmasın.
+  const [gecTeslim, setGecTeslim] = useState(false);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
 
   // 2. adım
