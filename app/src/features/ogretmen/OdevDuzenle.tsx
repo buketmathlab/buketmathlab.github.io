@@ -14,6 +14,7 @@ import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
+import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
 import type { Sinif } from '@/types/api';
 
@@ -26,6 +27,8 @@ type OdevDetay = {
   sinif: string;
   son_tarih: string;
   soru_sayisi: number | null;
+  gec_teslim: boolean;
+  sik_sayisi: number;
   cevap_anahtari: Record<string, string>;
   anahtar_yolu: string | null;
   odev_yolu: string | null;
@@ -60,6 +63,7 @@ export function OdevDuzenle() {
     soruSayisi: '',
     sonSecenek: 'E',
   });
+  const [gecTeslim, setGecTeslim] = useState(true);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
   const [cikarim, setCikarim] = useState<Cikarim | null>(null);
   const [yeniAnahtarPdf, setYeniAnahtarPdf] = useState<File | null>(null);
@@ -89,8 +93,11 @@ export function OdevDuzenle() {
       sinifId: detay.sinif_id,
       sonTarih: detay.son_tarih,
       soruSayisi: String(detay.soru_sayisi ?? ''),
-      sonSecenek: 'E',
+      // Şık sayısı artık kayıtta (0010). Önceden her açılışta 'E' varsayılıyordu;
+      // A–D'lik bir ödevi düzenleyen öğretmen seçimini yeniden yapmak zorundaydı.
+      sonSecenek: detay.sik_sayisi === 4 ? 'D' : 'E',
     });
+    setGecTeslim(detay.gec_teslim);
     const a: Record<number, string> = {};
     for (const [k, v] of Object.entries(detay.cevap_anahtari ?? {})) {
       const n = Number(k);
@@ -153,6 +160,8 @@ export function OdevDuzenle() {
         p_cevap_anahtari: testMi ? anahtar : null,
         p_anahtar_yolu: anahtarYolu,
         p_odev_yolu: odevYolu,
+        p_gec_teslim: gecTeslim,
+        p_sik_sayisi: testMi ? (form.sonSecenek === 'D' ? 4 : 5) : null,
       });
 
       const degisti = sonuc.yeniden_puanlanan ?? [];
@@ -234,6 +243,8 @@ export function OdevDuzenle() {
                 turDegistirilebilir={false}
                 tur={detay.tur}
               />
+
+              <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 
               <Field
                 etiket="Ödev PDF’i (sorular)"

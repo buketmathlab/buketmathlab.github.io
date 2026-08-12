@@ -67,6 +67,14 @@ echo "==> Ödev düzenleme testleri (0008)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/odev_duzenleme_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Öğrenci yükleme testleri (0009)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/ogrenci_yukleme_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
+echo "==> Geç teslim testleri (0010)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/gec_teslim_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Anon izolasyon testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/anon_izolasyon.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

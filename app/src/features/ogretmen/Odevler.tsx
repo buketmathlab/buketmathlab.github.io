@@ -177,6 +177,11 @@ export function Odevler() {
               <p className="mb-3 text-[13px] text-muted">
                 Son tarih: {tarihYaz(o.son_tarih)}
                 {gecti(o.son_tarih) && <span className="text-danger"> · süresi doldu</span>}
+                {/* Geç teslim yalnız KAPALIYKEN yazılıyor: açık olan
+                    varsayılan durum, her karta not düşmek gürültü olurdu. */}
+                {!o.gec_teslim && (
+                  <span className="text-warning"> · geç teslim kapalı</span>
+                )}
                 {o.yayinda && (
                   <>
                     {' · '}
@@ -185,6 +190,19 @@ export function Odevler() {
                   </>
                 )}
               </p>
+
+              {/* Geç teslime izin vermek, gecikmeyi görmezden gelmek değil.
+                  Öğretmenin isteği: geç gelen teslim listede mutlaka
+                  görünsün. Sayı sunucuda hesaplanıyor. */}
+              {o.gec_gonderim_sayisi > 0 && (
+                <p className="mb-3 -mt-2">
+                  <Tag tur="uyari">
+                    <span className="sk-sayi">
+                      {`${o.gec_gonderim_sayisi} gecikmeli teslim`}
+                    </span>
+                  </Tag>
+                </p>
+              )}
 
               <div className="flex flex-wrap gap-2">
                 {o.odev_pdf_var && (

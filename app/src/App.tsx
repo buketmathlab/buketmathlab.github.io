@@ -6,6 +6,9 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { GirisEkrani } from '@/features/kimlik/GirisEkrani';
 import { KurulumEkrani } from '@/features/kimlik/KurulumEkrani';
 import { Kabuk } from '@/components/layout/Kabuk';
+import { OgrenciKabuk } from '@/components/layout/OgrenciKabuk';
+import { Odevlerim } from '@/features/ogrenci/Odevlerim';
+import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
@@ -44,9 +47,21 @@ function Yonlendirme() {
     );
   }
 
+  if (oturum.rol === 'ogrenci') {
+    return (
+      <Routes>
+        <Route path="/ogrenci" element={<OgrenciKabuk />}>
+          <Route index element={<Odevlerim />} />
+          <Route path="odev/:id" element={<OdevTeslim />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/ogrenci" replace />} />
+      </Routes>
+    );
+  }
+
   if (oturum.rol !== 'ogretmen') {
-    // Öğrenci ve veli ekranları Faz 3–4'te gelecek. Şu an olmayan bir
-    // ekranı varmış gibi göstermek yerine durumu açıkça söylüyoruz.
+    // Veli ekranı Faz 4'te gelecek. Olmayan bir ekranı varmış gibi
+    // göstermek yerine durumu açıkça söylüyoruz.
     return <HenuzYok />;
   }
 
@@ -81,8 +96,8 @@ function HenuzYok() {
         Merhaba{oturum?.ogrenci ? `, ${oturum.ogrenci.ad}` : ''}
       </h1>
       <p className="mt-2 text-[15px] text-muted">
-        {oturum?.rol === 'veli' ? 'Veli' : 'Öğrenci'} ekranı henüz hazır değil. Öğretmeniniz
-        sistemi kurmayı sürdürüyor; çok yakında burada olacak.
+        Veli ekranı henüz hazır değil. Öğretmeniniz sistemi kurmayı sürdürüyor; çok yakında
+        burada olacak.
       </p>
       <button
         type="button"

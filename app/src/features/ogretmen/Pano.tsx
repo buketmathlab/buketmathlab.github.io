@@ -100,16 +100,22 @@ export function Pano() {
                         <p className="font-semibold text-ink">{g.ogrenci}</p>
                         <p className="truncate text-[13px] text-muted">{g.odev}</p>
                       </div>
-                      {g.puan === null ? (
-                        <Tag tur="uyari">Puan bekliyor</Tag>
-                      ) : (
-                        <Tag tur="basari">
-                          {/* Sayı ve kelime TEK metin düğümünde: Tag
-                              inline-flex olduğu için aralarındaki boşluk
-                              ayrı düğüm olsaydı yok olurdu ("92puan"). */}
-                          <span className="sk-sayi">{g.puan} puan</span>
-                        </Tag>
-                      )}
+                      <div className="flex flex-wrap justify-end gap-1">
+                        {/* Gecikme burada da görünür: pano öğretmenin
+                            "bugün ne oldu" ekranı, gecikmeyi başka bir
+                            yere bakarak öğrenmemeli. */}
+                        {g.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
+                        {g.puan === null ? (
+                          <Tag tur="uyari">Puan bekliyor</Tag>
+                        ) : (
+                          <Tag tur="basari">
+                            {/* Sayı ve kelime TEK metin düğümünde: Tag
+                                inline-flex olduğu için aralarındaki boşluk
+                                ayrı düğüm olsaydı yok olurdu ("92puan"). */}
+                            <span className="sk-sayi">{g.puan} puan</span>
+                          </Tag>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 ))}

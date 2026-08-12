@@ -13,6 +13,8 @@ import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
+import { GecTeslimSecimi } from './GecTeslimSecimi';
+import { SikSayisiSecimi } from './SikSayisiSecimi';
 import type { Sinif } from '@/types/api';
 
 type Adim = 1 | 2 | 3;
@@ -48,6 +50,7 @@ export function OdevOlustur() {
   const [sonTarih, setSonTarih] = useState('');
   const [soruSayisi, setSoruSayisi] = useState('20');
   const [sonSecenek, setSonSecenek] = useState<SonSecenek>('E');
+  const [gecTeslim, setGecTeslim] = useState(true);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
 
   // 2. adım
@@ -140,6 +143,8 @@ export function OdevOlustur() {
         p_cevap_anahtari: tur === 'test' ? anahtar : null,
         p_anahtar_yolu: anahtarYolu,
         p_odev_yolu: odevYolu,
+        p_gec_teslim: gecTeslim,
+        p_sik_sayisi: tur === 'test' ? (sonSecenek === 'D' ? 4 : 5) : 5,
       });
 
       bildir('Ödev taslak olarak kaydedildi', 'basari');
@@ -261,38 +266,25 @@ export function OdevOlustur() {
             </Field>
 
             {tur === 'test' && (
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="flex-1">
-                  <Field etiket="Soru sayısı" zorunlu>
-                    {(k) => (
-                      <Input
-                        {...k}
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={200}
-                        value={soruSayisi}
-                        onChange={(e) => setSoruSayisi(e.target.value)}
-                      />
-                    )}
-                  </Field>
-                </div>
-                <div className="flex-1">
-                  <Field etiket="Şık sayısı">
-                    {(k) => (
-                      <Select
-                        {...k}
-                        value={sonSecenek}
-                        onChange={(e) => setSonSecenek(e.target.value as SonSecenek)}
-                      >
-                        <option value="E">5 şık (A–E)</option>
-                        <option value="D">4 şık (A–D)</option>
-                      </Select>
-                    )}
-                  </Field>
-                </div>
-              </div>
+              <>
+                <Field etiket="Soru sayısı" zorunlu>
+                  {(k) => (
+                    <Input
+                      {...k}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={200}
+                      value={soruSayisi}
+                      onChange={(e) => setSoruSayisi(e.target.value)}
+                    />
+                  )}
+                </Field>
+                <SikSayisiSecimi deger={sonSecenek} onDegis={setSonSecenek} />
+              </>
             )}
+
+            <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 
             {formHatasi && (
               <p role="alert" className="mb-3 text-[13px] font-semibold text-danger">

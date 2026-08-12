@@ -135,7 +135,7 @@ begin
 
   ------------------------------------------------------------------
   raise notice '--- 7. Teslimden SONRA anahtar açılmalı, soru PDF''i kalmalı ---';
-  perform public.odev_gonder(t_ogrenci, v_odev, 'cozum/ogrenci-foto.jpg', '{"1":"A","2":"B"}'::jsonb);
+  perform public.odev_gonder(t_ogrenci, v_odev, 'cozum/' || v_odev || '/' || v_ogrenci || '.jpg', '{"1":"A","2":"B"}'::jsonb);
   select e into d_odev
   from jsonb_array_elements(public.ogrenci_odevleri(t_ogrenci) -> 'odevler') e
   where e ->> 'baslik' = 'PDFTEST Türev';

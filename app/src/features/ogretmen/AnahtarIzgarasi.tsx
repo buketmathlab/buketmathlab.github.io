@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
+import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
 import type { Cikarim, SonSecenek } from '@/lib/cevap-anahtari';
 
 type Props = {
@@ -10,11 +11,6 @@ type Props = {
   /** Çıkarım raporu. Elle giriliyorsa verilmez. */
   cikarim?: Cikarim | undefined;
   onDegis: (no: number, sik: string | null) => void;
-};
-
-const SIKLAR: Record<SonSecenek, string[]> = {
-  D: ['A', 'B', 'C', 'D'],
-  E: ['A', 'B', 'C', 'D', 'E'],
 };
 
 /**
@@ -113,53 +109,16 @@ export function AnahtarIzgarasi({ soruSayisi, sonSecenek, anahtar, cikarim, onDe
           )}
 
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: soruSayisi }, (_, i) => i + 1).map((no) => {
-              const secili = anahtar[no];
-              const eksik = !secili;
-              return (
-                <li
-                  key={no}
-                  className={
-                    'flex items-center gap-2 rounded-sk-sm border px-2 py-1 ' +
-                    (eksik
-                      ? 'border-warning bg-warning-bg'
-                      : celiskili.has(no)
-                        ? 'border-danger'
-                        : 'border-line')
-                  }
-                >
-                  <span className="sk-sayi w-7 shrink-0 text-right text-[13px] font-bold text-muted">
-                    {no}
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {siklar.map((s) => {
-                      const aktif = secili === s;
-                      return (
-                        <button
-                          key={s}
-                          type="button"
-                          // İkinci dokunuş seçimi kaldırır: yanlış basmayı
-                          // düzeltmek için ayrı bir "temizle" düğmesi gerekmiyor.
-                          onClick={() => onDegis(no, aktif ? null : s)}
-                          aria-pressed={aktif}
-                          aria-label={`${no}. soru, ${s} şıkkı`}
-                          className={
-                            'min-h-[36px] min-w-[36px] rounded-sk-sm border text-[14px] font-semibold ' +
-                            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ' +
-                            'focus-visible:outline-ink ' +
-                            (aktif
-                              ? 'border-ink bg-ink text-paper'
-                              : 'border-line bg-surface text-muted hover:border-ink-soft')
-                          }
-                        >
-                          {s}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </li>
-              );
-            })}
+            {Array.from({ length: soruSayisi }, (_, i) => i + 1).map((no) => (
+              <SikSatiri
+                key={no}
+                no={no}
+                siklar={siklar}
+                secili={anahtar[no]}
+                vurgu={!anahtar[no] ? 'uyari' : celiskili.has(no) ? 'tehlike' : 'yok'}
+                onDegis={onDegis}
+              />
+            ))}
           </ul>
         </>
       )}

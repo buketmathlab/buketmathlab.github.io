@@ -46,8 +46,8 @@ begin
 
   -- 1. öğrenci DOĞRU cevapları verdi (3'e C dedi) — yanlış anahtar yüzünden
   -- 75 alacak. 2. öğrenci anahtarla aynı hatayı yaptı, 100 alacak.
-  perform public.odev_gonder(t_ogr1, v_odev, 'f1.jpg', '{"1":"A","2":"B","3":"C","4":"D"}'::jsonb);
-  perform public.odev_gonder(t_ogr2, v_odev, 'f2.jpg', '{"1":"A","2":"B","3":"A","4":"D"}'::jsonb);
+  perform public.odev_gonder(t_ogr1, v_odev, 'cozum/' || v_odev || '/' || v_ogr1 || '.jpg', '{"1":"A","2":"B","3":"C","4":"D"}'::jsonb);
+  perform public.odev_gonder(t_ogr2, v_odev, 'cozum/' || v_odev || '/' || v_ogr2 || '.jpg', '{"1":"A","2":"B","3":"A","4":"D"}'::jsonb);
 
   select puan into p1 from public.gonderimler where odev_id = v_odev and ogrenci_id = v_ogr1;
   select puan into p2 from public.gonderimler where odev_id = v_odev and ogrenci_id = v_ogr2;
