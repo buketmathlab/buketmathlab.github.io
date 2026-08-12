@@ -239,6 +239,58 @@ begin
   raise notice '    kendi cevapları dönüyor, gönderim yoksa blok boş: OK';
 
   ------------------------------------------------------------------
+  raise notice '--- 7d. GECİKMELİ gönderim her ekranda görünüyor ---';
+  -- Öğretmenin isteği: geç teslime izin verilen ödevlerde bile geç gelen
+  -- teslim "gecikmeli" olarak görünmeli. İzin vermek, gecikmeyi görmezden
+  -- gelmek değil.
+
+  -- v_gecmis_acik: son tarihi 3 gün geçmiş bir ödeve gönderim yapıldı.
+  if not exists (
+    select 1 from jsonb_array_elements(public.odevler_listesi(t_ogretmen, v_sinif, null)) e
+    where (e ->> 'id')::uuid = v_gecmis_acik and (e ->> 'gec_gonderim_sayisi')::int = 1
+  ) then
+    raise exception 'HATA: odevler_listesi gecikmeli gönderimi saymıyor!';
+  end if;
+
+  if (public.odev_detay(t_ogretmen, v_gecmis_acik) ->> 'gec_gonderim_sayisi')::int <> 1 then
+    raise exception 'HATA: odev_detay gecikmeli sayısını vermiyor!';
+  end if;
+
+  if not exists (
+    select 1 from jsonb_array_elements(public.ogrenci_odevleri(t_ogr) -> 'odevler') e
+    where (e ->> 'id')::uuid = v_gecmis_acik
+      and (e -> 'gonderim' ->> 'gecikmeli')::boolean
+  ) then
+    raise exception 'HATA: öğrenci kendi gecikmesini göremiyor!';
+  end if;
+
+  if not exists (
+    select 1 from jsonb_array_elements(public.ogretmen_panosu(t_ogretmen) -> 'son_gonderimler') e
+    where (e ->> 'gecikmeli')::boolean
+  ) then
+    raise exception 'HATA: panoda gecikmeli gönderim işaretlenmiyor!';
+  end if;
+
+  -- SÜRESİ İÇİNDE gönderilen teslim gecikmeli SAYILMAMALI. Bu ölçüm olmadan
+  -- "hep true dönen" bir alan da testi geçerdi.
+  if (select count(*) from jsonb_array_elements(
+        public.odevler_listesi(t_ogretmen, v_sinif, null)) e
+      where (e ->> 'id')::uuid = v_ileri_kapali
+        and (e ->> 'gec_gonderim_sayisi')::int <> 0) > 0 then
+    raise exception 'HATA: süresi içinde gelen teslim gecikmeli sayıldı!';
+  end if;
+
+  -- SON GÜN gönderimi de gecikme değildir — odev_gonder ile aynı kural.
+  if not exists (
+    select 1 from jsonb_array_elements(public.ogrenci_odevleri(t_ogr) -> 'odevler') e
+    where (e ->> 'id')::uuid = v_bugun_kapali
+      and (e -> 'gonderim' ->> 'gecikmeli')::boolean = false
+  ) then
+    raise exception 'HATA: son gün gönderimi gecikmeli sayıldı!';
+  end if;
+  raise notice '    liste, detay, öğrenci ve pano: geç olan işaretli, zamanında olan değil: OK';
+
+  ------------------------------------------------------------------
   raise notice '--- 8. ESKİ İMZALAR DÜŞTÜ MÜ (0007 tuzağı) ---';
   function_yol := 'public.odev_olustur(text,text,text,uuid,text,date,integer,jsonb,text,text)';
   if to_regprocedure(function_yol) is not null then

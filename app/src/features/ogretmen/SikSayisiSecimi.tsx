@@ -15,11 +15,11 @@ type Props = {
  * Her ödevde soru sayısının yanında eşit ağırlıkta durması, hiç
  * dokunulmayacak bir alanı ana yola koymak demekti.
  *
- * KALDIRILMIYOR, GİZLENİYOR: özel ders öğrencileri farklı olabilir
- * (ortaokul testleri 4 şıklıdır) ve alan ödevde saklandığı için mevcut
- * kayıtların doğru açılması da buna bağlı. Değer varsayılandan farklıysa
- * seçim kendiliğinden AÇIK gelir — 4 şıklı bir ödevi düzenlerken ayarın
- * gizli kalması, sessizce yanlış değere dönmesinden beter olurdu.
+ * KALDIRILMIYOR, GİZLENİYOR: öğretmen ayrıca belirtti — özel ders
+ * öğrencilerinde hem 4 hem 5 şıklı test hazırlıyor. Yani seçim gerçekten
+ * gerekli, yalnız her ödevde önüne çıkması gereksiz. Değer varsayılandan
+ * farklıysa seçim kendiliğinden AÇIK gelir — 4 şıklı bir ödevi düzenlerken
+ * ayarın gizli kalması, sessizce yanlış değere dönmesinden beter olurdu.
  */
 export function SikSayisiSecimi({ deger, onDegis }: Props) {
   const [elleAcildi, setElleAcildi] = useState(false);
@@ -53,7 +53,10 @@ export function SikSayisiSecimi({ deger, onDegis }: Props) {
   }
 
   return (
-    <Field etiket="Şık sayısı" ipucu="Okul sınıflarında genellikle 5 şık kullanılıyor.">
+    <Field
+      etiket="Şık sayısı"
+      ipucu="Okul sınıflarında hep 5 şık; özel ders öğrencilerinde ikisi de olabilir."
+    >
       {(k) => (
         <Select {...k} value={deger} onChange={(e) => onDegis(e.target.value as SonSecenek)}>
           <option value="E">5 şık (A–E)</option>

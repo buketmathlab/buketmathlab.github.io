@@ -209,7 +209,10 @@ function OdevIcerigi({
 
         <div className="mt-3 flex flex-wrap gap-2">
           {gonderildi ? (
-            <Tag tur="basari">Gönderildi</Tag>
+            <>
+              <Tag tur="basari">Gönderildi</Tag>
+              {odev.gonderim!.gecikmeli && <Tag tur="uyari">Gecikmeli teslim</Tag>}
+            </>
           ) : (
             <Tag tur={sure.gecti ? 'notr' : sure.acil ? 'uyari' : 'notr'}>{sure.metin}</Tag>
           )}
@@ -341,6 +344,11 @@ function Sonuc({ odev, onPdf }: { odev: OgrenciOdev; onPdf: (yol: string) => voi
                 ? 'Ödevin alındı ve puanlandı.'
                 : 'Ödevin alındı. Öğretmenin değerlendirdikten sonra puanın görünecek.'}
             </p>
+            {g.gecikmeli && (
+              <p className="mt-1 text-[13px] font-semibold text-warning">
+                Son tarihten sonra gönderildi — öğretmenin gecikmeli olarak görüyor.
+              </p>
+            )}
           </div>
         </div>
 

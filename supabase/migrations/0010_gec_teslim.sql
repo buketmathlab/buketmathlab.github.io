@@ -527,3 +527,242 @@ grant execute on function public.odev_gonder(text, uuid, text, jsonb) to anon, a
 grant execute on function public.odev_detay(text, uuid)               to anon, authenticated;
 grant execute on function public.odevler_listesi(text, uuid, boolean) to anon, authenticated;
 grant execute on function public.ogrenci_odevleri(text)               to anon, authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 7. GECİKMELİ GÖNDERİM HER YERDE GÖRÜNÜR
+--
+-- Öğretmenin isteği: "süre dolduktan sonra da teslim alınsın dediğim tüm
+-- ödevlerde öğrenci son tarihten sonra göndermişse eğer, ödev listesinde
+-- mutlaka gecikmeli olduğu görünsün."
+--
+-- Geç teslimi AÇIK bırakmanın bedeli, geç gelenin normal görünmesi olmamalı.
+-- Ödev alınıyor ama gecikme kayda geçiyor ve ekranda yazıyor.
+--
+-- Kıyas `odev_gonder` ile AYNI kuralı kullanıyor: Türkiye günü, ve son gün
+-- gecikme sayılmaz. İki yerde iki farklı tanım olsaydı, sunucunun kabul
+-- ettiği bir teslim listede "gecikmeli" görünebilirdi.
+--
+-- Bu bilgi TÜRETİLİYOR, saklanmıyor: `gonderimler.created_at` ile
+-- `odevler.son_tarih` zaten elimizde. Ayrı bir sütun tutmak, son tarih
+-- sonradan değiştirildiğinde eskimiş bir bayrak bırakırdı.
+-- -----------------------------------------------------------------------------
+create or replace function public._gecikmeli(p_gonderim_zamani timestamptz, p_son_tarih date)
+returns boolean
+language sql
+immutable
+set search_path = public, extensions, pg_temp
+as $$
+  select (p_gonderim_zamani at time zone 'Europe/Istanbul')::date > p_son_tarih;
+$$;
+
+revoke all on function public._gecikmeli(timestamptz, date)
+  from public, anon, authenticated;
+
+create or replace function public.odevler_listesi(
+  p_token text,
+  p_sinif_id uuid default null,
+  p_yayinda boolean default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+begin
+  perform public._ogretmen(p_token);
+
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', d.id,
+      'baslik', d.baslik,
+      'aciklama', d.aciklama,
+      'tur', d.tur,
+      'sinif_id', d.sinif_id,
+      'sinif', s.ad,
+      'son_tarih', d.son_tarih,
+      'soru_sayisi', d.soru_sayisi,
+      'gec_teslim', d.gec_teslim,
+      'sik_sayisi', d.sik_sayisi,
+      'yayinda', d.yayinda,
+      'olusturma', d.created_at,
+      'odev_pdf_var', (d.odev_url is not null),
+      'anahtar_pdf_var', (d.anahtar_url is not null),
+      'gonderim_sayisi', (
+        select count(*) from public.gonderimler g where g.odev_id = d.id
+      ),
+      -- Kaç teslim son tarihten SONRA geldi.
+      'gec_gonderim_sayisi', (
+        select count(*) from public.gonderimler g
+        where g.odev_id = d.id and public._gecikmeli(g.created_at, d.son_tarih)
+      ),
+      'sinif_mevcudu', (
+        select count(*) from public.ogrenciler o
+        where o.sinif_id = d.sinif_id and o.aktif
+      )
+    ) order by d.son_tarih desc, d.created_at desc)
+    from public.odevler d
+    join public.siniflar s on s.id = d.sinif_id
+    where (p_sinif_id is null or d.sinif_id = p_sinif_id)
+      and (p_yayinda is null or d.yayinda = p_yayinda)
+  ), '[]'::jsonb);
+end;
+$$;
+
+create or replace function public.odev_detay(p_token text, p_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  d public.odevler;
+  s public.siniflar;
+begin
+  perform public._ogretmen(p_token);
+
+  select * into d from public.odevler where id = p_id;
+  if not found then
+    raise exception 'Ödev bulunamadı.' using errcode = 'P0002';
+  end if;
+  select * into s from public.siniflar where id = d.sinif_id;
+
+  return jsonb_build_object(
+    'id', d.id,
+    'baslik', d.baslik,
+    'aciklama', d.aciklama,
+    'tur', d.tur,
+    'sinif_id', d.sinif_id,
+    'sinif', s.ad,
+    'son_tarih', d.son_tarih,
+    'soru_sayisi', d.soru_sayisi,
+    'gec_teslim', d.gec_teslim,
+    'sik_sayisi', d.sik_sayisi,
+    'cevap_anahtari', coalesce(d.cevap_anahtari, '{}'::jsonb),
+    'anahtar_yolu', d.anahtar_url,
+    'odev_yolu', d.odev_url,
+    'yayinda', d.yayinda,
+    'gonderim_sayisi', (select count(*) from public.gonderimler g where g.odev_id = d.id),
+    'gec_gonderim_sayisi', (
+      select count(*) from public.gonderimler g
+      where g.odev_id = d.id and public._gecikmeli(g.created_at, d.son_tarih)
+    )
+  );
+end;
+$$;
+
+create or replace function public.ogrenci_odevleri(p_token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  o record;
+  ogr record;
+begin
+  select * into o from public._oturum(p_token);
+  if o.rol <> 'ogrenci' then
+    raise exception 'Bu bölüm yalnızca öğrenciler içindir.' using errcode = '42501';
+  end if;
+
+  select ogr2.id, ogr2.ad, ogr2.tur, s.ad as sinif, ogr2.sinif_id
+    into ogr
+  from public.ogrenciler ogr2
+  left join public.siniflar s on s.id = ogr2.sinif_id
+  where ogr2.id = o.ogrenci_id;
+
+  return jsonb_build_object(
+    'ogrenci', jsonb_build_object('id', ogr.id, 'ad', ogr.ad, 'sinif', ogr.sinif),
+    'odevler', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', d.id,
+        'baslik', d.baslik,
+        'aciklama', d.aciklama,
+        'tur', d.tur,
+        'son_tarih', d.son_tarih,
+        'soru_sayisi', d.soru_sayisi,
+        'gec_teslim', d.gec_teslim,
+        'sik_sayisi', d.sik_sayisi,
+        -- Soru PDF'i: teslimden bağımsız, her zaman.
+        'odev_yolu', d.odev_url,
+        'gonderim', case when g.id is null then null else jsonb_build_object(
+          'id', g.id, 'zaman', g.created_at, 'durum', g.durum,
+          'dogru', g.dogru, 'yanlis', g.yanlis, 'bos', g.bos,
+          'puan', g.puan, 'ogretmen_puan', g.ogretmen_puan,
+          'ogretmen_yorum', g.ogretmen_yorum,
+          'cevaplar', coalesce(g.cevaplar, '{}'::jsonb),
+          -- Öğrenci de kendi gecikmesini görüyor. Öğretmene görünen bir
+          -- şeyin öğrenciden saklanması için bir sebep yok; üstelik geç
+          -- gönderdiğini bilmesi işin yarısı.
+          'gecikmeli', public._gecikmeli(g.created_at, d.son_tarih)
+        ) end,
+        -- Anahtar YALNIZ teslim varsa eklenir. Teslim yoksa alan hiç yok.
+        'cevap_anahtari', case when g.id is not null then d.cevap_anahtari else null end,
+        'anahtar_yolu',   case when g.id is not null then d.anahtar_url    else null end
+      ) order by d.son_tarih)
+      from public.odevler d
+      left join public.gonderimler g
+        on g.odev_id = d.id and g.ogrenci_id = ogr.id
+      where d.yayinda and d.sinif_id = ogr.sinif_id
+    ), '[]'::jsonb),
+    'dersler', coalesce((
+      select jsonb_agg(jsonb_build_object('zaman', l.zaman, 'mod', l.mod, 'link', l.link)
+                       order by l.zaman)
+      from public.dersler l
+      where l.ogrenci_id = ogr.id and l.zaman > now()
+    ), '[]'::jsonb)
+  );
+end;
+$$;
+
+create or replace function public.ogretmen_panosu(p_token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  bugun date := current_date;
+begin
+  perform public._ogretmen(p_token);
+
+  return jsonb_build_object(
+    'ogrenci_sayisi', (select count(*) from public.ogrenciler where aktif),
+    'acik_odev', (select count(*) from public.odevler
+                   where yayinda and son_tarih >= bugun),
+    'bekleyen_degerlendirme', (select count(*) from public.gonderimler g
+                                join public.odevler o on o.id = g.odev_id
+                               where o.tur = 'acik' and g.durum = 'incelemede'),
+    'gecikmis_eksik', (
+      select count(*)
+      from public.odevler o
+      join public.ogrenciler ogr
+        on ogr.sinif_id = o.sinif_id and ogr.aktif
+      where o.yayinda and o.son_tarih < bugun
+        and not exists (select 1 from public.gonderimler g
+                         where g.odev_id = o.id and g.ogrenci_id = ogr.id)
+    ),
+    'son_gonderimler', coalesce((
+      select jsonb_agg(x order by x->>'zaman' desc) from (
+        select jsonb_build_object(
+                 'ogrenci', ogr.ad, 'odev', o.baslik,
+                 'puan', coalesce(g.ogretmen_puan, g.puan),
+                 'zaman', g.created_at,
+                 -- Panoda da görünüyor: öğretmenin "bugün ne oldu" ekranı
+                 -- burası, gecikmeyi ayrı bir yere bakarak öğrenmemeli.
+                 'gecikmeli', public._gecikmeli(g.created_at, o.son_tarih)
+               ) as x
+        from public.gonderimler g
+        join public.ogrenciler ogr on ogr.id = g.ogrenci_id
+        join public.odevler o on o.id = g.odev_id
+        order by g.created_at desc limit 10
+      ) t
+    ), '[]'::jsonb)
+  );
+end;
+$$;
+
+grant execute on function public.odevler_listesi(text, uuid, boolean) to anon, authenticated;
+grant execute on function public.odev_detay(text, uuid)               to anon, authenticated;
+grant execute on function public.ogrenci_odevleri(text)               to anon, authenticated;
+grant execute on function public.ogretmen_panosu(text)                to anon, authenticated;

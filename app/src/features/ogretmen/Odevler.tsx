@@ -191,6 +191,19 @@ export function Odevler() {
                 )}
               </p>
 
+              {/* Geç teslime izin vermek, gecikmeyi görmezden gelmek değil.
+                  Öğretmenin isteği: geç gelen teslim listede mutlaka
+                  görünsün. Sayı sunucuda hesaplanıyor. */}
+              {o.gec_gonderim_sayisi > 0 && (
+                <p className="mb-3 -mt-2">
+                  <Tag tur="uyari">
+                    <span className="sk-sayi">
+                      {`${o.gec_gonderim_sayisi} gecikmeli teslim`}
+                    </span>
+                  </Tag>
+                </p>
+              )}
+
               <div className="flex flex-wrap gap-2">
                 {o.odev_pdf_var && (
                   <Button tur="sade" olcu="sm" onClick={() => pdfAc(o, 'odev')}>

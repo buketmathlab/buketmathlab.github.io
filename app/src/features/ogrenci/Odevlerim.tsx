@@ -96,13 +96,16 @@ export function Odevlerim() {
                       </p>
                     </div>
                     {gonderildi ? (
-                      o.gonderim!.puan !== null ? (
-                        <Tag tur="basari">
-                          <span className="sk-sayi">{`${o.gonderim!.puan} puan`}</span>
-                        </Tag>
-                      ) : (
-                        <Tag tur="bilgi">Değerlendiriliyor</Tag>
-                      )
+                      <div className="flex flex-wrap justify-end gap-1">
+                        {o.gonderim!.puan !== null ? (
+                          <Tag tur="basari">
+                            <span className="sk-sayi">{`${o.gonderim!.puan} puan`}</span>
+                          </Tag>
+                        ) : (
+                          <Tag tur="bilgi">Değerlendiriliyor</Tag>
+                        )}
+                        {o.gonderim!.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
+                      </div>
                     ) : (
                       <div className="flex flex-wrap justify-end gap-1">
                         <Tag tur={s.acil ? 'uyari' : 'notr'}>{s.metin}</Tag>

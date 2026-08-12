@@ -34,6 +34,7 @@ const ODEVLER = [
       id: 'g1', zaman: gun(-7), durum: 'puanlandi', dogru: 8, yanlis: 1, bos: 1,
       puan: 80, ogretmen_puan: null, ogretmen_yorum: 'Üçüncü soruda işlem hatası var, tekrar bak.',
       cevaplar: { 1: 'A', 2: 'C', 3: 'D', 4: 'D', 5: 'A', 6: 'B', 7: 'C', 8: 'A', 9: 'D' },
+      gecikmeli: true,
     },
     cevap_anahtari: { 1: 'A', 2: 'C', 3: 'B', 4: 'D', 5: 'A', 6: 'B', 7: 'C', 8: 'A', 9: 'D', 10: 'B' },
     anahtar_yolu: 'odev/z/anahtar.pdf',

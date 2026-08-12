@@ -22,6 +22,7 @@ export type Pano = {
     odev: string;
     puan: number | null;
     zaman: string;
+    gecikmeli: boolean;
   }>;
 };
 
@@ -75,6 +76,8 @@ export type OdevSatiri = {
   odev_pdf_var: boolean;
   anahtar_pdf_var: boolean;
   gonderim_sayisi: number;
+  /** Son tarihten SONRA gelen teslim sayısı (migration 0010). */
+  gec_gonderim_sayisi: number;
   sinif_mevcudu: number;
 };
 
@@ -91,6 +94,8 @@ export type OgrenciGonderim = {
   ogretmen_yorum: string | null;
   /** Öğrencinin kendi verdiği cevaplar — hangi soruyu kaçırdığını görebilsin. */
   cevaplar: Record<string, string>;
+  /** Son tarihten sonra mı gönderildi. Sunucuda türetiliyor, saklanmıyor. */
+  gecikmeli: boolean;
 };
 
 /**
