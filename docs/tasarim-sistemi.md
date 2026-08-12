@@ -140,6 +140,30 @@ giriş ekranındakiyle aynı: `EwaluFigure` + metin, `flex items-center gap-3`.
 "öğrenci ekleyin" boş durum kartından figür çıkarıldı; ikinci bir kopya
 karakteri asistan olmaktan çıkarıp süse çevirir.
 
+### Puana göre konuşma
+
+Öğrenci ödevini gönderip puanını gördüğünde Ewalu beş bandın birine göre
+konuşuyor (`lib/ewalu-puan.ts`). **Cümleler öğretmenindir**; burada
+uydurulmuş tek kelime yok.
+
+| Puan | Poz |
+|---|---|
+| 100 · 85–99 | `kutlama` |
+| 70–84 · 50–69 · 0–49 | `calisma` |
+
+**`kutlama` yalnız 85 ve üstünde.** Bundan önce sonuç kartı puan ne olursa
+olsun kutlama pozunu ve yeşil "başarı" şeridini gösteriyordu; 35 alan
+öğrenciyi kutlayan bir ayı alay gibi okunur. Şerit de aynı eşiğe bağlandı,
+ama altı **nötr** — kırmızı ya da sarı değil: cümlelerin özenle kaçındığı
+yargıyı renk geri getirirdi.
+
+**İki ses ayrı duruyor.** Üstte sistem ("Ödevin alındı ve puanlandı." —
+puan ne olursa olsun aynı), altında ayrı bir blokta Ewalu. Sistem "ne
+oldu"yu, Ewalu "şimdi ne yapmalı"yı söyler.
+
+**Puan yoksa Ewalu susuyor.** Açık uçlu ödev henüz puanlanmadıysa bant yok;
+olmayan bir puana cümle uydurulmuyor.
+
 Konuşan Ewalu **dekoratiftir** (`alt=""`): cümle zaten yanında görünür
 metin olarak duruyor, ekran okuyucunun ayrıca pozu tarif etmesi tekrar
 olurdu.

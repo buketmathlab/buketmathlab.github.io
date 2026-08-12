@@ -7,6 +7,7 @@ import { Field, Input } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
+import { puanMesaji } from '@/lib/ewalu-puan';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -332,6 +333,23 @@ function OdevIcerigi({
 }
 
 /** Teslimden sonraki görünüm: puan ve cevap anahtarı karşılaştırması. */
+/**
+ * Ewalu'nun puana göre söylediği.
+ *
+ * Poz da cümle de `lib/ewalu-puan.ts`'ten geliyor — metinler öğretmenin.
+ * Figür `dekoratif`: cümle zaten yanında görünür metin olarak duruyor,
+ * ekran okuyucunun ayrıca pozu tarif etmesi tekrar olurdu.
+ */
+function EwaluSozu({ puan }: { puan: number }) {
+  const { poz, cumle } = puanMesaji(puan);
+  return (
+    <div className="mt-4 flex items-start gap-3 border-t border-line pt-4">
+      <EwaluFigure poz={poz} boyut={52} dekoratif className="shrink-0" />
+      <p className="text-[14px] leading-relaxed text-ink">{cumle}</p>
+    </div>
+  );
+}
+
 function Sonuc({ odev, onPdf }: { odev: OgrenciOdev; onPdf: (yol: string) => void }) {
   const g = odev.gonderim;
   if (!g) return null;
@@ -341,29 +359,39 @@ function Sonuc({ odev, onPdf }: { odev: OgrenciOdev; onPdf: (yol: string) => voi
 
   return (
     <>
-      <Card vurgu="basari" className="mb-4">
-        <div className="flex items-center gap-3">
-          <EwaluFigure poz="kutlama" boyut={64} dekoratif />
-          <div>
-            <p className="font-display text-[20px] font-semibold text-ink">
-              {puan !== null ? (
-                <span className="sk-sayi">{`${puan} puan`}</span>
-              ) : (
-                'Gönderildi'
-              )}
+      {/* YEŞİL ŞERİT DE PUANA BAĞLI. Kutlama pozuyla aynı hata buradaydı:
+          35 alan öğrencinin kartı da "başarı" yeşiliyle çerçeveleniyordu.
+          85 ve üstü yeşil; altı NÖTR — kırmızı ya da sarı değil, çünkü
+          cümlelerin özenle kaçındığı yargıyı renk geri getirirdi. Henüz
+          puanlanmamış gönderim yeşil kalıyor: teslim etmek başlı başına
+          olmuş bir iş. */}
+      <Card vurgu={puan === null || puan >= 85 ? 'basari' : 'yok'} className="mb-4">
+        {/* İKİ SES AYRI DURUYOR.
+            Üstte SİSTEM: puan ve "ödevin alındı" — puan ne olursa olsun aynı
+            cümle (öğretmenin kararı). Altta EWALU: puana göre değişen tek
+            cümle. Sistem "ne oldu"yu söyler, Ewalu "şimdi ne yapmalı"yı;
+            ikisini tek paragrafa karıştırmak hangisinin ne olduğunu
+            belirsizleştirirdi. */}
+        <div>
+          <p className="font-display text-[20px] font-semibold text-ink">
+            {puan !== null ? <span className="sk-sayi">{`${puan} puan`}</span> : 'Gönderildi'}
+          </p>
+          <p className="text-[14px] text-muted">
+            {puan !== null
+              ? 'Ödevin alındı ve puanlandı.'
+              : 'Ödevin alındı. Öğretmenin değerlendirdikten sonra puanın görünecek.'}
+          </p>
+          {g.gecikmeli && (
+            <p className="mt-1 text-[13px] font-semibold text-warning">
+              Son tarihten sonra gönderildi — öğretmenin gecikmeli olarak görüyor.
             </p>
-            <p className="text-[14px] text-muted">
-              {puan !== null
-                ? 'Ödevin alındı ve puanlandı.'
-                : 'Ödevin alındı. Öğretmenin değerlendirdikten sonra puanın görünecek.'}
-            </p>
-            {g.gecikmeli && (
-              <p className="mt-1 text-[13px] font-semibold text-warning">
-                Son tarihten sonra gönderildi — öğretmenin gecikmeli olarak görüyor.
-              </p>
-            )}
-          </div>
+          )}
         </div>
+
+        {/* Ewalu YALNIZ puan varsa konuşuyor. Açık uçlu ödev henüz
+            puanlanmadıysa söyleyecek bir şeyi yok; olmayan bir puana cümle
+            uydurmuyoruz. */}
+        {puan !== null && <EwaluSozu puan={puan} />}
 
         {g.dogru !== null && (
           <p className="mt-3 text-[14px] text-ink">
