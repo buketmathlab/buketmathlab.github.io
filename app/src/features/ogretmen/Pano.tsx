@@ -1,5 +1,4 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -65,7 +64,26 @@ export function Pano() {
 
   return (
     <>
-      <SayfaBasligi baslik="Bugün" aciklama="Dikkat etmeniz gereken şeyler." />
+      {/* Başlık bloğunu EWALU SÖYLÜYOR.
+          `SayfaBasligi` yerine buraya özel bir blok yazılıyor: diğer
+          ekranlarda başlık nötr bir etikettir, panoda ise günün özetini
+          asistan aktarıyor. Görsel ile metin yan yana durunca cümlenin
+          sahibi belli oluyor — giriş ekranındaki Ewalu bloğuyla aynı kalıp.
+
+          `calisma` pozu: okul ceketi, kulağının arkasında kalem. Panonun
+          işi "bugün ne yapmalıyım" olduğu için çalışma bağlamı doğru poz;
+          `karsilama` girişe, `kutlama` başarıya ait.
+
+          `dekoratif` — cümlenin kendisi zaten yanında yazıyor; ekran
+          okuyucunun ayrıca "Ewalu ceketiyle defterine yazıyor" demesi
+          bilgi katmaz, tekrar olurdu. */}
+      <div className="mb-5 flex items-center gap-3">
+        <EwaluFigure poz="calisma" boyut={56} dekoratif className="shrink-0" />
+        <div className="min-w-0">
+          <h1 className="text-[24px] text-ink">Bugün</h1>
+          <p className="mt-0.5 text-[14px] text-muted">Dikkat etmeniz gerekenler</p>
+        </div>
+      </div>
 
       <AsyncBoundary
         durum={durum}
@@ -104,21 +122,19 @@ export function Pano() {
               />
             </div>
 
+            {/* Burada İKİNCİ bir Ewalu YOK. Başlıkta zaten konuşuyor;
+                aynı ekranda ikinci bir figür karakteri süse çevirir
+                (Part VII: Ewalu asistandır, dekor değil). */}
             {veri.ogrenci_sayisi === 0 && (
               <Card className="mt-4">
-                <div className="flex items-center gap-4">
-                  <EwaluFigure poz="kesif" boyut={72} dekoratif />
-                  <div>
-                    <p className="font-semibold text-ink">Başlamak için öğrenci ekleyin</p>
-                    <p className="mt-1 text-[14px] text-muted">
-                      Sınıflar hazır.{' '}
-                      <Link to="/ogretmen/ogrenciler" className="font-bold text-link underline">
-                        Öğrenciler
-                      </Link>{' '}
-                      bölümünden ilk öğrencinizi ekleyebilirsiniz.
-                    </p>
-                  </div>
-                </div>
+                <p className="font-semibold text-ink">Başlamak için öğrenci ekleyin</p>
+                <p className="mt-1 text-[14px] text-muted">
+                  Sınıflar hazır.{' '}
+                  <Link to="/ogretmen/ogrenciler" className="font-bold text-link underline">
+                    Öğrenciler
+                  </Link>{' '}
+                  bölümünden ilk öğrencinizi ekleyebilirsiniz.
+                </p>
               </Card>
             )}
 

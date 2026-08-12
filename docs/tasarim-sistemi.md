@@ -123,13 +123,26 @@ Asistandır, ürünün kahramanı değil. Dört poz, dört bağlam:
 | Karşılama | İlk kurulum, giriş ekranı, landing tanıtımı |
 | Keşif | Boş durumlar — henüz ödev yok, henüz mesaj yok |
 | Kutlama | Ödev teslim edildi, başarı anları |
-| Çalışma | Ödev hatırlatması, değerlendirme bekleniyor |
+| Çalışma | Öğretmen panosu başlığı, ödev hatırlatması, değerlendirme bekleniyor |
 
 Poz eşlemesi kaynak dosyalar tek tek açılarak doğrulandı, dosya adından
 tahmin edilmedi.
 
 Boş durumlarda Ewalu **işlevseldir**: "hiçbir şey yok" ekranı ürünün en
 soğuk anıdır; karakter bu anı insanileştirir.
+
+**Ewalu konuşuyorsa görseli yanında durur.** Öğretmen panosunun başlığı
+(`Bugün` / `Dikkat etmeniz gerekenler`) günün özetini asistanın ağzından
+verir; görsel ile metin yan yana olunca cümlenin sahibi belli olur. Kalıp
+giriş ekranındakiyle aynı: `EwaluFigure` + metin, `flex items-center gap-3`.
+
+**Bir ekranda en fazla bir Ewalu.** Panoda başlıkta figür olduğu için
+"öğrenci ekleyin" boş durum kartından figür çıkarıldı; ikinci bir kopya
+karakteri asistan olmaktan çıkarıp süse çevirir.
+
+Konuşan Ewalu **dekoratiftir** (`alt=""`): cümle zaten yanında görünür
+metin olarak duruyor, ekran okuyucunun ayrıca pozu tarif etmesi tekrar
+olurdu.
 
 ## Okul mührü
 
