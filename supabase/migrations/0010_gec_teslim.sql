@@ -225,7 +225,15 @@ create or replace function public.odev_guncelle(
   p_cevap_anahtari jsonb default null,
   p_anahtar_yolu text default null,
   p_odev_yolu text default null,
-  p_gec_teslim boolean default true,
+  -- DİKKAT — burada varsayılan `null`, `true` DEĞİL.
+  --
+  -- Oluşturmada varsayılan `true` doğru: yeni ödev açık başlar. Ama
+  -- güncellemede `true` olsaydı, parametreyi göndermeyen HERHANGİ bir çağrı
+  -- öğretmenin kapattığı bir ödevi sessizce yeniden açardı. Ayarı "ödev
+  -- verildikten sonra da değiştirebilmek" ancak değişikliğin kalıcı olmasıyla
+  -- bir anlam taşır. `null` = "dokunma", aşağıdaki coalesce mevcut değeri
+  -- koruyor — `p_sik_sayisi` ile aynı davranış.
+  p_gec_teslim boolean default null,
   p_sik_sayisi smallint default null
 )
 returns jsonb

@@ -128,6 +128,28 @@ begin
   raise notice '    kapalıyken reddedilen ödev, açılınca kabul edildi: OK';
 
   ------------------------------------------------------------------
+  raise notice '--- 6b. Ayar YAYINDAKİ ödevde de kapatılabiliyor ve KALICI ---';
+  -- Öğretmenin isteği: "diğer düzenlemeleri yapabildiği gibi bu düzenlemeyi
+  -- de ödevi verdikten sonra da yapabilsin." Kalıcı olmazsa anlamı yok.
+  perform public.odev_guncelle(t_ogretmen, v_gecmis_acik, 'GEC Acik', null,
+                               v_sinif, bugun_tr - 3, 2,
+                               '{"1":"A","2":"B"}'::jsonb, null, null, false);
+  if (select gec_teslim from public.odevler where id = v_gecmis_acik)
+     or not (select yayinda from public.odevler where id = v_gecmis_acik) then
+    raise exception 'HATA: yayındaki ödevde geç teslim kapatılamadı!';
+  end if;
+
+  -- ASIL TUZAK: parametre GÖNDERİLMEDEN yapılan bir güncelleme (başlık
+  -- değişikliği gibi) ayarı sessizce yeniden AÇMAMALI.
+  perform public.odev_guncelle(t_ogretmen, v_gecmis_acik, 'GEC Acik yeni ad', null,
+                               v_sinif, bugun_tr - 3, 2,
+                               '{"1":"A","2":"B"}'::jsonb);
+  if (select gec_teslim from public.odevler where id = v_gecmis_acik) then
+    raise exception 'HATA: BAŞKA BİR DÜZENLEME GEÇ TESLİMİ SESSİZCE YENİDEN AÇTI!';
+  end if;
+  raise notice '    kapatma kalıcı, başka düzenleme ayarı bozmuyor: OK';
+
+  ------------------------------------------------------------------
   raise notice '--- 7. Ayar üç okuma ucundan da görünüyor ---';
   o := public.odev_detay(t_ogretmen, v_ileri_kapali);
   if (o ->> 'gec_teslim')::boolean then

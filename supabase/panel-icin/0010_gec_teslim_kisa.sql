@@ -139,7 +139,7 @@ create or replace function public.odev_guncelle(
   p_cevap_anahtari jsonb default null,
   p_anahtar_yolu text default null,
   p_odev_yolu text default null,
-  p_gec_teslim boolean default true,
+  p_gec_teslim boolean default null,
   p_sik_sayisi smallint default null
 )
 returns jsonb
