@@ -410,12 +410,50 @@ de menüden "Ana ekrana ekle" çalışıyor ve manifest'e uyuyor.
 - Uzun süre açılmayan uygulamada iOS oturumu düşürebilir.
 - Çevrimdışı çalışmıyor; bu bilinçli.
 
+## Bildirimler — kabuktaki rozetler (0022)
+
+Öğretmen veliden mesaj geldiğini eskiden ancak Veliler sekmesine girerek,
+puan bekleyen gönderimi ancak Pano'ya bakarak öğreniyordu. Artık iki sekmede
+rozet duruyor: **Veliler** → okunmamış veli mesajı, **Ödevler** → puan
+bekleyen gönderim.
+
+| Sayı | Ölçüt |
+|---|---|
+| `okunmamis_mesaj` | veliden gelen, öğretmenin o yazışmayı en son okumasından **sonra** yazılmış mesajlar |
+| `puan_bekleyen` | açık uçlu ödevin `durum = 'incelemede'` gönderimleri |
+
+Arşivdeki sınıf ve pasif öğrenci **sayılmıyor**: öğretmenin hiçbir
+listesinde görünmeyen bir öğrenci için rozet göstermek, tıklayınca boş
+ekrana götüren bir sayı üretirdi (0016 kuralı).
+
+**Ayrı bir uç yazıldı** (`bildirim_sayilari`) çünkü rozet her ekranda
+duruyor ve aralıklı yokleniyor. `veliler_listesi` bütün aktif öğrencileri
+dolaşıp her biri için iki alt sorgu çalıştırıyor — 300 öğrencide her
+yoklamada 600 alt sorgu demek.
+
+Ölçütler o iki uçtan **kopyalandı**, uçlar çağrılmadı: yeni imza açmak 0007
+tuzağını davet ederdi. İki yerde iki farklı sayı çıkmasın diye test,
+rozetin Pano ve Veliler sekmesiyle **birebir aynı** olduğunu ayrıca
+ölçüyor.
+
+**Rozet sıfırda hiç çizilmiyor** ve 99'dan büyük sayı `99+` oluyor. Rozet
+`aria-hidden`; sayı sekmenin `aria-label`'ında geçiyor ("Veliler, 3
+okunmamış mesaj") — ekran okuyucu kullanan biri rozeti göremez.
+
+**Öğrenci ve velide rozet yok.** İkisinin de kabuğu tek ekran; rozetin
+duracağı bir sekme çubuğu yok. Bilgi zaten yüzeyde: öğrencinin ödev listesi
+her satırda puanı ya da "Değerlendiriliyor"u gösteriyor, veli paneli
+açılınca mesajları gösterip `okundu_isaretle`'yi çağırıyor.
+
+**Uç çalıştırılmamışsa arayüz bozulmuyor:** `bildirim_sayilari` yoksa
+sayılar sıfır kalır, rozet çizilmez, hata mesajı çıkmaz ve oturum düşmez.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
 |---|---|---|
 | 0 | Mimari + tasarım sistemi | **tamamlandı** |
-| 1 | Veritabanı + güvenlik | **tamamlandı** — 0001–0020 canlıda, **0021 öğretmenin çalıştırmasını bekliyor** |
+| 1 | Veritabanı + güvenlik | **tamamlandı** — 0001–0021 canlıda, **0022 öğretmenin çalıştırmasını bekliyor** |
 | 2 | Öğretmen: sınıf, öğrenci, ödev, cevap anahtarı | **tamamlandı** |
 | 2C–2D | Öğrenci teslim ekranı, gönderim takibi, açık uçlu puanlama | **tamamlandı** |
 | 3 | Pano detayları, arşiv, kodlar, veliler, mesajlaşma | **tamamlandı** |
@@ -423,9 +461,12 @@ de menüden "Ana ekrana ekle" çalışıyor ve manifest'e uyuyor.
 | — | Yedekleme ve geri yükleme | **tamamlandı** — `docs/yedekleme.md` |
 | — | PIN değiştirme | **tamamlandı** — `/ogretmen/ayarlar` |
 | — | Özel ders: dersler ve ödemeler (0021) | **tamamlandı** — `/ogretmen/ogrenciler/:id` |
+| — | Ana ekrana ekleme ve sürüm denetimi | **tamamlandı** |
+| — | Uygulama içi bildirimler (0022) | **tamamlandı** — kabuktaki rozetler |
 | 5 | Deterministik test puanlama | `_puanla` canlıda; birim testleri Faz 11'de genişletilecek |
 | 6 | Açık uçlu değerlendirmede AI desteği | **ölçüldü, ertelendi** — soru PDF'lerinde metin katmanı var ama soru metni yok; sorular görsel. Görsel okuyan AI ayrı bir tur, API anahtarı gerekiyor |
-| 7–8 | Analitik, bildirimler | sırada |
+| 7 | Analitik | sırada |
+| 8 | Telefona düşen bildirim | **açık karar** — dar kapsamlı bir service worker gerektiriyor |
 | 9 | Landing + Ewalu deneyimi | sırada |
 | 10–12 | PWA, güvenlik denetimi, son QA | sırada |
 
