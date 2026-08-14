@@ -14,8 +14,10 @@ import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
+import { KonuAtama } from './KonuAtama';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
+import { sunucudanOku, sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
 import type { Sinif } from '@/types/api';
 
 type OdevDetay = {
@@ -30,6 +32,8 @@ type OdevDetay = {
   gec_teslim: boolean;
   sik_sayisi: number;
   cevap_anahtari: Record<string, string>;
+  /** Soru numarası → konu adı (migration 0020). Girilmemişse null. */
+  konular: Record<string, string> | null;
   anahtar_yolu: string | null;
   odev_yolu: string | null;
   yayinda: boolean;
@@ -65,6 +69,7 @@ export function OdevDuzenle() {
   });
   const [gecTeslim, setGecTeslim] = useState(true);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
+  const [konular, setKonular] = useState<Konular>({});
   const [cikarim, setCikarim] = useState<Cikarim | null>(null);
   const [yeniAnahtarPdf, setYeniAnahtarPdf] = useState<File | null>(null);
   const [yeniOdevPdf, setYeniOdevPdf] = useState<File | null>(null);
@@ -81,6 +86,10 @@ export function OdevDuzenle() {
   const { veri: siniflar } = useVeri<Sinif[]>('siniflar_listesi', {
     p_token: oturum?.token,
     p_arsiv: false,
+  });
+
+  const { veri: konuOnerileri } = useVeri<string[]>('konu_onerileri', {
+    p_token: oturum?.token,
   });
 
   // Sunucudan gelen kaydı forma yaz. Sadece ilk yüklemede: sonrasında
@@ -104,6 +113,7 @@ export function OdevDuzenle() {
       if (Number.isInteger(n)) a[n] = v;
     }
     setAnahtar(a);
+    setKonular(sunucudanOku(detay.konular));
   }, [detay]);
 
   const n = Number(form.soruSayisi) || 0;
@@ -162,6 +172,9 @@ export function OdevDuzenle() {
         p_odev_yolu: odevYolu,
         p_gec_teslim: gecTeslim,
         p_sik_sayisi: testMi ? (form.sonSecenek === 'D' ? 4 : 5) : null,
+        // BOŞ NESNE GÖNDERİLİYOR, null DEĞİL: sunucuda null "değiştirme"
+        // demek. Öğretmen bütün konuları sildiyse silme kaydedilsin.
+        p_konular: testMi ? sunucuyaHazirla(konular, n) : null,
       });
 
       const degisti = sonuc.yeniden_puanlanan ?? [];
@@ -305,6 +318,17 @@ export function OdevDuzenle() {
                         return y;
                       })
                     }
+                  />
+                </div>
+              )}
+
+              {testMi && n > 0 && (
+                <div className="mb-5 border-t border-line pt-5">
+                  <KonuAtama
+                    soruSayisi={n}
+                    konular={konular}
+                    oneriler={konuOnerileri ?? []}
+                    onDegis={setKonular}
                   />
                 </div>
               )}

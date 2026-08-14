@@ -13,8 +13,10 @@ import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
+import { KonuAtama } from './KonuAtama';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { SikSayisiSecimi } from './SikSayisiSecimi';
+import { sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
 import type { Sinif } from '@/types/api';
 
 type Adim = 1 | 2 | 3;
@@ -63,6 +65,7 @@ export function OdevOlustur() {
   const [okumaHatasi, setOkumaHatasi] = useState<string | null>(null);
   const [cikarim, setCikarim] = useState<Cikarim | null>(null);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
+  const [konular, setKonular] = useState<Konular>({});
 
   const [kaydediyor, setKaydediyor] = useState(false);
 
@@ -71,6 +74,12 @@ export function OdevOlustur() {
     { p_token: oturum?.token, p_arsiv: false },
     (v) => v.length === 0,
   );
+
+  // Otomatik tamamlama listesi. Gelmezse konu alanı çalışmaya devam eder —
+  // öneri bir kolaylık, koşul değil (Part VIII: yedek davranış).
+  const { veri: konuOnerileri } = useVeri<string[]>('konu_onerileri', {
+    p_token: oturum?.token,
+  });
 
   const n = Number(soruSayisi) || 0;
 
@@ -148,6 +157,9 @@ export function OdevOlustur() {
         p_odev_yolu: odevYolu,
         p_gec_teslim: gecTeslim,
         p_sik_sayisi: tur === 'test' ? (sonSecenek === 'D' ? 4 : 5) : 5,
+        // Açık uçlu ödevde konu analizi yapılamaz: anahtar yok, hangi sorunun
+        // yanlış olduğu bilinmiyor. Konu alanı da o yüzden yalnız testte var.
+        p_konular: tur === 'test' ? sunucuyaHazirla(konular, n) : null,
       });
 
       bildir('Ödev taslak olarak kaydedildi', 'basari');
@@ -376,6 +388,17 @@ export function OdevOlustur() {
                   sunucu eksik anahtarlı ödevi reddeder. Kalan {eksikSayisi} cevabı sonra da
                   tamamlayabilirsiniz.
                 </p>
+              )}
+
+              {n > 0 && (
+                <div className="mt-6 border-t border-line pt-5">
+                  <KonuAtama
+                    soruSayisi={n}
+                    konular={konular}
+                    oneriler={konuOnerileri ?? []}
+                    onDegis={setKonular}
+                  />
+                </div>
               )}
             </>
           ) : (

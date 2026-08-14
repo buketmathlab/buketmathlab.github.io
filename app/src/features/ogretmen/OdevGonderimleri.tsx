@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { KonuListesi, SoruNumaralari } from '@/components/ui/KonuListesi';
 import { Tag } from '@/components/ui/Tag';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -109,6 +110,17 @@ export function OdevGonderimleri() {
               </div>
             </div>
 
+            {/* SINIFIN KONU ÖZETİ. Öğretmenin bir sonraki dersini planlarken
+                bakacağı yer burası: otuz öğrencinin analizini tek tek okumak
+                yerine sınıf hangi konuda takıldı, tek bakışta. Sunucuda
+                toplanıyor — aksi hâlde otuz öğrencinin cevapları tarayıcıya
+                inerdi. */}
+            {(veri.konu_ozeti ?? []).length > 0 && (
+              <Card className="mb-4">
+                <KonuListesi analiz={veri.konu_ozeti ?? []} ses="ucuncu" />
+              </Card>
+            )}
+
             {bekleyen.length > 0 && (
               <Bolum baslik="Puan bekliyor" aciklama="Açık uçlu gönderimler. Puanı siz verirsiniz.">
                 {bekleyen.map((s) => (
@@ -159,6 +171,18 @@ export function OdevGonderimleri() {
                               <span className="sk-sayi">{s.yanlis}</span> yanlış ·{' '}
                               <span className="sk-sayi">{s.bos}</span> boş
                             </p>
+                          )}
+                          {/* HANGİ SORULAR — öğretmenin isteği. "4 yanlış"
+                              hangi öğrenciyle neyi konuşacağını söylemez;
+                              "3, 7, 9 yanlış" söyler. */}
+                          {((s.yanlis_sorular ?? []).length > 0 ||
+                            (s.bos_sorular ?? []).length > 0) && (
+                            <div className="mt-1">
+                              <SoruNumaralari
+                                yanlis={s.yanlis_sorular ?? []}
+                                bos={s.bos_sorular ?? []}
+                              />
+                            </div>
                           )}
                           {s.ogretmen_yorum && (
                             <p className="mt-1 text-[13px] text-muted">

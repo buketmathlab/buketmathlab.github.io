@@ -16,24 +16,34 @@ const SINIF_DETAY={sinif:{id:'11B',ad:'11B',ozel:false,arsiv:false},degerlendiri
    {id:'o3',ad:'Mehmet Kaya',tur:'okul',yapti:0,yapmadi:8,ortalama_yapan:null,ortalama_tum:0.0}]};
 const GONDERIMLER={odev:{id:'a1',baslik:'Limit — açık uçlu',tur:'acik',sinif:'11B',son_tarih:gun(-2),
    soru_sayisi:null,gec_teslim:true,yayinda:true},
-  ozet:{mevcut:3,gonderen:2,gecikmeli:1,puan_bekleyen:1},
+  ozet:{mevcut:4,gonderen:3,gecikmeli:1,puan_bekleyen:1},
   satirlar:[
    {ogrenci_id:'o1',ogrenci:'Ali Yıldırım',gonderim_id:'g1',gonderdi:true,zaman:gun(-1)+'T14:20:00Z',gecikmeli:true,
-    durum:'incelemede',dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:null,ogretmen_yorum:null,foto_var:true},
+    durum:'incelemede',dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:null,ogretmen_yorum:null,foto_var:true,
+    yanlis_sorular:[],bos_sorular:[]},
    {ogrenci_id:'o2',ogrenci:'Mehmet Kaya',gonderim_id:null,gonderdi:false,zaman:null,gecikmeli:false,
-    durum:null,dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:null,ogretmen_yorum:null,foto_var:false},
+    durum:null,dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:null,ogretmen_yorum:null,foto_var:false,
+    yanlis_sorular:[],bos_sorular:[]},
    {ogrenci_id:'o3',ogrenci:'Ece Güneş',gonderim_id:'g3',gonderdi:true,zaman:gun(-4)+'T18:40:00Z',gecikmeli:false,
-    durum:'onaylandi',dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:90,ogretmen_yorum:'Güzel.',foto_var:true}]};
+    durum:'onaylandi',dogru:null,yanlis:null,bos:null,puan:null,ogretmen_puan:90,ogretmen_yorum:'Güzel.',foto_var:true,
+    yanlis_sorular:[],bos_sorular:[]},
+   {ogrenci_id:'o4',ogrenci:'Zeynep Şahin',gonderim_id:'g4',gonderdi:true,zaman:gun(-3)+'T11:05:00Z',gecikmeli:false,
+    durum:'puanlandi',dogru:6,yanlis:3,bos:1,puan:60,ogretmen_puan:null,ogretmen_yorum:null,foto_var:true,
+    yanlis_sorular:[2,7,9],bos_sorular:[10]}],
+  konu_ozeti:[{konu:'Limit',toplam:5,dogru:2,yanlis:2,bos:1},
+              {konu:'Türev',toplam:5,dogru:4,yanlis:1,bos:0}]};
 const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},dersler:[],odevler:[
   {id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',son_tarih:gun(2),soru_sayisi:5,gec_teslim:true,sik_sayisi:5,sinif_arsiv:false,
-   odev_yolu:'odev/x.pdf',gonderim:null,cevap_anahtari:null,anahtar_yolu:null},
+   odev_yolu:'odev/x.pdf',gonderim:null,konu_analizi:[],cevap_anahtari:null,anahtar_yolu:null},
   {id:'a3',baslik:'Üslü Sayılar',aciklama:null,tur:'test',son_tarih:gun(-6),soru_sayisi:2,gec_teslim:true,sik_sayisi:4,sinif_arsiv:false,
    odev_yolu:'odev/z.pdf',
    gonderim:{id:'g1',zaman:gun(-7),durum:'puanlandi',dogru:1,yanlis:1,bos:0,puan:50,ogretmen_puan:null,ogretmen_yorum:null,cevaplar:{1:'A',2:'D'},gecikmeli:true},
+   konu_analizi:[{konu:'Üslü Sayılar',toplam:1,dogru:0,yanlis:1,bos:0},
+                 {konu:'Köklü Sayılar',toplam:1,dogru:1,yanlis:0,bos:0}],
    cevap_anahtari:{1:'A',2:'B'},anahtar_yolu:'odev/z-anahtar.pdf'},
   {id:'a4',baslik:'Arşivlenmiş sınıfın ödevi',aciklama:null,tur:'test',son_tarih:gun(3),soru_sayisi:5,
    gec_teslim:true,sik_sayisi:5,sinif_arsiv:true,
-   odev_yolu:'odev/w.pdf',gonderim:null,cevap_anahtari:null,anahtar_yolu:null}]};
+   odev_yolu:'odev/w.pdf',gonderim:null,konu_analizi:[],cevap_anahtari:null,anahtar_yolu:null}]};
 // Kod artık ÖĞRENCİ BAŞINA geliyor (0018); toplu uç kaldırıldı.
 const OGRENCI_KODLARI={ogrenci:'K7001XQ',veli:'K7051XQ'};
 const VELILER={toplam_okunmamis:2,
@@ -48,11 +58,21 @@ const YAZISMA={ogrenci:{id:'o1',ad:'Ada Yıldırım',sinif:'9A'},veli_kodu_var:t
   {kimden:'ogretmen',metin:'Merhaba, buyurun.',zaman:gun(-2)+'T10:02:00Z'}]};
 const VELI_PANEL={ogrenci:{ad:'Ada Yıldırım',sinif:'9A',tur:'okul'},
   odevler:[{baslik:'Türev testi',son_tarih:gun(-5),olusturma:gun(-12),gonderildi:true,
-            gonderim_zamani:gun(-6)+'T20:10:00Z',puan:85,durum:'puanlandi'},
+            gonderim_zamani:gun(-6)+'T20:10:00Z',puan:85,durum:'puanlandi',
+            yanlis_sorular:[3,7],bos_sorular:[10],
+            konu_analizi:[{konu:'Limit',toplam:4,dogru:2,yanlis:1,bos:1},
+                          {konu:'Türev',toplam:6,dogru:5,yanlis:1,bos:0}]},
            {baslik:'Üslü sayılar',son_tarih:gun(-1),olusturma:gun(-7),gonderildi:false,
-            gonderim_zamani:null,puan:null,durum:null}],
+            gonderim_zamani:null,puan:null,durum:null,
+            yanlis_sorular:[],bos_sorular:[],konu_analizi:[]}],
   mesajlar:YAZISMA.mesajlar,odemeler:[],son_gorulme:gun(-1)+'T20:00:00Z'};
-const CEVAP={veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+const ODEV_DETAY={id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',sinif_id:'11B',sinif:'11B',
+  son_tarih:gun(3),soru_sayisi:6,gec_teslim:false,sik_sayisi:5,
+  cevap_anahtari:{1:'A',2:'B',3:'C',4:'D',5:'E',6:'A'},
+  konular:{1:'Türev',2:'Türev',3:'Türev',4:'Limit',5:'Limit',6:'Limit'},
+  anahtar_yolu:'odev/anahtar.pdf',odev_yolu:'odev/soru.pdf',yayinda:true,gonderim_sayisi:3};
+const KONU_ONERILERI=['Türev','Limit','Üslü Sayılar','Köklü Sayılar'];
+const CEVAP={odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
@@ -62,6 +82,7 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Sınıf karnesi','/ogretmen/siniflar/11B'],
                             ['Pano detayı','/ogretmen/bugun/gondermeyen'],
                             ['Pano sınıfı','/ogretmen/bugun/gondermeyen/9A'],
+                            ['Ödev düzenle','/ogretmen/odevler/a1'],
                             ['Kodlar','/ogretmen/kodlar'],
                             ['Kod sınıfı','/ogretmen/kodlar/9A'],
                             ['Veliler','/ogretmen/veliler'],
@@ -86,8 +107,18 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
     await p.keyboard.press('Tab');
     const r=await p.evaluate(()=>{const e=document.activeElement;
       if(!e||e===document.body)return null;const s=getComputedStyle(e);
-      return {tag:e.tagName, h:s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0};});
+      return {tag:e.tagName, odakli:e.matches(':focus'),
+              h:s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0};});
     if(!r) continue;
+    // ÇOK BÖLÜMLÜ DENETİMLERİN ÇIKIŞ KARESİ SAYILMAZ.
+    // `<input type="date">` içinde gün/ay/yıl ayrı Tab durakları; üçünde de
+    // odak halkası çıkıyor. Dördüncü Tab denetimden ÇIKARIYOR ve o anda
+    // `document.activeElement` hâlâ tarih alanını gösteriyor ama `:focus`
+    // artık eşleşmiyor, dolayısıyla halka da yok. Denetim bunu "halkasız
+    // öğe" sayıyordu ve ödev formları kalıcı olarak 29/30 görünüyordu —
+    // gerçek bir kusur değil, ölçüm hatası. Ölçüldü: kural eklenmeden de
+    // üç gerçek durakta `outline: solid 2px`.
+    if(!r.odakli) continue;
     // <video controls> kontrolleri shadow DOM'da yaşar. Tarayıcı kendi odak
     // göstergesini çizer (Chromium'da oynat düğmesinde beyaz halka — ekran
     // görüntüsüyle doğrulandı) ama activeElement host'u bildirdiği için

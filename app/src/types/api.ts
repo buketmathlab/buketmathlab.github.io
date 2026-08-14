@@ -120,6 +120,21 @@ export type OgrenciGonderim = {
 };
 
 /**
+ * Konu başına doğru/yanlış/boş (migration 0020).
+ *
+ * Sunucu `(toplam - dogru)` azalan sıralı döndürüyor: en çok eksik olan konu
+ * HER ZAMAN ilk sırada. Sıralamayı arayüzde tekrarlamıyoruz — iki yerde iki
+ * farklı sıra, "en zayıf konu" iddiasını ekrandan ekrana değiştirirdi.
+ */
+export type KonuAnalizi = {
+  konu: string;
+  toplam: number;
+  dogru: number;
+  yanlis: number;
+  bos: number;
+};
+
+/**
  * `ogrenci_odevleri` içindeki tek ödev.
  *
  * `cevap_anahtari` ve `anahtar_yolu` TİPTE DE `null` OLABİLİR: sunucu bu iki
@@ -148,6 +163,11 @@ export type OgrenciOdev = {
   /** Soru PDF'i. Teslimden bağımsız, yayındaki ödevde her zaman var. */
   odev_yolu: string | null;
   gonderim: OgrenciGonderim | null;
+  /**
+   * Konu analizi (migration 0020). Teslim edilmediyse boş dizi — anahtar
+   * gibi bu da teslimden önce hesaplanmıyor.
+   */
+  konu_analizi: KonuAnalizi[];
   cevap_anahtari: Record<string, string> | null;
   anahtar_yolu: string | null;
 };
@@ -174,6 +194,15 @@ export type GonderimSatiri = {
   puan: number | null;
   ogretmen_puan: number | null;
   ogretmen_yorum: string | null;
+  /**
+   * Hangi soruları yanlış yaptı / boş bıraktı (migration 0020).
+   *
+   * Sayı değil NUMARA: "5 yanlış" öğretmene ne yapacağını söylemez,
+   * "3, 7 ve 9 yanlış" söyler. Göndermeyen öğrencide ve açık uçlu ödevde
+   * boş dizi — sunucu orada hiç üretmiyor.
+   */
+  yanlis_sorular: number[];
+  bos_sorular: number[];
   /** Dosyanın kendisi değil, varlığı. Yol `gonderim_foto_yolu` ile istenir. */
   foto_var: boolean;
 };
@@ -195,6 +224,8 @@ export type OdevGonderimleri = {
     gecikmeli: number;
     puan_bekleyen: number;
   };
+  /** Sınıfın tamamı için konu başına toplam. En zayıf konu ilk sırada. */
+  konu_ozeti: KonuAnalizi[];
   satirlar: GonderimSatiri[];
 };
 
@@ -283,6 +314,15 @@ export type VeliOdevi = {
   gonderim_zamani: string | null;
   puan: number | null;
   durum: string | null;
+  /** Konu analizi (0020). Veli hangi konuda eksik olduğunu görüyor. */
+  konu_analizi: KonuAnalizi[];
+  /**
+   * YALNIZ NUMARA. Öğrencinin işaretlediği şık da doğru şık da BURADA YOK
+   * ve olmayacak: numara "hangi soruda takıldı" der, şık göndermek dört
+   * şıklı bir soruda anahtara doğru bir adım olurdu (Kural 6).
+   */
+  yanlis_sorular: number[];
+  bos_sorular: number[];
 };
 
 export type VeliPaneli = {
