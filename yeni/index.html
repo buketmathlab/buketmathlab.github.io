@@ -9,9 +9,25 @@
       content="SEKİZ — ödev, teslim ve gelişim tek yerde. Buket Topuzoğlu · Matematik."
     />
     <link rel="icon" href="/yeni/marka/sekiz-favicon.svg" type="image/svg+xml" />
+
+    <!-- Ana ekrana ekleme. `scope` /yeni/ ile sınırlı: kök adresteki eski
+         uygulama hiçbir koşulda bu uygulamanın kapsamına girmiyor. -->
+    <link rel="manifest" href="/yeni/manifest.webmanifest" />
+
+    <!-- iOS manifest'teki simgeleri KULLANMAZ; ayrı etiket ister. Şeffaf
+         PNG'yi de siyah basar, bu yüzden simge zemini dolu üretiliyor. -->
+    <link rel="apple-touch-icon" href="/yeni/marka/sekiz-simge-180.png" />
+    <!-- Ana ekranda görünecek ad. Tam ad ("SEKİZ · Buket Topuzoğlu ·
+         Matematik") simgenin altında kırpılırdı. -->
+    <meta name="apple-mobile-web-app-title" content="SEKİZ" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- `default`: durum çubuğu kendi zeminini korur. `black-translucent`
+         içeriği çentiğin altına sokardı. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
     <title>SEKİZ · Buket Topuzoğlu · Matematik</title>
-    <script type="module" crossorigin src="/yeni/assets/index-CUqEVMgU.js"></script>
-    <link rel="stylesheet" crossorigin href="/yeni/assets/index-Dv66lQZq.css">
+    <script type="module" crossorigin src="/yeni/assets/index-DgHdtO8L.js"></script>
+    <link rel="stylesheet" crossorigin href="/yeni/assets/index-D0GH77OX.css">
   </head>
   <body>
     <div id="root"></div>

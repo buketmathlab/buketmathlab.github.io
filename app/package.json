@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "varliklar": "node scripts/varliklari-isle.mjs",
-    "pdf-denetim": "node scripts/pdf-uyumluluk-denetimi.mjs"
+    "pdf-denetim": "node scripts/pdf-uyumluluk-denetimi.mjs",
+    "pwa-denetim": "node scripts/pwa-denetimi.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.5",

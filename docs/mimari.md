@@ -350,6 +350,66 @@ uçlar için: paraya dokunan yeni bir uç eklendiğinde test kırılır ve yazan
 "öğrenci bunu görmeli mi?" sorusunu cevaplamak zorunda kalır. Kuralın yazılı
 olmadığı yerde sessizce bozulmasını engelleyen şey budur.
 
+## Ana ekrana ekleme ve sürüm denetimi
+
+SEKİZ telefonda ana ekrana eklenebiliyor: kendi simgesi, tam ekran açılış,
+adres çubuğu yok. `public/manifest.webmanifest` + `apple-touch-icon`.
+
+**Simge marka işareti, okul mührü değil.** Mühür yalnız ≥96 px bağlamlarda
+kullanılıyor (Kural 8); 48 px'lik bir ana ekran simgesinde halka yazısı ve
+köprü çizgileri okunmazdı. Üç çıktı üç ayrı sebeple üretiliyor: `any`
+(tarayıcının olduğu gibi kullandığı), `maskable` (Android simgeyi daireye
+kırpar — çizim iç %80'e sığdırılıyor), ve iOS için **şeffaflığı olmayan**
+180 px PNG (iOS şeffaf pikselleri siyah basar).
+
+`scope` ve `start_url` **`/yeni/`** ile sınırlı: kök adresteki eski
+uygulama hiçbir koşulda bu uygulamanın kapsamına girmiyor.
+
+### `?y=N` zahmetinin sonu
+
+GitHub Pages HTML'i `cache-control: max-age=600` ile gönderiyor (ölçüldü).
+Yeni sürüm yayınlandıktan sonra 10 dakika boyunca tarayıcı eskisini
+gösterebiliyordu; öğretmen bunu adres çubuğuna elle `?y=N` yazarak
+aşıyordu.
+
+Artık her yapı bir sürüm damgası alıyor (`vite.config.ts` → `surumDamgasi`).
+Damga hem pakete gömülüyor hem `surum.json`'a yazılıyor. Çalışan uygulama o
+dosyayı **`cache: 'no-store'`** ile okuyor — o bayrak isteğin tarayıcı
+önbelleğini atlamasını sağlıyor, yani HTML eski olsa bile yeni sürüm
+saniyeler içinde fark ediliyor. Açılışta, sekmeye dönüşte ve yarım saatte
+bir bakılıyor.
+
+Fark varsa üstte bir şerit çıkıyor: *"Yeni sürüm hazır · Yenile"*. Toast
+değil — toast 4 saniyede kaybolur ve kaçırılırdı. "Yenile" `reload()`
+yapmıyor (o yine önbellekteki HTML'i getirebilirdi), adrese `?s=<sürüm>`
+ekleyip geçiyor: **öğretmenin elle yaptığı şeyin aynısı, artık uygulama
+kendi yapıyor.**
+
+### SERVICE WORKER YAZILMADI — bilinçli karar
+
+Service worker cihaza yerleşir ve sayfayı kendisi sunmaya başlar. Hatalı
+yazılırsa eski sürümü sonsuza kadar servis eder ve kullanıcı bunu
+temizleyemez. Ölçüldü ki getirisi de yok:
+
+| İstenen | SW gerekli mi | Nasıl karşılandı |
+|---|---|---|
+| Ana ekrana ekleme, tam ekran, simge | hayır | manifest + `apple-touch-icon` |
+| Yeni sürümü fark etme | hayır | `surum.json`, `no-store` |
+| Çevrimdışı çalışma | evet — **ama anlamsız** | bütün veri Supabase'den geliyor |
+
+Tek kayıp: Android Chrome'un "Uygulamayı yükle" kutusu SW istiyor. SW'siz
+de menüden "Ana ekrana ekle" çalışıyor ve manifest'e uyuyor.
+
+`npm run pwa-denetim` **hiçbir service worker kaydedilmediğini** ölçüyor —
+"eski uygulama etkilenmez" iddiasının kanıtı bu.
+
+### Bilinen sınırlar
+
+- Ana ekrana ekledikten sonra **bir kez daha giriş** gerekiyor: iOS'ta tam
+  ekran uygulama, Safari'den ayrı bir depolama alanı kullanıyor.
+- Uzun süre açılmayan uygulamada iOS oturumu düşürebilir.
+- Çevrimdışı çalışmıyor; bu bilinçli.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
