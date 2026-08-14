@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
 import { Tag } from '@/components/ui/Tag';
@@ -16,6 +16,14 @@ type Props = {
   konular: Konular;
   /** `konu_onerileri` — öğretmenin daha önce kullandığı adlar. */
   oneriler: string[];
+  /**
+   * Ödev PDF'inden okunup öğretmenin ONAYLADIĞI konu adı.
+   *
+   * Yalnız konu ALANINI dolduruyor; hiçbir soruya konu YAZMIYOR. Öğretmen
+   * aralığı belirleyip "Ata"ya basmadan kayıt değişmez — otomatik doldurma
+   * ile otomatik uygulama farklı şeyler.
+   */
+  onerilenKonu?: string | undefined;
   onDegis: (konular: Konular) => void;
 };
 
@@ -36,12 +44,20 @@ type Props = {
  * yazmayı engellemez, yalnız kolaylaştırır. Amaç aynı konunun "Türev" ve
  * "türev" diye ikiye bölünmesini azaltmak.
  */
-export function KonuAtama({ soruSayisi, konular, oneriler, onDegis }: Props) {
+export function KonuAtama({ soruSayisi, konular, oneriler, onerilenKonu, onDegis }: Props) {
   const listeId = useId();
   const [ilk, setIlk] = useState('1');
   const [son, setSon] = useState(String(soruSayisi));
   const [konu, setKonu] = useState('');
   const [hata, setHata] = useState<string | null>(null);
+
+  // Ödev düzenleme ekranı tek sayfa: PDF, bu bileşen zaten ekrandayken
+  // seçilebiliyor. Başlangıç değeri yetmez, öğretmen düğmeye bastığında
+  // alanın dolması gerekiyor.
+  useEffect(() => {
+    if (onerilenKonu) setKonu(onerilenKonu);
+  }, [onerilenKonu]);
+
   const [acik, setAcik] = useState(false);
 
   const eksikler = konusuzSorular(konular, soruSayisi);

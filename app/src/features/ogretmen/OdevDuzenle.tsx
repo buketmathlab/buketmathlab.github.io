@@ -15,9 +15,11 @@ import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { KonuAtama } from './KonuAtama';
+import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
 import { sunucudanOku, sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
+import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
 import type { Sinif } from '@/types/api';
 
 type OdevDetay = {
@@ -70,6 +72,8 @@ export function OdevDuzenle() {
   const [gecTeslim, setGecTeslim] = useState(true);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
   const [konular, setKonular] = useState<Konular>({});
+  const [pdfOzet, setPdfOzet] = useState<PdfOzeti | null>(null);
+  const [onerilenKonu, setOnerilenKonu] = useState<string | undefined>(undefined);
   const [cikarim, setCikarim] = useState<Cikarim | null>(null);
   const [yeniAnahtarPdf, setYeniAnahtarPdf] = useState<File | null>(null);
   const [yeniOdevPdf, setYeniOdevPdf] = useState<File | null>(null);
@@ -121,6 +125,18 @@ export function OdevDuzenle() {
 
   function alanDegis<A extends keyof OdevFormDegerleri>(alan: A, deger: OdevFormDegerleri[A]) {
     setForm((f) => ({ ...f, [alan]: deger }));
+  }
+
+  /**
+   * Ödev (soru) PDF'ini okuyup ÖNERİ üretir. Okuma hatası düzenlemeyi
+   * engellemez; öneri kutusu çıkmaz, ekran bugünkü gibi çalışır.
+   */
+  async function odevPdfiniOku(dosya: File) {
+    try {
+      setPdfOzet(odevPdfOzeti(await pdfSatirlariniOku(dosya)));
+    } catch {
+      setPdfOzet(null);
+    }
   }
 
   async function anahtarPdfSecildi(dosya: File) {
@@ -272,10 +288,27 @@ export function OdevDuzenle() {
                     {...k}
                     type="file"
                     accept="application/pdf"
-                    onChange={(e) => setYeniOdevPdf(e.target.files?.[0] ?? null)}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      setYeniOdevPdf(f);
+                      if (f) void odevPdfiniOku(f);
+                      else setPdfOzet(null);
+                    }}
                   />
                 )}
               </Field>
+
+              {pdfOzet && (
+                <PdfOnerileri
+                  ozet={pdfOzet}
+                  mevcutSoruSayisi={n}
+                  mevcutSinifId={form.sinifId}
+                  siniflar={siniflar ?? []}
+                  onSoruSayisi={(x) => alanDegis('soruSayisi', String(x))}
+                  onKonu={setOnerilenKonu}
+                  onSinif={(id) => alanDegis('sinifId', id)}
+                />
+              )}
 
               {testMi && (
                 <Field
@@ -328,6 +361,7 @@ export function OdevDuzenle() {
                     soruSayisi={n}
                     konular={konular}
                     oneriler={konuOnerileri ?? []}
+                    onerilenKonu={onerilenKonu}
                     onDegis={setKonular}
                   />
                 </div>

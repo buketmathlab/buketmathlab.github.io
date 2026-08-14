@@ -253,6 +253,41 @@ doğru olan. Numara "hangi soruda takıldı" der ve velinin işine yarar; dört
 `konu_testleri.sql` 12. grubu velinin yanıtında iki şıkkın da geçmediğini
 ayrı ayrı ölçüyor.
 
+### Ödev PDF'inden okunanlar — ve neden AI yok
+
+Öğretmen konuların AI ile tahmin edilmesini istedi. Gerçek bir ödev PDF'i
+(`10C_uslu_koklu_SORULAR.pdf`) ölçüldü ve sonuç isteği **teknik olarak
+imkânsız** kıldı: PDF'te metin katmanı var, ama **soruların metni yok**.
+Sorular görsel olarak gömülü (4 sayfada 14 görsel, soru başına bir resim);
+metin katmanında yalnız çerçeve duruyor. AI'ya gönderilecek soru metni diye
+bir şey yok.
+
+Öğretmenin kararı: **"Önce AI'sız, AI sonra."** Bu yüzden `lib/odev-pdf-ozeti.ts`
+AI kullanmıyor, yalnız okunabilen çerçeveyi okuyor:
+
+| Okunan | Nereden |
+|---|---|
+| Soru sayısı | Puan tablosu (`SORU 1 2 … 10 TOPLAM`) **ve** soru başlıkları (`01 10 Puan`) |
+| Ödevin konusu | Başlık satırının ilk `·` parçası |
+| Sınıf | Alt bilgideki `· 10C ·` |
+
+**İki bağımsız soru sayısı sinyali birbirini denetliyor. Çelişirlerse
+hiçbiri seçilmez** — ekran ikisini de gösterip kararı öğretmene bırakıyor.
+Sessizce birini seçmek yanlış soru sayısı demek, yanlış soru sayısı da
+cevap anahtarının kırpılması demek (`odev_guncelle`).
+
+**Hiçbir alan kendiliğinden dolmuyor.** Kutu ne bulunduğunu söylüyor,
+uygulayan öğretmen. Onayladığı konu yalnız konu ALANINI dolduruyor; hiçbir
+soruya konu yazmıyor — öğretmen aralığı belirleyip "Ata"ya basana kadar
+kayıt değişmiyor. Sinyal bulunamazsa ya da PDF okunamazsa kutu hiç çıkmıyor
+ve ekran bugünkü gibi çalışıyor.
+
+Testler tek bir PDF'e uydurulmadı: öğretmenin gerçek 37 satırı sabit veri
+olarak duruyor, ama yanında taranmış PDF, tanınmayan şablon, çelişkili
+sinyal, ardışık olmayan numaralar ve düz metinde geçen "SORU" tuzağı da
+ölçülüyor. Gerekçe kayıtlı bir hata: cevap anahtarı turunda kendi ürettiğim
+örneklere uyan bir desen, gerçek PDF'te 0/10 çıkmıştı.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
