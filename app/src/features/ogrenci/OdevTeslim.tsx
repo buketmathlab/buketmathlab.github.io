@@ -6,6 +6,7 @@ import { Tag } from '@/components/ui/Tag';
 import { Field, Input } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
+import { KonuListesi } from '@/components/ui/KonuListesi';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { puanMesaji } from '@/lib/ewalu-puan';
 import { useToast } from '@/components/ui/toast-baglam';
@@ -407,6 +408,25 @@ function Sonuc({ odev, onPdf }: { odev: OgrenciOdev; onPdf: (yol: string) => voi
           </p>
         )}
       </Card>
+
+      {/* ÇALIŞILACAK KONULAR — öğretmenin isteği: "hangi konuda eksiği olduğu,
+          yani hangi konuya çalışması gerektiği bildirilmeli."
+
+          Ewalu'nun cümlesinden SONRA ve AYRI kartta: Ewalu "şimdi ne yapmalı"
+          der, bu liste "tam olarak nereye" der. Aynı kartın içinde olsaydı
+          cümle listenin başlığı gibi okunurdu.
+
+          Konusu girilmemiş ödevde liste hiç çıkmıyor — boş bir "konular"
+          başlığı, eksik bir şey varmış izlenimi verirdi. */}
+      {/* `?? []`: SQL'i öğretmen panelden elle çalıştırıyor, arayüz ondan
+          önce yayına girebiliyor. 0020 uygulanmamışken alan hiç gelmez;
+          okunmayan bir alan yüzünden ekranın tamamının beyaz kalması kabul
+          edilemez — konu listesi çıkmaz, ödev ekranı çalışmaya devam eder. */}
+      {(odev.konu_analizi ?? []).length > 0 && (
+        <Card className="mb-4">
+          <KonuListesi analiz={odev.konu_analizi ?? []} ses="ogrenci" />
+        </Card>
+      )}
 
       {/* Anahtar teslimden SONRA sunucudan geliyor; teslim etmemiş bir
           öğrencinin tarayıcısında bu veri hiç bulunmuyor.

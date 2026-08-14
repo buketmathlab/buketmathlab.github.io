@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { KonuListesi, SoruNumaralari } from '@/components/ui/KonuListesi';
 import { Tag } from '@/components/ui/Tag';
 import { Field, Textarea } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -131,6 +132,31 @@ export function VeliPanel() {
                         )}
                       </div>
                     </div>
+
+                    {/* NUMARA GİDİYOR, ŞIK GİTMİYOR (Kural 6).
+                        Öğretmenin isteği "veli de hangi soruları yanlış
+                        yaptığını görebilsin"di. Numara velinin işine yarar:
+                        çocuğuyla o soruya bakabilir. Şıkları göstermek —
+                        çocuğun verdiği cevabı da, doğrusunu da — dört
+                        seçenekli bir soruda anahtarı vermeye doğru bir
+                        adımdır. Sunucu da zaten göndermiyor. */}
+                    {/* `?? []`: 0020 panelde çalıştırılmadan önce bu alanlar
+                        gelmez. Veli paneli o hâlde de açılmalı. */}
+                    {((o.yanlis_sorular ?? []).length > 0 ||
+                      (o.bos_sorular ?? []).length > 0) && (
+                      <div className="mt-3 border-t border-line pt-3">
+                        <SoruNumaralari
+                          yanlis={o.yanlis_sorular ?? []}
+                          bos={o.bos_sorular ?? []}
+                        />
+                      </div>
+                    )}
+
+                    {(o.konu_analizi ?? []).length > 0 && (
+                      <div className="mt-3 border-t border-line pt-3">
+                        <KonuListesi analiz={o.konu_analizi ?? []} ses="ucuncu" />
+                      </div>
+                    )}
                   </Card>
                 );
               })}

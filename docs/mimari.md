@@ -215,6 +215,79 @@ durum seçildi: ödev yayında, süresi dolmuş, öğrenci teslim etmemiş.
 Velinin gördüğü şey **süreç**: çocuğu ödevini yapmış mı, kaçını kaçırmış,
 aldığı puan ne. Çözümler değil.
 
+## Konu analizi ve yanlış soru numaraları (0020)
+
+Öğretmenin iki isteği: *"hangi konuda eksiği olduğu, yani hangi konuya
+çalışması gerektiği bildirilmeli"* ve *"öğretmen de hangi soruları yanlış
+yaptığını görsün, veli de görebilsin."*
+
+**Eşleme öğretmenden geliyor, tahmin edilmiyor.** `odevler.konular` soru
+numarasını konu adına bağlıyor (`{"1":"Türev","2":"Türev"}`). Arayüz girişi
+aralıkla kolaylaştırıyor ("1–5: Türev") ama saklama biçimi soru başına:
+aralık saklansaydı tek bir sorunun konusunu değiştirmek aralığı bölmek
+demek olurdu. Konu **zorunlu değil** — girilmemiş ödev eskisi gibi çalışır,
+yalnız analiz çıkmaz.
+
+**Analiz sunucuda hesaplanıyor; bu bir tercih değil zorunluluk.** Veli de
+konu analizini görüyor, ama veliye cevap anahtarı gitmiyor (yukarıdaki
+Kural 6 sınırı). Tarayıcıda hesaplasaydık anahtarı göndermek gerekirdi.
+
+**`_konu_analizi` ve `_soru_dokumu`, `_puanla` ile birebir aynı dallanmayı
+uyguluyor:** boş cevap boş sayılır, anahtarı olmayan soru öğrenciyi
+cezalandırmaz. Ayrışsalardı öğrenci 100 alıp "şu konuda eksiğin var"
+uyarısı görebilirdi. Migration kendi denetiminde bunu her uygulamada
+yeniden ölçüyor; `konu_testleri.sql` 2. grubu da analizin toplamını
+gönderimde **saklanan** puanla karşılaştırıyor.
+
+**Soru numarası kime ne kadar gidiyor:**
+
+| Kim | Ne görüyor |
+|---|---|
+| Öğrenci | Kendi cevabı, anahtar (teslimden sonra), konu analizi — hepsi zaten vardı |
+| Öğretmen | Yanlış ve boş soru **numaraları**, öğrenci başına; sınıfın konu özeti |
+| Veli | Yalnız **numara** — `Yanlış: 3, 7` |
+
+Veliye numara gidiyor, **şık gitmiyor**: ne çocuğun işaretlediği ne de
+doğru olan. Numara "hangi soruda takıldı" der ve velinin işine yarar; dört
+şıklı bir soruda şıkkı göndermek anahtara doğru atılmış bir adım olurdu.
+`konu_testleri.sql` 12. grubu velinin yanıtında iki şıkkın da geçmediğini
+ayrı ayrı ölçüyor.
+
+### Ödev PDF'inden okunanlar — ve neden AI yok
+
+Öğretmen konuların AI ile tahmin edilmesini istedi. Gerçek bir ödev PDF'i
+(`10C_uslu_koklu_SORULAR.pdf`) ölçüldü ve sonuç isteği **teknik olarak
+imkânsız** kıldı: PDF'te metin katmanı var, ama **soruların metni yok**.
+Sorular görsel olarak gömülü (4 sayfada 14 görsel, soru başına bir resim);
+metin katmanında yalnız çerçeve duruyor. AI'ya gönderilecek soru metni diye
+bir şey yok.
+
+Öğretmenin kararı: **"Önce AI'sız, AI sonra."** Bu yüzden `lib/odev-pdf-ozeti.ts`
+AI kullanmıyor, yalnız okunabilen çerçeveyi okuyor:
+
+| Okunan | Nereden |
+|---|---|
+| Soru sayısı | Puan tablosu (`SORU 1 2 … 10 TOPLAM`) **ve** soru başlıkları (`01 10 Puan`) |
+| Ödevin konusu | Başlık satırının ilk `·` parçası |
+| Sınıf | Alt bilgideki `· 10C ·` |
+
+**İki bağımsız soru sayısı sinyali birbirini denetliyor. Çelişirlerse
+hiçbiri seçilmez** — ekran ikisini de gösterip kararı öğretmene bırakıyor.
+Sessizce birini seçmek yanlış soru sayısı demek, yanlış soru sayısı da
+cevap anahtarının kırpılması demek (`odev_guncelle`).
+
+**Hiçbir alan kendiliğinden dolmuyor.** Kutu ne bulunduğunu söylüyor,
+uygulayan öğretmen. Onayladığı konu yalnız konu ALANINI dolduruyor; hiçbir
+soruya konu yazmıyor — öğretmen aralığı belirleyip "Ata"ya basana kadar
+kayıt değişmiyor. Sinyal bulunamazsa ya da PDF okunamazsa kutu hiç çıkmıyor
+ve ekran bugünkü gibi çalışıyor.
+
+Testler tek bir PDF'e uydurulmadı: öğretmenin gerçek 37 satırı sabit veri
+olarak duruyor, ama yanında taranmış PDF, tanınmayan şablon, çelişkili
+sinyal, ardışık olmayan numaralar ve düz metinde geçen "SORU" tuzağı da
+ölçülüyor. Gerekçe kayıtlı bir hata: cevap anahtarı turunda kendi ürettiğim
+örneklere uyan bir desen, gerçek PDF'te 0/10 çıkmıştı.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |

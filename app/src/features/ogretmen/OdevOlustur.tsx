@@ -13,8 +13,12 @@ import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
+import { KonuAtama } from './KonuAtama';
+import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { SikSayisiSecimi } from './SikSayisiSecimi';
+import { sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
+import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
 import type { Sinif } from '@/types/api';
 
 type Adim = 1 | 2 | 3;
@@ -63,6 +67,9 @@ export function OdevOlustur() {
   const [okumaHatasi, setOkumaHatasi] = useState<string | null>(null);
   const [cikarim, setCikarim] = useState<Cikarim | null>(null);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
+  const [konular, setKonular] = useState<Konular>({});
+  const [pdfOzet, setPdfOzet] = useState<PdfOzeti | null>(null);
+  const [onerilenKonu, setOnerilenKonu] = useState<string | undefined>(undefined);
 
   const [kaydediyor, setKaydediyor] = useState(false);
 
@@ -71,6 +78,12 @@ export function OdevOlustur() {
     { p_token: oturum?.token, p_arsiv: false },
     (v) => v.length === 0,
   );
+
+  // Otomatik tamamlama listesi. Gelmezse konu alanı çalışmaya devam eder —
+  // öneri bir kolaylık, koşul değil (Part VIII: yedek davranış).
+  const { veri: konuOnerileri } = useVeri<string[]>('konu_onerileri', {
+    p_token: oturum?.token,
+  });
 
   const n = Number(soruSayisi) || 0;
 
@@ -84,6 +97,23 @@ export function OdevOlustur() {
     setFormHatasi(null);
     // Açık uçlu ödevde cevap anahtarı kavramı yok; doğrudan son adıma.
     setAdim(tur === 'test' ? 2 : 3);
+  }
+
+  /**
+   * Ödev (soru) PDF'ini okuyup ÖNERİ üretir.
+   *
+   * OKUMA HATASI ÖDEV OLUŞTURMAYI ENGELLEMEZ. Bu bir kolaylık; PDF taranmış
+   * olabilir, şablonu tanımayabiliriz, dosya bozuk olabilir. Hepsinde
+   * öneri kutusu çıkmaz ve ekran bugünkü gibi çalışır (Part VIII).
+   * Öğretmene hata da göstermiyoruz: istemediği bir işin başarısızlığını
+   * bildirmek, olmayan bir sorunu varmış gibi gösterirdi.
+   */
+  async function odevPdfiniOku(dosya: File) {
+    try {
+      setPdfOzet(odevPdfOzeti(await pdfSatirlariniOku(dosya)));
+    } catch {
+      setPdfOzet(null);
+    }
   }
 
   /** Anahtar PDF'i seçildiğinde tarayıcıda okunur ve çıkarım yapılır. */
@@ -148,6 +178,9 @@ export function OdevOlustur() {
         p_odev_yolu: odevYolu,
         p_gec_teslim: gecTeslim,
         p_sik_sayisi: tur === 'test' ? (sonSecenek === 'D' ? 4 : 5) : 5,
+        // Açık uçlu ödevde konu analizi yapılamaz: anahtar yok, hangi sorunun
+        // yanlış olduğu bilinmiyor. Konu alanı da o yüzden yalnız testte var.
+        p_konular: tur === 'test' ? sunucuyaHazirla(konular, n) : null,
       });
 
       bildir('Ödev taslak olarak kaydedildi', 'basari');
@@ -313,12 +346,28 @@ export function OdevOlustur() {
                 {...k}
                 type="file"
                 accept="application/pdf"
-                onChange={(e) => setOdevPdf(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setOdevPdf(f);
+                  if (f) void odevPdfiniOku(f);
+                  else setPdfOzet(null);
+                }}
               />
             )}
           </Field>
           {odevPdf && (
-            <p className="mb-4 text-[13px] text-success">Seçildi: {odevPdf.name}</p>
+            <p className="mb-2 text-[13px] text-success">Seçildi: {odevPdf.name}</p>
+          )}
+          {pdfOzet && (
+            <PdfOnerileri
+              ozet={pdfOzet}
+              mevcutSoruSayisi={n}
+              mevcutSinifId={sinifId}
+              siniflar={siniflar ?? []}
+              onSoruSayisi={(x) => setSoruSayisi(String(x))}
+              onKonu={setOnerilenKonu}
+              onSinif={setSinifId}
+            />
           )}
 
           <Field
@@ -376,6 +425,18 @@ export function OdevOlustur() {
                   sunucu eksik anahtarlı ödevi reddeder. Kalan {eksikSayisi} cevabı sonra da
                   tamamlayabilirsiniz.
                 </p>
+              )}
+
+              {n > 0 && (
+                <div className="mt-6 border-t border-line pt-5">
+                  <KonuAtama
+                    soruSayisi={n}
+                    konular={konular}
+                    oneriler={konuOnerileri ?? []}
+                    onerilenKonu={onerilenKonu}
+                    onDegis={setKonular}
+                  />
+                </div>
               )}
             </>
           ) : (
