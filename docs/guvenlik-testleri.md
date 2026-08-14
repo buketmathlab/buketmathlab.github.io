@@ -64,25 +64,25 @@ sütun adıyla çakışıyordu; öğrenci ekleme tamamen kırıktı. Test yakala
 | 7 | İstemci tarafı yetkilendirme atlatılabilir mi? | **KAPALI** | Anon izolasyon testi: 13 tablonun tamamı `permission denied`. Yetki kararı yalnız sunucuda. |
 | 8 | PIN / giriş deneme limiti atlatılabilir mi? | **KAPALI** | `giris_denemeleri` + `_kilitli_mi`: 15 dakikada 8 hatalı deneme → kilit. IP hash'lenerek saklanır. |
 | 9 | Dosyalara URL tahmin ederek erişilebilir mi? | **KAPALI** | Bucket `public = false`. `storage.objects` üzerinde anon politikası `using (false)`. |
-| 10 | Mesajlar üzerinden XSS çalıştırılabilir mi? | **KAPALI (tasarım)** | Mesaj düz metin saklanır; React varsayılan kaçışı uygular, `dangerouslySetInnerHTML` hiç kullanılmaz. Arayüz Faz 8'de gelince tekrar denenecek. |
+| 10 | Mesajlar üzerinden XSS çalıştırılabilir mi? | **KAPALI (tasarım)** | Mesaj düz metin saklanır; React varsayılan kaçışı uygular, `dangerouslySetInnerHTML` hiç kullanılmaz. Arayüz Faz 3E'de geldi ve denendi: `Veliler`/`VeliPanel` mesajı düz metin olarak basıyor, `dangerouslySetInnerHTML` depoda hiç geçmiyor. |
 | 11 | SQL enjeksiyonu mümkün mü? | **KAPALI** | Tüm RPC parametreleri tipli. Dinamik SQL yalnız iki yerde: 0002'deki migration döngüsü (sabit dizi) ve testler. Kullanıcı girdisiyle string birleştirme yok. |
 | 12 | Öğrenci mükerrer gönderimle notu manipüle edebilir mi? | **KAPALI** | `gonderim_tek UNIQUE (odev_id, ogrenci_id)`. Test 11: ikinci gönderim `unique_violation`, tabloda tek kayıt. |
-| 13 | Yeniden puanlama yetkisiz tetiklenebilir mi? | GEÇERSİZ | Cevap anahtarı revizyonu / yeniden puanlama henüz yok (Faz 5). O zaman eklenecek. |
+| 13 | Yeniden puanlama yetkisiz tetiklenebilir mi? | **KAPALI** | 0008'de geldi. `odev_guncelle` `_ogretmen(p_token)` şartı taşıyor; öğrenci ve veli çağıramıyor (`odev_duzenleme_testleri.sql`). Anahtar değişip gönderim varsa puanlar `_puanla` ile yeniden hesaplanıyor ve **puanı değişen her öğrenci `denetim_izi`'ne yazılıyor** (Part XLIII). Öğretmene eski→yeni puan listesi gösteriliyor; sessiz not değişikliği yok. |
 | 14 | Silinen öğrenci erişimini koruyabilir mi? | **KAPALI** | Test 16: pasifleştirme kodları siler ve oturumları iptal eder; sonraki çağrı reddedilir. |
 | 15 | Sınıf değişikliği geçmiş veriyi sızdırır mı? | **KISMEN** | Ödev artık `sinif_id` FK ile bağlı, serbest metin değil. Ancak öğrenci sınıf değiştirirse eski sınıfın ödevleri listesinden düşer — geçmiş notlar `gonderimler`'de durur ama görünürlük Faz 2'de ele alınmalı. |
 | + | Dahili fonksiyonlar dışarıdan çağrılabilir mi? | **KAPALI** | *Bu madde listede yoktu, test sırasında ortaya çıktı.* Bkz. yukarıdaki "yakalanan gerçek açık". |
 
 ## Kalan riskler — gizlenmiyor
 
-1. **Migration'lar Supabase'e uygulanmadı.** Yukarıdaki "KAPALI" işaretleri
-   yerel veritabanı içindir. Canlıya uygulandıktan sonra testler orada
-   tekrarlanmalı. Özellikle `0005` atlanırsa kimlik doğrulama atlatması
-   geri gelir.
-2. **İmzalı URL Edge Function'ı deploy edilmedi.** Dosya erişim kararı
-   SQL'de hazır ama URL üretimi yok. Bu yüzden dosya akışı henüz çalışmıyor
-   — bucket private olduğu için güvenli taraf, ama eksik.
-3. **XSS ve arayüz kaynaklı riskler yalnız tasarım düzeyinde kapalı.**
-   Gerçek arayüz Faz 2–4'te geldiğinde tekrar denenmeli.
+1. ~~Migration'lar Supabase'e uygulanmadı.~~ **ÇÖZÜLDÜ.** 0001–0021
+   canlıda; uçlar canlıya karşı yoklanarak doğrulandı. "KAPALI" işaretleri
+   hem yerelde hem canlıda geçerli.
+2. ~~İmzalı URL Edge Function'ı deploy edilmedi.~~ **ÇÖZÜLDÜ.**
+   `dosya-url` canlıda; ödev PDF'i ve çözüm fotoğrafı akışları çalışıyor.
+   Yetki kararı hâlâ SQL'de (`dosya_erisim_izni`), fonksiyon yalnız imzalıyor.
+3. **XSS arayüz geldikten sonra da yalnız tasarım düzeyinde kapalı.**
+   Arayüz Faz 2–3E'de geldi ve `dangerouslySetInnerHTML` hiç kullanılmadı,
+   ama saldırgan girdisiyle sistematik bir deneme YAPILMADI. Faz 11'e ait.
 4. **Madde 15 kısmen açık.** Sınıf değiştiren öğrencinin geçmiş ödev
    görünürlüğü Faz 2'de karara bağlanacak.
 5. **Deneme limiti IP'ye dayanıyor.** Aynı okul ağından çıkan öğrenciler

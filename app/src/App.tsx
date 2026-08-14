@@ -6,6 +6,7 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { GirisEkrani } from '@/features/kimlik/GirisEkrani';
 import { KurulumEkrani } from '@/features/kimlik/KurulumEkrani';
 import { Kabuk } from '@/components/layout/Kabuk';
+import { SurumSeridi } from '@/components/layout/SurumSeridi';
 import { OgrenciKabuk } from '@/components/layout/OgrenciKabuk';
 import { VeliKabuk } from '@/components/layout/VeliKabuk';
 import { VeliPanel } from '@/features/veli/VeliPanel';
@@ -151,6 +152,9 @@ export function App() {
   return (
     <ToastSaglayici>
       <OturumSaglayici>
+        {/* Şerit yönlendirmenin DIŞINDA: yeni sürüm haberi hangi ekranda
+            olunursa olunsun, giriş yapılmamışken bile geçerli. */}
+        <SurumSeridi />
         <HashRouter>
           <Yonlendirme />
         </HashRouter>

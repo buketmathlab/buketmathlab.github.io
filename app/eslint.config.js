@@ -34,6 +34,7 @@ export default tseslint.config(
     // geçerli — aksi hâlde `document` tanımsız görünüyor.
     files: [
       'scripts/erisilebilirlik-denetimi.mjs',
+      'scripts/pwa-denetimi.mjs',
       'scripts/ekran-goruntuleri.mjs',
       'scripts/ekran-goruntuleri-ogrenci.mjs',
     ],

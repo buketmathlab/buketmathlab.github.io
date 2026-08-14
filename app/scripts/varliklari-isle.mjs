@@ -138,6 +138,63 @@ async function okulMuhru() {
 }
 
 /**
+ * Ana ekran simgeleri — SEKİZ ana ekrana eklendiğinde görünen ikon.
+ *
+ * KAYNAK MARKA İŞARETİ, OKUL MÜHRÜ DEĞİL. Mühür yalnız ≥96 px bağlamlarda
+ * kullanılıyor (Kural 8 ve Faz 0 kararı); üstelik 48 px'lik bir ana ekran
+ * simgesinde halka yazısı ve köprü çizgileri lapaya dönerdi. İşaretin
+ * çizimine dokunulmuyor, yalnız ölçekleniyor.
+ *
+ * ÜÇ AYRI ÇIKTI, ÜÇ AYRI SEBEP:
+ *
+ * - `any` (192/512): tarayıcının olduğu gibi kullandığı simge.
+ * - `maskable` (512): Android simgeyi daireye/damlaya KIRPAR. Kırpma
+ *   güvenli alanı iç %80; çizim o alana sığdırılıp lacivert zemin kenara
+ *   kadar taşırılıyor. Bunu yapmasak Android işaretin kenarını keserdi.
+ * - `180` PNG: iOS `apple-touch-icon`. ŞEFFAFLIK YOK — iOS şeffaf pikselleri
+ *   SİYAH basar, yani şeffaf bırakılan simge ana ekranda siyah bir kutu
+ *   olarak görünürdü. Zemin açıkça dolduruluyor.
+ */
+const ZEMIN = '#001737'; // --sk-ink, favicon'daki dolgunun aynısı
+
+async function uygulamaSimgeleri() {
+  const girdi = join(HEDEF_MARKA, 'sekiz-favicon.svg');
+
+  // SVG'yi bir kez yüksek çözünürlükte pikselleştir; her boyutta yeniden
+  // rasterleştirmek kenarları farklı yumuşatırdı.
+  const kaynak = await sharp(girdi, { density: 384 })
+    .resize(1024, 1024, { fit: 'contain', background: ZEMIN })
+    .png()
+    .toBuffer();
+
+  for (const boyut of [192, 512]) {
+    await sharp(kaynak)
+      .resize(boyut, boyut)
+      .flatten({ background: ZEMIN })
+      .png({ compressionLevel: 9 })
+      .toFile(join(HEDEF_MARKA, `sekiz-simge-${boyut}.png`));
+  }
+
+  // Maskeli sürüm: çizim %80'e küçültülüp lacivert zemine oturtuluyor.
+  const ic = Math.round(512 * 0.8);
+  const pay = Math.round((512 - ic) / 2);
+  await sharp({
+    create: { width: 512, height: 512, channels: 4, background: ZEMIN },
+  })
+    .composite([
+      { input: await sharp(kaynak).resize(ic, ic).png().toBuffer(), top: pay, left: pay },
+    ])
+    .png({ compressionLevel: 9 })
+    .toFile(join(HEDEF_MARKA, 'sekiz-simge-512-maskeli.png'));
+
+  await sharp(kaynak)
+    .resize(180, 180)
+    .flatten({ background: ZEMIN })
+    .png({ compressionLevel: 9 })
+    .toFile(join(HEDEF_MARKA, 'sekiz-simge-180.png'));
+}
+
+/**
  * Ewalu tanıtım videosunun posteri — video oynatılana kadar görünen kare.
  *
  * Kaynak: `kaynak-varliklar/ewalu-tanitim-kare.jpg` — öğretmenin seçtiği
@@ -196,6 +253,8 @@ async function main() {
   await ewaluTamFigurler();
   console.log('Okul mührü maskeleniyor…');
   await okulMuhru();
+  console.log('Uygulama simgeleri üretiliyor…');
+  await uygulamaSimgeleri();
   console.log('Video posteri üretiliyor…');
   await videoPosteri();
 
