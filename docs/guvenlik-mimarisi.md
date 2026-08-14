@@ -44,6 +44,40 @@ iptal edilebilir; PIN sızarsa hesap kalıcı olarak düşer.
 **Neden gerekli:** Öğrenci ve veli kodları kısa. Limit olmadan kaba kuvvetle
 başka bir öğrencinin koduna ulaşmak zaman meselesidir.
 
+### PIN değiştirme — arayüzde (Ayarlar)
+
+`pin_degistir` 0003'te yazıldı, 0005'te yetkisi verildi ve uzun süre
+**arayüzde hiç çağrılmadı**; öğretmen PIN'ini değiştiremiyordu. Artık
+**Ayarlar** ekranından değiştiriliyor. Sunucu eski PIN'i doğruluyor, en az
+6 karakter istiyor, bcrypt (cost 10) ile saklıyor, **diğer tüm öğretmen
+oturumlarını düşürüyor** (mevcut oturum ayakta kalıyor) ve denetim izine
+yazıyor. Öğrenci ve veli oturumları etkilenmiyor.
+
+**Ölçülen bir istemci kusuru:** sunucu "mevcut PIN doğru değil" için de
+`28000` fırlatıyor, istemci ise o kodu "oturumun bitti" diye okuyup
+kullanıcıyı dışarı atıyordu — yani PIN'ini yanlış yazan öğretmen sistemden
+atılıyordu. `rpc()`'ye yalnız bu çağrı için `oturumDusurmesin` bayrağı
+eklendi. Güvenlik kaybı yok: oturum gerçekten ölmüşse jetonu istemcide
+tutmak hiçbir kapı açmaz, sunucu bir sonraki çağrıda da reddeder.
+
+### PIN unutulursa — KALAN RİSK
+
+Kolay bir kurtarma yolu **yok** ve olmaması bilinçli: bcrypt geri
+döndürülemez. Tek yol Supabase panelinde hash'i boşaltmaktır:
+
+```sql
+update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+```
+
+**Bu bir açık penceredir.** Hash boşken `giris()` HERKESE kurulum ekranı
+gösterir; o aralıkta siteye giren biri PIN'i belirleyebilir. Bu yüzden
+komut, yeni PIN belirlenmeden **hemen önce** çalıştırılmalı ve aralık
+dakikalarla sınırlanmalıdır.
+
+Bu risk kapatılmadı, kayda geçirildi. Kapatmanın yolu tek kullanımlık bir
+kurtarma jetonu olurdu; öğretmen bir kişi olduğu ve pencere elle
+kontrol edilebildiği için bugün gerekli görülmedi.
+
 ## 3. Dosya erişimi
 
 ### Mevcut (kritik açık)

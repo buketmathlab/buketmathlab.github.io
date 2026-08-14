@@ -10,6 +10,12 @@ import { sureDurumu } from '@/lib/son-tarih';
 import type { OgrenciOdevleri, OgrenciOdev } from '@/types/api';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
+const DERS_ZAMANI = new Intl.DateTimeFormat('tr-TR', {
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
 /**
  * Öğrencinin ödev listesi.
@@ -47,6 +53,10 @@ export function Odevlerim() {
     return sureDurumu(o.son_tarih).gecti && !o.gec_teslim ? 1 : 0;
   }
 
+  // `?? []` — sunucu bu alanı 0007'den beri gönderiyor ama savunmasız
+  // okumak, alan bir gün kaybolursa ekranın tamamını beyaz bırakırdı.
+  const dersler = veri?.dersler ?? [];
+
   const odevler = [...(veri?.odevler ?? [])].sort((a, b) => {
     const fark = oncelik(a) - oncelik(b);
     if (fark !== 0) return fark;
@@ -78,6 +88,50 @@ export function Odevlerim() {
         {...(hata ? { hataAciklama: hata } : {})}
         tekrarDene={yenile}
       >
+        {/* YAKLAŞAN DERSLER — yalnız özel ders öğrencisinde çıkar.
+            `ogrenci_odevleri` bu veriyi 0007'den beri döndürüyordu ama
+            hiçbir ekran göstermiyordu; veri akıyor, ekranı yoktu.
+
+            PARA BİLGİSİ YOK ve olmayacak (öğretmenin kuralı: "ödeme
+            detaylarını öğrenci görmesin"). Burada yalnız zaman, ders
+            biçimi ve online ise bağlantı var; sunucunun öğrenciye
+            gönderdiği yanıtta zaten tutar diye bir alan yok. */}
+        {dersler.length > 0 && (
+          <section className="mb-5" aria-labelledby="yaklasan-dersler">
+            <h2 id="yaklasan-dersler" className="mb-2 text-[18px] text-ink">
+              Yaklaşan derslerin
+            </h2>
+            <ul className="grid gap-2">
+              {dersler.map((d, i) => (
+                <li key={i}>
+                  <Card>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[15px] font-semibold text-ink">
+                        {DERS_ZAMANI.format(new Date(d.zaman))}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-[13px] text-muted">
+                          {d.mod === 'online' ? 'Online' : 'Yüz yüze'}
+                        </span>
+                        {d.link && (
+                          <a
+                            href={d.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-[44px] items-center text-[14px] font-bold text-link underline"
+                          >
+                            Derse katıl
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <ul className="grid gap-3">
           {odevler.map((o: OgrenciOdev) => {
             const s = sureDurumu(o.son_tarih);

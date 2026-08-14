@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -181,10 +181,24 @@ export function Ogrenciler() {
                 <Card key={o.id}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-ink">{o.ad}</p>
+                      {/* Ad artık detaya götürüyor: özel ders öğrencisinde
+                          ders ve ödeme takibi orada. Ödev kartı başlığının
+                          düzenlemeye gitmesiyle aynı desen. */}
+                      <Link
+                        to={`/ogretmen/ogrenciler/${o.id}`}
+                        className="inline-flex min-h-[44px] items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                      >
+                        {o.ad}
+                      </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                        {o.sinif && <Tag>{o.sinif}</Tag>}
-                        {o.tur === 'ozel' && <Tag tur="uyari">Özel ders</Tag>}
+                        {/* Özel ders öğrencisinde sınıf adı zaten "Özel ders"
+                            (0012'den beri gerçek bir sınıf) — ikisini birden
+                            çizmek aynı etiketi iki kez göstermekti. */}
+                        {o.tur === 'ozel' ? (
+                          <Tag tur="uyari">Özel ders</Tag>
+                        ) : (
+                          o.sinif && <Tag>{o.sinif}</Tag>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">

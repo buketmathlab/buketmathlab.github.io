@@ -80,7 +80,27 @@ type PostgrestHata = {
  * hatalarını insan diline çevirmek. Teknik ayrıntı kullanıcıya gitmez,
  * yalnız konsola yazılır.
  */
-export async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
+export type RpcSecenek = {
+  /**
+   * `28000` geldiğinde oturumu DÜŞÜRME.
+   *
+   * Normalde `28000` "oturumun bitti" demektir ve arayüz kullanıcıyı giriş
+   * ekranına atar. Ama `pin_degistir` AYNI KODU "mevcut PIN doğru değil"
+   * için de kullanıyor (`0003_guvenlik_fonksiyonlari.sql:295`) — yani
+   * PIN'ini yanlış yazan öğretmen sistemden atılıyordu. Ölçülerek bulundu.
+   *
+   * Bu bayrak yalnız o ekranda açılıyor. Güvenlik kaybı yok: oturum
+   * gerçekten ölmüşse jetonu istemcide tutmak hiçbir kapı açmaz, sunucu
+   * bir sonraki çağrıda da reddeder.
+   */
+  oturumDusurmesin?: boolean;
+};
+
+export async function rpc<T>(
+  fn: string,
+  args: Record<string, unknown> = {},
+  secenek: RpcSecenek = {},
+): Promise<T> {
   let yanit: Response;
 
   try {
@@ -110,7 +130,7 @@ export async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Pr
     // Oturum düşmüşse jetonu sil ve arayüzü haberdar et. Olay yayınlamak,
     // her çağrı noktasında ayrı kontrol yazmaktan güvenilir — bir yerde
     // unutulursa kullanıcı kilitli ekranda kalırdı.
-    if (hata.code === '28000') {
+    if (hata.code === '28000' && !secenek.oturumDusurmesin) {
       oturumSil();
       window.dispatchEvent(new CustomEvent('sekiz:oturum-dustu'));
       throw new OturumHatasi(hata.message || 'Oturumunuz sona erdi. Tekrar giriş yapın.');
