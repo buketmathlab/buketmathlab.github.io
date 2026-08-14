@@ -98,7 +98,23 @@ export function Kabuk() {
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto pt-4">
+        {/* Ayarlar SEKME DEĞİL, alt bağlantı. Menü zaten altı sekme;
+            yedincisi 360 px'de alt çubuğa sığmıyor (ölçüldü). PIN
+            değiştirmek de nadir ve kasıtlı bir iş — her gün görünmesi
+            gereken bir şey değil. Dar ekranda yan menü gizli olduğu için
+            aynı yere Pano'nun altından da geliniyor. */}
+        <div className="mt-auto flex flex-col gap-2 pt-4">
+          <NavLink
+            to="/ogretmen/ayarlar"
+            className={({ isActive }) =>
+              cn(
+                'rounded-sk-sm px-3 py-2 text-[14px] text-muted hover:bg-line-soft',
+                isActive && 'bg-line-soft font-semibold text-ink',
+              )
+            }
+          >
+            Ayarlar
+          </NavLink>
           <Button tur="sade" olcu="sm" tamGenislik onClick={cikisYap}>
             Çıkış
           </Button>

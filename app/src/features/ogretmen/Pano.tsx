@@ -182,6 +182,16 @@ export function Pano() {
                 sarıya dönüp kendini hatırlatıyor. */}
             <h2 className="mb-3 mt-8 text-[18px] text-ink">Verinizin yedeği</h2>
             <Yedek />
+
+            {/* Dar ekranda yan menü gizli; Ayarlar'a tek giriş burası.
+                `lg:hidden` — geniş ekranda yan menüde zaten var, iki kez
+                göstermek gereksiz. */}
+            <p className="mt-4 text-[14px] text-muted lg:hidden">
+              <Link to="/ogretmen/ayarlar" className="font-bold text-link underline">
+                Ayarlar
+              </Link>{' '}
+              — PIN’inizi buradan değiştirebilirsiniz.
+            </p>
           </>
         )}
       </AsyncBoundary>

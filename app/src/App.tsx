@@ -12,6 +12,7 @@ import { VeliPanel } from '@/features/veli/VeliPanel';
 import { Odevlerim } from '@/features/ogrenci/Odevlerim';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
+import { Ayarlar } from '@/features/ogretmen/Ayarlar';
 import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
 import { SinifDetay } from '@/features/ogretmen/SinifDetay';
@@ -105,6 +106,7 @@ function Yonlendirme() {
             Yazışmaya yanıt bekleyenler listesinden tek dokunuşla da
             gidilebiliyor; acil olan sınıfın altına gömülmesin. */}
         <Route path="veliler" element={<Veliler />} />
+        <Route path="ayarlar" element={<Ayarlar />} />
         <Route path="veliler/sinif/:id" element={<SinifVelileriEkrani />} />
         <Route path="veliler/yazisma/:id" element={<VeliYazismasi />} />
       </Route>
