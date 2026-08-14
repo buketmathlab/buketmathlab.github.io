@@ -13,6 +13,7 @@ import { Odevlerim } from '@/features/ogrenci/Odevlerim';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Ayarlar } from '@/features/ogretmen/Ayarlar';
+import { OgrenciDetay } from '@/features/ogretmen/OgrenciDetay';
 import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
 import { SinifDetay } from '@/features/ogretmen/SinifDetay';
@@ -95,6 +96,7 @@ function Yonlendirme() {
         <Route path="siniflar" element={<Siniflar />} />
         <Route path="siniflar/:id" element={<SinifDetay />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
+        <Route path="ogrenciler/:id" element={<OgrenciDetay />} />
         <Route path="odevler" element={<Odevler />} />
         <Route path="odevler/yeni" element={<OdevOlustur />} />
         <Route path="odevler/:id" element={<OdevDuzenle />} />

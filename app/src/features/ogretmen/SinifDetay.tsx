@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
@@ -50,7 +50,9 @@ export function SinifDetay() {
                 <h1 className="font-display text-[24px] font-semibold text-ink">
                   {veri.sinif.ad}
                 </h1>
-                {veri.sinif.ozel && <Tag tur="uyari">Özel ders</Tag>}
+                {/* Başlık zaten "Özel ders" yazıyor (`siniflar.ad` özel
+                    sınıfta bu değeri üretiyor); aynı sözü etikete tekrar
+                    yazmıyoruz. */}
                 {veri.sinif.arsiv && <Tag tur="notr">Arşivde</Tag>}
               </div>
               <p className="mt-1 text-[14px] text-muted">
@@ -78,7 +80,11 @@ export function SinifDetay() {
               <ul className="grid gap-2">
                 {veri.ogrenciler.map((o) => (
                   <li key={o.id}>
-                    <OgrenciSatiri ogrenci={o} toplam={veri.degerlendirilen_odev} />
+                    <OgrenciSatiri
+                      ogrenci={o}
+                      toplam={veri.degerlendirilen_odev}
+                      ozelSinif={veri.sinif.ozel}
+                    />
                   </li>
                 ))}
               </ul>
@@ -102,7 +108,15 @@ export function SinifDetay() {
   );
 }
 
-function OgrenciSatiri({ ogrenci: o, toplam }: { ogrenci: SinifOgrencisi; toplam: number }) {
+function OgrenciSatiri({
+  ogrenci: o,
+  toplam,
+  ozelSinif,
+}: {
+  ogrenci: SinifOgrencisi;
+  toplam: number;
+  ozelSinif: boolean;
+}) {
   const oran = toplam > 0 ? o.yapti / toplam : 0;
 
   /**
@@ -119,7 +133,14 @@ function OgrenciSatiri({ ogrenci: o, toplam }: { ogrenci: SinifOgrencisi; toplam
     <Card vurgu={vurgu}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-semibold text-ink">{o.ad}</p>
+          {/* Ad detaya götürüyor; özel ders öğrencisinde ders ve ödeme
+              takibi orada. Öğrenciler listesiyle aynı desen. */}
+          <Link
+            to={`/ogretmen/ogrenciler/${o.id}`}
+            className="inline-flex min-h-[44px] items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+          >
+            {o.ad}
+          </Link>
           <p className="mt-1 text-[13px] text-muted">
             <span className="sk-sayi font-semibold text-ink">{o.yapti}</span> yaptı ·{' '}
             <span className="sk-sayi font-semibold text-ink">{o.yapmadi}</span> yapmadı
@@ -140,7 +161,10 @@ function OgrenciSatiri({ ogrenci: o, toplam }: { ogrenci: SinifOgrencisi; toplam
         </div>
       </div>
 
-      {o.tur === 'ozel' && (
+      {/* Özel ders sınıfının sayfasında HERKES özel; her satıra aynı
+          etiketi basmak sayfa başlığını tekrar etmekti. Etiket yalnız
+          karışık bir sınıfta bilgi taşıyor. */}
+      {o.tur === 'ozel' && !ozelSinif && (
         <div className="mt-2">
           <Tag tur="uyari">Özel ders</Tag>
         </div>

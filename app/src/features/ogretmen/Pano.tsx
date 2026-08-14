@@ -187,7 +187,10 @@ export function Pano() {
                 `lg:hidden` — geniş ekranda yan menüde zaten var, iki kez
                 göstermek gereksiz. */}
             <p className="mt-4 text-[14px] text-muted lg:hidden">
-              <Link to="/ogretmen/ayarlar" className="font-bold text-link underline">
+              <Link
+                to="/ogretmen/ayarlar"
+                className="inline-flex min-h-[44px] items-center font-bold text-link underline"
+              >
                 Ayarlar
               </Link>{' '}
               — PIN’inizi buradan değiştirebilirsiniz.

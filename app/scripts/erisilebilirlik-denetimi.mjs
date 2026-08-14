@@ -1,6 +1,6 @@
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 const SINIFLAR=[9,10,11].flatMap(s=>['A','B'].map(h=>({id:`${s}${h}`,ad:`${s}${h}`,seviye:s,sube:h,arsiv:false,ogrenci_sayisi:12})));
-const OGR={toplam:40,sayfa:1,toplam_sayfa:2,kayitlar:[{id:'a',ad:'Elif Yıldırım',tur:'okul',sinif:'9A'},{id:'b',ad:'Ece Güneş',tur:'ozel',sinif:null}]};
+const OGR={toplam:40,sayfa:1,toplam_sayfa:2,kayitlar:[{id:'a',ad:'Elif Yıldırım',tur:'okul',sinif:'9A'},{id:'b',ad:'Ece Güneş',tur:'ozel',sinif:'Özel ders'}]};
 const bugun=new Date(); const gun=n=>{const d=new Date(bugun);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
 const ODEVLER_LISTESI=[{id:'a1',baslik:'Türev testi — sayfa 84',aciklama:null,tur:'test',sinif_id:'11B',sinif:'11B',
   son_tarih:gun(8),soru_sayisi:10,gec_teslim:true,sik_sayisi:5,yayinda:true,olusturma:gun(-10),
@@ -32,7 +32,7 @@ const GONDERIMLER={odev:{id:'a1',baslik:'Limit — açık uçlu',tur:'acik',sini
     yanlis_sorular:[2,7,9],bos_sorular:[10]}],
   konu_ozeti:[{konu:'Limit',toplam:5,dogru:2,yanlis:2,bos:1},
               {konu:'Türev',toplam:5,dogru:4,yanlis:1,bos:0}]};
-const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},dersler:[],odevler:[
+const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},dersler:[{zaman:gun(2)+'T16:00:00Z',mod:'online',link:'https://ornek/ders'}],odevler:[
   {id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',son_tarih:gun(2),soru_sayisi:5,gec_teslim:true,sik_sayisi:5,sinif_arsiv:false,
    odev_yolu:'odev/x.pdf',gonderim:null,konu_analizi:[],cevap_anahtari:null,anahtar_yolu:null},
   {id:'a3',baslik:'Üslü Sayılar',aciklama:null,tur:'test',son_tarih:gun(-6),soru_sayisi:2,gec_teslim:true,sik_sayisi:4,sinif_arsiv:false,
@@ -66,15 +66,22 @@ const VELI_PANEL={ogrenci:{ad:'Ada Yıldırım',sinif:'9A',tur:'okul'},
             gonderim_zamani:null,puan:null,durum:null,
             yanlis_sorular:[],bos_sorular:[],konu_analizi:[]}],
   mesajlar:YAZISMA.mesajlar,odemeler:[],son_gorulme:gun(-1)+'T20:00:00Z'};
+const OZEL_DETAY={ogrenci:{id:'o9',ad:'Ozan Demir',tur:'ozel',sinif:'Özel ders',aktif:true},
+  dersler:[{id:'d1',zaman:gun(3)+'T16:00:00Z',mod:'online',link:'https://ornek/ders',gecti:false},
+           {id:'d2',zaman:gun(-4)+'T16:00:00Z',mod:'yuzyuze',link:null,gecti:true}],
+  odemeler:[{id:'p1',tutar:1500.5,tarih:gun(-2),odendi:false},
+            {id:'p2',tutar:800,tarih:gun(-32),odendi:true}],
+  ozet:{toplam:2300.5,odenen:800,kalan:1500.5,ders_toplam:2,gelecek_ders:1}};
 const ODEV_DETAY={id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',sinif_id:'11B',sinif:'11B',
   son_tarih:gun(3),soru_sayisi:6,gec_teslim:false,sik_sayisi:5,
   cevap_anahtari:{1:'A',2:'B',3:'C',4:'D',5:'E',6:'A'},
   konular:{1:'Türev',2:'Türev',3:'Türev',4:'Limit',5:'Limit',6:'Limit'},
   anahtar_yolu:'odev/anahtar.pdf',odev_yolu:'odev/soru.pdf',yayinda:true,gonderim_sayisi:3};
 const KONU_ONERILERI=['Türev','Limit','Üslü Sayılar','Köklü Sayılar'];
-const CEVAP={odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+const CEVAP={ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
+let tasmali=0;
 for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],
                             ['Ödevler','/ogretmen/odevler'],
@@ -84,6 +91,7 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Pano sınıfı','/ogretmen/bugun/gondermeyen/9A'],
                             ['Ödev düzenle','/ogretmen/odevler/a1'],
                             ['Ayarlar','/ogretmen/ayarlar'],
+                            ['Öğrenci detayı','/ogretmen/ogrenciler/o9'],
                             ['Kodlar','/ogretmen/kodlar'],
                             ['Kod sınıfı','/ogretmen/kodlar/9A'],
                             ['Veliler','/ogretmen/veliler'],
@@ -138,7 +146,33 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
     .filter(x=>x.h>0&&x.h<44));
   const etiketsiz=await p.evaluate(()=>[...document.querySelectorAll('input,select,textarea')]
     .filter(e=>!e.labels?.length&&!e.getAttribute('aria-label')).length);
-  console.log(`${ad.padEnd(11)} odak ${halka}/${odak}${yerel?` (+${yerel} yerel video kontrolü, tarayıcı yönetiyor)`:''}  | 44px altı: ${kucuk.length} ${kucuk.length?JSON.stringify(kucuk):''} | etiketsiz alan: ${etiketsiz}`);
+  // YATAY TAŞMA — 360 px'de sayfanın kendisi yana kaymamalı.
+  //
+  // NEDEN BURADA: taşma her turda elle yazılan betiklerle ölçülüyordu, yani
+  // yalnız o tur bakılan ekran korunuyordu. Bu betik zaten 22 ekranın
+  // hepsini güncel sahte veriyle 360 px'de geziyor; ölçüm tek satır ve
+  // sınıfın tamamını kapsıyor. Eklendiğinde 21/22 ekran temizdi, bir tanesi
+  // (öğrenci detayı özet ızgarası) taşıyordu ve düzeltildi.
+  //
+  // Taşan öğe de yazılıyor: "2 px taşıyor" tek başına aranacak yer
+  // bırakmıyor, çünkü suçlu çoğu zaman sınırı aşan kutu değil kabına
+  // sığmayan metin oluyor.
+  const tasma=await p.evaluate(()=>{
+    const kok=document.documentElement;
+    const fark=kok.scrollWidth-kok.clientWidth;
+    if(fark<=0) return {fark:0,suclu:null};
+    // En derindeki, içeriği kabından geniş olan öğe: asıl kaynak o.
+    let suclu=null;
+    for(const e of document.querySelectorAll('*'))
+      if(e.clientWidth>0 && e.scrollWidth>e.clientWidth+0.5) suclu=e;
+    return {fark, suclu: suclu ? `<${suclu.tagName.toLowerCase()}> `+
+      `${suclu.clientWidth}→${suclu.scrollWidth}px "${(suclu.textContent||'').trim().slice(0,24)}"` : null};
+  });
+  if(tasma.fark>0) tasmali++;
+  console.log(`${ad.padEnd(11)} odak ${halka}/${odak}${yerel?` (+${yerel} yerel video kontrolü, tarayıcı yönetiyor)`:''}  | 44px altı: ${kucuk.length} ${kucuk.length?JSON.stringify(kucuk):''} | etiketsiz alan: ${etiketsiz} | taşma: ${tasma.fark}px${tasma.suclu?' ← '+tasma.suclu:''}`);
   await p.close();
 }
 await b.close();
+console.log(tasmali===0
+  ? '\n→ 360 px yatay taşma: hiçbir ekranda yok ✓'
+  : `\n→ ${tasmali} ekranda YATAY TAŞMA var`);

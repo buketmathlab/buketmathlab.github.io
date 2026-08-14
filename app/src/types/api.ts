@@ -355,3 +355,51 @@ export type PanoDetayi = {
   toplam: number;
   gruplar: Array<{ sinif: string; ozel: boolean; satirlar: PanoSatiri[] }>;
 };
+
+/**
+ * `ozel_ders_detay` (migration 0021) — ÖĞRETMENE ÖZEL.
+ *
+ * `id` alanları bu ucun varlık sebebi: `ders_sil`, `odeme_degistir` ve
+ * `odeme_sil` bir `p_id` istiyor ve başka hiçbir uç id döndürmüyordu.
+ *
+ * ÖĞRETMENİN KURALI — ÖĞRENCİ PARAYI GÖRMEZ. Bu tip yalnız öğretmen
+ * ekranında kullanılıyor. Öğrencinin ucu (`ogrenci_odevleri`) ödemeyle
+ * ilgili hiçbir alan taşımıyor; sınır sunucuda, arayüzde gizleme yok
+ * (Part XXI). `ozel_ders_takibi_testleri.sql` 4. grubu bunu alan adı ve
+ * tutar değeri olarak ayrı ayrı ölçüyor.
+ */
+export type OzelDers = {
+  id: string;
+  zaman: string;
+  mod: 'yuzyuze' | 'online';
+  link: string | null;
+  /** Zamanı geçmiş ders. Sunucuda türetiliyor, saklanmıyor. */
+  gecti: boolean;
+};
+
+export type OzelOdeme = {
+  id: string;
+  tutar: number;
+  tarih: string;
+  odendi: boolean;
+};
+
+export type OzelDersDetayi = {
+  ogrenci: {
+    id: string;
+    ad: string;
+    tur: 'okul' | 'ozel';
+    sinif: string | null;
+    aktif: boolean;
+  };
+  dersler: OzelDers[];
+  odemeler: OzelOdeme[];
+  ozet: {
+    toplam: number;
+    odenen: number;
+    /** Öğretmenin asıl bakacağı sayı: ödenmemiş toplam. */
+    kalan: number;
+    ders_toplam: number;
+    gelecek_ders: number;
+  };
+};

@@ -288,29 +288,88 @@ sinyal, ardışık olmayan numaralar ve düz metinde geçen "SORU" tuzağı da
 ölçülüyor. Gerekçe kayıtlı bir hata: cevap anahtarı turunda kendi ürettiğim
 örneklere uyan bir desen, gerçek PDF'te 0/10 çıkmıştı.
 
+## Özel ders: dersler ve ödemeler (0021)
+
+Özel ders öğrencisi için ders programı ve ödeme takibi. `ders_ekle`,
+`ders_sil`, `odeme_ekle`, `odeme_degistir`, `odeme_sil` 0004'ten beri
+yazılıydı ve yetkileri verilmişti, ama **üçü `p_id` istiyor ve öğretmenin
+o id'yi öğrenebileceği hiçbir uç yoktu**. Yani ödeme "ödendi"
+işaretlenemiyor, ders silinemiyordu. 0021 tek bir okuma ucu
+(`ozel_ders_detay`) ekleyerek beş yazma ucunu kullanılabilir kıldı; yeni
+yazma ucu açılmadı.
+
+### Kimin neyi gördüğü
+
+Öğretmenin kuralı: **"Ödeme detaylarını öğrenci görmesin. Yani özel ders
+öğrencim."** Para velinin ve öğretmenin meselesi; çocuk ödevine çalışırken
+borç bilgisiyle karşılaşmamalı.
+
+| | Ders programı | Ödeme tutarı | Ödeme `id` |
+|---|---|---|---|
+| Öğretmen — `ozel_ders_detay` | geçmiş **ve** gelecek | var | **var** |
+| Veli — `veli_paneli` | yok | var | **yok** |
+| Öğrenci — `ogrenci_odevleri` | yalnız gelecek | **yok** | yok |
+
+Üç satırın gerekçesi ayrı ayrı:
+
+- **Öğretmene geçmiş dersler de dönüyor** — "kaç ders yaptık" sorusunu o
+  soruyor. Öğrenciye yalnız gelecek dönüyor, çünkü onun işine yarayan o.
+- **Veliye `id` gitmiyor.** Veli parayı görmeli (ödeyen o) ama
+  yönetmemeli; id göndermek silme/değiştirme yoluna açık kapı bırakırdı.
+- **Öğrenciye ödemeyle ilgili hiçbir alan gitmiyor** — tutar da, alan adı
+  da yok.
+
+Sınır **sunucuda**: ayrı uçlar ve rol denetimi. Arayüzde gizlemek değil —
+gizlenen veri gönderilmiş veridir (Part XXI, cevap anahtarındaki kuralın
+aynısı). Öğrenci ve veli `ozel_ders_detay`'ı çağırdığında `42501` alıyor.
+
+### Kural iki bağımsız katmanda zorlanıyor
+
+Yazılı olmayan bir kural sessizce bozulur. Bu yüzden iki ayrı yerde
+ölçülüyor:
+
+1. **Migration'ın kendi denetimi** — `0021` uygulanırken
+   `ogrenci_odevleri`'nin gövde metninde `tutar|odendi|odemeler` arıyor;
+   bulursa **hata verip dağıtımı durduruyor**. Yani öğrencinin ucuna ödeme
+   alanı ekleyen bir migration canlıya çıkamaz.
+2. **Çalışma anı testi** — `ozel_ders_takibi_testleri.sql` 4. grubu, en
+   sert durumu kuruyor (özel ders öğrencisi, ödenmemiş 800 TL borcu, dersi
+   var) ve öğrencinin yanıtında hem **alan adını** hem **tutar değerini**
+   ayrı ayrı arıyor. Denetimin işe yaradığı, aynı tutarın öğretmenin
+   ucunda **bulunduğu** gösterilerek kanıtlanıyor — aksi hâlde boş bir
+   metinde arıyor olurduk.
+
+Birincisi devre dışı kalsa ikincisi yakalar.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
 |---|---|---|
 | 0 | Mimari + tasarım sistemi | **tamamlandı** |
-| 1 | Veritabanı + güvenlik | **tamamlandı, canlıda** (0001–0020) |
+| 1 | Veritabanı + güvenlik | **tamamlandı** — 0001–0020 canlıda, **0021 öğretmenin çalıştırmasını bekliyor** |
 | 2 | Öğretmen: sınıf, öğrenci, ödev, cevap anahtarı | **tamamlandı** |
 | 2C–2D | Öğrenci teslim ekranı, gönderim takibi, açık uçlu puanlama | **tamamlandı** |
 | 3 | Pano detayları, arşiv, kodlar, veliler, mesajlaşma | **tamamlandı** |
 | 3F | Konu analizi, yanlış soru numaraları, PDF'ten öneri | **tamamlandı** |
 | — | Yedekleme ve geri yükleme | **tamamlandı** — `docs/yedekleme.md` |
+| — | PIN değiştirme | **tamamlandı** — `/ogretmen/ayarlar` |
+| — | Özel ders: dersler ve ödemeler (0021) | **tamamlandı** — `/ogretmen/ogrenciler/:id` |
 | 5 | Deterministik test puanlama | `_puanla` canlıda; birim testleri Faz 11'de genişletilecek |
 | 6 | Açık uçlu değerlendirmede AI desteği | **ölçüldü, ertelendi** — soru PDF'lerinde metin katmanı var ama soru metni yok; sorular görsel. Görsel okuyan AI ayrı bir tur, API anahtarı gerekiyor |
 | 7–8 | Analitik, bildirimler | sırada |
 | 9 | Landing + Ewalu deneyimi | sırada |
 | 10–12 | PWA, güvenlik denetimi, son QA | sırada |
 
-**Arayüze bağlanmamış uçlar** (yazıldı, yetkisi var, ekranı yok):
-`pin_degistir` — PIN değiştirilemiyor; `ders_ekle/sil` ve
-`odeme_ekle/degistir/sil` — özel ders ve ödeme takibi. Veli paneli ödeme
-listesini çiziyor ama ödemeyi girecek ekran olmadığı için bölüm hiç
-dolmuyor. `dosya_erisim_izni` bilerek bağlı değil: onu Edge Function
-çağırıyor.
+**Arayüze bağlanmamış uçlar.** Uçlar tarandığında üç gerçek boşluk
+çıkmıştı — `disa_aktar` (yedek), `pin_degistir` (PIN) ve özel ders yazma
+uçları. **Üçü de kapatıldı**; bugün yazılıp yetkisi verilmiş ama ekranı
+olmayan uç kalmadı.
+
+Bilerek bağlı olmayan tek uç `dosya_erisim_izni`: onu tarayıcı değil Edge
+Function çağırıyor.
+
+Veli panelindeki ödeme bölümü artık dolabiliyor — öğretmen ödemeyi
+`/ogretmen/ogrenciler/:id` ekranından giriyor.
 
 ## Video varlığı
 
