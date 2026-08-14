@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
+import { Yedek } from './Yedek';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
@@ -173,6 +174,14 @@ export function Pano() {
                 ))}
               </div>
             )}
+
+            {/* YEDEK EN ALTTA, bilerek. Panonun işi "bugün ne yapmalıyım";
+                yedek günlük bir iş değil. Ama görünmeyen yedek alınmayan
+                yedektir — bu yüzden ayrı bir sekmeye gömülmedi, öğretmenin
+                her gün açtığı ekranın sonunda duruyor. Eskidiğinde kart
+                sarıya dönüp kendini hatırlatıyor. */}
+            <h2 className="mb-3 mt-8 text-[18px] text-ink">Verinizin yedeği</h2>
+            <Yedek />
           </>
         )}
       </AsyncBoundary>
