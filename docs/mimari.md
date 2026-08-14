@@ -339,7 +339,16 @@ Yazılı olmayan bir kural sessizce bozulur. Bu yüzden iki ayrı yerde
    ucunda **bulunduğu** gösterilerek kanıtlanıyor — aksi hâlde boş bir
    metinde arıyor olurduk.
 
-Birincisi devre dışı kalsa ikincisi yakalar.
+3. **Sayım denetimi** — yukarıdaki ikisi *bilinen* uçları koruyor. Üçüncüsü
+   soruyu tersine çeviriyor: anon'un çağırabildiği, gövdesinde ödeme alanı
+   geçen **her** fonksiyon ya öğretmen ya veli şartı taşımalı. Bugün altı uç
+   var (`disa_aktar`, `odeme_ekle/degistir/sil`, `ozel_ders_detay` öğretmen
+   şartlı; `veli_paneli` veli şartlı) ve öğrenci altısında da `42501` alıyor.
+
+Birincisi devre dışı kalsa ikincisi yakalar. Üçüncüsü ise **yarın yazılacak**
+uçlar için: paraya dokunan yeni bir uç eklendiğinde test kırılır ve yazan kişi
+"öğrenci bunu görmeli mi?" sorusunu cevaplamak zorunda kalır. Kuralın yazılı
+olmadığı yerde sessizce bozulmasını engelleyen şey budur.
 
 ## Faz sırası
 

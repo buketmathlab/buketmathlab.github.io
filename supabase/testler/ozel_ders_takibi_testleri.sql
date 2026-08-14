@@ -241,6 +241,56 @@ begin
 
   raise notice '8 OK — olmayan öğrenci reddediliyor, tek imza';
 
+  -- ---------------------------------------------------------------------------
+  -- 9 — PARAYA AÇILAN BÜTÜN KAPILAR ÖĞRENCİYE KAPALI
+  --
+  -- 4. grup tek bir ucu ölçüyor. Bu grup soruyu tersine çeviriyor: sistemde
+  -- paraya dokunan KAÇ uç var ve öğrenci hepsinde geri çevriliyor mu?
+  --
+  -- Öğretmenin kuralı tek bir fonksiyonun değil, sistemin özelliği olmalı.
+  -- ---------------------------------------------------------------------------
+  begin perform public.disa_aktar(jo);
+    raise exception '9a: öğrenci YEDEĞİ indirebildi (içinde ödemeler var)';
+  exception when sqlstate '42501' then null; end;
+
+  begin perform public.odeme_ekle(jo, v_ozel, 999, current_date);
+    raise exception '9b: öğrenci ödeme ekleyebildi';
+  exception when sqlstate '42501' then null; end;
+
+  begin perform public.odeme_degistir(jo, p1);
+    raise exception '9c: öğrenci ödemeyi ödendi yapabildi';
+  exception when sqlstate '42501' then null; end;
+
+  begin perform public.odeme_sil(jo, p1);
+    raise exception '9d: öğrenci ödeme silebildi';
+  exception when sqlstate '42501' then null; end;
+
+  begin perform public.veli_paneli(jo);
+    raise exception '9e: öğrenci VELİ panelini açabildi (içinde ödemeler var)';
+  exception when sqlstate '42501' then null; end;
+
+  -- SAYIM DENETİMİ — asıl koruma bu.
+  --
+  -- Yukarıdaki beş satır bugün bilinen kapıları kapatıyor. Yarın biri paraya
+  -- dokunan YENİ bir uç yazarsa o satırlar sessiz kalırdı. Bu yüzden uçları
+  -- tek tek değil, SAYARAK denetliyoruz: anon'un çağırabildiği, gövdesinde
+  -- ödeme alanı geçen her fonksiyon ya öğretmen ya veli şartı taşımalı.
+  --
+  -- Yeni bir uç eklendiğinde bu test kırılır ve yazan kişi "öğrenci bunu
+  -- görmeli mi?" sorusunu cevaplamak zorunda kalır. Kuralın yazılı olmadığı
+  -- yerde sessizce bozulmasını engelleyen şey budur.
+  select count(*) into n
+    from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
+   where ns.nspname = 'public' and p.prokind = 'f'
+     and has_function_privilege('anon', p.oid, 'EXECUTE')
+     and pg_get_functiondef(p.oid) ~* '(odemeler|tutar|odendi)'
+     and pg_get_functiondef(p.oid) !~* '(_ogretmen\(|rol *= *''veli'')';
+  if n > 0 then
+    raise exception '9f: paraya dokunan ama rol şartı taşımayan % uç var', n;
+  end if;
+
+  raise notice '9 OK — paraya açılan altı kapının hepsi öğrenciye kapalı';
+
   raise notice '';
-  raise notice 'ÖZEL DERS TAKİBİ TESTLERİ: 8 GRUP GEÇTİ';
+  raise notice 'ÖZEL DERS TAKİBİ TESTLERİ: 9 GRUP GEÇTİ';
 end $$;
