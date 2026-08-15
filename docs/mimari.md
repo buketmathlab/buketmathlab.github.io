@@ -448,12 +448,81 @@ açılınca mesajları gösterip `okundu_isaretle`'yi çağırıyor.
 **Uç çalıştırılmamışsa arayüz bozulmuyor:** `bildirim_sayilari` yoksa
 sayılar sıfır kalır, rozet çizilmez, hata mesajı çıkmaz ve oturum düşmez.
 
+## Konu karnesi — dönem geneli (0023)
+
+`konu_ozeti` (0020) **tek bir ödevin** dökümüdür; `sinif_ogrencileri` (0013)
+iki ortalama verir ama konu da zaman da taşımaz. Yani *"sınıfım dönem
+boyunca hangi konuda zayıf?"* sorusu 0023'e kadar hiçbir ekranda
+sorulamıyordu.
+
+**Tek uç: `konu_karnesi(p_token, p_sinif_id, p_ogrenci_id)`** — öğretmene
+özel. İkisinden **tam olarak biri** verilir; ikisi birden ya da hiçbiri
+`22023` ile reddedilir. Sessizce birini seçmek, öğretmenin baktığını
+sandığı şeyle ekranda gösterileni ayırırdı.
+
+| Alan | İçerik |
+|---|---|
+| `kapsam` | `{ tur: 'sinif' \| 'ogrenci', ad, sinif, mevcut }` |
+| `odev_sayisi` | değerlendirilmiş ödev sayısı |
+| `konular` | `{konu, toplam, dogru, yanlis, bos}` — **en zayıf başta** |
+| `gelisim` | `{odev, tarih, tur, deger, gonderen, mevcut}` — kronolojik |
+
+**Ölçütler kopyalanıyor, uçlar çağrılmıyor** (0022'deki desen).
+"Değerlendirilmiş ödev" = yayında **ve** süresi dolmuş — `sinif_ogrencileri`
+ile birebir aynı. Konu toplama `konu_ozeti` ile aynı `_konu_analizi`
+çağrısını ve aynı sıralamayı kullanıyor; test eşitliği ayrıca ölçüyor.
+Mevcut uçların gövdesine dokunulmuyor, imzalarına parametre eklenmiyor
+(0007 tuzağı).
+
+**Konu dökümü yalnız test ödevlerinden; `gelisim`'e açık uçlu da giriyor.**
+Açık uçlunun cevap anahtarı yok — konu dökümüne girseydi her soru "boş"
+sayılır ve öğretmene uydurma bir eksik listesi çıkardı. Ama puanı var,
+dolayısıyla gelişimden çıkarmak resmin yarısını silerdi.
+
+**Gönderilmeyen ödevde `deger` `null`, 0 değil.** Sıfır yazmak "sıfır aldı"
+demektir; göndermemek başka bir şeydir. Kaç kişinin gönderdiği ayrı alanda.
+
+**Hiçbir eğilim iddiası yok** — ne ok, ne "yükseliyor", ne "düşüyor". Üç
+ödevden yön çıkarmak ölçülemeyecek bir iddia olurdu ve o iddia yanlışsa
+öğretmen bir çocuk hakkında yanlış bir cümle kurar.
+
+**Arşiv ve pasif — sorulan şeye göre.** Sınıf karnesinde pasif öğrenci
+sayılmıyor (`sinif_ogrencileri` ile aynı). Ama uç bir liste değil, kimlikle
+çağrılıyor: pasif bir öğrencinin ya da arşivlenmiş bir sınıfın karnesi
+istendiğinde **yine dönüyor** — tam olarak 0016'nın `sinif_ogrencileri` ve
+`odev_gonderimleri` için bilerek bıraktığı geri dönüş yolu. Bunun bilinen
+bir sonucu var: `konu_ozeti` gönderimleri hiç süzmediği için pasif
+öğrencinin gönderimi orada sayılır, karnede sayılmaz. Test bu farkı
+gizlemiyor, beklenen büyüklükte olduğunu ölçüyor.
+
+**Öğrenci ve veli çağıramıyor.** Dönem geneli "zayıf konular" listesini bir
+çocuğa göstermek ayrı bir karardır — hangi tonda, hangi eşikten sonra,
+kimin ağzından? Öğretmen istemedi.
+
+**Ölçülen maliyet.** Uç her soruyu jsonb'den okuyor, yani tahmin edilmedi:
+
+| Yük | Sınıf karnesi | Öğrenci karnesi |
+|---|---|---|
+| 30 öğrenci × 20 ödev × 10 soru | 38–45 ms | 2,7 ms |
+| 35 öğrenci × 40 ödev × 20 soru (bir yıl) | **169 ms** | 6,6 ms |
+
+Karşılaştırma: aynı veride `sinif_ogrencileri` 1,8–3,9 ms,
+`odev_gonderimleri` 5 ms. Karne belirgin olarak daha pahalı; bu yüzden
+**ayrı yükleniyor** (`KonuKarnesiBolumu`'nun kendi `useVeri`'si var) ve
+sayfanın geri kalanı onu beklemiyor. Rozetlerin aksine yoklanmıyor: yalnız
+öğretmen o sayfayı bilerek açtığında bir kez çalışıyor.
+
+**Uç çalıştırılmamışsa ekran bozulmuyor:** PostgREST'in İngilizce
+`schema cache` hatası gösterilmiyor; yerine "0023'ün panelde çalıştırılması
+gerekiyor" yazan sakin bir kart çıkıyor ve sayfanın geri kalanı çalışmaya
+devam ediyor.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
 |---|---|---|
 | 0 | Mimari + tasarım sistemi | **tamamlandı** |
-| 1 | Veritabanı + güvenlik | **tamamlandı** — 0001–0021 canlıda, **0022 öğretmenin çalıştırmasını bekliyor** |
+| 1 | Veritabanı + güvenlik | **tamamlandı** — 0001–0021 canlıda, **0022 ve 0023 öğretmenin çalıştırmasını bekliyor** |
 | 2 | Öğretmen: sınıf, öğrenci, ödev, cevap anahtarı | **tamamlandı** |
 | 2C–2D | Öğrenci teslim ekranı, gönderim takibi, açık uçlu puanlama | **tamamlandı** |
 | 3 | Pano detayları, arşiv, kodlar, veliler, mesajlaşma | **tamamlandı** |
@@ -463,9 +532,10 @@ sayılar sıfır kalır, rozet çizilmez, hata mesajı çıkmaz ve oturum düşm
 | — | Özel ders: dersler ve ödemeler (0021) | **tamamlandı** — `/ogretmen/ogrenciler/:id` |
 | — | Ana ekrana ekleme ve sürüm denetimi | **tamamlandı** |
 | — | Uygulama içi bildirimler (0022) | **tamamlandı** — kabuktaki rozetler |
+| — | Konu karnesi: dönem geneli döküm ve gelişim (0023) | **tamamlandı** — sınıf ve öğrenci sayfalarında |
 | 5 | Deterministik test puanlama | `_puanla` canlıda; birim testleri Faz 11'de genişletilecek |
 | 6 | Açık uçlu değerlendirmede AI desteği | **ölçüldü, ertelendi** — soru PDF'lerinde metin katmanı var ama soru metni yok; sorular görsel. Görsel okuyan AI ayrı bir tur, API anahtarı gerekiyor |
-| 7 | Analitik | sırada |
+| 7 | Analitik | **kısmen** — dönem geneli konu karnesi ve gelişim geldi (0023). Kalan: öğrenci/veliye dönük döküm ve sınıflar arası bakış, ikisi de ayrı karar |
 | 8 | Telefona düşen bildirim | **açık karar** — dar kapsamlı bir service worker gerektiriyor |
 | 9 | Landing + Ewalu deneyimi | sırada |
 | 10–12 | PWA, güvenlik denetimi, son QA | sırada |

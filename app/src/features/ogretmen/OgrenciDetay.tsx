@@ -7,6 +7,7 @@ import { Field, Input, Select } from '@/components/ui/Field';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useToast } from '@/components/ui/toast-baglam';
+import { KonuKarnesiBolumu } from '@/features/ogretmen/KonuKarnesiBolumu';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -184,8 +185,7 @@ export function OgrenciDetay() {
                  göstermek yerine neden olmadığı yazılıyor. */
               <Card>
                 <p className="text-[14px] text-muted">
-                  Ders programı ve ödeme takibi yalnız özel ders öğrencileri için tutulur. Bu
-                  öğrencinin ödev karnesini sınıf sayfasından görebilirsiniz.
+                  Ders programı ve ödeme takibi yalnız özel ders öğrencileri için tutulur.
                 </p>
               </Card>
             ) : (
@@ -360,6 +360,14 @@ export function OgrenciDetay() {
                 )}
               </>
             )}
+
+            {/* KONU KARNESİ (0023) — HER ÖĞRENCİDE.
+                Bu ekran okul öğrencisinde bugüne kadar tek bir cümleden
+                ibaretti: "ders ve ödeme yalnız özel derste tutulur". Konu
+                karnesi o boşluğu dolduruyor ve ekranı her öğrenci için
+                anlamlı kılıyor — "bu çocuk hangi konuda zayıf" sorusunun
+                cevabı artık adının olduğu sayfada. */}
+            <KonuKarnesiBolumu ogrenciId={id} />
           </>
         )}
       </AsyncBoundary>

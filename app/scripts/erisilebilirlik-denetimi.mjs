@@ -81,7 +81,19 @@ const KONU_ONERILERI=['Türev','Limit','Üslü Sayılar','Köklü Sayılar'];
 // Rozetler AÇIKKEN ölçülüyor: sıfır dönseydi denetim rozetsiz bir
 // arayüzü denetlerdi ve dokunma hedefi/taşma etkisi hiç görülmezdi.
 const BILDIRIM={okunmamis_mesaj:128,puan_bekleyen:7};
-const CEVAP={bildirim_sayilari:BILDIRIM,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+// KONU KARNESİ DOLU ÖLÇÜLÜYOR (0023). Boş dönseydi denetim yalnız
+// "henüz değerlendirilmiş ödev yok" kartını görürdü; çubuklar, uzun ödev
+// adları ve iki haneli sayılar hiç ölçülmezdi. Uzun bir ödev adı bilerek
+// var: 360 px'de taşmanın en olası yeri orası.
+const KONU_KARNESI={kapsam:{tur:'sinif',ad:'11B',sinif:'11B',mevcut:24},odev_sayisi:8,
+  konular:[{konu:'Üslü ve Köklü Sayılar',toplam:48,dogru:19,yanlis:22,bos:7},
+           {konu:'Limit',toplam:32,dogru:20,yanlis:9,bos:3},
+           {konu:'Türev',toplam:40,dogru:38,yanlis:2,bos:0}],
+  gelisim:[{odev:'Üslü ve Köklü Sayılar · Değerlendirme Sınavı',tarih:gun(-40),tur:'test',deger:54.5,gonderen:22,mevcut:24},
+           {odev:'Limit — açık uçlu',tarih:gun(-24),tur:'acik',deger:71,gonderen:19,mevcut:24},
+           {odev:'Türev testi',tarih:gun(-9),tur:'test',deger:88.3,gonderen:24,mevcut:24},
+           {odev:'Deneme 4',tarih:gun(-2),tur:'test',deger:null,gonderen:0,mevcut:24}]};
+const CEVAP={bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 let tasmali=0;

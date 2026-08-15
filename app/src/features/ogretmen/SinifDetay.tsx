@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
+import { KonuKarnesiBolumu } from '@/features/ogretmen/KonuKarnesiBolumu';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import type { SinifDetayi, SinifOgrencisi } from '@/types/api';
@@ -101,6 +102,15 @@ export function SinifDetay() {
                 </Button>
               </Card>
             )}
+
+            {/* DÖNEM GENELİ KONU KARNESİ (0023). Yukarıdaki karne "kim kaç
+                ödev yaptı, ortalaması ne" diyor; bu bölüm "sınıf hangi
+                KONUDA zayıf" diyor. İkisi ayrı sorular ve öğretmen bugüne
+                kadar ikincisini hiçbir ekranda soramıyordu.
+
+                AYRI YÜKLENİYOR: karne sorgusu ölçüldü, en kötü durumda
+                169 ms. Yukarıdaki liste onu beklemesin. */}
+            <KonuKarnesiBolumu sinifId={id} />
           </>
         )}
       </AsyncBoundary>

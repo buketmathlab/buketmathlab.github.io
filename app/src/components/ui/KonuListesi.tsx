@@ -4,6 +4,15 @@ type Props = {
   analiz: KonuAnalizi[];
   /** Öğrenci ekranında "sen", veli ve öğretmen ekranında üçüncü tekil. */
   ses: 'ogrenci' | 'ucuncu';
+  /**
+   * Metin TEK ÖDEVİ mi yoksa DÖNEMİ mi anlatıyor.
+   *
+   * Varsayılan `'odev'`; bileşenin beş mevcut çağrı noktası bir ödevin
+   * dökümünü çiziyor ve hiçbiri değişmiyor. Konu karnesi (0023) dönem
+   * genelini çiziyor — orada "bu ödevdeki bütün konular" demek düpedüz
+   * yanlış bilgi olurdu.
+   */
+  kapsam?: 'odev' | 'donem';
 };
 
 /**
@@ -17,10 +26,11 @@ type Props = {
  * kötü giden bir ödevde ekranı bir eksik listesine çevirir; iyi giden konuyu
  * görmek öğrencinin nereye tutunacağını söyler.
  */
-export function KonuListesi({ analiz, ses }: Props) {
+export function KonuListesi({ analiz, ses, kapsam = 'odev' }: Props) {
   if (analiz.length === 0) return null;
 
   const eksikOlanlar = analiz.filter((k) => k.dogru < k.toplam);
+  const nerede = kapsam === 'donem' ? 'Bu dönemdeki' : 'Bu ödevdeki';
 
   return (
     <div>
@@ -34,8 +44,8 @@ export function KonuListesi({ analiz, ses }: Props) {
       <p className="mb-3 text-[13px] text-muted">
         {eksikOlanlar.length === 0
           ? ses === 'ogrenci'
-            ? 'Bu ödevdeki bütün konuları tam yapmışsın.'
-            : 'Bu ödevdeki bütün konular tam yapılmış.'
+            ? `${nerede} bütün konuları tam yapmışsın.`
+            : `${nerede} bütün konular tam yapılmış.`
           : ses === 'ogrenci'
             ? 'En çok eksiğin olan konu en üstte.'
             : 'En çok eksik olan konu en üstte.'}
