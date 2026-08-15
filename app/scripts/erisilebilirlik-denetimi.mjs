@@ -78,7 +78,10 @@ const ODEV_DETAY={id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',sinif_i
   konular:{1:'Türev',2:'Türev',3:'Türev',4:'Limit',5:'Limit',6:'Limit'},
   anahtar_yolu:'odev/anahtar.pdf',odev_yolu:'odev/soru.pdf',yayinda:true,gonderim_sayisi:3};
 const KONU_ONERILERI=['Türev','Limit','Üslü Sayılar','Köklü Sayılar'];
-const CEVAP={ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+// Rozetler AÇIKKEN ölçülüyor: sıfır dönseydi denetim rozetsiz bir
+// arayüzü denetlerdi ve dokunma hedefi/taşma etkisi hiç görülmezdi.
+const BILDIRIM={okunmamis_mesaj:128,puan_bekleyen:7};
+const CEVAP={bildirim_sayilari:BILDIRIM,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 let tasmali=0;

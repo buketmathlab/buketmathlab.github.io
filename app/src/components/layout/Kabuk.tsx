@@ -2,10 +2,20 @@ import type { ReactElement } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { Button } from '@/components/ui/Button';
+import { Rozet } from '@/components/ui/Rozet';
+import { useBildirimler } from '@/hooks/useBildirimler';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { cn } from '@/lib/cn';
 
-type Sekme = { yol: string; etiket: string; ikon: ReactElement };
+type Sekme = {
+  yol: string;
+  etiket: string;
+  ikon: ReactElement;
+  /** Rozet sayısını hangi bildirim alanından alacağı. */
+  rozet?: 'okunmamis_mesaj' | 'puan_bekleyen';
+  /** Ekran okuyucuya okunacak sayı açıklaması: "3 okunmamış mesaj". */
+  rozetAdi?: (n: number) => string;
+};
 
 /** İkonlar kendi setimiz — ikon paketi bağımlılığı eklemiyoruz. */
 const ikon = {
@@ -45,6 +55,8 @@ const SEKMELER: Sekme[] = [
     yol: '/ogretmen/odevler',
     etiket: 'Ödevler',
     ikon: <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ikon.odev}</svg>,
+    rozet: 'puan_bekleyen',
+    rozetAdi: (n) => `${n} gönderim puan bekliyor`,
   },
   {
     yol: '/ogretmen/ogrenciler',
@@ -55,6 +67,8 @@ const SEKMELER: Sekme[] = [
     yol: '/ogretmen/veliler',
     etiket: 'Veliler',
     ikon: <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ikon.veli}</svg>,
+    rozet: 'okunmamis_mesaj',
+    rozetAdi: (n) => `${n} okunmamış mesaj`,
   },
   {
     yol: '/ogretmen/kodlar',
@@ -72,6 +86,19 @@ const SEKMELER: Sekme[] = [
  */
 export function Kabuk() {
   const { cikisYap } = useOturum();
+  const bildirim = useBildirimler();
+
+  /** Sekmenin rozet sayısı; rozeti olmayan sekmede 0. */
+  const sayi = (s: Sekme) => (s.rozet ? bildirim[s.rozet] : 0);
+
+  /**
+   * Ekran okuyucu için sekme adı. Rozet `aria-hidden`; sayı BURADA
+   * geçmezse klavye/ekran okuyucu kullanan biri bekleyen işi hiç duymaz.
+   */
+  const etiketAdi = (s: Sekme) => {
+    const n = sayi(s);
+    return n > 0 && s.rozetAdi ? `${s.etiket}, ${s.rozetAdi(n)}` : undefined;
+  };
 
   return (
     <div className="min-h-dvh lg:flex">
@@ -92,9 +119,11 @@ export function Kabuk() {
                   isActive ? 'bg-ink text-paper' : 'text-muted hover:bg-line-soft',
                 )
               }
+              aria-label={etiketAdi(s)}
             >
               <span className="size-5">{s.ikon}</span>
-              {s.etiket}
+              <span className="flex-1">{s.etiket}</span>
+              <Rozet sayi={sayi(s)} />
             </NavLink>
           ))}
         </nav>
@@ -150,8 +179,19 @@ export function Kabuk() {
                   isActive ? 'text-ink' : 'text-muted',
                 )
               }
+              aria-label={etiketAdi(s)}
             >
-              <span className="size-5">{s.ikon}</span>
+              {/* Rozet ikonun sağ üstünde. Alt çubuk dikey (ikon üstte,
+                  etiket altta); rozeti kardeş öğe olarak koymak onu
+                  etiketin ALTINA düşürüyordu. */}
+              <span className="relative size-5">
+                {s.ikon}
+                {sayi(s) > 0 && (
+                  <span className="absolute -right-2.5 -top-1.5">
+                    <Rozet sayi={sayi(s)} />
+                  </span>
+                )}
+              </span>
               {s.etiket}
             </NavLink>
           ))}
