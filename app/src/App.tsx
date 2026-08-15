@@ -19,6 +19,7 @@ import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
 import { SinifDetay } from '@/features/ogretmen/SinifDetay';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
+import { TopluOgrenci } from '@/features/ogretmen/TopluOgrenci';
 import { Odevler } from '@/features/ogretmen/Odevler';
 import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
 import { Veliler, SinifVelileriEkrani, VeliYazismasi } from '@/features/ogretmen/Veliler';
@@ -97,6 +98,10 @@ function Yonlendirme() {
         <Route path="siniflar" element={<Siniflar />} />
         <Route path="siniflar/:id" element={<SinifDetay />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
+        {/* `:id`'DEN ÖNCE. Sonra gelseydi `/ogrenciler/toplu` isteği
+            `:id = "toplu"` olarak eşleşir ve "öğrenci bulunamadı" ekranı
+            açılırdı. */}
+        <Route path="ogrenciler/toplu" element={<TopluOgrenci />} />
         <Route path="ogrenciler/:id" element={<OgrenciDetay />} />
         <Route path="odevler" element={<Odevler />} />
         <Route path="odevler/yeni" element={<OdevOlustur />} />

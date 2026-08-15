@@ -448,6 +448,71 @@ açılınca mesajları gösterip `okundu_isaretle`'yi çağırıyor.
 **Uç çalıştırılmamışsa arayüz bozulmuyor:** `bildirim_sayilari` yoksa
 sayılar sıfır kalır, rozet çizilmez, hata mesajı çıkmaz ve oturum düşmez.
 
+## Toplu öğrenci ekleme (0024)
+
+Öğrenci eklemenin tek yolu tek tek diyalogdu: **12 sınıf × ~30 öğrenci =
+360 kez**. Karnelerin, rozetlerin, konu analizinin hiçbiri öğrenci
+girilmeden bir şey göstermediği için bu, bütün ürünün önündeki tıkaçtı.
+
+**Uç: `ogrenciler_toplu_ekle(p_token, p_tur, p_sinif_id, p_adlar jsonb)`**
+— öğretmene özel, en fazla 200 ad, dönen: her öğrenci için `id`, `ad` ve
+iki kod.
+
+**Neden yeni uç — istemciden döngü yetmez.** 30 ayrı `ogrenci_ekle` çağrısı
+30 ayrı işlem demek: ağ 17. öğrencide koparsa 16 öğrenci eklenmiş, 14'ü
+eksik ve öğretmen hangisinin girdiğini bilmiyor. Tek uç tek işlem:
+**hepsi ya da hiçbiri.** Geçersiz tek bir ad bütün partiyi reddediyor ve
+kaçıncı satır olduğunu söylüyor.
+
+Kod üretimi kopyalanmıyor: `_yeni_kod()` (0003) çağrılıyor — ikinci bir
+üretici bir gün iki farklı alfabe ya da iki farklı uzunluk demek olurdu.
+
+**Mükerrer ad reddedilmiyor.** Şemada `ogrenciler.ad` üzerinde UNIQUE yok
+ve olmamalı: bir okulda aynı adda iki öğrenci gerçekten olur. Sunucu
+ekliyor; **uyarı arayüzde**, karar öğretmenin. Arayüz hem yapıştırılan
+listenin kendi içindeki hem o sınıfta zaten kayıtlı olan adları işaretliyor.
+
+### Türkçe büyük/küçük harf tuzağı — ölçüldü
+
+e-Okul listeleri BÜYÜK HARF geliyor. Düzeltme `lib/ogrenci-listesi.ts`
+içinde ve **düz `toLowerCase()` kullanılamaz**:
+
+```
+ALİ YILMAZ IŞIK   toLowerCase()           → "ali̇ yilmaz işik"   ✗ (23 karakter)
+ALİ YILMAZ IŞIK   toLocaleLowerCase('tr') → "ali yılmaz ışık"   ✓ (22 karakter)
+```
+
+Düz yol `i` harfinin ardına ayrı bir **birleşen nokta** (U+0307) ekliyor ve
+`I` harfini `i` yapıyor — "IŞIK" adı "Işik" diye kaydedilirdi. Ekranda
+neredeyse aynı görünür; arama tutmaz, sıralama bozulur, çocuğun adı sessizce
+bozuk kalır. Testte birleşen noktanın **çıkmadığı** ayrıca ölçülüyor.
+
+Düzeltme açılıp kapatılabiliyor; varsayılanı ölçüme göre: satırların
+%80'inden fazlası tamamen büyük harfse açık geliyor. Önizlemede her zaman
+**kaydedilecek hâl** görünüyor.
+
+### Kodların dağıtımı — 0018 ile denge
+
+Öğretmenin kararı "ikisi de olsun": sonuç ekranında hem tablo hem
+indirilebilir CSV. 0018'de "bir öğrenciye kodunu gösterirken diğerlerininki
+görünmesin" kuralını koymuştuk; toplu tablo o kapıyı bilerek aralıyor, o
+yüzden ekranda uyarı ve tek dokunuşluk **"Kodları gizle"** var (gizleme
+tabloyu DOM'dan kaldırıyor, yalnız görsel değil — testte ölçülüyor).
+
+CSV **UTF-8 BOM** ile başlıyor ve **noktalı virgülle** ayrılıyor: BOM'suz
+Excel dosyayı Windows-1254 sanıp "Çobanoğlu"yu "Ãobanoğlu" yapıyor, virgülle
+ayrılsa Türkçe Excel'de her şey tek sütuna düşüyor.
+
+**Kodlar bir kez gösteriliyor.** Sayfadan çıkınca kayboluyor; sonradan
+Kodlar sekmesinden öğrenci öğrenci alınıyor (0018 yolu).
+
+### PDF yolu buraya bağlanacak
+
+Metin katmanlı e-Okul PDF'i geldiğinde `pdfSatirlariniOku`'nun döndürdüğü
+satırlar aynı `listeyiCoz`'e verilecek; ikinci bir ayrıştırıcı yazılmayacak.
+Bugün elde olan liste PDF'i taranmış bir görüntü ve o hattan sıfır satır
+okunuyor — bu yüzden bu tur yapıştırmayla çalışıyor.
+
 ## Konu karnesi — dönem geneli (0023)
 
 `konu_ozeti` (0020) **tek bir ödevin** dökümüdür; `sinif_ogrencileri` (0013)
@@ -522,7 +587,7 @@ devam ediyor.
 | Faz | Kapsam | Durum |
 |---|---|---|
 | 0 | Mimari + tasarım sistemi | **tamamlandı** |
-| 1 | Veritabanı + güvenlik | **tamamlandı** — 0001–0021 canlıda, **0022 ve 0023 öğretmenin çalıştırmasını bekliyor** |
+| 1 | Veritabanı + güvenlik | **tamamlandı** — 0001–0023 canlıda, **0024 öğretmenin çalıştırmasını bekliyor** |
 | 2 | Öğretmen: sınıf, öğrenci, ödev, cevap anahtarı | **tamamlandı** |
 | 2C–2D | Öğrenci teslim ekranı, gönderim takibi, açık uçlu puanlama | **tamamlandı** |
 | 3 | Pano detayları, arşiv, kodlar, veliler, mesajlaşma | **tamamlandı** |
@@ -533,6 +598,7 @@ devam ediyor.
 | — | Ana ekrana ekleme ve sürüm denetimi | **tamamlandı** |
 | — | Uygulama içi bildirimler (0022) | **tamamlandı** — kabuktaki rozetler |
 | — | Konu karnesi: dönem geneli döküm ve gelişim (0023) | **tamamlandı** — sınıf ve öğrenci sayfalarında |
+| — | Toplu öğrenci ekleme (0024) | **tamamlandı** — `/ogretmen/ogrenciler/toplu` |
 | 5 | Deterministik test puanlama | `_puanla` canlıda; birim testleri Faz 11'de genişletilecek |
 | 6 | Açık uçlu değerlendirmede AI desteği | **ölçüldü, ertelendi** — soru PDF'lerinde metin katmanı var ama soru metni yok; sorular görsel. Görsel okuyan AI ayrı bir tur, API anahtarı gerekiyor |
 | 7 | Analitik | **kısmen** — dönem geneli konu karnesi ve gelişim geldi (0023). Kalan: öğrenci/veliye dönük döküm ve sınıflar arası bakış, ikisi de ayrı karar |
