@@ -279,17 +279,58 @@ begin
   -- Yeni bir uç eklendiğinde bu test kırılır ve yazan kişi "öğrenci bunu
   -- görmeli mi?" sorusunu cevaplamak zorunda kalır. Kuralın yazılı olmadığı
   -- yerde sessizce bozulmasını engelleyen şey budur.
+  --
+  -- KELİME SINIRI (`\m … \M`) ŞART — ölçülerek eklendi. Desen önce düz alt
+  -- dize arıyordu ve 0024 turunda YANLIŞ POZİTİF verdi: `ogrenciler_toplu_ekle`
+  -- gövdesindeki bir yorumda geçen `ogrenci_sinif_tutarli` kelimesi "tutar"
+  -- içeriyor. O fonksiyonun parayla hiçbir ilgisi yok.
+  --
+  -- Bugün zararsızdı (fonksiyonda `_ogretmen(` var, muafiyete giriyor) ama
+  -- bir gün birini OLMAYAN bir güvenlik açığının peşine düşürürdü — ve
+  -- yanlış alarm veren bir denetim, bir süre sonra ciddiye alınmayan bir
+  -- denetimdir. Kelime sınırlı desenin altı gerçek ödeme ucunun altısını da
+  -- yakalamaya devam ettiği ölçüldü: disa_aktar, odeme_degistir, odeme_ekle,
+  -- odeme_sil, ozel_ders_detay, veli_paneli.
   select count(*) into n
     from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
    where ns.nspname = 'public' and p.prokind = 'f'
      and has_function_privilege('anon', p.oid, 'EXECUTE')
-     and pg_get_functiondef(p.oid) ~* '(odemeler|tutar|odendi)'
+     and pg_get_functiondef(p.oid) ~* '\m(odemeler|tutar|odendi)\M'
      and pg_get_functiondef(p.oid) !~* '(_ogretmen\(|rol *= *''veli'')';
   if n > 0 then
     raise exception '9f: paraya dokunan ama rol şartı taşımayan % uç var', n;
   end if;
 
-  raise notice '9 OK — paraya açılan altı kapının hepsi öğrenciye kapalı';
+  -- SAYIMIN GERÇEKTEN YAKALADIĞININ KANITI.
+  --
+  -- Yukarıdaki sıfır tek başına iki şey anlamına gelebilir: kural tutuyor,
+  -- ya da desen hiçbir şey bulamıyor. İkisini ayırmak için bilerek KUSURLU
+  -- bir uç yaratıp sayımın onu bulduğunu ölçüyoruz, sonra düşürüyoruz.
+  --
+  -- Bu, desen daraltıldığı için ayrıca gerekli oldu (0024): kelime sınırı
+  -- eklerken deseni fazla daraltıp sayımı kör etmediğimizin güvencesi bu.
+  execute $sahte$
+    create function public._sahte_para_ucu(p_token text)
+    returns jsonb language sql security definer
+    set search_path = public, extensions, pg_temp
+    as 'select jsonb_build_object(''tutar'', (select sum(o.tutar) from public.odemeler o))'
+  $sahte$;
+  execute 'grant execute on function public._sahte_para_ucu(text) to anon';
+
+  select count(*) into n
+    from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
+   where ns.nspname = 'public' and p.prokind = 'f'
+     and has_function_privilege('anon', p.oid, 'EXECUTE')
+     and pg_get_functiondef(p.oid) ~* '\m(odemeler|tutar|odendi)\M'
+     and pg_get_functiondef(p.oid) !~* '(_ogretmen\(|rol *= *''veli'')';
+
+  execute 'drop function public._sahte_para_ucu(text)';
+
+  if n <> 1 then
+    raise exception '9g: sayım bilerek kusurlu ucu BULAMADI (% buldu) — desen kör', n;
+  end if;
+
+  raise notice '9 OK — paraya açılan altı kapının hepsi öğrenciye kapalı, sayım kör değil';
 
   raise notice '';
   raise notice 'ÖZEL DERS TAKİBİ TESTLERİ: 9 GRUP GEÇTİ';

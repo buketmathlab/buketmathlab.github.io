@@ -112,7 +112,17 @@ export function Ogrenciler() {
       <SayfaBasligi
         baslik="Öğrenciler"
         aciklama="Her öğrenci için ayrı öğrenci ve veli kodu üretilir."
-        eylem={<Button onClick={() => setEkleAcik(true)}>Öğrenci ekle</Button>}
+        eylem={
+          <div className="flex flex-wrap gap-2">
+            {/* Tek öğrenci ekleme AYNEN DURUYOR: yıl içinde gelen bir
+                öğrenciyi eklemek tek tıklık bir iş olmayı sürdürmeli.
+                Toplu yol dönem başı için ikinci düğme. */}
+            <Button tur="ikincil" onClick={() => git('/ogretmen/ogrenciler/toplu')}>
+              Toplu ekle
+            </Button>
+            <Button onClick={() => setEkleAcik(true)}>Öğrenci ekle</Button>
+          </div>
+        }
       />
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
