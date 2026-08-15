@@ -35,6 +35,7 @@ export default tseslint.config(
     files: [
       'scripts/erisilebilirlik-denetimi.mjs',
       'scripts/pwa-denetimi.mjs',
+      'scripts/konu-karnesi-denetimi.mjs',
       'scripts/ekran-goruntuleri.mjs',
       'scripts/ekran-goruntuleri-ogrenci.mjs',
     ],

@@ -249,6 +249,38 @@ export type SinifDetayi = {
   ogrenciler: SinifOgrencisi[];
 };
 
+/**
+ * `konu_karnesi` — DÖNEM GENELİ konu dökümü ve gelişim (migration 0023).
+ *
+ * `konu_ozeti` (0020) tek bir ödevin dökümüdür; bu, dönemin tamamı.
+ * Sınıf ya da öğrenci için çağrılır — ikisi birden değil.
+ */
+export type GelisimSatiri = {
+  odev: string;
+  tarih: string;
+  tur: 'test' | 'acik';
+  /**
+   * Sınıfta gönderenlerin ortalaması, öğrencide kendi puanı.
+   *
+   * GÖNDERİLMEYEN ÖDEVDE `null` — 0 DEĞİL. Sıfır yazmak "sıfır aldı"
+   * demektir; göndermemek başka bir şeydir ve ekran ikisini karıştırmamalı.
+   */
+  deger: number | null;
+  gonderen: number;
+  /** Sınıfta aktif öğrenci sayısı; öğrenci kapsamında 1. */
+  mevcut: number;
+};
+
+export type KonuKarnesi = {
+  kapsam: { tur: 'sinif' | 'ogrenci'; ad: string; sinif: string | null; mevcut: number };
+  /** Karnenin dayandığı ödev sayısı: yayında VE süresi dolmuş (0013 ölçütü). */
+  odev_sayisi: number;
+  /** En zayıf konu başta. Yalnız test ödevlerinden. */
+  konular: KonuAnalizi[];
+  /** Kronolojik. Açık uçlu ödevler de burada. */
+  gelisim: GelisimSatiri[];
+};
+
 /** `veliler_listesi` — öğretmenin veli sekmesi (migration 0019). */
 export type VeliBekleyen = {
   ogrenci_id: string;
