@@ -582,6 +582,89 @@ sayfanın geri kalanı onu beklemiyor. Rozetlerin aksine yoklanmıyor: yalnız
 gerekiyor" yazan sakin bir kart çıkıyor ve sayfanın geri kalanı çalışmaya
 devam ediyor.
 
+## İki ayrı yazışma ve rol sekmeleri (0025)
+
+Öğretmenin isteği: *"Mesajlar kısmında öğrenci öğretmenle, veli öğretmenle
+olacak şekilde"*, ve öğrenci/veli girişlerine sekmeler.
+
+### Sınır ŞEMADA, arayüzde değil
+
+0025'e kadar `mesajlar` tablosunda öğrenci başına **tek** akış vardı.
+Öğrenciye o akışı olduğu gibi açsaydık çocuk, velisinin öğretmenle
+yazdıklarını okurdu — *"Ali son zamanlarda çok tembelleşti, ne
+yapmalıyız?"* gibi cümleleri. Bu bir görünürlük tercihi değil; gizlenen
+veri gönderilmiş veridir (Part XXI).
+
+Bu yüzden `mesajlar.kanal` sütunu geldi (`'veli'` / `'ogrenci'`) ve
+okuma uçları o sütuna göre süzüyor:
+
+| Uç | Kime | Hangi kanal |
+|---|---|---|
+| `ogrenci_mesajlari` | öğrenci | yalnız `ogrenci` |
+| `veli_paneli.mesajlar` | veli | yalnız `veli` |
+| `mesajlar_ogretmen(…, p_kanal)` | öğretmen | seçtiği kanal |
+
+**Rol kanalı belirliyor, parametre değil.** `mesaj_gonder`'de veli her
+zaman `veli`, öğrenci her zaman `ogrenci` kanalına yazıyor; parametre
+yalnız öğretmen için anlamlı. Yani veli `p_kanal='ogrenci'` göndererek
+çocuğunun yazışmasına giremiyor.
+
+### `okundu` anahtarı neden üç sütun oldu
+
+Öğretmenin artık öğrenci başına **iki** okuma işareti var. Anahtar
+`(ogrenci_id, rol)` kalsaydı veli yazışmasını okumak öğrenci yazışmasını
+da okunmuş sayardı ve **çocuğun mesajı sessizce kaybolurdu** — 0019'un
+bir kez düzelttiği hatanın aynısı. Anahtar `(ogrenci_id, rol, kanal)`.
+
+### PL/pgSQL tuzağı — değişken adı sütun adıyla aynı olmamalı
+
+`okundu_isaretle`'de yerel değişkeni `kanal` diye yazmıştım.
+`insert … on conflict (ogrenci_id, rol, kanal)` hedefinde PostgreSQL
+değişkenle sütunu ayıramıyor:
+
+```
+ERROR: column reference "kanal" is ambiguous
+DETAIL: It could refer to either a PL/pgSQL variable or a table column.
+```
+
+Değişkenler `v_kanal` oldu. Kural: sütun adını yerel değişken adı olarak
+kullanma.
+
+### Sekmeler
+
+| Giriş | Sekmeler |
+|---|---|
+| Öğrenci (okul) | Pano · Ödevler · Mesajlar |
+| Öğrenci (özel ders) | Pano · Ödevler · Mesajlar |
+| Veli (okul) | Pano · Ödevler · Mesajlar |
+| Veli (özel ders) | Pano · Ödevler · **Ödemeler** · Mesajlar |
+
+Üç kabuk da `components/layout/SekmeCubugu.tsx`'i kullanıyor; öğretmen
+kabuğunun görünümü değişmedi. Öğrenci ve veli geniş ekranda **yatay**
+sekme satırı kullanıyor, öğretmendeki gibi yan menü değil: ikisinin de
+düzeni ortalanmış 880 px'lik tek sütun.
+
+**Ödemeler sekmesi yalnız özel derste.** Rotası okul velisinde de tanımlı
+(adresi elle yazan veli beyaz ekranla kalmasın), yalnız sekmesi
+çizilmiyor; veri zaten sunucudan boş geliyor.
+
+**Öğrenci ekranlarında para bilgisi yok** — öğretmenin kalıcı kuralı.
+Sınır sunucuda: `ogrenci_odevleri` tutar/ödendi diye bir alan hiç
+göndermiyor. `app/scripts/kabuk-denetimi.mjs` bunu üç öğrenci ekranında
+hem ekran metninden hem **ağ yanıtından** ölçüyor, ve aramanın çalıştığını
+aynı desenin velinin ödeme ekranında eşleştiğini göstererek kanıtlıyor.
+
+**Ewalu yalnız öğrenci Panosunda ve ödev sonucu ekranında.** Sekmeler
+gelince `Odevlerim`'deki Ewalu kaldırıldı; her sekmede karakter
+göstermek Part VII'nin açıkça uyardığı şey.
+
+### Öğretmen tarafı
+
+Öğrenci yazışmaları **Öğrenciler** sekmesinde (öğretmenin kararı):
+listenin üstünde "Yanıt bekleyen öğrenciler", öğrenci detayında Mesajlar
+düğmesi. Veliler sekmesi aynen kaldı. Rozet **tek**: iki ayrı sayı
+öğretmene iki ayrı yer aratırdı.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |

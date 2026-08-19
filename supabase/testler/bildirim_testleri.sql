@@ -135,10 +135,17 @@ begin
   jt := (public.giris('Rozet!2026'))->>'token';
 
   -- 2d'den kalan okunmamış mesaj burada karşılaştırılıyor.
+  --
+  -- 0025'TE DEĞİŞEN KARŞILAŞTIRMA. Rozet tek sayı ama artık İKİ yazışmayı
+  -- birden sayıyor (öğretmenin isteği: tek rozet). Dolayısıyla yalnız
+  -- Veliler sekmesiyle eşitlik aramak yanlış olurdu — öğrencinin yazdığı
+  -- her mesaj testi kırardı. Ölçülen şey aynı kalıyor: rozet, öğretmenin
+  -- iki listesinde GÖRDÜĞÜ sayıların toplamından sapamaz.
   mesaj := (public.bildirim_sayilari(jt)->>'okunmamis_mesaj')::int;
-  m := (public.veliler_listesi(jt)->>'toplam_okunmamis')::int;
+  m := (public.veliler_listesi(jt)->>'toplam_okunmamis')::int
+     + (public.ogrenci_yazismalari(jt)->>'toplam_okunmamis')::int;
   if mesaj <> m then
-    raise exception '4a: rozet % diyor, Veliler sekmesi % diyor', mesaj, m;
+    raise exception '4a: rozet % diyor, iki liste toplamı % diyor', mesaj, m;
   end if;
 
   -- DENETİMİN İŞE YARADIĞI KANITI: iki taraf da sıfır olsaydı eşitlik
@@ -153,7 +160,7 @@ begin
     raise exception '4c: rozet % diyor, Pano % diyor', n, m;
   end if;
 
-  raise notice '4 OK — rozet Veliler sekmesiyle (% mesaj) ve Pano ile (% puan bekleyen) birebir aynı', mesaj, n;
+  raise notice '4 OK — rozet iki yazışma listesiyle (% mesaj) ve Pano ile (% puan bekleyen) birebir aynı', mesaj, n;
 end $$;
 
 -- 5 — ARŞİV VE PASİF ÖĞRENCİ

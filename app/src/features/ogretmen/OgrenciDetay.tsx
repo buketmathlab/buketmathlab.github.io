@@ -180,6 +180,30 @@ export function OgrenciDetay() {
               </div>
             </div>
 
+            {/* MESAJLAR (0025) — öğretmenin kararıyla ÖĞRENCİLER
+                bölümünde. Ekran zaten öğrenci başına; yazışmayı buraya
+                bağlamak yeni bir gezinme kademesi açmıyor.
+
+                Yazışmanın kendisi ayrı ekranda: burada göstermek, bu
+                sayfayı ders/ödeme/konu karnesi/yazışma diye dört bölümlü
+                bir yığına çevirirdi ve mesaj metinlerini ekran her
+                açıldığında indirmek gerekirdi. */}
+            <div className="mb-6">
+              <Button
+                tur="ikincil"
+                onClick={() => git(`/ogretmen/ogrenciler/yazisma/${id}`)}
+              >
+                Öğrenciyle mesajlar
+              </Button>
+              {/* Velinin yazışması AYRI ve Veliler sekmesinde. Öğretmen
+                  hangisine yazdığını bilmeli: çocuğa yazdığı bir cümle
+                  veliye, veliye yazdığı çocuğa gitmiyor. */}
+              <p className="mt-2 text-[13px] text-muted">
+                Bu yazışmayı yalnız öğrenci görüyor. Velinin yazışması Veliler
+                bölümünde, ayrı.
+              </p>
+            </div>
+
             {!ozelMi ? (
               /* Okul öğrencisinde ders ve ödeme kavramı yok. Boş bölüm
                  göstermek yerine neden olmadığı yazılıyor. */

@@ -9,8 +9,13 @@ import { Kabuk } from '@/components/layout/Kabuk';
 import { SurumSeridi } from '@/components/layout/SurumSeridi';
 import { OgrenciKabuk } from '@/components/layout/OgrenciKabuk';
 import { VeliKabuk } from '@/components/layout/VeliKabuk';
-import { VeliPanel } from '@/features/veli/VeliPanel';
+import { VeliPano } from '@/features/veli/VeliPano';
+import { VeliOdevler } from '@/features/veli/VeliOdevler';
+import { VeliOdemeler } from '@/features/veli/VeliOdemeler';
+import { VeliMesajlar } from '@/features/veli/VeliMesajlar';
+import { OgrenciPano } from '@/features/ogrenci/OgrenciPano';
 import { Odevlerim } from '@/features/ogrenci/Odevlerim';
+import { OgrenciMesajlar } from '@/features/ogrenci/OgrenciMesajlar';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Ayarlar } from '@/features/ogretmen/Ayarlar';
@@ -22,7 +27,12 @@ import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { TopluOgrenci } from '@/features/ogretmen/TopluOgrenci';
 import { Odevler } from '@/features/ogretmen/Odevler';
 import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
-import { Veliler, SinifVelileriEkrani, VeliYazismasi } from '@/features/ogretmen/Veliler';
+import {
+  Veliler,
+  SinifVelileriEkrani,
+  VeliYazismasi,
+  OgrenciYazismasi,
+} from '@/features/ogretmen/Veliler';
 import { OdevOlustur } from '@/features/ogretmen/OdevOlustur';
 import { OdevDuzenle } from '@/features/ogretmen/OdevDuzenle';
 import { OdevGonderimleri } from '@/features/ogretmen/OdevGonderimleri';
@@ -62,7 +72,11 @@ function Yonlendirme() {
     return (
       <Routes>
         <Route path="/ogrenci" element={<OgrenciKabuk />}>
-          <Route index element={<Odevlerim />} />
+          <Route index element={<OgrenciPano />} />
+          <Route path="odevler" element={<Odevlerim />} />
+          <Route path="mesajlar" element={<OgrenciMesajlar />} />
+          {/* Teslim ekranı SEKME DEĞİL: bir ödevin içi. Sekme çubuğu
+              üstte duruyor, öğrenci Ödevler'e tek dokunuşla dönüyor. */}
           <Route path="odev/:id" element={<OdevTeslim />} />
         </Route>
         <Route path="*" element={<Navigate to="/ogrenci" replace />} />
@@ -74,7 +88,15 @@ function Yonlendirme() {
     return (
       <Routes>
         <Route path="/veli" element={<VeliKabuk />}>
-          <Route index element={<VeliPanel />} />
+          <Route index element={<VeliPano />} />
+          <Route path="odevler" element={<VeliOdevler />} />
+          {/* ÖDEMELER ROTASI OKUL VELİSİNDE DE TANIMLI, sekmesi
+              çıkmasa bile. Rotayı role göre kaldırmak, adresi elle yazan
+              ya da eski bir bağlantıyı açan veliye beyaz ekran verirdi;
+              ekran o durumda açıklayıcı bir cümle gösteriyor. Sınır
+              zaten sunucuda: okul öğrencisinde `odemeler` boş geliyor. */}
+          <Route path="odemeler" element={<VeliOdemeler />} />
+          <Route path="mesajlar" element={<VeliMesajlar />} />
         </Route>
         <Route path="*" element={<Navigate to="/veli" replace />} />
       </Routes>
@@ -102,6 +124,9 @@ function Yonlendirme() {
             `:id = "toplu"` olarak eşleşir ve "öğrenci bulunamadı" ekranı
             açılırdı. */}
         <Route path="ogrenciler/toplu" element={<TopluOgrenci />} />
+        {/* Öğrenci yazışması da `:id`'den ÖNCE — aynı tuzak: sonra
+            gelseydi `:id = "yazisma"` olarak eşleşirdi. */}
+        <Route path="ogrenciler/yazisma/:id" element={<OgrenciYazismasi />} />
         <Route path="ogrenciler/:id" element={<OgrenciDetay />} />
         <Route path="odevler" element={<Odevler />} />
         <Route path="odevler/yeni" element={<OdevOlustur />} />

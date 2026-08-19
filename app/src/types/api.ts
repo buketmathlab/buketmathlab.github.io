@@ -173,9 +173,15 @@ export type OgrenciOdev = {
 };
 
 export type OgrenciOdevleri = {
-  ogrenci: { id: string; ad: string; sinif: string | null };
+  ogrenci: { id: string; ad: string; sinif: string | null; tur: 'okul' | 'ozel' };
   odevler: OgrenciOdev[];
   dersler: Array<{ zaman: string; mod: string; link: string | null }>;
+  /**
+   * Mesajlar sekmesinin rozeti (0025). Yalnız SAYI: yazışmanın kendisi
+   * ayrı uçta (`ogrenci_mesajlari`), çünkü sekme açılmadan mesaj
+   * metinlerini indirmenin sebebi yok.
+   */
+  okunmamis_mesaj: number;
 };
 
 /** `odev_gonderimleri` içindeki tek satır — sınıftaki HER öğrenci için bir tane. */
@@ -321,13 +327,55 @@ export type SinifVelileri = {
   veliler: SinifVelisi[];
 };
 
-/** Tek bir mesaj. Yazışma iki yönlü; `kimden` hangi tarafın yazdığını söyler. */
-export type Mesaj = { kimden: 'ogretmen' | 'veli'; metin: string; zaman: string };
+/**
+ * Hangi yazışma (migration 0025).
+ *
+ * İKİ AYRI YAZIŞMA VAR: öğrenci↔öğretmen ve veli↔öğretmen. Ayrım
+ * SUNUCUDA, `mesajlar.kanal` sütununda; buradaki tip yalnız hangisini
+ * istediğimizi söylemeye yarıyor. Arayüzde süzme YOK — çocuk, velisinin
+ * öğretmenle yazdıklarını okuyamamalı ve bu bir görünürlük tercihi değil,
+ * şemadan gelen bir sınır (Part XXI).
+ */
+export type Kanal = 'veli' | 'ogrenci';
+
+/** Tek bir mesaj. `kimden` hangi tarafın yazdığını söyler. */
+export type Mesaj = {
+  kimden: 'ogretmen' | 'veli' | 'ogrenci';
+  metin: string;
+  zaman: string;
+};
 
 export type Yazisma = {
   ogrenci: { id: string; ad: string; sinif: string | null };
+  kanal: Kanal;
+  /**
+   * O KANALIN karşı tarafının kodu var mı: veli kanalında veli kodu,
+   * öğrenci kanalında öğrenci kodu. Kod yoksa yazılan mesajı kimse
+   * göremez; öğretmen bunu yazmadan ÖNCE görsün.
+   */
   veli_kodu_var: boolean;
   mesajlar: Mesaj[];
+};
+
+/** `ogrenci_yazismalari` — öğretmene "hangi öğrenciler yazmış" (0025). */
+export type OgrenciBekleyen = {
+  ogrenci_id: string;
+  ad: string;
+  sinif: string | null;
+  okunmamis: number;
+  son_mesaj: string | null;
+};
+
+export type OgrenciYazismalari = {
+  toplam_okunmamis: number;
+  /** MESAJ METNİ TAŞIMIYOR: ortak ekranda herkesin yazdığı yan yana durmasın. */
+  yanit_bekleyen: OgrenciBekleyen[];
+};
+
+/** `ogrenci_mesajlari` — öğrencinin KENDİ yazışması (0025). */
+export type OgrenciMesajlari = {
+  mesajlar: Mesaj[];
+  son_gorulme: string | null;
 };
 
 /**
@@ -362,6 +410,8 @@ export type VeliPaneli = {
   odevler: VeliOdevi[];
   mesajlar: Mesaj[];
   odemeler: Array<{ tutar: number; tarih: string; odendi: boolean }>;
+  /** Mesajlar sekmesinin rozeti (0025) — yalnız VELİ yazışmasından. */
+  okunmamis_mesaj: number;
   son_gorulme: string | null;
 };
 
