@@ -11,9 +11,11 @@ import { OgrenciKabuk } from '@/components/layout/OgrenciKabuk';
 import { VeliKabuk } from '@/components/layout/VeliKabuk';
 import { VeliPano } from '@/features/veli/VeliPano';
 import { VeliOdevler } from '@/features/veli/VeliOdevler';
+import { VeliKarne } from '@/features/veli/VeliKarne';
 import { VeliOdemeler } from '@/features/veli/VeliOdemeler';
 import { VeliMesajlar } from '@/features/veli/VeliMesajlar';
 import { OgrenciPano } from '@/features/ogrenci/OgrenciPano';
+import { OgrenciKarnem } from '@/features/ogrenci/OgrenciKarnem';
 import { Odevlerim } from '@/features/ogrenci/Odevlerim';
 import { OgrenciMesajlar } from '@/features/ogrenci/OgrenciMesajlar';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
@@ -74,6 +76,7 @@ function Yonlendirme() {
         <Route path="/ogrenci" element={<OgrenciKabuk />}>
           <Route index element={<OgrenciPano />} />
           <Route path="odevler" element={<Odevlerim />} />
+          <Route path="konularim" element={<OgrenciKarnem />} />
           <Route path="mesajlar" element={<OgrenciMesajlar />} />
           {/* Teslim ekranı SEKME DEĞİL: bir ödevin içi. Sekme çubuğu
               üstte duruyor, öğrenci Ödevler'e tek dokunuşla dönüyor. */}
@@ -90,6 +93,7 @@ function Yonlendirme() {
         <Route path="/veli" element={<VeliKabuk />}>
           <Route index element={<VeliPano />} />
           <Route path="odevler" element={<VeliOdevler />} />
+          <Route path="konular" element={<VeliKarne />} />
           {/* ÖDEMELER ROTASI OKUL VELİSİNDE DE TANIMLI, sekmesi
               çıkmasa bile. Rotayı role göre kaldırmak, adresi elle yazan
               ya da eski bir bağlantıyı açan veliye beyaz ekran verirdi;

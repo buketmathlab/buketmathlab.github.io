@@ -21,6 +21,9 @@ export const SEKME_IKON = {
     'M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 2c-2.7 0-6 1.3-6 3.5V19h8v-2.5c0-.9.5-1.7 1.3-2.4A9.7 9.7 0 0 0 8 13Zm8 0c-.6 0-1.3.1-2 .2 1.2.8 2 1.8 2 3.3V19h6v-2.5c0-2.2-3.3-3.5-6-3.5Z',
   // Anahtar: kod bir şifredir, ikon da bunu söylesin.
   kod: 'M14 2a6 6 0 0 0-5.7 7.9L2 16.2V22h5.8l1.4-1.4v-2h2v-2h2l1.3-1.3A6 6 0 1 0 14 2Zm2.5 5.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z',
+  // Konu karnesi: çubuk grafik — içerideki `Gelisim` ile aynı fikir.
+  karne:
+    'M4 20h16v2H4v-2Zm2-8h3v7H6v-7Zm4.5-6h3v13h-3V6ZM15 9h3v10h-3V9Z',
   mesaj:
     'M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-6 4V6a2 2 0 0 1 2-2Zm3 5h10v2H7V9Zm0 4h7v2H7v-2Z',
   // Ödeme ikonu yalnız VELİDE ve yalnız özel derste çıkıyor.

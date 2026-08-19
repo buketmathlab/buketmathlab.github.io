@@ -691,6 +691,76 @@ adın ve mesajın `getBoundingClientRect().top` değerlerini karşılaştırarak
 satıra sarar. Bu normal metin akışı; verilen güvence "ad kendi satırına
 zorlanmıyor", "hiçbir mesaj hiçbir zaman sarmaz" değil.
 
+## Öğrenci ve veli kendi konu karnesini görüyor (0026)
+
+0023'te konu karnesi **yalnız öğretmene** açılmıştı ve sebebi yazılıydı:
+dönem geneli "zayıf konular" listesini bir çocuğa göstermek ayrı bir
+karardı. Öğretmen bu turda kararı verdi.
+
+### Yeni uç PARAMETRE ALMIYOR — ve asıl güvence bu
+
+`kendi_karnem(p_token)`. `p_ogrenci_id` alsaydı "başkasının karnesini
+isteyemez" bir DENETİM olurdu: yazılır, unutulur, bir düzenlemede düşer.
+Parametre hiç olmayınca başkasının karnesini istemek **yapı gereği**
+imkânsız — sorulacak bir kimlik yok, öğrenci oturumdan geliyor.
+(`ogrenci_mesajlari` ve `veli_paneli` ile aynı desen.) Test, kimlik alan
+bir ikinci imzanın açılmadığını ayrıca ölçüyor.
+
+`konu_karnesi`'ye dokunulmadı: imzası ve öğretmen şartı 0023'teki gibi.
+
+### Ne gitmiyor ve neden
+
+| Gitmeyen | Sebep |
+|---|---|
+| sınıf mevcudu, ortalaması | bir çocuğa "sınıfın neresindesin" demek bu ekranın işi değil |
+| başka öğrencinin verisi | sorgu kendi `ogrenci_id`'sine bağlı |
+| `gelisim`'de `gonderen`/`mevcut` | sınıf bilgisi; kıyas kapısını açardı |
+| cevap anahtarı | Kural 6 — `_konu_analizi` yalnız sayı döndürüyor |
+| ödeme | öğretmenin kalıcı kuralı |
+
+Öğrenci ve veli **aynı** karneyi görüyor (aynı çocuk); test bunu da
+ölçüyor. Sayıların öğretmenin `konu_karnesi` çıktısıyla **birebir** aynı
+olduğu bağlanmış durumda — ayrışırlarsa test kırılıyor.
+
+### Sekme adı "Karnem" değil "Konularım"
+
+Türkiye'de "karne" okulun resmî not karnesidir; o sekmeye basan bir çocuk
+notlarını bekler, oysa içeride konu dökümü var. Etiket tek satırlık bir
+değişiklik.
+
+### Cümle taslak ve tek dosyada
+
+`lib/karne-sozu.ts` — üç durum (veri yok / hepsi tam / eksik var), her
+biri öğrenci ve veli sesiyle. `lib/ewalu-puan.ts`'teki desen: cümleler
+öğretmenindir, buradakiler taslaktır ve tek dosyadan değişir.
+
+Üçünde de **kıyas yok, eğilim iddiası yok**, çocuğu değil işi işaret
+ediyor ("takılmışsın", "zayıfsın" değil) ve her cümle bir sonraki adımla
+bitiyor. Test yasaklı kelime listesini üç durumda da tarıyor.
+
+**Ewalu yalnız öğrenci karnesinde ve Panoda** — velinin ekranında yok,
+onun Panosunda zaten var.
+
+### Ölçümde düzeltilen üç kendi hatam
+
+1. **Geri alma kanıtı hiçbir şey ölçmüyordu.** Altı zayıflatmanın altısı
+   da "yakalandı" göründü, ama hepsi AYNI hatayla düşüyordu: test dosyası
+   tekrar çalıştırılabilir değildi ve her koşuda sınıfa iki ödev daha
+   ekleniyordu. Temizlik eklendi; sayım testi ancak temiz zeminde bir şey
+   ölçer.
+2. **`d.tur='test'` süzgeci normal veriyle ölçülemiyordu** (0023'teki
+   aynı durum): açık uçlu ödev normal yoldan konu taşıyamıyor. Bozuk
+   satırı artık test kendisi üretiyor.
+3. **Yalnız sqlstate'e bakmak kördü:** rol şartını kaldırınca öğretmen bu
+   kez `ogrenci_id is null` duvarına takılıp yine `42501` dönüyordu.
+   Türkçe mesaj da ölçülüyor.
+
+Tarayıcı tarafında da iki ölçüm hatası düzeltildi: sayfanın tamamındaki
+ağ yanıtlarını taramak yanlıştı (öğrenci teslimden sonra anahtarı meşru
+olarak alıyor — 0007), ölçüm karne ucuna daraltıldı; ve konu adını
+aramak kördü, çünkü ad Ewalu'nun cümlesinde de geçiyor — listenin kendi
+başlığı da aranıyor.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |
