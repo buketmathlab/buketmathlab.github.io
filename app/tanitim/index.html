@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#001737" />
+    <meta
+      name="description"
+      content="SEKİZ — Arnavutköy Korkmaz Yiğit Anadolu Lisesi'nde matematik ödevleri için kurulmuş bir uygulama. Buket Topuzoğlu · Matematik."
+    />
+    <link rel="icon" href="/yeni/marka/sekiz-favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/yeni/marka/sekiz-simge-180.png" />
+
+    <!-- MANIFEST BİLEREK YOK. Tanıtım sayfası "ana ekrana eklenecek" bir
+         uygulama değil, bir kez okunacak bir sayfa. Manifest bağlasaydık
+         telefon bu sayfayı da yüklenebilir uygulama sanardı ve ana ekrana
+         eklenen simge giriş ekranı yerine tanıtımı açardı. -->
+
+    <!-- Bu sayfa herkese açık ve dışarıya verilecek bağlantı budur; sosyal
+         paylaşımda başlık ve açıklama doğru görünsün. Görsel olarak okul
+         mührü değil SEKİZ işareti kullanılıyor: mühür okulun resmî mührü,
+         paylaşım kartında ürün işareti daha doğru. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SEKİZ · Buket Topuzoğlu · Matematik" />
+    <meta
+      property="og:description"
+      content="Ödev, teslim ve gelişim tek yerde. Öğrenci ödevini görür ve gönderir, veli çocuğunun gidişatını izler."
+    />
+    <meta property="og:url" content="https://buketmathlab.github.io/yeni/tanitim/" />
+    <meta property="og:locale" content="tr_TR" />
+
+    <title>SEKİZ nedir? · Buket Topuzoğlu · Matematik</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <!-- JavaScript kapalıysa sayfa boş kalmasın: tanıtımın özü ve giriş
+           bağlantısı burada da duruyor. Uygulamanın kendisi JavaScript
+           gerektiriyor ama "SEKİZ nedir" sorusunun cevabı gerektirmiyor. -->
+      <div style="max-width: 40rem; margin: 3rem auto; padding: 0 1.25rem">
+        <h1>SEKİZ</h1>
+        <p>
+          Arnavutköy Korkmaz Yiğit Anadolu Lisesi'nde matematik ödevleri için kurulmuş bir
+          uygulama. Öğrenci ödevini görür, çözer, gönderir; testlerde puanı anında
+          hesaplanır. Öğretmen kimin gönderip kimin göndermediğini görür. Veli çocuğunun
+          gidişatını izler — cevap anahtarını değil.
+        </p>
+        <p><a href="/yeni/">Giriş ekranına git</a></p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/tanitim.tsx"></script>
+  </body>
+</html>

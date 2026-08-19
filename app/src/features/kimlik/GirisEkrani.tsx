@@ -147,6 +147,23 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
       <footer className="mt-9">
         <GeometricDivider className="mb-6" />
         <EwaluVideo />
+
+        {/* 9 — TANITIM SAYFASI (Faz 9). Öğretmenin belirlediği sekiz
+               maddenin ARDINDAN gelen tek ek öğe ve bilerek en altta:
+               videonun da altında, kod kutusunun çok aşağısında. Her gün
+               giriş yapan öğrencinin ve velinin önüne hiç çıkmıyor;
+               yalnız "bu nedir?" diye aşağı inen biri görüyor.
+
+               Uygulama içi bir rota DEĞİL, ayrı bir sayfa — bu yüzden
+               `Link` değil düz `a`. Adres `/yeni/tanitim/`. */}
+        <p className="mt-8 text-center">
+          <a
+            href="/yeni/tanitim/"
+            className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-link underline"
+          >
+            SEKİZ nedir?
+          </a>
+        </p>
       </footer>
     </main>
   );

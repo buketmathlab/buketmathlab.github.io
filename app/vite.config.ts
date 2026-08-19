@@ -45,6 +45,26 @@ export default defineConfig({
   build: {
     outDir: '../yeni',
     emptyOutDir: true,
+    rollupOptions: {
+      /**
+       * İKİ GİRİŞ NOKTASI (Faz 9).
+       *
+       *   index.html          → /yeni/            uygulama
+       *   tanitim/index.html  → /yeni/tanitim/    herkese açık tanıtım
+       *
+       * Çıktı yolları kaynaktaki klasör yapısını birebir izliyor; adresin
+       * `#` içermemesinin tek sebebi bu. Öğretmenin dışarıya vereceği
+       * bağlantı `buketmathlab.github.io/yeni/tanitim/` oluyor.
+       *
+       * KÖK `index.html` BUNDAN ETKİLENMİYOR: burada adı geçen iki dosya da
+       * `app/` altında; depo kökündeki eski uygulamaya yapı hattı hiçbir
+       * koşulda dokunmuyor (`outDir` yalnız `../yeni`).
+       */
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        tanitim: fileURLToPath(new URL('./tanitim/index.html', import.meta.url)),
+      },
+    },
     // Faz 0'da paket boyutunu görünür tutuyoruz; büyüdükçe uyarı alalım.
     chunkSizeWarningLimit: 300,
     // Vite'ın varsayılan hedefi safari14; oysa ürün ZATEN daha yenisini

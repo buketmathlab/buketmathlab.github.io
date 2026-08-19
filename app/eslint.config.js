@@ -32,15 +32,18 @@ export default tseslint.config(
     // Playwright betikleri: page.evaluate() gövdeleri Node'da değil,
     // tarayıcı içinde çalışır. Bu yüzden hem Node hem tarayıcı globalleri
     // geçerli — aksi hâlde `document` tanımsız görünüyor.
-    files: [
-      'scripts/erisilebilirlik-denetimi.mjs',
-      'scripts/pwa-denetimi.mjs',
-      'scripts/konu-karnesi-denetimi.mjs',
-      'scripts/toplu-ogrenci-denetimi.mjs',
-      'scripts/kabuk-denetimi.mjs',
-      'scripts/ekran-goruntuleri.mjs',
-      'scripts/ekran-goruntuleri-ogrenci.mjs',
-    ],
+    //
+    // BURASI ELLE SAYILAN BİR LİSTEYDİ VE İKİ KEZ TUZAK OLDU: 0025'te
+    // `kabuk-denetimi.mjs`, Faz 9'da `tanitim-gorselleri.mjs` eklenince
+    // `npm run lint` kırıldı — ikisinde de betiği yazdıktan sonra listeyi
+    // güncellemeyi atlamışım. Liste artık kalıp.
+    //
+    // BİLİNÇLİ TAVİZ: `scripts/` altındaki saf Node betikleri de (varlık
+    // hattı, PDF denetimi) tarayıcı globallerini almış oluyor; onlarda
+    // yanlışlıkla yazılmış bir `document` artık yakalanmaz. Buna karşılık
+    // tekrar eden ve yayına kadar giden bir kırılma kapanıyor — takas
+    // bilerek bu yönde yapıldı.
+    files: ['scripts/*.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 );
