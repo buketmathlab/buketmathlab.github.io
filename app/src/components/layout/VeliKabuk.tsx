@@ -28,6 +28,7 @@ export function VeliKabuk() {
   const sekmeler: SekmeTanim[] = [
     { yol: '/veli', etiket: 'Pano', ikon: SEKME_IKON.pano, sonu: true },
     { yol: '/veli/odevler', etiket: 'Ödevler', ikon: SEKME_IKON.odev },
+    { yol: '/veli/konular', etiket: 'Konular', ikon: SEKME_IKON.karne },
     ...(ozet.tur === 'ozel'
       ? [
           {

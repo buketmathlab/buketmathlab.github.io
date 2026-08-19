@@ -76,6 +76,20 @@ function veliPaneli(tur) {
   };
 }
 
+// Kendi konu karnesi (0026). Ada'nın karnesi: Oran'da eksik, Kesirler tam.
+const KENDI_KARNEM = {
+  kapsam: { ad: 'Ada Kanalcı', sinif: '9A' },
+  odev_sayisi: 2,
+  konular: [
+    { konu: 'Oran', toplam: 2, dogru: 0, yanlis: 2, bos: 0 },
+    { konu: 'Kesirler', toplam: 2, dogru: 2, yanlis: 0, bos: 0 },
+  ],
+  gelisim: [
+    { odev: 'Kesirler denemesi', tarih: gun(-3), tur: 'test', deger: 50 },
+    { odev: 'Kesirler yazılı', tarih: gun(-2), tur: 'acik', deger: 70 },
+  ],
+};
+
 const OGRENCI_MESAJLARI = {
   mesajlar: [
     { kimden: 'ogrenci', metin: OGRENCI_CUMLESI, zaman: gun(-1) + 'T08:00:00Z' },
@@ -126,6 +140,11 @@ async function sayfaAc(rol, tur, yol) {
   const s = await tarayici.newPage({ viewport: { width: 360, height: 780 } });
   const agGovdeleri = [];
   const cagrilar = [];
+  // UÇ BAŞINA yanıt: bazı iddialar sayfanın TAMAMINA değil TEK BİR UCA ait.
+  // (Öğrenci teslimden sonra `ogrenci_odevleri` içinde anahtarı meşru
+  //  olarak alıyor — 0007. "Sayfada hiç anahtar geçmesin" demek yanlış
+  //  bir iddia olurdu; ölçüm doğru uca daraltılıyor.)
+  const govdeler = {};
   await s.route('**/rest/v1/rpc/*', (r) => {
     const uc = r.request().url().split('/').pop().split('?')[0];
     cagrilar.push(uc);
@@ -134,15 +153,17 @@ async function sayfaAc(rol, tur, yol) {
       : uc === 'veli_paneli' ? veliPaneli(tur)
       : uc === 'ogrenci_mesajlari' ? OGRENCI_MESAJLARI
       : uc === 'mesajlar_ogretmen' ? YAZISMA_OGRENCI
+      : uc === 'kendi_karnem' ? KENDI_KARNEM
       : {};
     agGovdeleri.push(JSON.stringify(govde));
+    govdeler[uc] = JSON.stringify(govde);
     r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
   });
   await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)),
     OTURUM[rol](tur));
   await s.goto(KOK + yol, { waitUntil: 'networkidle' });
   await s.waitForTimeout(700);
-  return { s, agGovdeleri, cagrilar };
+  return { s, agGovdeleri, cagrilar, govdeler };
 }
 
 /**
@@ -176,10 +197,10 @@ async function sekmeler(s) {
 console.log('\n1 — DÖRT GİRİŞ TÜRÜNÜN SEKME KÜMESİ');
 // -----------------------------------------------------------------------------
 const BEKLENEN = {
-  'öğrenci (okul)': ['Pano', 'Ödevler', 'Mesajlar'],
-  'öğrenci (özel)': ['Pano', 'Ödevler', 'Mesajlar'],
-  'veli (okul)': ['Pano', 'Ödevler', 'Mesajlar'],
-  'veli (özel)': ['Pano', 'Ödevler', 'Ödemeler', 'Mesajlar'],
+  'öğrenci (okul)': ['Pano', 'Ödevler', 'Konularım', 'Mesajlar'],
+  'öğrenci (özel)': ['Pano', 'Ödevler', 'Konularım', 'Mesajlar'],
+  'veli (okul)': ['Pano', 'Ödevler', 'Konular', 'Mesajlar'],
+  'veli (özel)': ['Pano', 'Ödevler', 'Konular', 'Ödemeler', 'Mesajlar'],
 };
 
 for (const [ad, [rol, tur, yol]] of Object.entries({
@@ -225,6 +246,7 @@ for (const [ad, yol] of [
   ['Pano', '/ogrenci'],
   ['Ödevler', '/ogrenci/odevler'],
   ['Mesajlar', '/ogrenci/mesajlar'],
+  ['Konularım', '/ogrenci/konularim'],
 ]) {
   const { s, agGovdeleri } = await sayfaAc('ogrenci', 'ozel', yol);
   const metin = await s.evaluate(() => document.body.innerText);
@@ -320,6 +342,67 @@ console.log('\n4b — AD VE MESAJ AYNI SATIRDA, ÖĞRENCİNİN GERÇEK ADIYLA');
   const genel = await s.evaluate(() =>
     [...document.querySelectorAll('strong')].some((e) => e.textContent.trim() === 'Öğrenci:'));
   olc('genel "Öğrenci" etiketi yerini ada bıraktı', genel === false);
+  await s.close();
+}
+
+// -----------------------------------------------------------------------------
+console.log('\n4c — BEŞ SEKME 360 px\'DE SIĞIYOR MU (varsayılmıyor, ölçülüyor)');
+//
+// Özel ders velisinde sekme sayısı 4'ten 5'e çıktı. Öğretmenin altı sekmesi
+// 360 px'de sığıyor ama bu KENDİLİĞİNDEN geçerli değil: alt çubukta etiket
+// uzunlukları farklı ("Konular", "Ödemeler"). Taşma ve dokunma hedefi
+// ölçülüyor.
+// -----------------------------------------------------------------------------
+{
+  const { s } = await sayfaAc('veli', 'ozel', '/veli');
+  const o = await s.evaluate(() => {
+    const cubuk = [...document.querySelectorAll('nav[aria-label="Ana gezinme"]')]
+      .filter((n) => n.checkVisibility())[0];
+    const baglar = [...cubuk.querySelectorAll('a')];
+    return {
+      adet: baglar.length,
+      tasma: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      // Her sekme 44 px dokunma hedefini koruyor mu
+      kucuk: baglar.filter((a) => a.getBoundingClientRect().height < 44).length,
+      // Etiketler kırpılıyor mu: yazı kabından geniş mi
+      kirpik: baglar.filter((a) => a.scrollWidth > a.clientWidth + 1).length,
+    };
+  });
+  olc('özel ders velisinde 5 sekme çiziliyor', o.adet === 5, `${o.adet} sekme`);
+  olc('360 px yatay taşma yok', o.tasma === 0, `${o.tasma} px`);
+  olc('beş sekmenin hepsi 44 px+', o.kucuk === 0);
+  olc('hiçbir sekme etiketi kırpılmıyor', o.kirpik === 0);
+  await s.close();
+}
+
+// -----------------------------------------------------------------------------
+console.log('\n4d — KARNEDE KIYAS VE ANAHTAR YOK');
+//
+// Sunucu testi (`kendi_karnem_testleri.sql`) sızıntıyı UÇTA ölçüyor; bu
+// grup EKRANDA ölçüyor. Arayüz doğru veriyi alıp yanlış bir şey
+// yazabilirdi — örneğin "sınıf ortalaması" diye bir satır uydurabilirdi.
+// -----------------------------------------------------------------------------
+for (const [ad, rol, yol] of [
+  ['öğrenci', 'ogrenci', '/ogrenci/konularim'],
+  ['veli', 'veli', '/veli/konular'],
+]) {
+  const { s, govdeler } = await sayfaAc(rol, 'okul', yol);
+  const metin = await s.evaluate(() => document.body.innerText);
+  // YALNIZ KARNE UCUNUN yanıtı — sayfanın tamamı değil.
+  const karne = govdeler.kendi_karnem ?? '';
+  olc(`${ad} karne ucu çağrıldı`, karne.length > 0);
+  olc(`${ad} karnesinde kıyas kelimesi yok`,
+    !/sınıf ortalaması|sıralama|sınıfın/i.test(metin));
+  olc(`${ad} karne yanıtında mevcut/gonderen yok`,
+    !/"mevcut"|"gonderen"/.test(karne));
+  olc(`${ad} karne yanıtında cevap anahtarı yok`,
+    !/cevap_anahtari|anahtar_yolu/.test(karne));
+  // YALNIZ KONU ADINI ARAMAK KÖR — ölçüldü. "Oran" Ewalu'nun cümlesinde de
+  // geçiyor ("En çok Oran konusunda takılmışsın"), o yüzden konu LİSTESİ hiç
+  // çizilmese bile arama tutuyordu. Listenin kendi başlığı da aranıyor.
+  const listeBasligi = rol === 'ogrenci' ? 'Çalışılacak konular' : 'Eksik olunan konular';
+  olc(`${ad} konu listesi çiziliyor`, metin.includes(listeBasligi), listeBasligi);
+  olc(`${ad} en zayıf konuyu görüyor`, metin.includes('Oran'));
   await s.close();
 }
 

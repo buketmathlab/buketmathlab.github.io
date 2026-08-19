@@ -272,9 +272,17 @@ export type GelisimSatiri = {
    * demektir; göndermemek başka bir şeydir ve ekran ikisini karıştırmamalı.
    */
   deger: number | null;
-  gonderen: number;
-  /** Sınıfta aktif öğrenci sayısı; öğrenci kapsamında 1. */
-  mevcut: number;
+  /**
+   * SINIF BİLGİSİ — yalnız öğretmenin ucunda (`konu_karnesi`) var.
+   *
+   * `kendi_karnem` (0026) bu iki alanı BİLEREK göndermiyor: öğrenciye ve
+   * veliye "kaç kişiden kaçı gönderdi" demek kıyas kapısını açardı.
+   * `Gelisim` bileşeni `kapsam='ogrenci'` iken onları zaten çizmiyor
+   * (ölçüldü), yani ekranda bir eksiklik oluşmuyor.
+   */
+  gonderen?: number;
+  /** Sınıfta aktif öğrenci sayısı; öğrenci kapsamında gönderilmiyor. */
+  mevcut?: number;
 };
 
 export type KonuKarnesi = {
@@ -284,6 +292,25 @@ export type KonuKarnesi = {
   /** En zayıf konu başta. Yalnız test ödevlerinden. */
   konular: KonuAnalizi[];
   /** Kronolojik. Açık uçlu ödevler de burada. */
+  gelisim: GelisimSatiri[];
+};
+
+/**
+ * `kendi_karnem` (migration 0026) — öğrencinin ve velinin KENDİ karnesi.
+ *
+ * `KonuKarnesi`'nin kırpılmış hâli ve fark bilerek:
+ *   - `kapsam.tur` yok — seçilecek bir kapsam yok, hep bu öğrenci
+ *   - `kapsam.mevcut` yok — sınıfın kaç kişi olduğu bu ekrana ait değil
+ *   - `gelisim` satırlarında `gonderen`/`mevcut` yok — sınıf bilgisi
+ *
+ * KIYAS ÇAĞRIŞTIRAN HİÇBİR SAYI GÖNDERİLMİYOR. Bir çocuğa "sınıfın
+ * neresindesin" demek bu ekranın işi değil; sınır sunucuda
+ * (`kendi_karnem_testleri.sql` 3. grubu ölçüyor), arayüzde gizleme değil.
+ */
+export type KendiKarnem = {
+  kapsam: { ad: string; sinif: string | null };
+  odev_sayisi: number;
+  konular: KonuAnalizi[];
   gelisim: GelisimSatiri[];
 };
 

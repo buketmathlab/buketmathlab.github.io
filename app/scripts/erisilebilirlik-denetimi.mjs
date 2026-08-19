@@ -101,7 +101,12 @@ const OGRENCI_MESAJLARI={mesajlar:[
   {kimden:'ogrenci',metin:'Hocam soruyu anlamadım.',zaman:gun(-1)+'T08:00:00Z'},
   {kimden:'ogretmen',metin:'Yarın derste bakalım.',zaman:gun(-1)+'T09:00:00Z'}],
   son_gorulme:gun(-1)+'T09:30:00Z'};
-const CEVAP={ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+const KENDI_KARNEM={kapsam:{ad:'Ada Yıldırım',sinif:'9A'},odev_sayisi:2,
+  konular:[{konu:'Oran',toplam:2,dogru:0,yanlis:2,bos:0},
+           {konu:'Kesirler',toplam:2,dogru:2,yanlis:0,bos:0}],
+  gelisim:[{odev:'Kesirler denemesi',tarih:gun(-3),tur:'test',deger:50},
+           {odev:'Kesirler yazılı',tarih:gun(-2),tur:'acik',deger:70}]};
+const CEVAP={kendi_karnem:KENDI_KARNEM,ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 let tasmali=0;
@@ -125,9 +130,11 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Veli panosu','/veli','veli'],
                             ['Veli ödevler','/veli/odevler','veli'],
                             ['Veli ödemeler','/veli/odemeler','veli'],
+                            ['Veli konular','/veli/konular','veli'],
                             ['Veli mesajlar','/veli/mesajlar','veli'],
                             ['Öğrenci panosu','/ogrenci','ogrenci'],
                             ['Ödevlerim','/ogrenci/odevler','ogrenci'],
+                            ['Öğrenci konularım','/ogrenci/konularim','ogrenci'],
                             ['Öğrenci mesajlar','/ogrenci/mesajlar','ogrenci'],
                             ['Teslim','/ogrenci/odev/a1','ogrenci'],
                             ['Teslim sonucu','/ogrenci/odev/a3','ogrenci'],
