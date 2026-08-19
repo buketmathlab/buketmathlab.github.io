@@ -665,6 +665,32 @@ listenin üstünde "Yanıt bekleyen öğrenciler", öğrenci detayında Mesajlar
 düğmesi. Veliler sekmesi aynen kaldı. Rozet **tek**: iki ayrı sayı
 öğretmene iki ayrı yer aratırdı.
 
+### Mesaj satırı: ad ve mesaj aynı satırda
+
+İlk sürümde gönderen etiketi kendi satırındaydı, mesaj balonu altındaydı.
+Öğretmen bunu bildirdi: *"Öğrenciden gelen mesaj öğrencinin isminin
+yanında olmalı. Ayrı bir satırda olmamalı o mesajlar."*
+
+Artık ad balonun **içinde** kalın bir ön ek, mesaj hemen yanında, saat en
+sonda küçük ve soluk. Saat neden adın yanında değil: 360 px'de ad + saat +
+mesaj tek satıra sığmıyor ve metin satırlarca aşağı iniyordu.
+
+Öğretmen ekranında etiket artık **öğrencinin gerçek adı**
+(`mesajlar_ogretmen.ogrenci.ad`). **Veli tarafında ad yok ve
+uydurulmuyor** — şemada veli adı diye bir alan yok, yalnız veli KODU var;
+orada "Veli" yazıyor.
+
+Kim yazdı bilgisi hâlâ **renkle değil yazıyla da** veriliyor; ön ek bu
+güvenceyi koruyor.
+
+`kabuk-denetimi.mjs` bunu sınıf adına ya da HTML yapısına bakarak değil,
+adın ve mesajın `getBoundingClientRect().top` değerlerini karşılaştırarak
+ölçüyor — ekranda gerçekten aynı hizada mı, sorulan bu.
+
+**Dürüst sınır:** çok uzun tek bir kelimeyle başlayan bir mesaj yine alt
+satıra sarar. Bu normal metin akışı; verilen güvence "ad kendi satırına
+zorlanmıyor", "hiçbir mesaj hiçbir zaman sarmaz" değil.
+
 ## Faz sırası
 
 | Faz | Kapsam | Durum |

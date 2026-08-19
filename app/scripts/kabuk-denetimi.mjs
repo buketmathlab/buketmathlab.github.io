@@ -17,10 +17,21 @@ import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 const KOK = 'http://127.0.0.1:8788/yeni/#';
 const gun = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 
-// Ayırt edici iki cümle. Sızıntı ararken metinde bunları arıyoruz; kısa ve
-// başka hiçbir yerde geçmeyen kelimeler seçildi.
-const VELI_CUMLESI = 'VELIDENGELEN kalemtiras meselesi';
-const OGRENCI_CUMLESI = 'OGRENCIDENGELEN zeytinagaci meselesi';
+// Ayırt edici iki cümle. Sızıntı ararken metinde bunları arıyoruz; başka
+// hiçbir yerde geçmeyen kelimeler seçildi ("kalemtiras", "zeytinagaci").
+//
+// GERÇEK BİR CÜMLE GİBİ YAZILDILAR ve bunun ölçümle ilgili bir sebebi var:
+// ilk sürümde "OGRENCIDENGELEN…" diye 15 harflik, bölünemeyen bir kelimeyle
+// başlıyorlardı. Ad ön ekinin yanına sığmadığı için metin alt satıra
+// kayıyordu ve "ad ve mesaj aynı satırda" ölçümü kırılıyordu — ürün değil,
+// uydurma cümle yüzünden. Kısa bir kelimeyle başlayan gerçekçi bir mesaj
+// gerçek kullanımı temsil ediyor.
+//
+// DÜRÜST SINIR: çok uzun tek bir kelimeyle başlayan bir mesaj yine alt
+// satıra sarar. Bu normal metin akışı; verdiğimiz güvence "ad kendi
+// satırına ZORLANMIYOR", "hiçbir mesaj hiçbir zaman sarmaz" değil.
+const VELI_CUMLESI = 'Hocam kalemtiras meselesini soracaktim';
+const OGRENCI_CUMLESI = 'Hocam zeytinagaci meselesini anlamadim';
 
 // Gerçekçi bir tutar: sızıntı ararken hem ALAN ADINI hem DEĞERİ arıyoruz.
 const TUTAR = 1500.5;
@@ -73,7 +84,19 @@ const OGRENCI_MESAJLARI = {
   son_gorulme: null,
 };
 
+// Öğretmenin öğrenci yazışması: gelen mesaj öğrencinin ADIYLA gösterilmeli.
+const YAZISMA_OGRENCI = {
+  ogrenci: { id: 'o1', ad: 'Ada Kanalcı', sinif: '9A' },
+  kanal: 'ogrenci',
+  veli_kodu_var: true,
+  mesajlar: [
+    { kimden: 'ogrenci', metin: OGRENCI_CUMLESI, zaman: gun(-1) + 'T08:00:00Z' },
+    { kimden: 'ogretmen', metin: 'Yarın derste bakalım.', zaman: gun(-1) + 'T09:00:00Z' },
+  ],
+};
+
 const OTURUM = {
+  ogretmen: () => ({ rol: 'ogretmen', token: 't'.repeat(64) }),
   ogrenci: (tur) => ({
     rol: 'ogrenci', token: 't'.repeat(64),
     ogrenci: { id: 'o1', ad: 'Ada Kanalcı', tur, sinif: tur === 'ozel' ? 'Özel ders' : '9A' },
@@ -110,6 +133,7 @@ async function sayfaAc(rol, tur, yol) {
       uc === 'ogrenci_odevleri' ? ogrenciOdevleri(tur)
       : uc === 'veli_paneli' ? veliPaneli(tur)
       : uc === 'ogrenci_mesajlari' ? OGRENCI_MESAJLARI
+      : uc === 'mesajlar_ogretmen' ? YAZISMA_OGRENCI
       : {};
     agGovdeleri.push(JSON.stringify(govde));
     r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
@@ -248,6 +272,54 @@ console.log('\n4 — İKİ YAZIŞMA BİRBİRİNE KARIŞMIYOR');
   olc('veliye giden ağ yanıtında öğrencinin cümlesi YOK', !ag.includes(OGRENCI_CUMLESI));
   olc('veli ekranı ogrenci_mesajlari ucunu ÇAĞIRMIYOR',
     !cagrilar.includes('ogrenci_mesajlari'));
+  await s.close();
+}
+
+// -----------------------------------------------------------------------------
+console.log('\n4b — AD VE MESAJ AYNI SATIRDA, ÖĞRENCİNİN GERÇEK ADIYLA');
+//
+// Öğretmenin isteği: "Öğrenciden gelen mesaj öğrencinin isminin yanında
+// olmalı. Ayrı bir satırda olmamalı o mesajlar."
+//
+// NASIL ÖLÇÜLÜYOR: sınıf adına ya da HTML yapısına bakmıyoruz — ikisi de
+// düzeni değil niyeti ölçer. Adın ve mesajın ekranda GERÇEKTEN aynı yatay
+// hizada olup olmadığı `getBoundingClientRect()` ile karşılaştırılıyor.
+// Ad ayrı satıra düşerse iki `top` değeri ayrışır ve ölçüm kırılır.
+// -----------------------------------------------------------------------------
+{
+  const { s } = await sayfaAc('ogretmen', 'ozel', '/ogretmen/ogrenciler/yazisma/o1');
+  const olcum = await s.evaluate((cumle) => {
+    const kalin = [...document.querySelectorAll('strong')]
+      .find((e) => e.textContent.includes('Ada Kanalcı'));
+    if (!kalin) return { adVar: false };
+    // Mesaj metnini taşıyan metin düğümünün kendi dikdörtgeni.
+    const balon = kalin.parentElement;
+    const dugum = [...balon.childNodes]
+      .find((n) => n.nodeType === 3 && n.textContent.includes(cumle.slice(0, 12)));
+    if (!dugum) return { adVar: true, metinVar: false };
+    const araliq = document.createRange();
+    araliq.selectNodeContents(dugum);
+    return {
+      adVar: true,
+      metinVar: true,
+      adUst: Math.round(kalin.getBoundingClientRect().top),
+      metinUst: Math.round(araliq.getBoundingClientRect().top),
+    };
+  }, OGRENCI_CUMLESI);
+
+  olc('öğretmen ekranında öğrencinin GERÇEK ADI geçiyor', olcum.adVar === true);
+  olc('adın yanında mesaj metni var', olcum.metinVar === true);
+  olc(
+    'ad ve mesaj AYNI SATIRDA',
+    olcum.metinVar === true && olcum.adUst === olcum.metinUst,
+    `ad üst ${olcum.adUst} · metin üst ${olcum.metinUst}`,
+  );
+
+  // Genel "Öğrenci" kelimesi ARTIK ETİKET DEĞİL: gerçek ad geldiyse o
+  // kelimenin ön ek olarak durmaması gerekiyor.
+  const genel = await s.evaluate(() =>
+    [...document.querySelectorAll('strong')].some((e) => e.textContent.trim() === 'Öğrenci:'));
+  olc('genel "Öğrenci" etiketi yerini ada bıraktı', genel === false);
   await s.close();
 }
 

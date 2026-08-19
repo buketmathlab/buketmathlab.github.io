@@ -86,19 +86,32 @@ export function Yazisma({
               const benim = m.kimden === benKimim;
               return (
                 <li key={i} className={benim ? 'text-right' : ''}>
-                  {/* Kim yazdı bilgisi RENKLE DEĞİL, yazıyla da veriliyor:
-                      renk körlüğünde hizalama ve renk tek başına ayırt
-                      edici olmaz. */}
-                  <span className="mb-1 block text-[12px] font-bold text-muted">
-                    {benim ? 'Siz' : (adlar[m.kimden] ?? m.kimden)} ·{' '}
-                    {ZAMAN.format(new Date(m.zaman))}
-                  </span>
                   <span
                     className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-sk-md px-3 py-2 text-left text-[15px] ${
                       benim ? 'bg-ink text-paper' : 'bg-line-soft text-ink'
                     }`}
                   >
-                    {m.metin}
+                    {/* AD VE MESAJ AYNI SATIRDA (öğretmenin isteği).
+                        Önce ad kendi satırında, mesaj altındaydı; öğretmen
+                        "ayrı bir satırda olmamalı o mesajlar" dedi. Ad artık
+                        balonun içinde bir ön ek.
+
+                        Kim yazdı bilgisi RENKLE DEĞİL yazıyla da veriliyor:
+                        renk körlüğünde hizalama ve renk tek başına ayırt
+                        edici olmaz. Ön ek bu güvenceyi koruyor. */}
+                    <strong className="font-bold">
+                      {benim ? 'Siz' : (adlar[m.kimden] ?? m.kimden)}:
+                    </strong>{' '}
+                    {m.metin}{' '}
+                    {/* Saat EN SONDA, küçük ve soluk. Adın yanına koysaydık
+                        360 px'de mesaj metni satırlarca aşağı iniyordu. */}
+                    <span
+                      className={`whitespace-nowrap text-[12px] ${
+                        benim ? 'text-paper/70' : 'text-muted'
+                      }`}
+                    >
+                      {ZAMAN.format(new Date(m.zaman))}
+                    </span>
                   </span>
                 </li>
               );
