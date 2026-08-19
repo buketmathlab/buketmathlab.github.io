@@ -123,6 +123,10 @@ echo "==> Toplu öğrenci ekleme testleri (0024)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/toplu_ogrenci_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> İki ayrı yazışma testleri (0025)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/iki_yazisma_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> PIN değiştirme testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/pin_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

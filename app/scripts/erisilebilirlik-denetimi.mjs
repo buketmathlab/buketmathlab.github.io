@@ -32,7 +32,7 @@ const GONDERIMLER={odev:{id:'a1',baslik:'Limit — açık uçlu',tur:'acik',sini
     yanlis_sorular:[2,7,9],bos_sorular:[10]}],
   konu_ozeti:[{konu:'Limit',toplam:5,dogru:2,yanlis:2,bos:1},
               {konu:'Türev',toplam:5,dogru:4,yanlis:1,bos:0}]};
-const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B'},dersler:[{zaman:gun(2)+'T16:00:00Z',mod:'online',link:'https://ornek/ders'}],odevler:[
+const OGRENCI_ODEVLERI={ogrenci:{id:'o1',ad:'Elif Yıldırım',sinif:'11B',tur:'ozel'},okunmamis_mesaj:1,dersler:[{zaman:gun(2)+'T16:00:00Z',mod:'online',link:'https://ornek/ders'}],odevler:[
   {id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',son_tarih:gun(2),soru_sayisi:5,gec_teslim:true,sik_sayisi:5,sinif_arsiv:false,
    odev_yolu:'odev/x.pdf',gonderim:null,konu_analizi:[],cevap_anahtari:null,anahtar_yolu:null},
   {id:'a3',baslik:'Üslü Sayılar',aciklama:null,tur:'test',son_tarih:gun(-6),soru_sayisi:2,gec_teslim:true,sik_sayisi:4,sinif_arsiv:false,
@@ -53,10 +53,10 @@ const VELILER={toplam_okunmamis:2,
 const SINIF_VELILERI={sinif:{id:'9A',ad:'9A',ozel:false},veliler:[
   {ogrenci_id:'o1',ad:'Ada Yıldırım',tur:'okul',veli_kodu_var:true,mesaj_sayisi:3,son_mesaj:gun(-2)+'T09:15:00Z',okunmamis:2},
   {ogrenci_id:'o2',ad:'Cem Şahin',tur:'okul',veli_kodu_var:false,mesaj_sayisi:0,son_mesaj:null,okunmamis:0}]};
-const YAZISMA={ogrenci:{id:'o1',ad:'Ada Yıldırım',sinif:'9A'},veli_kodu_var:true,mesajlar:[
+const YAZISMA={ogrenci:{id:'o1',ad:'Ada Yıldırım',sinif:'9A'},kanal:'veli',veli_kodu_var:true,mesajlar:[
   {kimden:'veli',metin:'Merhaba hocam.',zaman:gun(-2)+'T09:15:00Z'},
   {kimden:'ogretmen',metin:'Merhaba, buyurun.',zaman:gun(-2)+'T10:02:00Z'}]};
-const VELI_PANEL={ogrenci:{ad:'Ada Yıldırım',sinif:'9A',tur:'okul'},
+const VELI_PANEL={ogrenci:{ad:'Ada Yıldırım',sinif:'9A',tur:'ozel'},okunmamis_mesaj:1,
   odevler:[{baslik:'Türev testi',son_tarih:gun(-5),olusturma:gun(-12),gonderildi:true,
             gonderim_zamani:gun(-6)+'T20:10:00Z',puan:85,durum:'puanlandi',
             yanlis_sorular:[3,7],bos_sorular:[10],
@@ -65,7 +65,9 @@ const VELI_PANEL={ogrenci:{ad:'Ada Yıldırım',sinif:'9A',tur:'okul'},
            {baslik:'Üslü sayılar',son_tarih:gun(-1),olusturma:gun(-7),gonderildi:false,
             gonderim_zamani:null,puan:null,durum:null,
             yanlis_sorular:[],bos_sorular:[],konu_analizi:[]}],
-  mesajlar:YAZISMA.mesajlar,odemeler:[],son_gorulme:gun(-1)+'T20:00:00Z'};
+  mesajlar:YAZISMA.mesajlar,
+  odemeler:[{tutar:1500.5,tarih:gun(-2),odendi:false},{tutar:1200,tarih:gun(-32),odendi:true}],
+  son_gorulme:gun(-1)+'T20:00:00Z'};
 const OZEL_DETAY={ogrenci:{id:'o9',ad:'Ozan Demir',tur:'ozel',sinif:'Özel ders',aktif:true},
   dersler:[{id:'d1',zaman:gun(3)+'T16:00:00Z',mod:'online',link:'https://ornek/ders',gecti:false},
            {id:'d2',zaman:gun(-4)+'T16:00:00Z',mod:'yuzyuze',link:null,gecti:true}],
@@ -93,7 +95,13 @@ const KONU_KARNESI={kapsam:{tur:'sinif',ad:'11B',sinif:'11B',mevcut:24},odev_say
            {odev:'Limit — açık uçlu',tarih:gun(-24),tur:'acik',deger:71,gonderen:19,mevcut:24},
            {odev:'Türev testi',tarih:gun(-9),tur:'test',deger:88.3,gonderen:24,mevcut:24},
            {odev:'Deneme 4',tarih:gun(-2),tur:'test',deger:null,gonderen:0,mevcut:24}]};
-const CEVAP={bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+const OGRENCI_YAZISMALARI={toplam_okunmamis:1,
+  yanit_bekleyen:[{ogrenci_id:'o1',ad:'Ada Yıldırım',sinif:'9A',okunmamis:1,son_mesaj:gun(-1)+'T08:00:00Z'}]};
+const OGRENCI_MESAJLARI={mesajlar:[
+  {kimden:'ogrenci',metin:'Hocam soruyu anlamadım.',zaman:gun(-1)+'T08:00:00Z'},
+  {kimden:'ogretmen',metin:'Yarın derste bakalım.',zaman:gun(-1)+'T09:00:00Z'}],
+  son_gorulme:gun(-1)+'T09:30:00Z'};
+const CEVAP={ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 let tasmali=0;
@@ -113,8 +121,14 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Veliler','/ogretmen/veliler'],
                             ['Sınıf velileri','/ogretmen/veliler/sinif/9A'],
                             ['Yazışma','/ogretmen/veliler/yazisma/o1'],
-                            ['Veli paneli','/veli','veli'],
-                            ['Ödevlerim','/ogrenci','ogrenci'],
+                            ['Öğrenci yazışması','/ogretmen/ogrenciler/yazisma/o1'],
+                            ['Veli panosu','/veli','veli'],
+                            ['Veli ödevler','/veli/odevler','veli'],
+                            ['Veli ödemeler','/veli/odemeler','veli'],
+                            ['Veli mesajlar','/veli/mesajlar','veli'],
+                            ['Öğrenci panosu','/ogrenci','ogrenci'],
+                            ['Ödevlerim','/ogrenci/odevler','ogrenci'],
+                            ['Öğrenci mesajlar','/ogrenci/mesajlar','ogrenci'],
                             ['Teslim','/ogrenci/odev/a1','ogrenci'],
                             ['Teslim sonucu','/ogrenci/odev/a3','ogrenci'],
                             ['Kapalı sınıf','/ogrenci/odev/a4','ogrenci']]) {

@@ -1,16 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Field, Textarea } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { useToast } from '@/components/ui/toast-baglam';
+import { Yazisma as YazismaKutusu } from '@/components/ui/Yazisma';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import type { SinifVelileri, VelilerListesi, Yazisma } from '@/types/api';
+import type { Kanal, SinifVelileri, VelilerListesi, Yazisma } from '@/types/api';
 
 const ZAMAN = new Intl.DateTimeFormat('tr-TR', {
   day: 'numeric',
@@ -201,62 +200,51 @@ export function SinifVelileriEkrani() {
 }
 
 /**
- * Bir veliyle yazışma.
+ * Bir yazışma — öğretmen tarafı, İKİ KANAL İÇİN DE aynı bileşen (0025).
  *
- * Ekran açılır açılmaz `ogretmen_okudu` çağrılıyor: öğretmen mesajı GÖRDÜ,
- * sayaç sıfırlansın. Ayrı bir "okundu işaretle" düğmesi koymak öğretmene
- * hiçbir şey kazandırmayan bir iş yükü olurdu.
+ * `kanal='veli'` Veliler sekmesinden, `kanal='ogrenci'` Öğrenciler
+ * sekmesinden açılıyor. İki ayrı bileşen yazmak, aradaki tek farkın
+ * (hangi yazışma) iki kopyada zamanla ayrışmasına yol açardı.
+ *
+ * Ekran açılır açılmaz `ogretmen_okudu` çağrılıyor — ama artık KANALIYLA
+ * BİRLİKTE: veli yazışmasını okumak öğrencininkini okunmuş saymamalı.
  */
-export function VeliYazismasi() {
+export function Yazismasi({ kanal }: { kanal: Kanal }) {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
-  const { bildir } = useToast();
   const git = useNavigate();
-  const [metin, setMetin] = useState('');
-  const [gonderiliyor, setGonderiliyor] = useState(false);
   const okunduYazildi = useRef(false);
+
+  const veli = kanal === 'veli';
+  const geriYol = veli ? '/ogretmen/veliler' : '/ogretmen/ogrenciler';
+  const geriAd = veli ? '← Veliler' : '← Öğrenciler';
 
   const { veri, durum, hata, yenile } = useVeri<Yazisma>('mesajlar_ogretmen', {
     p_token: oturum?.token,
     p_ogrenci_id: id,
+    p_kanal: kanal,
   });
 
   useEffect(() => {
     // Bir kez: her yeniden çizimde istek atmasın.
     if (!veri || okunduYazildi.current || !oturum?.token) return;
     okunduYazildi.current = true;
-    void rpc('ogretmen_okudu', { p_token: oturum.token, p_ogrenci_id: id }).catch(() => {
+    void rpc('ogretmen_okudu', {
+      p_token: oturum.token,
+      p_ogrenci_id: id,
+      p_kanal: kanal,
+    }).catch(() => {
       // Okundu kaydı yazılamazsa ekran çalışmaya devam etmeli; öğretmene
       // hata göstermek burada gürültü olur, en kötü sayaç bir sonraki
       // açılışta düşer.
     });
-  }, [veri, oturum?.token, id]);
-
-  async function gonder() {
-    const t = metin.trim();
-    if (!t) return;
-    setGonderiliyor(true);
-    try {
-      await rpc('mesaj_gonder', {
-        p_token: oturum?.token,
-        p_metin: t,
-        p_ogrenci_id: id,
-      });
-      setMetin('');
-      yenile();
-      bildir('Mesaj gönderildi', 'basari');
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Mesaj gönderilemedi.', 'hata');
-    } finally {
-      setGonderiliyor(false);
-    }
-  }
+  }, [veri, oturum?.token, id, kanal]);
 
   return (
     <>
       <div className="mb-4">
-        <Button tur="sade" olcu="sm" onClick={() => git('/ogretmen/veliler')}>
-          ← Veliler
+        <Button tur="sade" olcu="sm" onClick={() => git(geriYol)}>
+          {geriAd}
         </Button>
       </div>
 
@@ -273,81 +261,62 @@ export function VeliYazismasi() {
                 {veri.ogrenci.ad}
               </h1>
               <p className="mt-1 text-[14px] text-muted">
-                {veri.ogrenci.sinif ?? 'Sınıfsız'} · velisiyle yazışma
+                {veri.ogrenci.sinif ?? 'Sınıfsız'} ·{' '}
+                {veli ? 'velisiyle yazışma' : 'öğrenciyle yazışma'}
               </p>
             </div>
 
             {!veri.veli_kodu_var && (
               <Card vurgu="uyari" className="mb-4">
-                <p className="font-semibold text-ink">Bu öğrencinin veli kodu yok.</p>
+                <p className="font-semibold text-ink">
+                  {veli
+                    ? 'Bu öğrencinin veli kodu yok.'
+                    : 'Bu öğrencinin öğrenci kodu yok.'}
+                </p>
                 <p className="mt-1 text-[14px] text-muted">
-                  Veli giriş yapamadığı için yazdığınız mesajı göremez. Kodlar bölümünden
-                  öğrenciye bakıp veli kodunu paylaşabilirsiniz.
+                  {veli ? 'Veli' : 'Öğrenci'} giriş yapamadığı için yazdığınız mesajı
+                  göremez. Kodlar bölümünden öğrenciye bakıp kodu paylaşabilirsiniz.
                 </p>
               </Card>
             )}
 
-            <Card className="mb-4">
-              {veri.mesajlar.length === 0 ? (
-                <p className="text-[14px] text-muted">
-                  Henüz mesaj yok. İlk mesajı siz yazabilirsiniz.
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {veri.mesajlar.map((m, i) => {
-                    const benim = m.kimden === 'ogretmen';
-                    return (
-                      <li key={i} className={benim ? 'text-right' : ''}>
-                        {/* Kim yazdı bilgisi RENKLE DEĞİL, yazıyla da
-                            veriliyor: renk körlüğünde hizalama ve renk tek
-                            başına ayırt edici olmaz. */}
-                        <span className="mb-1 block text-[12px] font-bold text-muted">
-                          {benim ? 'Siz' : 'Veli'} · {ZAMAN.format(new Date(m.zaman))}
-                        </span>
-                        <span
-                          className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-sk-md px-3 py-2 text-left text-[15px] ${
-                            benim ? 'bg-ink text-paper' : 'bg-line-soft text-ink'
-                          }`}
-                        >
-                          {m.metin}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Card>
-
-            <Card>
-              <Field etiket="Yeni mesaj">
-                {(kimlik) => (
-                  <Textarea
-                    {...kimlik}
-                    rows={3}
-                    value={metin}
-                    onChange={(e) => setMetin(e.target.value)}
-                    maxLength={4000}
-                    placeholder="Veliye iletmek istediğinizi yazın."
-                  />
-                )}
-              </Field>
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <span className="sk-sayi text-[12px] text-muted">{metin.length}/4000</span>
-                <Button
-                  onClick={gonder}
-                  yukleniyor={gonderiliyor}
-                  yuklenmeMetni="Gönderiliyor"
-                  {...(metin.trim() ? {} : { disabled: true })}
-                >
-                  Gönder
-                </Button>
-              </div>
-            </Card>
+            <YazismaKutusu
+              mesajlar={veri.mesajlar}
+              benKimim="ogretmen"
+              adlar={{ veli: 'Veli', ogrenci: 'Öğrenci' }}
+              yazmaEtiketi="Yeni mesaj"
+              yerTutucu={
+                veli
+                  ? 'Veliye iletmek istediğinizi yazın.'
+                  : 'Öğrenciye iletmek istediğinizi yazın.'
+              }
+              gonderParametreleri={{
+                p_token: oturum?.token,
+                p_ogrenci_id: id,
+                p_kanal: kanal,
+              }}
+              gonderildi={yenile}
+              bosMetin="Henüz mesaj yok. İlk mesajı siz yazabilirsiniz."
+            />
           </>
         )}
       </AsyncBoundary>
     </>
   );
+}
+
+/** Veli yazışması — Veliler sekmesinden açılır. */
+export function VeliYazismasi() {
+  return <Yazismasi kanal="veli" />;
+}
+
+/**
+ * Öğrenci yazışması — ÖĞRENCİLER sekmesinden açılır (öğretmenin kararı:
+ * "Öğretmen girişinde öğrenci ile mesajlaşma bölümünü öğrenciler kısmına
+ * ekle").
+ */
+export function OgrenciYazismasi() {
+  return <Yazismasi kanal="ogrenci" />;
 }
 
 function Ok() {

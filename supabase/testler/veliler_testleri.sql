@@ -320,14 +320,27 @@ begin
   exception when sqlstate '22023' then null;
   end;
 
-  -- Öğrenci mesajlaşmaya hiç girmiyor
-  begin
-    perform public.mesaj_gonder(jo, 'Öğrenci yazıyor.');
-    raise exception '10c: ÖĞRENCİ mesaj gönderdi';
-  exception when sqlstate '42501' then null;
-  end;
+  -- 0025'TE DEĞİŞEN KURAL. Öğrenci artık yazabiliyor (kendi yazışmasına),
+  -- ama yazdığı şey VELİ yazışmasına düşmüyor. Burada ölçülen tam olarak
+  -- bu sınır: bu dosya veli tarafını koruyor, sızıntının kendisi
+  -- `iki_yazisma_testleri.sql`'de ölçülüyor.
+  perform public.mesaj_gonder(jo, 'Öğrencinin kendi kanalına yazdığı.');
 
-  raise notice '10 OK — boş mesaj, hedefsiz mesaj ve öğrenci gönderimi reddediliyor';
+  select count(*) into n from public.mesajlar
+   where ogrenci_id = v_a and kanal = 'ogrenci' and kimden = 'ogrenci';
+  if n <> 1 then raise exception '10c: öğrencinin mesajı kendi kanalına düşmedi'; end if;
+
+  select count(*) into n from public.mesajlar
+   where ogrenci_id = v_a and kanal = 'veli' and kimden = 'ogrenci';
+  if n <> 0 then raise exception '10d: öğrencinin mesajı VELİ yazışmasına düştü'; end if;
+
+  -- Velinin yazışma ekranında öğrencinin cümlesi hiç geçmemeli.
+  v := public.mesajlar_ogretmen(jt, v_a, 'veli');
+  if v::text like '%kendi kanalına yazdığı%' then
+    raise exception '10e: öğrencinin cümlesi veli yazışmasında görünüyor';
+  end if;
+
+  raise notice '10 OK — boş ve hedefsiz mesaj reddediliyor, öğrencinin mesajı veli yazışmasına karışmıyor';
 
   raise notice '';
   raise notice 'VELİLER VE MESAJLAŞMA TESTLERİ: 10 GRUP GEÇTİ';

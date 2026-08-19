@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { sureDurumu } from '@/lib/son-tarih';
@@ -69,16 +68,18 @@ export function Odevlerim() {
 
   return (
     <>
-      <div className="mb-5 flex items-center gap-3">
-        <EwaluFigure poz={bekleyen === 0 ? 'kutlama' : 'calisma'} boyut={56} dekoratif />
-        <div>
-          <h1 className="font-display text-[24px] font-semibold text-ink">Ödevlerim</h1>
-          <p className="text-[14px] text-muted">
-            {bekleyen === 0
-              ? 'Bekleyen ödevin yok. Eline sağlık.'
-              : `${bekleyen} ödevin seni bekliyor.`}
-          </p>
-        </div>
+      {/* EWALU BURADAN KALKTI (0025). Sekmeler gelince öğrenci Pano →
+          Ödevler diye geziyor; karakteri iki ekranda üst üste göstermek
+          Part VII'nin uyardığı "her yerde Ewalu" durumu olurdu. Ewalu
+          artık yalnız Pano'da ve ödev sonucu ekranında — yani günün
+          başında ve puanı gördüğü anda. */}
+      <div className="mb-5">
+        <h1 className="font-display text-[24px] font-semibold text-ink">Ödevlerim</h1>
+        <p className="text-[14px] text-muted">
+          {bekleyen === 0
+            ? 'Bekleyen ödevin yok. Eline sağlık.'
+            : `${bekleyen} ödevin seni bekliyor.`}
+        </p>
       </div>
 
       <AsyncBoundary
