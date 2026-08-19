@@ -837,3 +837,85 @@ kaybolmuyor.
 ffmpeg bu ortamda `imageio-ffmpeg` paketiyle sağlandı
 (`python3 -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"`).
 Varlık hattı ffmpeg'e bağımlı değil: poster kaynağı depoda duruyor.
+
+## Tanıtım sayfası (Faz 9)
+
+Adres **`/yeni/tanitim/`** — herkese açık, giriş gerektirmeyen tek sayfa.
+Hedef okuyucu okul müdürü, veli ve ürünü ilk kez duyan biri; öğrenci
+değil (öğrencinin ihtiyacı giriş kutusudur ve o ekran ayrı kalıyor).
+
+### Neden ikinci bir Vite girişi
+
+Öğretmenin kararı adresin `#` içermemesiydi: bağlantı bir veli mesajına
+ya da okul panosuna yazılacak ve bazı uygulamalar `#`ten sonrasını
+bağlantıya dahil etmiyor. Uygulama `HashRouter` kullandığı için rota
+olarak eklemek `/yeni/#/tanitim` üretirdi.
+
+Bu yüzden `vite.config.ts`'e ikinci bir giriş noktası kondu:
+
+```
+index.html          → /yeni/            uygulama
+tanitim/index.html  → /yeni/tanitim/    tanıtım
+```
+
+**Ölçülen yan etki: uygulamanın yükü artmadı.** İki giriş noktası Rollup'ı
+ortak parça üretmeye itiyor; öğrencinin indirdiği toplam ham 406.176 →
+405.277 bayt, gzip 118.869 → 118.858 bayt. Fark 11 bayt, yani yok.
+
+Ayrıca `App.tsx:59`'daki yapı bozulmadan kaldı: giriş yapılmamışken
+uygulama hâlâ doğrudan `GirisEkrani`'ni döndürüyor, `Routes`'a hiç
+girmiyor. Tanıtım sayfası ayrı bir HTML olduğu için o dalı açmak
+gerekmedi.
+
+### Sayfa sunucuya hiç bağlanmıyor
+
+`src/tanitim.tsx` ne `HashRouter`, ne oturum sağlayıcı, ne Supabase
+istemcisi içe aktarıyor. Sonuç ölçülüyor (`scripts/tanitim-denetimi.mjs`
+1. grup): sıfır dış istek, sıfır çerez, boş `localStorage`. Sayfa bunu
+okuyucuya da yazıyor — ve yazdığı için ölçülmesi şart: ölçülmeyen bir
+gizlilik iddiası iddia değil temennidir.
+
+### Ekran görüntüleri uydurma veriyle
+
+`scripts/tanitim-gorselleri.mjs` uygulamayı Playwright ile açıp bütün RPC
+çağrılarını kesiyor ve uydurma veriyle cevaplıyor. Gerçek öğrenci verisi
+hiçbir aşamada kullanılmıyor ve sayfa bunu okuyucuya açıkça söylüyor.
+
+Betikte iki ölçüm hatası çıktı ve ikisi de kayda değer:
+
+1. **Sahte "sızıntı" alarmı.** Gerçek sunucuya giden istekleri
+   `page.on('request')` ile saymıştım; denetim "2 gerçek istek" dedi. Oysa
+   o olay `route.fulfill()` ile karşılanan istekler için de tetikleniyor ve
+   o istekler tarayıcıdan hiç çıkmıyor. Doğru ölçüm iki katmanlı: önce
+   Supabase'e giden her şeyi yakalayıp iptal eden bir yol, sonra (kayıt
+   sırasının tersinden eşleştiği için üstte kalan) RPC yolu. Böylece
+   "karşılanmamış istek" sayısı gerçekten sıfır ölçülüyor.
+2. **"87 gün kaldı".** Sahte son tarihleri sabit bir güne yazmıştım ama
+   etiketleri uygulama gerçek saate göre hesaplıyor; iki gün sonrası için
+   "87 gün kaldı" yazan bir ekran ürünü bozuk gösterirdi. Tarihler artık
+   çekim anına göreli.
+
+### Metindeki iddialar denetleniyor
+
+Denetimin 5. grubu sayfanın metnini okuyup iki yönlü ölçüyor:
+**bulunması gerekenler** (AI'nın puanlamadığı, açık uçlu puanı öğretmenin
+verdiği, veliye anahtar gitmediği, görsellerin uydurma olduğu) ve
+**bulunmaması gerekenler** (çevrimdışı çalışma, bildirim gönderme, "yapay
+zekâ destekli", otomatik konu önerisi — dördü de bugün YAPILMAYAN şeyler).
+
+Bir gün bu sayfaya ürünün yapmadığı bir vaat eklenirse denetim kırılır.
+
+### Bilerek dışarıda bırakılan
+
+**Ödeme takibi.** Özel ders ödemeleri üründe var ama tanıtım sayfasında
+anlatılmıyor: sayfa okulun mührünü taşıyor ve okul kimliğiyle özel ders
+ücretlendirmesini aynı sayfada yan yana koymak doğru olmazdı. Karar
+öğretmenin; istenirse eklenir.
+
+### Giriş ekranına eklenen tek satır
+
+Videonun da altında, kod kutusunun çok aşağısında bir "SEKİZ nedir?"
+bağlantısı. Öğretmenin belirlediği sekiz maddelik sıraya eklenen dokuzuncu
+öğe ve bilerek en altta — her gün giriş yapan öğrencinin önüne çıkmıyor.
+Denetim bunu sınıf adıyla değil, bağlantının form kutusundan **aşağıda**
+olduğunu ölçerek doğruluyor.
