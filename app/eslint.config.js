@@ -37,6 +37,7 @@ export default tseslint.config(
       'scripts/pwa-denetimi.mjs',
       'scripts/konu-karnesi-denetimi.mjs',
       'scripts/toplu-ogrenci-denetimi.mjs',
+      'scripts/kabuk-denetimi.mjs',
       'scripts/ekran-goruntuleri.mjs',
       'scripts/ekran-goruntuleri-ogrenci.mjs',
     ],

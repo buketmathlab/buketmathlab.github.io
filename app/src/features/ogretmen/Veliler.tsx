@@ -280,10 +280,16 @@ export function Yazismasi({ kanal }: { kanal: Kanal }) {
               </Card>
             )}
 
+            {/* ÖĞRENCİNİN GERÇEK ADI (öğretmenin isteği). Ad zaten
+                `mesajlar_ogretmen`'den geliyor; yeni SQL gerekmedi.
+
+                VELİ TARAFINDA AD YOK ve uydurulmuyor: şemada veli adı diye
+                bir alan yok, yalnız veli KODU var. Olmayan bir veriyi
+                varmış gibi göstermektense "Veli" yazıyor. */}
             <YazismaKutusu
               mesajlar={veri.mesajlar}
               benKimim="ogretmen"
-              adlar={{ veli: 'Veli', ogrenci: 'Öğrenci' }}
+              adlar={{ veli: 'Veli', ogrenci: veri.ogrenci.ad }}
               yazmaEtiketi="Yeni mesaj"
               yerTutucu={
                 veli
