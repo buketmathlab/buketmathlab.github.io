@@ -2,11 +2,54 @@
 
 Canlı vitrin: `/yeni/` — bu belgedeki her şey orada görülebilir.
 
-## Marka fikri: 8 → ∞
+## Marka felsefesi: öğrenmenin sürekliliği
 
-Üst üste binmiş iki halka dikeyken **8**, 90° döndürülünce **∞**. Tek şekil,
-iki anlam. Fikir dekoratif değil geometrik olarak gerçek — bu yüzden işe
-yarıyor.
+**Matematikte sonsuzluk bir sayı değil, bir yöndür:** her adımdan sonra bir
+adımın daha mümkün olduğunu söyler. SEKİZ adını bu fikirden alıyor.
+
+Bir bitişi değil, devam edebilmeyi anlatır — ve SEKİZ öğrenmeyi de tam
+olarak böyle görür. Bir konu tamamlanmaz; anlaşıldığı anda kendinden büyük
+bir soruya alan açar. Öğrencinin bugün kavradığı şey, yarın soracağı
+sorunun zeminidir.
+
+Bu yüzden SEKİZ ödevi bir görev listesi gibi değil, bir gelişim çizgisi
+gibi ele alıyor. Puan bir hüküm değil, nereye bakılacağını gösteren bir
+işaret.
+
+Marka cümlesi: **"Öğrenmenin sonu yok."**
+
+### Yazım kuralı — bu bölümde bağlayıcı
+
+İsmin matematiksel çağrışımı **bir şekil bilgisi olarak anlatılmaz.**
+Aşağıdaki ifadeler ve varyantları hiçbir kullanıcıya görünen metinde
+kullanılmaz:
+
+- "Sekiz yan yattığında sonsuzluk işaretidir"
+- "8 yan yatınca…", "8'i yan çevirince…"
+- "8 aslında sonsuzluk işaretidir", "sonsuzluk sembolüne dönüşür"
+
+Amaç okuyucuya geometri öğretmek değil; ismin çağrışımını eğitim
+felsefesine çevirmek. Kurulacak bağ şu: **matematik → sonsuzluk →
+süreklilik → öğrenme → gelişim.**
+
+**"Öğrenmenin sonu yok." tek başına bırakılmaz.** Marka cümlesi olarak
+kullanılabilir, ama geçtiği her yerde öncesinde ya da sonrasında
+matematiksel ve pedagojik kimlikle bağı kurulur. Tanıtım sayfasında bağ
+"Neden SEKİZ" bölümünün tamamı; kapanışta cümlenin hemen altındaki
+satır ("Her cevap, bir sonraki sorunun başlangıcı").
+
+Klişelerden kaçınılır: "ufukların ötesi", "sınırsız yolculuk", "sonsuz
+keşifler evreni" gibi ifadeler kullanılmaz. Şiirsel olmaya çalışırken
+yapaylaşmak, hiç denememekten kötüdür.
+
+### İşaretin kendisi — uygulama notu
+
+Bu bölüm geliştirici içindir, kullanıcıya görünen metin değildir.
+
+Üst üste binmiş iki halka dikeyken **8**, 90° döndürülünce **∞**. Tek
+şekil, iki anlam; fikir dekoratif değil geometrik olarak gerçek — işaretin
+işe yaramasının sebebi bu. Ama **işaret bunu göstererek anlatır, metin
+açıklayarak değil.**
 
 **Kullanım yeri bilinçli olarak sınırlı** (Kural 12): uygulama açılışı, ödev
 teslim başarısı, ilerleme tamamlanması, tanıtım sayfası. Başka hiçbir yerde
