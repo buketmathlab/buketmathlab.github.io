@@ -63,26 +63,32 @@ begin
   -- ---------------------------------------------------------------------------
   foreach jeton in array array[jo, jv] loop
     for r in
-      -- MATERIALIZED ŞART — ve sebebi ölçülerek bulundu.
+      -- BEYAZ LİSTE — GÖVDE METNİNE GÖRE SEÇMİYORUZ.
       --
-      -- `pg_get_functiondef` doğrudan WHERE'e yazılınca sorgu
-      -- «"array_agg" is an aggregate function» diye patlıyordu. Oysa bu
-      -- sorguda array_agg geçmiyor: planlayıcı yüklemi `nspname='public'`
-      -- süzgecinden ÖNCE çalıştırıp pg_catalog'daki toplam fonksiyonlara
-      -- çarpıyor. SQL'de yüklem sırası garanti değildir; "güvenli" bir
-      -- süzgeç güvensiz bir çağrıyı korumaz. MATERIALIZED o sırayı
-      -- zorluyor: gövde okuma yalnız public'teki uçlarda çalışıyor.
-      with hedef as materialized (
-        select p.oid, p.proname, p.proargtypes::oid[] as argtipleri
-          from pg_proc p
-          join pg_namespace n on n.oid = p.pronamespace
-         where n.nspname = 'public'
-           and has_function_privilege('anon', p.oid, 'execute')
-      )
-      select h.proname, h.argtipleri
-        from hedef h
-       where pg_get_functiondef(h.oid) ~ '_ogretmen\('
-       order by h.proname
+      -- İlk sürüm uçları "gövdesinde `_ogretmen(` geçiyor mu" diye
+      -- seçiyordu ve bunun KÖR NOKTASI geri alma kanıtında ortaya çıktı:
+      -- bir ucun rol şartını silince o uç testin KAPSAMINDAN DA ÇIKIYOR,
+      -- yani denetim tam da korumak istediği durumda susuyordu.
+      --
+      -- Mantık tersine çevrildi: anon'a açık HER uç, aşağıdaki listede
+      -- değilse öğrenci/veli jetonunu reddetmek ZORUNDA. Liste öğrenci ve
+      -- velinin meşru olarak kullandığı uçlar; yeni bir uç eklendiğinde
+      -- varsayılan "reddetmeli" oluyor ve listeyi genişletmek bilinçli bir
+      -- karar gerektiriyor.
+      select p.proname, p.proargtypes::oid[] as argtipleri
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and has_function_privilege('anon', p.oid, 'execute')
+         and p.proname not in (
+               -- öğrenci/velinin kendi uçları
+               'dosya_erisim_izni', 'kendi_karnem', 'mesaj_gonder',
+               'odev_gonder', 'ogrenci_mesajlari', 'ogrenci_odevleri',
+               'okundu_isaretle', 'veli_paneli',
+               -- rol şartı taşımayan üçlü (1c ayrıca sayıyor)
+               'giris', 'cikis', 'pin_ayarla'
+             )
+       order by p.proname
     loop
       select array_agg('null::' || format_type(t, null) order by i)
         into tipler
@@ -117,7 +123,7 @@ begin
   if sayac < 60 then
     raise exception '1a şüpheli: yalnız % çağrı yapıldı, uç sayısı beklenenden az', sayac;
   end if;
-  raise notice '1a OK — % çağrı (37 uç × 2 rol), hepsi 42501 ile reddedildi', sayac;
+  raise notice '1a OK — % çağrı (beyaz liste dışı her uç × 2 rol), hepsi 42501', sayac;
 
   -- ---------------------------------------------------------------------------
   -- 1b — GEÇERSİZ JETON. Uydurma bir jetonla hiçbir uç açılmamalı.
@@ -622,9 +628,17 @@ begin
   --      Yukarıda 8 hatalı deneme yapıldı ve HEPSİ AYNI IP'den (testte
   --      kimlik sabit). Eski davranışta B de kilitlenirdi.
   -- ---------------------------------------------------------------------------
-  sonuc := public.giris(kodB);
+  -- ÇAĞRI SARMALANIYOR: kilit devredeyse `giris` 53400 fırlatıyor ve
+  -- sarmalanmazsa o ham hata kaçıp testin adını söylemeden süiti
+  -- düşürüyordu (geri alma kanıtında ölçüldü).
+  begin
+    sonuc := public.giris(kodB);
+  exception when others then
+    get stacked diagnostics v_kod = returned_sqlstate;
+    raise exception '4c BAŞARISIZ — A''nın hatalı denemeleri B''yi kilitledi (sqlstate %)', v_kod;
+  end;
   if sonuc->>'rol' <> 'ogrenci' then
-    raise exception '4c BAŞARISIZ — A''nın hatalı denemeleri B''yi kilitledi: %', sonuc;
+    raise exception '4c BAŞARISIZ — B giriş yapamadı: %', sonuc;
   end if;
   raise notice '4c OK — bir kodun kilitlenmesi aynı ağdaki diğer öğrenciyi etkilemiyor';
 
