@@ -410,6 +410,7 @@ declare
     '😀🧮 emoji ve ünicode ĞÜŞİÖÇ'
   ];
   v_kod text;
+  v_mesaj text;
   n integer;
 begin
   update public.ayarlar
@@ -486,16 +487,26 @@ begin
   -- ---------------------------------------------------------------------------
   -- 3d — BOŞ VE YALNIZ BOŞLUKTAN OLUŞAN MESAJ REDDEDİLİYOR.
   -- ---------------------------------------------------------------------------
+  -- SQLSTATE'İ DE ÖLÇÜYORUZ, "herhangi bir hata"yı değil.
+  --
+  -- İlk sürüm yalnız "hata verdi mi" diye bakıyordu ve bu KÖRDÜ: uç
+  -- denetimi geri alındığında şema kısıtı devreye girip 23514 fırlatıyor,
+  -- test yine geçiyordu. Oysa ikisi aynı şey değil — 22023 öğrenciye
+  -- "Mesaj boş olamaz." diye Türkçe dönüyor, 23514 ham kısıt ihlali.
+  -- Öğrencinin gördüğü şey birincisi.
   foreach yuk in array array['', '   ', E'\t\n  '] loop
     begin
       perform public.mesaj_gonder(jo, yuk, null, 'ogrenci');
       raise exception '3d BAŞARISIZ — boş mesaj kabul edildi: [%]', yuk;
     exception when others then
-      get stacked diagnostics v_kod = returned_sqlstate;
+      get stacked diagnostics v_kod = returned_sqlstate, v_mesaj = message_text;
       if v_kod = 'P0001' and sqlerrm like '%3d BAŞARISIZ%' then raise; end if;
+      if v_kod <> '22023' or v_mesaj <> 'Mesaj boş olamaz.' then
+        raise exception '3d BAŞARISIZ — uç denetimi devrede değil. Beklenen 22023/"Mesaj boş olamaz.", gelen %/"%"', v_kod, v_mesaj;
+      end if;
     end;
   end loop;
-  raise notice '3d OK — boş ve yalnız boşluklu mesaj reddediliyor';
+  raise notice '3d OK — uç denetimi boş mesajı 22023 ve Türkçe mesajla reddediyor';
 
   -- ---------------------------------------------------------------------------
   -- 3e — YÜK VELİ KANALINA SIZMIYOR. 0025'in kanal sınırı saldırgan
