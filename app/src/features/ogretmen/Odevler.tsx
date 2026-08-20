@@ -190,7 +190,20 @@ export function Odevler() {
                     {o.baslik}
                   </button>
                   <p className="text-[13px] text-muted">
-                    {o.sinif} · {o.tur === 'test' ? 'Test' : 'Açık uçlu'}
+                    {o.sinif}
+                    {/* KARDEŞ İŞARETİ (0030). Aynı gruptaki ödevler AYRI
+                        satırlar olarak duruyor — her birinin kendi gönderim
+                        sayısı ve kendi ortalaması var, katlamak onları
+                        gizlerdi. Bu işaret yalnız "bu ödev yalnız bu sınıfa
+                        özel değil" diyor. */}
+                    {o.kardesler && o.kardesler.length > 0 && (
+                      <span title={[o.sinif, ...o.kardesler].join(', ')}>
+                        {' · +'}
+                        <span className="sk-sayi">{o.kardesler.length}</span> sınıf
+                      </span>
+                    )}
+                    {' · '}
+                    {o.tur === 'test' ? 'Test' : 'Açık uçlu'}
                     {o.soru_sayisi !== null && (
                       <>
                         {' · '}

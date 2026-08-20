@@ -139,6 +139,10 @@ echo "==> Genel ortalama testleri (0029)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/genel_ortalama_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Çoklu sınıf ödevi testleri (0030)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/coklu_sinif_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Faz 11 güvenlik denetimi"
 psql_ -d "$DB" -f "$KOK/supabase/testler/guvenlik_denetimi.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

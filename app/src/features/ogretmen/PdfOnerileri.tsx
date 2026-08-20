@@ -6,7 +6,13 @@ type Props = {
   ozet: PdfOzeti;
   /** Öğretmenin şu an girdiği soru sayısı — üzerine YAZILMAZ, karşılaştırılır. */
   mevcutSoruSayisi: number;
-  mevcutSinifId: string;
+  /**
+   * Şu an seçili sınıf(lar). 0030'dan beri ödev oluştururken birden çok sınıf
+   * seçilebiliyor; düzenleme ekranında hâlâ tek. Bileşen yalnız "önerilen
+   * sınıf zaten seçili mi?" diye soruyor — ekleme mi değiştirme mi olacağına
+   * ÇAĞIRAN karar veriyor.
+   */
+  secililer: readonly string[];
   siniflar: readonly Sinif[];
   onSoruSayisi: (n: number) => void;
   onKonu: (konu: string) => void;
@@ -33,7 +39,7 @@ type Props = {
 export function PdfOnerileri({
   ozet,
   mevcutSoruSayisi,
-  mevcutSinifId,
+  secililer,
   siniflar,
   onSoruSayisi,
   onKonu,
@@ -42,7 +48,7 @@ export function PdfOnerileri({
   if (ozetBos(ozet)) return null;
 
   const eslesenSinif = ozet.sinif ? siniflar.find((s) => s.ad === ozet.sinif) : undefined;
-  const sinifFarkli = eslesenSinif !== undefined && eslesenSinif.id !== mevcutSinifId;
+  const sinifFarkli = eslesenSinif !== undefined && !secililer.includes(eslesenSinif.id);
   const sayiFarkli = ozet.soruSayisi !== null && ozet.soruSayisi !== mevcutSoruSayisi;
   const celiski = ozet.soruSayisiKaynak === 'celiskili';
 
@@ -138,7 +144,7 @@ export function PdfOnerileri({
           <li className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-[14px] text-ink">
               Sınıf: <span className="font-semibold">{eslesenSinif.ad}</span>
-              {!sinifFarkli && <span className="text-muted"> — seçtiğinizle aynı</span>}
+              {!sinifFarkli && <span className="text-muted"> — zaten seçili</span>}
             </span>
             {sinifFarkli && (
               <Button tur="sade" olcu="sm" onClick={() => onSinif(eslesenSinif.id)}>

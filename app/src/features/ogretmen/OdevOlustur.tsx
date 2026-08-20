@@ -19,7 +19,7 @@ import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { SikSayisiSecimi } from './SikSayisiSecimi';
 import { sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
 import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
-import type { Sinif } from '@/types/api';
+import type { CokluOdevSonucu, Sinif } from '@/types/api';
 
 type Adim = 1 | 2 | 3;
 
@@ -49,7 +49,9 @@ export function OdevOlustur() {
   // 1. adım
   const [baslik, setBaslik] = useState('');
   const [aciklama, setAciklama] = useState('');
-  const [sinifId, setSinifId] = useState('');
+  // ÇOKLU SINIF (0030). Aynı ödevi 9A, 9B ve 9C'ye vermek için akıştan üç kez
+  // geçmek gerekiyordu; PDF'ler de üç kez yükleniyordu. Artık seçim bir küme.
+  const [sinifIdler, setSinifIdler] = useState<string[]>([]);
   const [tur, setTur] = useState<'test' | 'acik'>('test');
   const [sonTarih, setSonTarih] = useState('');
   const [soruSayisi, setSoruSayisi] = useState('20');
@@ -89,7 +91,7 @@ export function OdevOlustur() {
 
   function ilerle() {
     if (!baslik.trim()) return setFormHatasi('Ödeve bir başlık yazın.');
-    if (!sinifId) return setFormHatasi('Sınıf seçin.');
+    if (sinifIdler.length === 0) return setFormHatasi('En az bir sınıf seçin.');
     if (!sonTarih) return setFormHatasi('Son tarih seçin.');
     if (tur === 'test' && (n < 1 || n > 200)) {
       return setFormHatasi('Soru sayısı 1 ile 200 arasında olmalı.');
@@ -153,6 +155,12 @@ export function OdevOlustur() {
   async function taslagiKaydet() {
     setKaydediyor(true);
     try {
+      // PDF'LER BİR KEZ YÜKLENİYOR — kaç sınıf seçilmiş olursa olsun.
+      // Dosya yolu ödevin id'sinden bağımsız üretiliyor (`odevDosyaYolu`),
+      // dolayısıyla kopyalar aynı yolu paylaşabiliyor. Anahtarın paylaşılması
+      // Kural 6'yı delmiyor: `dosya_erisim_izni` öğrenciye erişimi KENDİ
+      // gönderimi üzerinden veriyor ve `coklu_sinif_testleri.sql` 7. grubu
+      // başka sınıfın teslimiyle anahtarın açılmadığını ayrıca ölçüyor.
       let odevYolu: string | null = null;
       let anahtarYolu: string | null = null;
 
@@ -165,11 +173,10 @@ export function OdevOlustur() {
         anahtarYolu = await dosyaYukle(anahtarPdf, odevDosyaYolu('anahtar', anahtarPdf.name));
       }
 
-      await rpc('odev_olustur', {
+      const ortak = {
         p_token: oturum?.token,
         p_baslik: baslik.trim(),
         p_aciklama: aciklama.trim() || null,
-        p_sinif_id: sinifId,
         p_tur: tur,
         p_son_tarih: sonTarih,
         p_soru_sayisi: tur === 'test' ? n : null,
@@ -181,9 +188,38 @@ export function OdevOlustur() {
         // Açık uçlu ödevde konu analizi yapılamaz: anahtar yok, hangi sorunun
         // yanlış olduğu bilinmiyor. Konu alanı da o yüzden yalnız testte var.
         p_konular: tur === 'test' ? sunucuyaHazirla(konular, n) : null,
-      });
+      };
 
-      bildir('Ödev taslak olarak kaydedildi', 'basari');
+      try {
+        const sonuc = await rpc<CokluOdevSonucu>('odevler_coklu_olustur', {
+          ...ortak,
+          p_sinif_idler: sinifIdler,
+        });
+        const adlar = sonuc.odevler.map((o) => o.sinif).join(', ');
+        bildir(
+          sonuc.odevler.length === 1
+            ? 'Ödev taslak olarak kaydedildi'
+            : `${sonuc.odevler.length} ödev taslak olarak kaydedildi (${adlar})`,
+          'basari',
+        );
+      } catch (e) {
+        // 0030 PANELDE HENÜZ ÇALIŞTIRILMADIYSA. PostgREST'in cevabı İngilizce
+        // ve teknik; ekranı bozmak yerine tek sınıflık eski yola düşüyoruz —
+        // ödev oluşturmak, yeni bir SQL dosyasının çalıştırılmasına bağlı
+        // olmamalı (Part VIII: yedek davranış).
+        const ucYok =
+          e instanceof Error && /could not find the function|schema cache/i.test(e.message);
+        if (!ucYok) throw e;
+        if (sinifIdler.length > 1) {
+          throw new Error(
+            'Birden çok sınıfa ödev verme bu sistemde henüz açılmadı. ' +
+              'Tek sınıf seçerek kaydedebilirsiniz.',
+          );
+        }
+        await rpc('odev_olustur', { ...ortak, p_sinif_id: sinifIdler[0] });
+        bildir('Ödev taslak olarak kaydedildi', 'basari');
+      }
+
       git('/ogretmen/odevler');
     } catch (e) {
       bildir(e instanceof Error ? e.message : 'Ödev kaydedilemedi.', 'hata');
@@ -259,34 +295,69 @@ export function OdevOlustur() {
               )}
             </Field>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="flex-1">
-                <Field etiket="Sınıf" zorunlu>
-                  {(k) => (
-                    <Select {...k} value={sinifId} onChange={(e) => setSinifId(e.target.value)}>
-                      <option value="">Seçin…</option>
-                      {siniflar?.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.ad}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                </Field>
+            {/* SINIFLAR — ONAY KUTUSU, `select multiple` DEĞİL.
+                Çoklu `select` dokunmatikte kullanılamaz: seçimi korumak için
+                ctrl/cmd basılı tutmak gerekiyor ve telefonda öyle bir tuş yok.
+                Kutular ayrıca kaç sınıfın seçili olduğunu tek bakışta veriyor. */}
+            <fieldset className="mb-4">
+              <legend className="mb-1 block text-[14px] font-medium text-ink">
+                Sınıflar <span aria-hidden="true">*</span>
+              </legend>
+              <p className="mb-2 text-[13px] text-muted">
+                Birden çok sınıf seçebilirsiniz; her sınıf için ayrı bir ödev oluşur.
+                PDF’ler bir kez yüklenir.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {siniflar?.map((s) => {
+                  const secili = sinifIdler.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className={
+                        'flex min-h-[44px] cursor-pointer items-center gap-2 rounded-sk-sm border px-3 ' +
+                        'text-[15px] focus-within:outline focus-within:outline-2 ' +
+                        'focus-within:outline-offset-2 focus-within:outline-ink ' +
+                        (secili
+                          ? 'border-ink bg-ink font-semibold text-paper'
+                          : 'border-line text-ink')
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={secili}
+                        onChange={() =>
+                          setSinifIdler((y) =>
+                            y.includes(s.id) ? y.filter((x) => x !== s.id) : [...y, s.id],
+                          )
+                        }
+                      />
+                      {/* Seçim rengin YANINDA yazıyla da veriliyor: renk tek
+                          başına bilgi taşımamalı. */}
+                      <span aria-hidden="true">{secili ? '✓' : '+'}</span>
+                      <span>{s.ad}</span>
+                    </label>
+                  );
+                })}
               </div>
-              <div className="flex-1">
-                <Field etiket="Son tarih" zorunlu>
-                  {(k) => (
-                    <Input
-                      {...k}
-                      type="date"
-                      value={sonTarih}
-                      onChange={(e) => setSonTarih(e.target.value)}
-                    />
-                  )}
-                </Field>
-              </div>
-            </div>
+              {sinifIdler.length > 1 && (
+                <p className="mt-2 text-[13px] text-muted">
+                  <span className="sk-sayi">{sinifIdler.length}</span> sınıf seçildi — her
+                  birinin gönderimleri ve karnesi ayrı tutulur.
+                </p>
+              )}
+            </fieldset>
+
+            <Field etiket="Son tarih" zorunlu>
+              {(k) => (
+                <Input
+                  {...k}
+                  type="date"
+                  value={sonTarih}
+                  onChange={(e) => setSonTarih(e.target.value)}
+                />
+              )}
+            </Field>
 
             <Field etiket="Tür" ipucu="Testte puanı sistem hesaplar; açık uçluda siz verirsiniz.">
               {(k) => (
@@ -362,11 +433,14 @@ export function OdevOlustur() {
             <PdfOnerileri
               ozet={pdfOzet}
               mevcutSoruSayisi={n}
-              mevcutSinifId={sinifId}
+              secililer={sinifIdler}
               siniflar={siniflar ?? []}
               onSoruSayisi={(x) => setSoruSayisi(String(x))}
               onKonu={setOnerilenKonu}
-              onSinif={setSinifId}
+              // ÜZERİNE YAZMIYOR, EKLİYOR. Öğretmen 1. adımda üç şube seçmiş
+              // olabilir; PDF'ten okunan tek sınıf o seçimi silseydi, önerinin
+              // "hiçbir şey değiştirmez" sözü bozulurdu.
+              onSinif={(id) => setSinifIdler((y) => (y.includes(id) ? y : [...y, id]))}
             />
           )}
 
@@ -456,7 +530,9 @@ export function OdevOlustur() {
               yukleniyor={kaydediyor}
               yuklenmeMetni="Kaydediliyor"
             >
-              Taslağı kaydet
+              {sinifIdler.length > 1
+                ? `${sinifIdler.length} sınıf için taslak kaydet`
+                : 'Taslağı kaydet'}
             </Button>
           </div>
         </Card>
