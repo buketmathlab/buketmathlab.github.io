@@ -237,22 +237,28 @@ console.log('\n5. Metindeki iddialar');
   await sayfa.goto(TANITIM, { waitUntil: 'networkidle' });
   const metin = (await sayfa.locator('body').innerText()).replace(/\s+/g, ' ');
 
-  // BULUNMASI GEREKENLER — ürünün gerçek sınırları okuyucuya söyleniyor mu.
+  /* BULUNMASI GEREKENLER — ürünün gerçek sınırları metinde duruyor mu.
+   * Cümleler öğretmenin nihai editoryal metninden; metin değişirse
+   * buradaki desenler de değişmeli (aynı cümleyi iki yerde tutmak
+   * yerine, denetim metnin kendisini okuyor). */
   bak(
-    'AI puanlama YAPILMADIĞI açıkça yazıyor',
-    /Hiçbir ödevi yapay zekâ değerlendirmiyor/.test(metin),
+    'değerlendirmenin öğretmende olduğu yazıyor',
+    /son değerlendirme öğretmen tarafından yapılır/.test(metin),
   );
   bak(
-    'Açık uçlu puanı öğretmenin verdiği yazıyor',
-    /Açık uçlu ödevlerde puanı öğretmen veriyor/.test(metin),
+    'pedagojik değerlendirmenin öğretmende kaldığı yazıyor',
+    /pedagojik değerlendirme öğretmende kalır/.test(metin),
   );
-  bak('Veliye cevap anahtarı gitmediği yazıyor', /cevap anahtarı hiçbir koşulda/.test(metin));
-  bak('Ekran görüntülerinin uydurma olduğu yazıyor', /uydurmadır/.test(metin));
+  bak(
+    'anahtarın teslimden önce açılmadığı yazıyor',
+    /teslim etmeden cevap anahtarına erişemez/.test(metin),
+  );
+  bak(
+    'ekran görüntülerinin uydurma olduğu yazıyor',
+    /adlar ve puanlar uydurmadır/.test(metin),
+  );
 
-  // BULUNMAMASI GEREKENLER — bugün YAPILMAYAN şeyler.
-  // Ürün çevrimdışı çalışmıyor, bildirim göndermiyor, konu önerisi için
-  // yapay zekâ kullanmıyor. Bunları vaat eden bir cümle sayfaya bir gün
-  // eklenirse burada kırılsın.
+  /* BULUNMAMASI GEREKENLER — bugün YAPILMAYAN şeyler. */
   const yasakli = [
     ['çevrimdışı', /çevrimdışı/i],
     ['bildirim gönderme vaadi', /bildirim gönder/i],
@@ -264,11 +270,10 @@ console.log('\n5. Metindeki iddialar');
   }
 
   /* -------------------------------------------------------------------
-   * MARKA FELSEFESİ — öğretmenin yazım kuralı
+   * EDİTORYAL KURALLAR — öğretmenin brief'inde AÇIKÇA yasakladıkları.
    *
-   * İsmin matematiksel çağrışımı bir ŞEKİL BİLGİSİ olarak anlatılmayacak.
-   * Kural `docs/tasarim-sistemi.md`'de yazılı; burada ÖLÇÜLÜYOR — yazılı
-   * ama ölçülmeyen bir kural, ilk aceleci düzenlemede geri gelir.
+   * Yazılı ama ölçülmeyen bir kural, ilk aceleci düzenlemede geri gelir.
+   * Üçü de brief'te "kesinlikle kullanma" diye geçiyor.
    * ----------------------------------------------------------------- */
   const yasakliMarka = [
     ['yan yat', /yan yat/i],
@@ -278,23 +283,28 @@ console.log('\n5. Metindeki iddialar');
     ['ufukların ötesi', /ufuk(ların|un) ötesi/i],
     ['sınırsız yolculuk', /sınırsız yolculuk/i],
     ['sonsuz keşifler', /sonsuz keşif/i],
+    // "Veli süreci görür, öğrencinin yerine geçmez." — brief: KULLANMA.
+    ['velinin yerine geçmez kalıbı', /yerine geçmez/i],
+    // Negatif Ewalu paragrafı — brief: yazma.
+    ['negatif Ewalu kalıbı', /Ewalu (ödev değerlendirmez|puan vermez|karar vermez)/i],
   ];
   for (const [ad, kalip] of yasakliMarka) {
-    bak(`marka: "${ad}" geçmiyor`, !kalip.test(metin));
+    bak(`editoryal: "${ad}" geçmiyor`, !kalip.test(metin));
   }
 
-  // Manifesto duruyor mu: zincirin iki ucu (matematik ve öğrenme).
-  bak(
-    'marka: sonsuzluk matematiksel olarak kuruluyor',
-    /Matematikte sonsuzluk bir sayı değil, bir yöndür/.test(metin),
-  );
-  bak('marka: "Neden SEKİZ" bölümü var', /Neden SEKİZ/.test(metin));
-
-  // Marka cümlesi TEK BAŞINA değil: hemen ardından bağlayan satır geliyor.
+  /* MARKA CÜMLESİ ve onu kuran bölüm. Brief bu turda kuralı gevşetti:
+   * "Öğrenmenin sonu yok." artık TEK BAŞINA da güçlü bir marka cümlesi
+   * olarak kullanılabiliyor. Bu yüzden eski "yanında bağlayıcı satır
+   * olmalı" ölçümü kaldırıldı — artık yanlış şeyi ölçüyordu.
+   * Yerine ölçülen: cümle sayfada var ve onu kuran felsefe bölümü de var. */
   bak('marka cümlesi var', /Öğrenmenin sonu yok\./.test(metin));
   bak(
-    'marka cümlesi tek başına DEĞİL',
-    /Öğrenmenin sonu yok\.\s*Her cevap, bir sonraki sorunun başlangıcı\./.test(metin),
+    'sonsuzluk fikri eğitim felsefesine bağlanıyor',
+    /SEKİZ, sonsuzluk fikrinden ilham alır/.test(metin),
+  );
+  bak(
+    'öğrenmenin süreç olduğu yazıyor',
+    /Öğrenme bir sonuç değil, devam eden bir süreçtir/.test(metin),
   );
 
   await sayfa.close();

@@ -64,6 +64,17 @@ export function VeliKarne() {
                 <p className="text-[15px] text-ink">{soz.veli}</p>
               </Card>
 
+              {/* GENEL ORTALAMA (0029). Öğrencinin ekranındakiyle AYNI
+                  sayı, aynı uçtan — iki yerde iki farklı ortalama
+                  çıkması en olası hataydı ve testi ayrıca var.
+                  Sınıf ortalaması burada da yok. */}
+              {(veri.genel_ortalama ?? null) !== null && (
+                <p className="mb-2 text-[15px] text-ink">
+                  Genel ortalaması{' '}
+                  <span className="sk-sayi font-bold">{veri.genel_ortalama}</span>
+                </p>
+              )}
+
               <p className="mb-3 text-[13px] text-muted">
                 <span className="sk-sayi">{veri.odev_sayisi}</span> değerlendirilmiş ödev
                 üzerinden.

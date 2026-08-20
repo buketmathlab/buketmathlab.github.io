@@ -919,3 +919,38 @@ bağlantısı. Öğretmenin belirlediği sekiz maddelik sıraya eklenen dokuzunc
 öğe ve bilerek en altta — her gün giriş yapan öğrencinin önüne çıkmıyor.
 Denetim bunu sınıf adıyla değil, bağlantının form kutusundan **aşağıda**
 olduğunu ölçerek doğruluyor.
+
+## Genel ortalama (0029)
+
+Tanıtım sayfasının nihai metni iki yerde "genel ortalamasını takip
+edebilir" diyordu. **Ölçüldü: böyle bir ekran yoktu.** `kendi_karnem`
+yalnız konu dökümü ve ödev ödev değerler döndürüyordu.
+
+Öğretmenin kararı: metne dokunma, eksik özelliği yap. 0029 `kendi_karnem`
+ve `veli_paneli` gövdelerine tek alan ekliyor: `genel_ortalama`.
+
+**Kapsam dar ve bilinçli — yalnız çocuğun KENDİ ortalaması.** Sınıf
+ortalaması, sıralama ve başka öğrencinin verisi bu iki uçtan hâlâ
+çıkmıyor; 0026'daki karar değişmedi.
+
+`round(avg(coalesce(ogretmen_puan, puan)), 1)` — arayüzdeki ve
+`sinif_ogrencileri`'ndeki hesabın aynısı. **Gönderilmeyen ödev 0 olarak
+girmiyor:** puanlanmamış bir işi ortalamaya sıfırla katmak, öğrenciyi
+yapmadığı bir sınavdan kalmış gibi gösterirdi. Pencere
+`kendi_karnem.odev_sayisi` ile aynı (yayında + süresi dolmuş), yani
+ekrandaki "N değerlendirilmiş ödev üzerinden" satırıyla aynı şeyden söz
+ediyor. Değerlendirilmiş gönderim yoksa `null` ve satır hiç çizilmiyor.
+
+**Gövdeler ezberden yazılmadı.** 0016'da `create or replace` için gövdeyi
+yeniden yazmak iki hataya yol açmıştı; 0029 gövdeleri kaynak
+migration'lardan birebir kopyalayan bir betikle üretildi ve diff'i
+ölçüldü: **sıfır satır silinmiş**, yalnız 29'ar satır eklenmiş.
+
+### 0026'nın denetimi daraltıldı, gevşetilmedi
+
+`kendi_karnem_testleri.sql` 3c "ortalama" alt dizesini toptan
+yasaklıyordu ve 0029 eklenince tetikledi. Denetim haklıydı ama ölçtüğü
+şey niyetinden genişti: yasaklanan **kıyas**tır, çocuğun kendi ortalaması
+değil. İzinli tek anahtar metinden çıkarılıp kalan her "ortalama" hâlâ
+yakalanıyor — `sinif_ortalama`, `ortalama_tum`, `ortalama_yapan` ve
+`siralama` için tek tek ölçülerek doğrulandı.

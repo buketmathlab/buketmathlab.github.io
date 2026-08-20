@@ -310,6 +310,16 @@ export type KonuKarnesi = {
 export type KendiKarnem = {
   kapsam: { ad: string; sinif: string | null };
   odev_sayisi: number;
+  /**
+   * Çocuğun KENDİ genel ortalaması (0029). Sınıf ortalaması değil — o
+   * bu uçtan hiç gelmiyor ve gelmeyecek.
+   *
+   * `null` olabilir: değerlendirilmiş gönderim yoksa sunucu ortalama
+   * üretmiyor, uydurma bir 0 göndermiyor. Alan optional DEĞİL ama
+   * nullable — 0029 panelde çalıştırılmadıysa alan hiç gelmez ve
+   * ekran `?? null` ile sessizce ortalamasız çalışır.
+   */
+  genel_ortalama: number | null;
   konular: KonuAnalizi[];
   gelisim: GelisimSatiri[];
 };
@@ -434,6 +444,13 @@ export type VeliOdevi = {
 
 export type VeliPaneli = {
   ogrenci: { ad: string; sinif: string | null; tur: 'okul' | 'ozel' };
+  /**
+   * Çocuğun kendi genel ortalaması (0029) — `kendi_karnem` ile AYNI
+   * sayı, aynı ölçütten. İki uçtan iki farklı ortalama çıkması en olası
+   * hataydı; `genel_ortalama_testleri.sql` 3. grubu ikisinin eşit
+   * olduğunu ayrıca ölçüyor.
+   */
+  genel_ortalama: number | null;
   odevler: VeliOdevi[];
   mesajlar: Mesaj[];
   odemeler: Array<{ tutar: number; tarih: string; odendi: boolean }>;

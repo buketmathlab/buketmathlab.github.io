@@ -75,6 +75,20 @@ export function OgrenciKarnem() {
               {/* KAÇ ÖDEV ÜZERİNDEN konuşuyoruz. Bu sayı olmadan iki konu
                   arasındaki fark yorumlanamaz — tek soruluk bir konunun ne
                   kadar zayıf bir kanıt olduğu ancak böyle görülür. */}
+              {/* GENEL ORTALAMA (0029) — SENİN ORTALAMAN, SINIFIN DEĞİL.
+                  Yanına sınıf ortalaması ya da sıralama KONULMUYOR ve
+                  sunucudan da gelmiyor; çocuk kendi gidişatını görüyor.
+
+                  `?? null` savunması bilerek: 0029 panelde henüz
+                  çalıştırılmadıysa alan hiç gelmez ve satır sessizce
+                  çizilmez — ekran bozulmaz. */}
+              {(veri.genel_ortalama ?? null) !== null && (
+                <p className="mb-2 text-[15px] text-ink">
+                  Genel ortalaman{' '}
+                  <span className="sk-sayi font-bold">{veri.genel_ortalama}</span>
+                </p>
+              )}
+
               <p className="mb-3 text-[13px] text-muted">
                 <span className="sk-sayi">{veri.odev_sayisi}</span> değerlendirilmiş ödev
                 üzerinden.
