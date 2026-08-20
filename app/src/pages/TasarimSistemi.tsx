@@ -187,7 +187,12 @@ export function TasarimSistemi() {
         aciklama="Fraunces başlıklarda, Manrope arayüzde. İkisi de Türkçe diakritiklerin tamamını taşıyor. Google Fonts CDN yerine self-host: hem daha hızlı hem ziyaretçi IP'si üçüncü tarafa gitmiyor."
       >
         <Card>
-          <p className="font-display text-[38px] leading-tight">Öğrenmenin sonu yok</p>
+          {/* FONT ÖRNEĞİ — marka cümlesi DEĞİL. Burada eskiden
+              "Öğrenmenin sonu yok" yazıyordu; o cümle artık yalnız
+              bağlamıyla birlikte kullanılıyor (tanıtım sayfası, kapanış),
+              tek başına bir yazı tipi örneği olarak değil. Örnek metin
+              Türkçe diakritiklerin tamamını taşımayı sürdürüyor. */}
+          <p className="font-display text-[38px] leading-tight">Öğrenci, ödev, gelişim</p>
           <p className="mt-1 text-[15px] text-muted">
             Manrope · gövde metni. Ödevini görürsün, çözersin, gönderirsin.
           </p>

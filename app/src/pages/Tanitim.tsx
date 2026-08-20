@@ -42,6 +42,7 @@ export function Tanitim() {
       <UstCubuk />
       <main id="icerik">
         <Acilis />
+        <Manifesto />
         <Ogrenciye />
         <Ogretmene />
         <Veliye />
@@ -173,10 +174,9 @@ function Acilis() {
           Matematik ödevleri; verilmesi, yapılması ve takibi tek yerde.
         </p>
 
-        {/* Marka fikri bir kez söyleniyor ve bırakılıyor. */}
-        <p className="mx-auto mt-3 max-w-[30rem] text-[16px] text-muted">
-          Sekiz, yan yattığında sonsuzluk işaretidir. Öğrenmenin sonu yok.
-        </p>
+        {/* MARKA FİKRİ BURADA AÇIKLANMIYOR — bir sonraki bölümün işi bu.
+            Açılışta tek cümleyle geçiştirmek, ismin arkasındaki düşünceyi
+            bir şekil bilgisine indirger. */}
 
         <p className="mt-8 text-[14px] text-muted">
           Arnavutköy Korkmaz Yiğit Anadolu Lisesi · Matematik
@@ -210,13 +210,64 @@ function SekizgenDoku() {
 }
 
 /* ============================================================
-   02 — ÖĞRENCİ
+   02 — NEDEN SEKİZ (marka manifestosu)
+   ============================================================ */
+
+/**
+ * SEKİZ'in NE YAPTIĞINI değil, NEDEN VAR OLDUĞUNU anlatan bölüm.
+ * Öğretmenin brief'i üzerine yazıldı ve iki kesin kuralı var.
+ *
+ * 1. İSMİN MATEMATİKSEL ÇAĞRIŞIMI BİR ŞEKİL BİLGİSİ DEĞİL.
+ *    "Sekiz yan yattığında sonsuzluk işaretidir" cümlesi — ve
+ *    "yan çevirince", "sonsuzluk sembolüne dönüşür" gibi bütün
+ *    varyantları — KULLANILMAYACAK. Okuyucuya geometri anlatmıyoruz;
+ *    ismin çağrışımını eğitim felsefesine çeviriyoruz. İşaretin kendisi
+ *    zaten sayfada dönüyor; anlatılması gereken şey dönüşün ne demek
+ *    olduğu, nasıl olduğu değil.
+ *
+ * 2. "Öğrenmenin sonu yok." TEK BAŞINA BIRAKILMAYACAK. Marka cümlesi
+ *    olarak kalıyor ama her geçtiği yerde matematiksel ve pedagojik
+ *    kimlikle bağı kurulmuş olacak — burada bölümün tamamı o bağ,
+ *    kapanışta ise cümlenin hemen yanındaki satır.
+ *
+ * Kurulan zincir: matematik → sonsuzluk → süreklilik → öğrenme → gelişim.
+ * Son paragraf zinciri ürünün gerçekten yaptığı şeye bağlıyor (konu
+ * karnesi, puanın bir işaret olarak sunulması) — yoksa manifesto,
+ * ürünün karşılığı olmayan bir edebiyat olurdu.
+ */
+function Manifesto() {
+  return (
+    <Bolum no="02" baslik="Neden SEKİZ" zemin="yuzey">
+      <div className="mt-4 max-w-[42rem]">
+        <P>
+          <strong className="font-bold">
+            Matematikte sonsuzluk bir sayı değil, bir yöndür:
+          </strong>{' '}
+          her adımdan sonra bir adımın daha mümkün olduğunu söyler. SEKİZ adını bu
+          fikirden alıyor.
+        </P>
+        <P>
+          Bir bitişi değil, devam edebilmeyi anlatır — ve SEKİZ öğrenmeyi de tam olarak
+          böyle görür. Bir konu tamamlanmaz; anlaşıldığı anda kendinden büyük bir soruya
+          alan açar. Öğrencinin bugün kavradığı şey, yarın soracağı sorunun zeminidir.
+        </P>
+        <P>
+          Bu yüzden SEKİZ ödevi bir görev listesi gibi değil, bir gelişim çizgisi gibi ele
+          alıyor. Puan bir hüküm değil, nereye bakılacağını gösteren bir işaret.
+        </P>
+      </div>
+    </Bolum>
+  );
+}
+
+/* ============================================================
+   03 — ÖĞRENCİ
    ============================================================ */
 
 function Ogrenciye() {
   return (
     <RolBolum
-      no="02"
+      no="03"
       baslik="Öğrenci"
       dosya="ogrenci.webp"
       alt="Öğrencinin ödev listesi ekranı: bekleyen ve gönderilmiş ödevler, puanlar"
@@ -235,13 +286,13 @@ function Ogrenciye() {
 }
 
 /* ============================================================
-   03 — ÖĞRETMEN
+   04 — ÖĞRETMEN
    ============================================================ */
 
 function Ogretmene() {
   return (
     <RolBolum
-      no="03"
+      no="04"
       baslik="Öğretmen"
       zemin="yuzey"
       dosya="ogretmen.webp"
@@ -263,13 +314,13 @@ function Ogretmene() {
 }
 
 /* ============================================================
-   04 — VELİ
+   05 — VELİ
    ============================================================ */
 
 function Veliye() {
   return (
     <RolBolum
-      no="04"
+      no="05"
       baslik="Veli"
       dosya="veli.webp"
       alt="Velinin ödev listesi: gönderilen ödevler, alınan puan, yanlış yapılan soruların numaraları ve süresi yaklaşan ödev"
@@ -287,12 +338,12 @@ function Veliye() {
 }
 
 /* ============================================================
-   05 — EWALU
+   06 — EWALU
    ============================================================ */
 
 function EwaluBolumu() {
   return (
-    <Bolum no="05" baslik="Ewalu" zemin="yuzey">
+    <Bolum no="06" baslik="Ewalu" zemin="yuzey">
       <div className="mt-4 flex items-start gap-4">
         <EwaluFigure poz="karsilama" boyut={72} dekoratif className="shrink-0" />
         <div>
@@ -312,7 +363,7 @@ function EwaluBolumu() {
 }
 
 /* ============================================================
-   06 — DEĞİŞMEYEN KURALLAR
+   07 — DEĞİŞMEYEN KURALLAR
    ============================================================ */
 
 /**
@@ -371,7 +422,7 @@ function Kurallar() {
   ];
 
   return (
-    <Bolum no="06" baslik="Değişmeyen kurallar">
+    <Bolum no="07" baslik="Değişmeyen kurallar">
       <ul className="mt-5 grid gap-4 sm:grid-cols-2">
         {kurallar.map((k) => (
           <li key={k.baslik} className="rounded-sk-lg border border-line bg-surface p-5">
@@ -397,14 +448,14 @@ function Kurallar() {
 }
 
 /* ============================================================
-   07 — KİM YAPTI
+   08 — KİM YAPTI
    ============================================================ */
 
 function Kim() {
   return (
     <section className="bg-surface">
       <div className="mx-auto max-w-[42rem] px-5 py-14 text-center">
-        <p className="sk-sayi text-[12px] font-bold tracking-[0.18em] text-amber">07</p>
+        <p className="sk-sayi text-[12px] font-bold tracking-[0.18em] text-amber">08</p>
 
         {/* Mühür yalnız 96 px ve üstünde kullanılır (Faz 0 kuralı);
             küçükte halka yazısı okunmuyor. `dekoratif` değil: okulun adı
@@ -448,7 +499,15 @@ function Kapanis() {
           <Sekiz8Mark boyut={64} acilistaDonsun gecikme={200} etiket={null} />
         </div>
 
+        {/* MARKA CÜMLESİ — VE YANINDAKİ SATIR ONDAN AYRILMAZ.
+            Öğretmenin kuralı: "Öğrenmenin sonu yok." tek başına
+            bırakılmayacak. Burada hemen altındaki satır cümleyi
+            manifestoya bağlıyor; sayfanın açılışında kurulan zincirin
+            (matematik → süreklilik → öğrenme) son halkası bu. */}
         <p className="mt-6 text-[22px] leading-[1.35]">Öğrenmenin sonu yok.</p>
+        <p className="mx-auto mt-2 max-w-[26rem] text-[16px] leading-[1.5] text-paper/80">
+          Her cevap, bir sonraki sorunun başlangıcı.
+        </p>
 
         <a
           href="/yeni/"

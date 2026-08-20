@@ -263,6 +263,40 @@ console.log('\n5. Metindeki iddialar');
     bak(`"${ad}" iddiası YOK`, !kalip.test(metin));
   }
 
+  /* -------------------------------------------------------------------
+   * MARKA FELSEFESİ — öğretmenin yazım kuralı
+   *
+   * İsmin matematiksel çağrışımı bir ŞEKİL BİLGİSİ olarak anlatılmayacak.
+   * Kural `docs/tasarim-sistemi.md`'de yazılı; burada ÖLÇÜLÜYOR — yazılı
+   * ama ölçülmeyen bir kural, ilk aceleci düzenlemede geri gelir.
+   * ----------------------------------------------------------------- */
+  const yasakliMarka = [
+    ['yan yat', /yan yat/i],
+    ['yan çevir', /yan çevir/i],
+    ['sonsuzluk işareti', /sonsuzluk işaret/i],
+    ['sonsuzluk sembolü', /sonsuzluk sembol/i],
+    ['ufukların ötesi', /ufuk(ların|un) ötesi/i],
+    ['sınırsız yolculuk', /sınırsız yolculuk/i],
+    ['sonsuz keşifler', /sonsuz keşif/i],
+  ];
+  for (const [ad, kalip] of yasakliMarka) {
+    bak(`marka: "${ad}" geçmiyor`, !kalip.test(metin));
+  }
+
+  // Manifesto duruyor mu: zincirin iki ucu (matematik ve öğrenme).
+  bak(
+    'marka: sonsuzluk matematiksel olarak kuruluyor',
+    /Matematikte sonsuzluk bir sayı değil, bir yöndür/.test(metin),
+  );
+  bak('marka: "Neden SEKİZ" bölümü var', /Neden SEKİZ/.test(metin));
+
+  // Marka cümlesi TEK BAŞINA değil: hemen ardından bağlayan satır geliyor.
+  bak('marka cümlesi var', /Öğrenmenin sonu yok\./.test(metin));
+  bak(
+    'marka cümlesi tek başına DEĞİL',
+    /Öğrenmenin sonu yok\.\s*Her cevap, bir sonraki sorunun başlangıcı\./.test(metin),
+  );
+
   await sayfa.close();
 }
 
