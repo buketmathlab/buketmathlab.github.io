@@ -135,6 +135,10 @@ echo "==> PIN değiştirme testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/pin_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Faz 11 güvenlik denetimi"
+psql_ -d "$DB" -f "$KOK/supabase/testler/guvenlik_denetimi.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Anon izolasyon testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/anon_izolasyon.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
