@@ -177,8 +177,21 @@ begin
   if v::text ilike '%mevcut%' or v::text ilike '%gonderen%' then
     raise exception '3b: karnede sınıf mevcudu/gönderen sayısı geçiyor';
   end if;
-  if v::text ilike '%ortalama%' or v::text ilike '%siralama%' then
-    raise exception '3c: karnede ortalama/sıralama geçiyor';
+  -- 3c — KIYAS ORTALAMASI YOK.
+  --
+  -- 0029'a KADAR bu denetim "ortalama" alt dizesini toptan yasaklıyordu ve
+  -- 0029 eklenince tetikledi. Denetim haklıydı, ama ölçtüğü şey niyetinden
+  -- genişti: yasaklanan KIYAS'tır — sınıf ortalaması, sıralama, mevcut —
+  -- çocuğun KENDİ ortalaması değil. Öğretmen 0029'da kendi ortalamasını
+  -- açıkça istedi.
+  --
+  -- Denetim gevşetilmedi, DARALTILDI: izinli tek anahtar (`genel_ortalama`)
+  -- metinden çıkarılıyor, kalan her "ortalama" hâlâ yakalanıyor. Yani
+  -- `sinif_ortalama`, `ortalama_tum`, `ortalama_yapan` gibi bir alan bir gün
+  -- sızarsa test yine kırılır.
+  if replace(v::text, 'genel_ortalama', '') ilike '%ortalama%'
+     or v::text ilike '%siralama%' then
+    raise exception '3c: karnede KIYAS ortalaması/sıralama geçiyor';
   end if;
 
   -- Ada'nın kendi puanı 50 (4 sorunun 2'si doğru); Bora'nın 100.
