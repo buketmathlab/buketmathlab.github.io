@@ -898,12 +898,76 @@ Betikte iki ölçüm hatası çıktı ve ikisi de kayda değer:
 ### Metindeki iddialar denetleniyor
 
 Denetimin 5. grubu sayfanın metnini okuyup iki yönlü ölçüyor:
-**bulunması gerekenler** (AI'nın puanlamadığı, açık uçlu puanı öğretmenin
-verdiği, veliye anahtar gitmediği, görsellerin uydurma olduğu) ve
-**bulunmaması gerekenler** (çevrimdışı çalışma, bildirim gönderme, "yapay
-zekâ destekli", otomatik konu önerisi — dördü de bugün YAPILMAYAN şeyler).
+**bulunması gerekenler** (anahtarın yalnız teslimden sonra açıldığı, açık
+uçlu değerlendirmenin öğretmende olduğu, kıyaslama yapılmadığı,
+görsellerin uydurma olduğu, çerez/takip yapılmadığı) ve **bulunmaması
+gerekenler** (çevrimdışı çalışma, bildirim gönderme, "yapay zekâ
+destekli", otomatik konu önerisi — dördü de bugün YAPILMAYAN şeyler),
+üstüne editoryal yasaklar.
 
 Bir gün bu sayfaya ürünün yapmadığı bir vaat eklenirse denetim kırılır.
+
+## Tanıtım sayfası — altı bölümlük yeniden kurulum
+
+Öğretmen sayfa için yeni ve tam bir brief verdi: dört danışmanlı bir kurul
+çerçevesi, altı bölüm ve her bölümün metni yazılmış hâlde. Üç ton kuralı
+kesin — **savunmacı/olumsuz cümle yok**, **kurum adı gururla geçer**,
+**yoğun paragraf yok**. Sayfa 13 paragraf ağırlıklı bölümden 6 taranabilir
+bölüme indi; rol bölümleri paragraf değil **üçer madde**.
+
+| # | Bölüm |
+|---|---|
+| 1 | Hero — kurum rozeti, H1 "Öğrenmenin Sürekliliği, Gelişimin Netliği.", iki çağrı |
+| 2 | Felsefe — "Sadece Puan Değil, Süreç Odaklı Akademik Rutin" + üç kart |
+| 3 | Ekosistem — Öğrenci / Öğretmen / Veli + Okul Yönetimi |
+| 4 | Ewalu |
+| 5 | Güvenilir Altyapı, Sorumlu Teknoloji |
+| 6 | Künye ve kapanış |
+
+### Ölçümle karara bağlanan beş nokta
+
+Brief satır satır ürüne karşı ölçüldü; beş yerde ayrışma çıktı ve beşini de
+öğretmen karara bağladı.
+
+**1. Satıcı adı ve ülke sayfada geçmiyor.** Brief "İsveç merkezli …
+Supabase" diyordu. Ölçüm doğrulamadı: proje bölgesi **Zürih
+(eu-central-2)**, yani İsviçre; sağlayıcı şirket de İsveç merkezli değil.
+Doğrulanmamış bir iddiayı yayımlamaktansa (Kural 15) öğretmenin kararıyla
+**hiçbiri yazılmıyor** — ne İsveç, ne Zürih, ne İsviçre, ne satıcı adı.
+Bölge bilgisi `docs/kvkk-notlari.md` içinde duruyor; kalkan yalnız tanıtım
+sayfasındaki cümle.
+
+**2. "Öğrenmenin sonu yok." tam bir kez.** Yeni H1 öğretmenin başlığı;
+marka cümlesi eskiden üç yerdeydi, artık yalnız kapanışta. Denetim **kaç
+kez geçtiğini** sayıyor.
+
+**3. Okul Yönetimi bloğu ekransız ve girişsiz.** Sistemde üç rol var —
+`ogretmen`, `ogrenci`, `veli`. Okul yönetimi girişi, kurum panosu ya da
+idari rapor **yok**. Öğretmenin üç maddesi birebir duruyor ve zaten bir
+özellik vaat etmiyor; ama diğer üç rolle birebir aynı kalıpta dursaydı
+dördüncü bir giriş varmış gibi okunurdu. Çözüm bir savunmacı cümle yazmak
+değil, **bloğu farklı kurmak** oldu: ekran görüntüsü yok, giriş bağlantısı
+yok. Denetimin 6. grubu bunu DOM'dan ölçüyor.
+
+**4. Cevap anahtarı güvencesi olumlu kipte.** "Ödevini teslim etmeden
+cevap anahtarına erişemez" → **"Teslimden sonra açılan çözümler ve kişisel
+analiz."** Aynı güvence (Kural 6 / Part XXI), tek bir olumsuz sözcük
+kullanmadan. Sunucudaki kural değişmedi.
+
+**5. Ewalu "akıllı" değil.** Ewalu bir çizim ve puan aralığına göre cümle
+seçen bir kural kümesi (`lib/ewalu-puan.ts`) — yapay zekâ değil ve Kural 5
+gereği testleri hiçbir zaman yapay zekâ puanlamayacak. Öğretmen aynı sıfatı
+bir önceki turda video altyazısından da kendisi çıkarmıştı.
+
+Ayrıca üç yazım düzeltmesi: "Bosphorus hattının" → **"Boğaz hattının"**
+(Kural 18), bölüm numaraları 1-2-4-4 → 1-2-3-4, "imkanı" → "imkânı".
+
+**Beş kararın beşi de denetimde kilitli.** `scripts/tanitim-denetimi.mjs`
+İsveç, satıcı adı, bölge adı, "akıllı maskot/asistan", "Bosphorus" ve
+dördüncü bir giriş vaadini yasaklı desen olarak arıyor; marka cümlesini
+sayıyor; yönetim bloğunun görsel ve bağlantı sayısını ölçüyor. Kararların
+ölçülerek uygulandığı, dokuz yamanın tek tek geri alınmasıyla kanıtlandı
+(**9/9 kırıldı**).
 
 ### Bilerek dışarıda bırakılan
 
