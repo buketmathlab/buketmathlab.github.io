@@ -29,6 +29,7 @@ import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { TopluOgrenci } from '@/features/ogretmen/TopluOgrenci';
 import { Odevler } from '@/features/ogretmen/Odevler';
 import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
+import { KodFisleri } from '@/features/ogretmen/KodFisleri';
 import {
   Veliler,
   SinifVelileriEkrani,
@@ -138,7 +139,10 @@ function Yonlendirme() {
         <Route path="odevler/:id/gonderimler" element={<OdevGonderimleri />} />
         {/* Kodlar da iki kademeli: önce sınıf, sonra o sınıfın kodları. */}
         <Route path="kodlar" element={<Kodlar />} />
+        {/* `:id`'den ÖNCE değil SONRA gelebilir: yol iki parçalı
+            (`kodlar/:id/fisler`), tek parçalı `kodlar/:id` ile çakışmıyor. */}
         <Route path="kodlar/:id" element={<SinifKodlari />} />
+        <Route path="kodlar/:id/fisler" element={<KodFisleri />} />
         {/* Veliler üç kademeli: sınıf → o sınıfın velileri → yazışma.
             Yazışmaya yanıt bekleyenler listesinden tek dokunuşla da
             gidilebiliyor; acil olan sınıfın altına gömülmesin. */}

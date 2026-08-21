@@ -168,6 +168,15 @@ export function SinifKodlari() {
               </p>
             </div>
 
+            {/* KESİP DAĞITMAK İÇİN AYRI EKRAN. Bu ekranın "aynı anda tek
+                öğrenci" kuralı (0018) bozulmuyor: fişler kendi sayfasında,
+                onay kapısının arkasında hazırlanıyor. */}
+            <div className="mb-4">
+              <Button tur="sade" onClick={() => git(`/ogretmen/kodlar/${id}/fisler`)}>
+                Kod fişlerini yazdır
+              </Button>
+            </div>
+
             <Card>
               <ul className="divide-y divide-line">
                 {veri.kayitlar.map((o) => {
