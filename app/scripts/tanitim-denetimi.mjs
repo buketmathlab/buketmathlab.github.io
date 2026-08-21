@@ -486,6 +486,117 @@ console.log('\n7. Giriş ekranı bağlantısı');
   await sayfa.close();
 }
 
+/* ============================================================
+   8 — SESSİZ TAZELEME (bayat önbellek)
+
+   Öğretmen yeni tasarımı göremedi. Ölçüm: sayfa yayında doğruydu, ama
+   GitHub Pages HTML'i `max-age=600` ile gönderdiği için tarayıcı 10
+   dakika eski HTML'i veriyordu ve o HTML dosya adı hash'li ESKİ paketi
+   çağırıyordu.
+
+   Uygulamada bu iş `SurumSeridi` ile çözülmüştü; tanıtım sayfası
+   uygulamadan hiçbir şey içe aktarmadığı için buraya bağlanmamıştı.
+   Aşağısı yeni davranışın gerçekten çalıştığını ölçüyor — ve en önemlisi,
+   SONSUZ DÖNGÜYE girmediğini.
+   ============================================================ */
+console.log('\n8. Sessiz tazeleme');
+{
+  const { readFile } = await import('node:fs/promises');
+  const kendiSurum = JSON.parse(
+    await readFile(new URL('../../yeni/surum.json', import.meta.url), 'utf8'),
+  ).surum;
+
+  /** Sayfayı açar; `surum` verilirse surum.json onu döndürür (yoksa 404). */
+  async function ac(surum) {
+    const s = await tarayici.newPage();
+    const belgeler = [];
+    // Ana belge isteklerini sayıyoruz: tazelemenin KAÇ KEZ olduğu bu.
+    s.on('request', (r) => {
+      if (r.resourceType() === 'document') belgeler.push(r.url());
+    });
+    await s.route('**/surum.json', (r) =>
+      surum === undefined
+        ? r.fulfill({ status: 404, body: 'yok' })
+        : r.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ surum }),
+          }),
+    );
+    await s.goto(TANITIM, { waitUntil: 'networkidle' });
+    // Tazeleme olacaksa ilk saniyede olur; ikinci bir tur için pay bırak.
+    await s.waitForTimeout(2500);
+    return { s, belgeler };
+  }
+
+  /* AYNI SÜRÜM → HİÇ YÖNLENDİRME YOK.
+     Bu ölçüm olmadan diğerleri boş: her koşulda yönlendiren bir kod da
+     "farklı sürümde yenileniyor" testini geçerdi. */
+  {
+    const { s, belgeler } = await ac(kendiSurum);
+    const adres = s.url();
+    bak(
+      'Aynı sürümde tazeleme YOK',
+      !adres.includes('?s=') && belgeler.length === 1,
+      `${belgeler.length} belge · ${adres.split('/yeni')[1]}`,
+    );
+    await s.close();
+  }
+
+  /* FARKLI SÜRÜM → BİR KEZ TAZELENİYOR, sayfa açık kalıyor. */
+  {
+    const { s, belgeler } = await ac('99999999999999');
+    const adres = s.url();
+    bak(
+      'Farklı sürümde adres ?s ile tazeleniyor',
+      adres.includes('s=99999999999999'),
+      adres.split('/yeni')[1],
+    );
+    /* SONSUZ DÖNGÜ KİLİDİ. surum.json ISRARLA farklı dönüyor (yayın yarım
+       kalmış gibi). Kilit olmasaydı sayfa kendini sonsuza kadar yeniden
+       yüklerdi; belge sayısı 2'de kalmalı. */
+    bak(
+      'SONSUZ DÖNGÜ YOK — en fazla bir tazeleme',
+      belgeler.length === 2,
+      `${belgeler.length} belge yüklemesi`,
+    );
+    const basliklar = await s.locator('h1').count();
+    bak('Tazelemeden sonra sayfa açık', basliklar === 1, `${basliklar} h1`);
+    await s.close();
+  }
+
+  /* surum.json OKUNAMIYOR → sayfa normal açılıyor.
+     Çevrimdışı olmak normal bir durum, hata değil. */
+  {
+    const { s, belgeler } = await ac(undefined);
+    const basliklar = await s.locator('h1').count();
+    bak(
+      'surum.json 404 iken sayfa normal açılıyor',
+      basliklar === 1 && belgeler.length === 1 && !s.url().includes('?s='),
+      `${belgeler.length} belge · ${basliklar} h1`,
+    );
+    await s.close();
+  }
+
+  /* DEPOLAMA KULLANILMIYOR. Uygulamadaki "Şimdi değil" tercihi
+     localStorage'a yazıyor; burada kapatılacak şerit olmadığı için o yola
+     hiç girilmiyor. Sayfanın "çerez kullanmaz, takip yapmaz" cümlesi
+     tazelemeden SONRA da doğru olmalı. */
+  {
+    const { s } = await ac('99999999999999');
+    const depo = await s.evaluate(() => ({
+      local: localStorage.length,
+      session: sessionStorage.length,
+    }));
+    bak(
+      'Tazelemeden sonra da depolama boş',
+      depo.local === 0 && depo.session === 0,
+      `local=${depo.local} session=${depo.session}`,
+    );
+    await s.close();
+  }
+}
+
 await tarayici.close();
 
 console.log(`\n${'='.repeat(52)}`);

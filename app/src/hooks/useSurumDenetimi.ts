@@ -23,7 +23,15 @@ const ARALIK_MS = 30 * 60 * 1000;
 /** Kapatılan şeridin hangi sürüm için kapatıldığı burada tutuluyor. */
 const YOK_SAYILAN = 'sekiz_surum_yoksayilan';
 
-async function yayindakiSurum(): Promise<string | null> {
+/**
+ * Yayındaki sürümü okur; okunamazsa `null`.
+ *
+ * DIŞA AÇIK ve bilerek: tanıtım sayfası da (`src/tanitim.tsx`) aynı
+ * dosyayı okuyor. İkinci bir getirme kodu yazsaydım `no-store` bayrağı
+ * bir gün birinde kalır öbüründe kaybolurdu — turun bütün fikri o
+ * bayrakta. Tek kod yolu.
+ */
+export async function yayindakiSurum(): Promise<string | null> {
   try {
     // `no-store`: bu turun bütün fikri bu satırda.
     const y = await fetch(`${import.meta.env.BASE_URL}surum.json`, { cache: 'no-store' });
