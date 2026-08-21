@@ -127,6 +127,7 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Toplu ekleme','/ogretmen/ogrenciler/toplu'],
                             ['Kodlar','/ogretmen/kodlar'],
                             ['Kod sınıfı','/ogretmen/kodlar/9A'],
+                            ['Kod fişleri','/ogretmen/kodlar/9A/fisler'],
                             ['Veliler','/ogretmen/veliler'],
                             ['Sınıf velileri','/ogretmen/veliler/sinif/9A'],
                             ['Yazışma','/ogretmen/veliler/yazisma/o1'],

@@ -141,3 +141,68 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
+
+/* ===========================================================================
+   KOD FİŞLERİ (yazdırma)
+
+   Ölçüler `mm` cinsinden: `px` yazsaydık yazıcının ölçeğine göre kayar ve
+   makasla kesilen fiş kâğıttaki çizgiyle tutmazdı.
+
+   Ekranda da aynı ızgara çiziliyor — öğretmen kâğıda ne çıkacağını
+   yazdırmadan önce görüyor.
+   =========================================================================== */
+.sk-fis-sayfa {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4mm;
+  width: 190mm;
+  max-width: 100%;
+  margin: 0 auto 8mm;
+}
+
+.sk-fis {
+  border: 1px dashed var(--color-line);   /* kesme çizgisi */
+  border-radius: 2mm;
+  padding: 3mm 4mm;
+  min-height: 50mm;
+  break-inside: avoid;                     /* fiş iki sayfaya bölünmesin */
+}
+
+@media print {
+  /* Sayfa kenar boşluğu yazıcıya bırakılmıyor: fişler kâğıda ortalanmalı. */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  /* KABUK KÂĞIDA ÇIKMIYOR.
+     Bileşen tarafındaki `print:hidden` yalnız EKRANIN kendi içeriğini
+     kapatıyor; yan menü, üst çubuk ve sekmeler kabukta ve onun dışında.
+     Denetim gerçekten yazdırma kipinde bakınca "Çıkış" düğmesinin kâğıda
+     çıktığı ölçüldü — bu kural o bulgunun karşılığı.
+     Anlamsal etiketler seçiliyor (`aside`/`header`/`nav`): sınıf adları
+     değişebilir, bu üçü kabuğun iskeleti. */
+  aside,
+  header,
+  nav {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .sk-fis-sayfa {
+    width: auto;
+    margin: 0;
+    /* Her sayfa yeni kâğıt. Son sayfadan sonra boş kâğıt çıkmasın. */
+    break-after: page;
+  }
+  .sk-fis-sayfa:last-child {
+    break-after: auto;
+  }
+
+  .sk-fis {
+    border-color: #999;
+  }
+}

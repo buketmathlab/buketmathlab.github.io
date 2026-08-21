@@ -1031,3 +1031,59 @@ düşülüyor, çok sınıf seçiliyse Türkçe ve anlaşılır bir cümle çık
    kez gönderiyordum; tavan kaldırılınca mükerrer denetimi devreye girip
    test yine geçiyordu. Geri alma kanıtı yakaladı; test 21 **gerçek ve
    ayrı** sınıfla yeniden yazıldı.
+
+## Kod fişleri — kesilip dağıtılmak üzere (yeni SQL yok)
+
+Okullar açılırken ~720 öğrenciye giriş kodu dağıtılacak. Ölçüldü: bugüne
+kadar tek yol ya `Kodlar` sekmesinde öğrencileri **tek tek** açmak
+(0018'in bilinçli kararı) ya da toplu eklerken indirilen CSV'yi saklamış
+olmaktı; depoda yazdırma altyapısı hiç yoktu.
+
+### Öğrenci fişi ve veli fişi AYRI sayfa — ölçülmüş bir zorunluluk
+
+Tek fişe iki kodu basmak iki kuralı birden çiğniyordu:
+
+1. `veli_paneli` özel ders öğrencisinde **ödemeleri** döndürüyor. Veli
+   kodunu eline alan öğrenci borç bilgisini görürdü — öğretmenin kalıcı
+   kuralı bunu yasaklıyor.
+2. **0025'in bütün varlık sebebi** veli↔öğretmen yazışmasını öğrenciden
+   ayırmaktı. Veli kodunu alan öğrenci o yazışmayı okurdu.
+
+Bu yüzden iki ayrı sayfa var ve aynı anda yalnız biri **çiziliyor** —
+gizlenmiyor, DOM'a hiç girmiyor. `kod-fisi-denetimi.mjs` 3. ve 4. grubu
+bunu alan adına değil **gerçek kod değerlerine** bakarak ölçüyor;
+denetimin işe yaradığı, aynı değerlerin kendi sayfasında bulunduğu
+gösterilerek kanıtlanıyor.
+
+### 0018 geri alınmadı
+
+0017'nin bir sınıfın tüm kodlarını **tek yanıtta** döndüren ucu 0018'de
+kaldırılmıştı. Fiş ekranı onu geri getirmiyor: `ogrenci_kodlari` öğrenci
+öğrenci çağrılıyor (N istek, her biri yalnız kendi kimliğiyle) ve denetim
+`sinif_kodlari`'nın çağrılmadığını ayrıca ölçüyor. **Yeni SQL yok**,
+öğretmenin panelde çalıştıracağı bir dosya yok.
+
+**Dürüst sınır:** yazdırma doğası gereği bütün sınıfın kodunu tarayıcıya
+indiriyor. Bu gizlenmiyor — onay kapısı ne olacağını söylüyor, kodlar
+hiçbir yere kaydedilmiyor (`localStorage`/`sessionStorage` denetimde
+ayrıca ölçülüyor) ve onaylanmadan tek bir istek bile gitmiyor.
+
+Kod görüntülemenin **denetim izi bırakmaması** bugün de böyle
+(`ogrenci_kodlari` `_denetim` yazmıyor). Bu tur o açığı ne açıyor ne
+kapatıyor; güvenlik turuna not.
+
+### Kâğıt ölçüsü
+
+A4'e 2 sütun × 5 satır = **10 fiş**, ölçüler `mm` cinsinden (`px`
+yazsaydık yazıcı ölçeğine göre kayar, kesme çizgisi tutmazdı). Kabuk
+yazdırmada `display:none` — bu, denetim gerçekten `media: 'print'`
+kipinde bakınca "Çıkış" düğmesinin kâğıda çıktığı **ölçüldüğü için**
+eklendi.
+
+### Kendi ölçüm hatam
+
+Ekrandan çıkınca kodları temizleyen bir `useEffect` yazmıştım. Geri alma
+kanıtı onu bozduğunda **hiçbir ölçüm kırılmadı** — çünkü React zaten
+unmount'ta state'i atıyor; o satır hiçbir iş yapmıyordu. Süs kod
+kaldırıldı ve ölçüm gerçek bir riske çevrildi: kodların tarayıcı
+deposuna yazılması.
