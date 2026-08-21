@@ -100,6 +100,20 @@ export type OdevSatiri = {
    */
   ortalama_yapan: number | null;
   ortalama_tum: number | null;
+  /**
+   * Aynı anda başka sınıflara da verilmişse ONLARIN sınıf adları (0030).
+   * Tek sınıfa verilen ödevde `null` — kardeşi olmayan ödevde boş bir dizi
+   * göndermek, ekranda "birlikte verildi" işaretinin boş yere çıkmasına
+   * yol açardı. 0030 çalıştırılmadıysa alan hiç gelmez; `?:` bu yüzden.
+   */
+  kardesler?: string[] | null;
+};
+
+/** `odevler_coklu_olustur` (0030) yanıtı. */
+export type CokluOdevSonucu = {
+  /** Tek sınıfa verildiyse null: kardeşi olmayan ödevin grubu yok. */
+  grup_id: string | null;
+  odevler: Array<{ odev_id: string; sinif_id: string; sinif: string }>;
 };
 
 /** Öğrencinin kendi gönderimi. Puan yalnız test ödevinde dolu olur. */

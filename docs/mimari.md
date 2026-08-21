@@ -954,3 +954,80 @@ yasaklıyordu ve 0029 eklenince tetikledi. Denetim haklıydı ama ölçtüğü
 değil. İzinli tek anahtar metinden çıkarılıp kalan her "ortalama" hâlâ
 yakalanıyor — `sinif_ortalama`, `ortalama_tum`, `ortalama_yapan` ve
 `siralama` için tek tek ölçülerek doğrulandı.
+
+## Aynı ödevi birden çok sınıfa (0030)
+
+Ölçüldü: `odev_olustur` tek sınıf alıyordu (`p_sinif_id uuid`). 9A, 9B ve
+9C'ye aynı ödevi vermek için üç adımlı akıştan **üç kez** geçmek, iki
+PDF'i **üç kez** yüklemek ve cevap anahtarını **üç kez** girmek
+gerekiyordu. 12 sınıf var ve aynı seviyenin şubeleri aynı müfredatı
+görüyor.
+
+### Kopya, ortak ödev değil
+
+`odevler.sinif_id` `not null` ve neredeyse her uç ona göre süzüyor (0013,
+0016, 0020, 0023, 0026, 0029). "Tek ödev – çok sınıf" şeması o uçların
+tamamını elden geçirmek demekti. Bunun yerine her sınıfın **kendi ödevi**
+oluşuyor: kendi gönderimleri, kendi karnesi, kendi ortalaması.
+Aralarındaki tek bağ `odevler.grup_id`; tek sınıfa verilen ödevde `null`.
+
+### PDF bir kez yükleniyor — ve bu güvenlik sorusu doğuruyor
+
+Dosya yolu ödevin id'sinden bağımsız üretiliyor
+(`odev/<rastgele-uuid>/<tur>.pdf`, `services/dosya.ts`), dolayısıyla
+kopyalar **aynı yüklenmiş dosyayı paylaşıyor**. Tarayıcıda ölçüldü: üç
+sınıf, iki PDF → imzalı adres **2 kez** istendi, dosya **2 kez**
+yüklendi (`coklu-sinif-denetimi.mjs`).
+
+Paylaşılan **cevap anahtarı** ise Kural 6'yı ilgilendiriyor:
+`dosya_erisim_izni` öğrenciye erişimi `d.anahtar_url = p_yol` eşleşmesi
+üzerinden veriyor. Üç ödev aynı yolu taşıdığında bir sınıfın teslimi
+diğerlerine anahtarı açar mıydı? **Açmıyor** — eşleşme öğrencinin KENDİ
+gönderimi üzerinden kuruluyor. Bu varsayılmadı, `coklu_sinif_testleri.sql`
+7. grubunda dört durumla ölçüldü: teslim etmemiş öğrenci `false`, teslim
+eden `true`, başka sınıfın öğrencisi (kendi teslimi yokken) `false`,
+**veli her koşulda `false`**.
+
+### Atomiklik ve arıza enjeksiyonu
+
+`odevler_coklu_olustur` ön denetimden sonra döngüde mevcut
+`public.odev_olustur`'u **çağırıyor** — ikinci bir insert yazsaydık iki
+yol bir gün ayrışırdı. Tek işlem: hepsi ya da hiçbiri.
+
+Testin ölçtüğü şey burada dikkat istiyor: ön denetim bozuk sınıfı baştan
+elediği için "geçersiz sınıf" denemesi döngünün atomikliğini **hiç
+sınamaz**. Bu yüzden 4. grup ikinci sınıfın insert'inde patlayan geçici
+bir tetikleyici kuruyor; birinci sınıf yazılıyor, ikincisi patlıyor ve
+hiçbir satırın kalmadığı ölçülüyor. Denetim `do` bloğunun **dışında**
+(0024'te öğrenilen tuzak: `exception` taşıyan blok kendi alt işlemini
+açar ve fonksiyon yarım yazsa bile test geçerdi).
+
+### Kardeşler bağımsız — ve bu ekranda yazıyor
+
+Kopyalar oluştuktan sonra birbirinden bağımsız: cevap anahtarı
+düzeltmesi yalnız düzenlenen sınıfı etkiliyor. Sessiz bırakmak, iki
+sınıfta yanlış notu görünmez kılardı — 0008'in otomatik yeniden
+puanlaması tam olarak bunun için yazılmıştı. Bu yüzden `odev_detay` ve
+`odevler_listesi` `kardesler` alanını taşıyor; düzenleme ekranı
+"buradaki değişiklik yalnız 9B'yi etkiler" diyor, liste satırı
+"9A · +2 sınıf" gösteriyor.
+
+**Düzeltmeyi kardeşlere yaymak bu turda YAPILMADI** — ayrı ve daha büyük
+bir tur (yeniden puanlamanın kardeşlere yayılması + denetim izi).
+Tehlike gizlenmedi, görünür kılındı.
+
+### 0030 çalıştırılmamışsa
+
+Ekran bozulmuyor: uç yoksa ve tek sınıf seçiliyse eski `odev_olustur`'a
+düşülüyor, çok sınıf seçiliyse Türkçe ve anlaşılır bir cümle çıkıyor
+(Part VIII). Bu yüzden sürümün 0030'dan önce yayına girmesi güvenli.
+
+### Yol boyunca bulunan iki ölçüm hatası (kendi hatalarım)
+
+1. **Erişilebilirlik denetimi ödev OLUŞTURMA ekranını hiç gezmiyordu.**
+   En çok alanı olan ekranlardan biri her turda ölçüm dışında kalmıştı;
+   listeye eklendi (32 ekran).
+2. **"21 sınıf reddediliyor" testi tavanı ölçmüyordu.** Aynı sınıfı 21
+   kez gönderiyordum; tavan kaldırılınca mükerrer denetimi devreye girip
+   test yine geçiyordu. Geri alma kanıtı yakaladı; test 21 **gerçek ve
+   ayrı** sınıfla yeniden yazıldı.

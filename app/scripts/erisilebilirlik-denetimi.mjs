@@ -118,6 +118,10 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Pano detayı','/ogretmen/bugun/gondermeyen'],
                             ['Pano sınıfı','/ogretmen/bugun/gondermeyen/9A'],
                             ['Ödev düzenle','/ogretmen/odevler/a1'],
+                            // 0030'da fark edildi: ödev OLUŞTURMA ekranı bu
+                            // listede hiç yoktu — en çok alanı olan ekranlardan
+                            // biri her turda ölçüm dışında kalmıştı.
+                            ['Yeni ödev','/ogretmen/odevler/yeni'],
                             ['Ayarlar','/ogretmen/ayarlar'],
                             ['Öğrenci detayı','/ogretmen/ogrenciler/o9'],
                             ['Toplu ekleme','/ogretmen/ogrenciler/toplu'],

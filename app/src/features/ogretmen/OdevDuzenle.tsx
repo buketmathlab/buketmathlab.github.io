@@ -40,6 +40,11 @@ type OdevDetay = {
   odev_yolu: string | null;
   yayinda: boolean;
   gonderim_sayisi: number;
+  /**
+   * Aynı anda verildiği DİĞER sınıfların adları (0030). Kardeşi yoksa —
+   * ya da 0030 henüz çalıştırılmadıysa — gelmez.
+   */
+  kardesler?: string[] | null;
 };
 
 type PuanDegisimi = { ogrenci: string; eski_puan: number | null; yeni_puan: number };
@@ -252,6 +257,26 @@ export function OdevDuzenle() {
               </Card>
             )}
 
+            {/* KARDEŞ UYARISI (0030).
+                Bu ödev birden çok sınıfa birlikte verildiyse kopyalar
+                BAĞIMSIZ: buradaki düzeltme diğerlerine geçmiyor. Sessiz
+                kalsaydık bir cevap anahtarı düzeltmesi öbür sınıflarda
+                yanlış notu sessizce bırakırdı — 0008'in otomatik yeniden
+                puanlaması tam olarak bunun için yazılmıştı. */}
+            {detay.kardesler && detay.kardesler.length > 0 && (
+              <Card vurgu="uyari" className="mb-4">
+                <p className="text-[15px] text-ink">
+                  Bu ödev <strong>{[detay.sinif, ...detay.kardesler].join(', ')}</strong>{' '}
+                  sınıflarına birlikte verildi.
+                </p>
+                <p className="mt-1 text-[14px] text-muted">
+                  Buradaki değişiklik yalnız <strong>{detay.sinif}</strong> sınıfını
+                  etkiler. Diğerlerini de değiştirmek isterseniz onları ayrı ayrı
+                  düzenleyin.
+                </p>
+              </Card>
+            )}
+
             <Card>
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <Tag tur={detay.yayinda ? 'basari' : 'uyari'}>
@@ -302,7 +327,7 @@ export function OdevDuzenle() {
                 <PdfOnerileri
                   ozet={pdfOzet}
                   mevcutSoruSayisi={n}
-                  mevcutSinifId={form.sinifId}
+                  secililer={[form.sinifId]}
                   siniflar={siniflar ?? []}
                   onSoruSayisi={(x) => alanDegis('soruSayisi', String(x))}
                   onKonu={setOnerilenKonu}
