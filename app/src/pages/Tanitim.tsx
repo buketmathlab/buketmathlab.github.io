@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { Sekiz8Mark } from '@/components/brand/Sekiz8Mark';
 import { SchoolCrest } from '@/components/brand/SchoolCrest';
-import { StarEight } from '@/components/brand/StarEight';
 import { GeometricDivider } from '@/components/brand/GeometricDivider';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { EwaluVideo } from '@/components/brand/EwaluVideo';
@@ -11,43 +10,44 @@ import { sekizgenYolu } from '@/lib/geometri';
 /**
  * SEKİZ tanıtım sayfası — /yeni/tanitim/
  *
- * METİN ÖĞRETMENİNDİR. Bu dosyadaki her başlık, alt başlık ve madde onun
- * yazdığı brief'ten geliyor; benim işim yerleşim, ölçü ve doğrulama.
+ * METİN ÖĞRETMENİNDİR. Bölüm başlıkları, cümleler ve sıra onun verdiği
+ * nihai brief'ten; benim işim yerleşim, tipografi, görsel ritim ve
+ * doğrulama.
  *
- * ÜÇ TON KURALI (brief'ten, denetimde de ölçülüyor):
- *   1. Savunmacı / olumsuz cümle yok. Özellikle Ewalu NE OLMADIĞIYLA
- *      anlatılmaz ("ödev değerlendirmez", "öğretmenin yerine geçmez"…).
- *   2. Kurum adı gururla ve doğal biçimde geçer; kuru bir teknik not gibi
- *      değil.
- *   3. Yoğun paragraf yok. Rol bölümleri üçer MADDE — paragraf değil.
+ * ═══ MARKA CÜMLESİ ═══
+ * "Öğrenmenin sonu yok." — hero'da H1, felsefe bölümünde vurgu,
+ * kapanışta son söz. Değiştirilmiyor.
  *
- * ÖĞRETMENİN BU TURDA VERDİĞİ BEŞ KARAR — hepsi burada uygulanmış hâlde,
- * hepsi `scripts/tanitim-denetimi.mjs` içinde ölçülüyor:
+ * İSMİN MATEMATİKSEL ÇAĞRIŞIMI ŞEKİL BİLGİSİ OLARAK ANLATILMIYOR.
+ * "8 yan yatınca sonsuzluk işaretidir" ve bütün varyantları YASAK.
+ * Bağ düşünsel kuruluyor: sonsuzluk bir bitiş değil, devam edebilme.
+ * İşaretin kendisi bunu GÖSTEREREK anlatıyor (hero ve kapanıştaki
+ * `Sekiz8Mark`), cümle AÇIKLAYARAK değil.
  *
- *   1. SATICI ADI VE ÜLKE SAYFADA GEÇMİYOR. Brief "İsveç merkezli …
- *      Supabase" diyordu; ölçüm bunu doğrulamadı (proje bölgesi Zürih,
- *      eu-central-2 — yani İsviçre; Supabase şirketi de İsveç merkezli
- *      değil). Öğretmenin kararı: hiçbiri yazmasın. Bölge bilgisi
- *      `docs/kvkk-notlari.md`'de duruyor, tanıtım sayfasında değil.
- *   2. "Öğrenmenin sonu yok." YALNIZ KAPANIŞTA. Yeni H1 öğretmenin
- *      başlığı; marka cümlesi tek bir yerde kalıyor, tekrar etmiyor.
- *   3. OKUL YÖNETİMİ BLOĞU EKRANSIZ VE GİRİŞSİZ. Sistemde üç rol var
- *      (öğretmen, öğrenci, veli); okul yönetimi girişi yok. Öğretmenin üç
- *      maddesi birebir duruyor — ama bu blok ekran görüntüsü ve giriş
- *      bağlantısı almıyor, böylece dördüncü bir giriş ima edilmiyor.
- *      Tek bir savunmacı cümle yazmadan.
- *   4. CEVAP ANAHTARI GÜVENCESİ OLUMLU KİPTE: "Teslimden sonra açılan
- *      çözümler ve kişisel analiz." Kural 6 / Part XXI'in sayfadaki
- *      karşılığı bu; sunucudaki kural zaten değişmiyor.
- *   5. EWALU "AKILLI" DEĞİL. Ewalu bir çizim ve puan aralığına göre cümle
- *      seçen bir kural kümesi (`lib/ewalu-puan.ts`) — yapay zekâ değil ve
- *      Kural 5 gereği testleri hiçbir zaman yapay zekâ puanlamayacak.
- *      Öğretmen aynı sıfatı bir önceki turda video altyazısından da
- *      kendisi çıkarmıştı.
+ * ═══ DİL: POZİTİF AMA GERÇEKÇİ ═══
+ * Öğretmenin kuralı üç satır:
+ *   GERÇEĞİ GİZLEME · ÖĞRENCİYİ ETİKETLEME · GELİŞİMİ GÖSTER
+ *
+ * Yani "yanlış yaptığı sorular", "eksik olduğu konu alanları", "teslim
+ * edilmemiş ödev" AÇIKÇA yazılıyor — bunları yumuşatmak gerçeği gizlemek
+ * olurdu. Yasak olan ÖĞRENCİYİ bir sonuçla tanımlamak: "başarısız",
+ * "yetersiz", "zayıf öğrenci". "Kaygı" da marka dilinde geçmiyor.
+ * `scripts/tanitim-denetimi.mjs` bu ayrımı iki listeyle ölçüyor.
+ *
+ * ═══ EWALU'NUN GERÇEK ROLÜ ═══
+ * Ewalu, öğrenci soru çözerken yanında duran bir sohbet öğretmeni
+ * DEĞİL — ölçüldü: üründe soru bazlı ipucu veren hiçbir yer yok; Ewalu
+ * gönderim sonrası sonuç kartında görünüyor. Bölüm bunu doğru
+ * konumlandırıyor ve Ewalu'nun ne YAPMADIĞINI uzun uzun anlatmıyor.
+ *
+ * ═══ EKRAN GÖRÜNTÜLERİ ═══
+ * Altısı da GERÇEK uygulamanın gerçek ekranı; uydurma olan yalnız veri
+ * (`scripts/tanitim-gorselleri.mjs`, sunucuya sıfır istekle çekiliyor).
+ * Olmayan bir özellik için ekran üretilmedi.
  *
  * SUNUCUYA HİÇ İSTEK ATMIYOR: ne oturum sağlayıcı, ne Supabase istemcisi.
- * Sıfır çerez, sıfır takip — sayfanın kendi cümlesi bunu söylüyor ve
- * denetimin 1. grubu bunu DAVRANIŞ olarak ölçüyor.
+ * Sıfır çerez, sıfır takip — denetimin 1. grubu bunu DAVRANIŞ olarak
+ * ölçüyor.
  */
 export function Tanitim() {
   return (
@@ -56,8 +56,16 @@ export function Tanitim() {
       <main id="icerik">
         <Hero />
         <Felsefe />
-        <Ekosistem />
+        <SekizNedir />
+        <Ogrenci />
+        <Ogretmen />
+        <GeriBildirim />
+        <Veli />
+        <Iletisim />
         <EwaluBolumu />
+        <Degerlendirme />
+        <Gelisim />
+        <Gelecek />
         <Guven />
       </main>
       <Kunye />
@@ -67,60 +75,157 @@ export function Tanitim() {
 
 /* ============================================================
    ORTAK PARÇALAR
+
+   BÖLÜMLER BİLEREK AYNI KALIBA SOKULMADI. Her bölüm bir karta
+   konsaydı sayfa bir özellik listesine dönerdi (öğretmenin açık
+   uyarısı). Ritim: tipografik bölüm → ekranlı bölüm → koyu bant →
+   tipografik bölüm. Aşağıdaki parçalar o ritmin yapı taşları.
    ============================================================ */
 
+/** Metin bölümü. Kart yok, çerçeve yok — yalnız tipografi ve boşluk. */
 function Bolum({
   baslik,
   ustBaslik,
   children,
   zemin = 'kagit',
   genis = false,
-  id,
+  ortala = false,
 }: {
   baslik: string;
   ustBaslik?: string;
-  children: ReactNode;
+  children?: ReactNode;
   zemin?: 'kagit' | 'yuzey';
   genis?: boolean;
-  id?: string;
+  ortala?: boolean;
 }) {
   return (
-    <section className={zemin === 'yuzey' ? 'bg-surface' : ''} {...(id ? { id } : {})}>
-      <div className={`mx-auto ${genis ? 'max-w-[54rem]' : 'max-w-[42rem]'} px-5 py-14`}>
+    <section className={zemin === 'yuzey' ? 'bg-surface' : ''}>
+      <div
+        className={`mx-auto ${genis ? 'max-w-[58rem]' : 'max-w-[40rem]'} px-5 py-16 md:py-20 ${
+          ortala ? 'text-center' : ''
+        }`}
+      >
         {ustBaslik && (
-          <p className="mb-2 text-[13px] font-bold uppercase tracking-[0.14em] text-muted">
+          <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
             {ustBaslik}
           </p>
         )}
-        <h2 className="text-[26px] leading-[1.2] text-ink">{baslik}</h2>
+        <h2 className="font-display text-[26px] font-semibold leading-[1.2] text-ink md:text-[30px]">
+          {baslik}
+        </h2>
         {children}
       </div>
     </section>
   );
 }
 
+function P({ children }: { children: ReactNode }) {
+  return <p className="mt-5 text-[17px] leading-[1.7] text-ink">{children}</p>;
+}
+
+/** İkincil ton — bölümün kapanış cümlesi ya da ara notu. */
+function Not({ children }: { children: ReactNode }) {
+  return <p className="mt-4 text-[16px] leading-[1.65] text-muted">{children}</p>;
+}
+
 /**
- * Madde işareti.
+ * Madde listesi.
  *
- * SELÇUKLU YILDIZI KULLANILMIYOR ve bu bilinçli: sayfada 12 madde var,
- * her birine yıldız koymak "bir ekranda en fazla bir geometrik vurgu"
- * kuralını (Faz 0) çiğnerdi. Yıldız yalnız Okul Yönetimi bloğunda, tek
- * bir kez.
+ * İKONSUZ VE KUTUSUZ. Öğretmenin tasarım kuralı açık: her özelliği ayrı
+ * bir kutuya koyma, ikon kalabalığı yapma. Maddeler ince bir çizgiyle
+ * ayrılıyor — okunurluğu bozmadan sayfayı sakin tutuyor.
  */
-function Madde({ children }: { children: ReactNode }) {
+function Maddeler({ maddeler }: { maddeler: string[] }) {
   return (
-    <li className="flex gap-3">
-      <span
-        aria-hidden="true"
-        className="mt-[9px] h-[6px] w-[6px] shrink-0 rounded-full bg-ink/30"
-      />
-      <span className="text-[16px] leading-[1.6] text-ink">{children}</span>
-    </li>
+    <ul className="mt-6 border-t border-line">
+      {maddeler.map((m) => (
+        <li key={m} className="border-b border-line py-3 text-[16px] leading-[1.6] text-ink">
+          {m}
+        </li>
+      ))}
+    </ul>
   );
 }
 
-function Maddeler({ children, className }: { children: ReactNode; className?: string }) {
-  return <ul className={`mt-4 flex flex-col gap-3 ${className ?? ''}`}>{children}</ul>;
+/**
+ * Bir uygulama ekranı.
+ *
+ * ÖLÇÜLER `scripts/tanitim-gorselleri.mjs` ile BİREBİR (780×1520);
+ * ayrışırsa sayfa okunurken metin zıplar. Denetim bunu ayrıca ölçüyor.
+ *
+ * UYDURMA VERİ NOTU her görselin altında. Ekran görüntüleri sahte
+ * veriyle üretildi; gerçek bir öğrenciye aitmiş gibi göstermemek bir
+ * nezaket değil, dürüstlük meselesi.
+ */
+function Ekran({ dosya, alt, aciklama }: { dosya: string; alt: string; aciklama: string }) {
+  return (
+    <figure className="min-w-0">
+      <img
+        src={`/yeni/tanitim-ekranlar/${dosya}`}
+        alt={alt}
+        width={780}
+        height={1520}
+        loading="lazy"
+        decoding="async"
+        className="w-full rounded-sk-lg border border-line shadow-sk-md"
+      />
+      <figcaption className="mt-2 text-[12px] leading-[1.45] text-muted">
+        {aciklama}
+        <span className="block text-[11px]">Örnek ekran — adlar ve puanlar uydurmadır.</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+/**
+ * Metin ve ekran(lar) yan yana.
+ *
+ * `ters` ile öğretmen bölümünde görseller sola alınıyor: üç rol bölümü
+ * arka arkaya aynı hizada dursaydı sayfa tekdüze olurdu.
+ */
+function EkranliBolum({
+  ustBaslik,
+  baslik,
+  zemin,
+  ters = false,
+  ekranlar,
+  children,
+}: {
+  ustBaslik: string;
+  baslik: string;
+  zemin?: 'kagit' | 'yuzey';
+  ters?: boolean;
+  ekranlar: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className={zemin === 'yuzey' ? 'bg-surface' : ''}>
+      <div className="mx-auto max-w-[62rem] px-5 py-16 md:py-20">
+        <div
+          className={`flex flex-col gap-10 lg:items-start lg:gap-14 ${
+            ters ? 'lg:flex-row-reverse' : 'lg:flex-row'
+          }`}
+        >
+          <div className="lg:flex-1">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
+              {ustBaslik}
+            </p>
+            <h2 className="font-display text-[26px] font-semibold leading-[1.2] text-ink md:text-[30px]">
+              {baslik}
+            </h2>
+            {children}
+          </div>
+          {/* GENİŞLİK ÖLÇÜLEREK SEÇİLDİ. 24rem denendi: iki ekran yan yana
+              ~180 px kalıyor ve telefon görüntüsündeki metin okunmuyordu —
+              gerçek ürünü göstermenin bütün anlamı kayboluyor. 30rem'de
+              her ekran ~230 px; metin sütunu da ~480 px kalıyor. */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:w-[30rem] lg:shrink-0">
+            {ekranlar}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 /* ============================================================
@@ -138,7 +243,7 @@ function UstCubuk() {
       </a>
 
       <div className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-[54rem] items-center justify-between gap-3 px-5 py-2">
+        <div className="mx-auto flex max-w-[62rem] items-center justify-between gap-3 px-5 py-2">
           <SekizWordmark bicim="sade" boyut="sm" />
           <a
             href="/yeni/"
@@ -154,6 +259,10 @@ function UstCubuk() {
 
 /* ============================================================
    1 — HERO
+
+   İLK EKRANDA AZ ŞEY VAR ve bu bilinçli: marka, öğretmenin adı, tek
+   bir büyük cümle ve SEKİZ'in ne olduğuna dair TEK açıklama. Fazlası
+   ilk izlenimi zayıflatırdı.
    ============================================================ */
 
 function Hero() {
@@ -161,55 +270,33 @@ function Hero() {
     <section className="relative overflow-hidden">
       <SekizgenDoku />
 
-      <div className="relative mx-auto max-w-[44rem] px-5 pb-16 pt-12 text-center">
+      <div className="relative mx-auto max-w-[44rem] px-5 pb-20 pt-14 text-center md:pb-28 md:pt-20">
         <div className="flex justify-center">
           <SekizWordmark boyut="lg" acilistaDonsun />
         </div>
 
-        {/* KURUM ROZETİ. Mühür DEĞİL, metin: mühür yalnız 96 px ve üstünde
-            kullanılabiliyor (Kural 8) ve künyede zaten 160 px'de duruyor.
-            `rounded-full` değil `rounded-sk-lg`: ad uzun, 360 px'de iki-üç
-            satıra sarıyor ve hap biçimi o zaman kırılıyor. */}
-        <p className="mx-auto mt-8 inline-block max-w-[30rem] rounded-sk-lg border border-line bg-surface px-4 py-2 text-[13px] font-bold leading-[1.45] tracking-[0.04em] text-muted">
-          Beşiktaş Arnavutköy Korkmaz Yiğit Anadolu Lisesi · İstanbul
-        </p>
-
-        {/* SAYFANIN TEK h1'İ. */}
-        <h1 className="mt-6 font-display text-[32px] font-semibold leading-[1.15] text-ink">
-          Öğrenmenin Sürekliliği, Gelişimin Netliği.
+        <h1 className="mt-10 font-display text-[38px] font-semibold leading-[1.1] text-ink md:text-[52px]">
+          Öğrenmenin sonu yok.
         </h1>
 
-        <p className="mx-auto mt-5 max-w-[36rem] text-[18px] leading-[1.55] text-ink">
-          SEKİZ; ödev takibini, akademik gelişimi ve nitelikli geri bildirimi tek bir rafine
-          platformda buluşturan dijital çalışma ekosistemidir.
+        <p className="mx-auto mt-6 max-w-[36rem] text-[18px] leading-[1.6] text-ink md:text-[19px]">
+          SEKİZ; öğrencinin öğrenme sürecini takip ettiği, öğretmenin gelişimi gördüğü ve
+          velinin bu sürece destek olduğu dijital eğitim platformudur.
         </p>
 
-        {/* İKİ CTA. 480 px altında ALT ALTA: yan yana koyunca "Platforma
-            Giriş Yap" 360 px'de iki satıra kırılıyor ve düğme çarpık
-            duruyor. Ölçüldü, varsayılmadı. */}
-        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <a
-            href="/yeni/"
-            className="inline-flex min-h-[48px] items-center justify-center rounded-sk-sm bg-ink px-6 text-[16px] font-bold text-paper"
-          >
-            Platforma Giriş Yap
-          </a>
-          <a
-            href="#ekosistem"
-            className="inline-flex min-h-[48px] items-center justify-center rounded-sk-sm border border-line bg-surface px-6 text-[16px] font-bold text-ink"
-          >
-            Sistemi Keşfet <span aria-hidden="true">&nbsp;↓</span>
-          </a>
-        </div>
+        {/* Dört adım. Ayraç `·` markanın ayracı (SekizWordmark ile aynı). */}
+        <p className="mt-10 text-[13px] font-bold uppercase tracking-[0.16em] text-muted">
+          Ödev · Değerlendirme · Geri Bildirim · Gelişim
+        </p>
       </div>
     </section>
   );
 }
 
 /**
- * Açılışın arka planındaki sekizgen örgü. Yalnız burada (Faz 0 kuralı:
- * tesselasyon landing açılışında ve boş durumlarda; uygulama
- * ekranlarında değil). Opaklık 0.04 — metnin kontrastına karışmıyor.
+ * Açılışın arka planındaki sekizgen örgü — sayfadaki TEK dokusal öğe
+ * (Faz 0 kuralı: tesselasyon yalnız landing açılışında). Opaklık 0.04,
+ * metnin kontrastına karışmıyor.
  */
 function SekizgenDoku() {
   return (
@@ -235,34 +322,58 @@ function SekizgenDoku() {
 }
 
 /* ============================================================
-   2 — FELSEFE
+   2 — MARKA FELSEFESİ
    ============================================================ */
 
 function Felsefe() {
-  const kartlar: [string, string][] = [
-    [
-      'Gelişim Odaklı Takip',
-      'Öğrenci yalnızca sonucunu değil, eksiklerini ve gelişebileceği alanları anlık görür. Öz-düzenleme becerisi kazanır.',
-    ],
-    [
-      'Kaygısız Öğrenme Alanı',
-      'Sıralama baskısı veya kıyaslama olmadan, her öğrencinin kendi potansiyelini ve ritmini keşfetmesine odaklanan güvenli bir yapı.',
-    ],
-    [
-      'Görünür Akademik İlerleme',
-      'Öğretmenin rehberliği ve velinin bilinçli desteği, öğrenciyi baskı altına almadan aynı yapıcı eksende buluşur.',
-    ],
+  return (
+    <section className="bg-surface">
+      <div className="mx-auto max-w-[42rem] px-5 py-20 text-center md:py-24">
+        <h2 className="font-display text-[28px] font-semibold leading-[1.25] text-ink md:text-[34px]">
+          Öğrenme bir sonuç değil, devam eden bir süreçtir.
+        </h2>
+        <p className="mx-auto mt-6 max-w-[34rem] text-[17px] leading-[1.7] text-ink">
+          SEKİZ, matematiğin sonsuzluk fikrinden ilham alır. Çünkü öğrenme de tek bir sonuçla
+          tamamlanmaz; her kazanım yeni bir düşüncenin ve yeni bir gelişimin başlangıcıdır.
+        </p>
+
+        <GeometricDivider className="mx-auto my-10 max-w-[16rem]" />
+
+        <p className="font-display text-[22px] font-semibold text-ink md:text-[24px]">
+          Öğrenmenin sonu yok.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   3 — SEKİZ NEDİR?
+   ============================================================ */
+
+function SekizNedir() {
+  const roller: [string, string][] = [
+    ['Öğrenci', 'Kendi öğrenme sürecini takip eder.'],
+    ['Öğretmen', 'Sınıfın gelişimini görür ve öğretimini buna göre şekillendirir.'],
+    ['Veli', 'Öğrencinin gelişimini takip eder ve sürece destek olur.'],
   ];
 
   return (
-    <Bolum baslik="Sadece Puan Değil, Süreç Odaklı Akademik Rutin" zemin="yuzey" genis>
-      <div className="mt-7 grid gap-5 md:grid-cols-3">
-        {kartlar.map(([baslik, metin]) => (
-          <div key={baslik} className="rounded-sk-lg border border-line bg-paper p-5">
-            <h3 className="font-display text-[18px] font-semibold leading-[1.25] text-ink">
-              {baslik}
-            </h3>
-            <p className="mt-2 text-[15px] leading-[1.6] text-muted">{metin}</p>
+    <Bolum baslik="Ödevden gelişime, öğrenmenin tamamı tek yerde." genis>
+      <P>
+        SEKİZ; ödevlerin verildiği, çalışmaların teslim edildiği, sonuçların
+        değerlendirildiği, geri bildirimlerin görüldüğü ve öğrencinin gelişiminin takip
+        edildiği bütünleşik bir eğitim platformudur.
+      </P>
+
+      {/* Üç rol: kutu değil, sütun. Kartlara koymak sayfayı bir özellik
+          ızgarasına çevirirdi; burada amaç yalnız kimin ne yaptığını
+          bir bakışta göstermek. */}
+      <div className="mt-10 grid gap-8 border-t border-line pt-8 md:grid-cols-3 md:gap-10">
+        {roller.map(([ad, cumle]) => (
+          <div key={ad}>
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">{ad}</p>
+            <p className="mt-2 text-[16px] leading-[1.6] text-ink">{cumle}</p>
           </div>
         ))}
       </div>
@@ -271,287 +382,373 @@ function Felsefe() {
 }
 
 /* ============================================================
-   3 — EKOSİSTEM
+   4 — ÖĞRENCİ
    ============================================================ */
 
-function Ekosistem() {
+function Ogrenci() {
   return (
-    <section id="ekosistem">
-      <div className="mx-auto max-w-[54rem] px-5 py-14">
-        <h2 className="text-[26px] leading-[1.2] text-ink">
-          SEKİZ Ekosistemi: Dört Paydaş, Tek Uyum
+    <EkranliBolum
+      ustBaslik="Öğrenci"
+      baslik="Öğrenci kendi öğrenme sürecini görür."
+      zemin="yuzey"
+      ekranlar={
+        <>
+          <Ekran
+            dosya="ogrenci.webp"
+            alt="Öğrencinin ödev listesi: bekleyen ve gönderilmiş ödevler, puanlar"
+            aciklama="Ödev listesi"
+          />
+          <Ekran
+            dosya="ogrenci-sonuc.webp"
+            alt="Teslim sonrası sonuç ekranı: puan, doğru ve yanlış sayısı, çalışılacak konular"
+            aciklama="Teslimden sonra: puan ve geri bildirim"
+          />
+        </>
+      }
+    >
+      <Maddeler
+        maddeler={[
+          'Bütün ödevlerini tek ekranda görür; tamamladıklarını ve teslim edilmeyi bekleyenleri takip eder.',
+          'Ödevini çözüm fotoğrafıyla teslim eder — fotoğraf yüklenmeden teslim tamamlanmaz.',
+          'Test türündeki ödevlerde puanını teslim ettiği anda görür.',
+          'Cevap anahtarı teslimden önce açılmaz; teslimden hemen sonra açılır.',
+          'Yanlış yaptığı soruları ve ödev sonuçlarını görür.',
+          'Genel ortalamasını ve gelişimini güçlendirebileceği konu alanlarını takip eder.',
+        ]}
+      />
+      <Not>Öğrenci yalnızca ödev teslim etmez; kendi öğrenme sürecini takip eder.</Not>
+    </EkranliBolum>
+  );
+}
+
+/* ============================================================
+   5 — ÖĞRETMEN
+   ============================================================ */
+
+function Ogretmen() {
+  return (
+    <EkranliBolum
+      ustBaslik="Öğretmen"
+      baslik="Öğretmen yalnızca sonucu değil, öğrenmenin gelişimini görür."
+      ters
+      ekranlar={
+        <>
+          <Ekran
+            dosya="ogretmen.webp"
+            alt="Öğretmen panosu: öğrenci sayısı, açık ödev, puan bekleyen ve teslim edilmemiş ödev sayıları"
+            aciklama="Pano"
+          />
+          <Ekran
+            dosya="ogretmen-sinif.webp"
+            alt="Sınıf karnesi: öğrenci ortalamaları ve sınıfın konu dökümü"
+            aciklama="Sınıf karnesi"
+          />
+        </>
+      }
+    >
+      <Maddeler
+        maddeler={[
+          'Hangi öğrencinin ödevini yaptığını, hangi ödevin henüz teslim edilmediğini görür.',
+          'Puanları ve puan bekleyen çalışmaları takip eder.',
+          'Ödev, öğrenci ve sınıf ortalamalarını görür.',
+          'Öğrencilerin yanlış yaptığı soruları ve konu alanlarını inceler.',
+          'Sınıfın hangi matematik konularında gelişime ihtiyaç duyduğunu görür.',
+        ]}
+      />
+      <P>
+        Açık uçlu ödevlerde öğrencinin çözümü öğretmen tarafından kontrol edilir ve nihai puan
+        öğretmen tarafından verilir.
+      </P>
+      <Not>
+        Veri öğretmenin yerini almaz. Öğretmenin öğrenciyi daha iyi anlamasına yardımcı olur.
+      </Not>
+    </EkranliBolum>
+  );
+}
+
+/* ============================================================
+   6 — GERİ BİLDİRİM
+
+   KOYU BANT. Sayfanın ortasında ritmi kıran tek tipografik durak;
+   art arda gelen üç rol bölümünden sonra gözün dinlendiği yer.
+   ============================================================ */
+
+function GeriBildirim() {
+  return (
+    <section className="bg-ink text-paper">
+      <div className="mx-auto max-w-[42rem] px-5 py-20 text-center md:py-24">
+        <h2 className="font-display text-[26px] font-semibold leading-[1.25] md:text-[32px]">
+          Sonuç, öğrenmenin bir sonraki adımını gösterir.
+        </h2>
+        <p className="mx-auto mt-6 max-w-[34rem] text-[17px] leading-[1.7] text-paper/90">
+          SEKİZ öğrencinin yalnızca puanını göstermez. Yanlış yaptığı soruları ve eksik olduğu
+          konu alanlarını da görünür hâle getirir.
+        </p>
+        <p className="mx-auto mt-5 max-w-[34rem] text-[17px] leading-[1.7] text-paper/90">
+          Öğrenci nerede olduğunu görür. Öğretmen sınıfın hangi konularda gelişime ihtiyaç
+          duyduğunu görür.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   7 — VELİ
+   ============================================================ */
+
+function Veli() {
+  return (
+    <EkranliBolum
+      ustBaslik="Veli"
+      baslik="Öğrenme sürecine aile de eşlik eder."
+      zemin="yuzey"
+      ekranlar={
+        <>
+          <Ekran
+            dosya="veli.webp"
+            alt="Velinin ödev listesi: gönderilen ödevler, alınan puan ve yanlış yapılan soruların numaraları"
+            aciklama="Velinin gördüğü ödev durumu"
+          />
+          <Ekran
+            dosya="ogrenci-konular.webp"
+            alt="Konu karnesi: genel ortalama, konu alanları ve ödev ödev gelişim"
+            aciklama="Ortalama ve gelişim alanları"
+          />
+        </>
+      }
+    >
+      <P>
+        Veli; öğrencinin yaptığı ve yapmadığı ödevleri, puanlarını, genel ortalamasını ve
+        gelişim alanlarını takip edebilir. Öğrencinin eksik olduğu veya daha fazla
+        çalışabileceği konu alanları veli tarafından da görülebilir.
+      </P>
+      <P>
+        Bu görünürlük, öğrencinin ihtiyaç duyduğu desteğin doğru zamanda verilmesine yardımcı
+        olur.
+      </P>
+      <Not>
+        SEKİZ, öğretmen ile aile arasında öğrencinin gelişimini destekleyen ortak bir zemin
+        oluşturur.
+      </Not>
+    </EkranliBolum>
+  );
+}
+
+/* ============================================================
+   8 — İLETİŞİM
+   ============================================================ */
+
+function Iletisim() {
+  return (
+    <Bolum baslik="Öğrenme, iletişimle güçlenir." ortala>
+      <P>
+        SEKİZ üzerinden öğrenci–öğretmen ve veli–öğretmen arasında iletişim kurulabilir.
+      </P>
+      <Not>Bu iki iletişim alanı birbirinden bağımsızdır.</Not>
+    </Bolum>
+  );
+}
+
+/* ============================================================
+   9 — EWALU
+   ============================================================ */
+
+function EwaluBolumu() {
+  return (
+    <section className="bg-surface">
+      <div className="mx-auto max-w-[46rem] px-5 py-16 md:py-20">
+        <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
+          Ewalu
+        </p>
+        <h2 className="font-display text-[26px] font-semibold leading-[1.2] text-ink md:text-[30px]">
+          SEKİZ'in öğrenme sürecindeki dijital yüzü.
         </h2>
 
-        <div className="mt-8 flex flex-col gap-12">
-          <RolBlok
-            kicker="Öğrenci İçin"
-            baslik="Ne Yapacağını Bilen, Özgür ve Planlı Zihinler"
-            dosya="ogrenci.webp"
-            alt="Öğrencinin ödev listesi ekranı: bekleyen ve gönderilmiş ödevler, puanlar"
-            maddeler={[
-              'Tek ekrandan ödev ve çözüm erişimi.',
-              // Kural 6 / Part XXI güvencesi — olumlu kipte, öğretmenin kararı.
-              'Teslimden sonra açılan çözümler ve kişisel analiz.',
-              'Sorumluluk bilincini artıran şeffaf takip.',
-            ]}
-          />
+        <div className="mt-6 flex items-start gap-5">
+          <EwaluFigure poz="karsilama" boyut={88} dekoratif className="shrink-0" />
+          <div>
+            {/* TEK PARAGRAF, İKİ CÜMLE — iki kez kısaltıldı.
+                1) "Ewalu, SEKİZ'in öğrencinin öğrenme yolculuğuna eşlik
+                   eden dijital asistanıdır." — arka arkaya iki tamlama
+                   ("SEKİZ'in öğrencinin") cümleyi düşürüyordu.
+                2) "SEKİZ deneyimine insani bir yüz kazandırır" çıkarıldı:
+                   öğretmen gereksiz buldu. Ayrıca kalan cümle birinciyle
+                   tekrar ediyordu, o yüzden ikisi tek paragrafta
+                   birleştirildi. Ne yaptığı bir kez söyleniyor. */}
+            <p className="text-[17px] leading-[1.7] text-ink">
+              Ewalu, SEKİZ'in dijital asistanıdır. Öğrenciyi karşılar ve ödev sonucunu
+              aldığında ona uygun geri bildirimi sunar.
+            </p>
+          </div>
+        </div>
 
-          <RolBlok
-            kicker="Öğretmen İçin"
-            baslik="Veriye Dayalı, Nitelikli Rehberlik"
-            dosya="ogretmen.webp"
-            alt="Öğretmen panosu: öğrenci sayısı, açık ödev, puan bekleyen ve eksik ödev kutuları"
-            ters
-            maddeler={[
-              'Sınıfın genel ve bireysel konu hakimiyetini anlık görme.',
-              'Açık uçlu ödevlerde pedagojik değerlendirme kontrolü.',
-              'Zaman kazandıran, doğrudan ihtiyaca odaklanan ders planlaması.',
-            ]}
-          />
-
-          <RolBlok
-            kicker="Veli İçin"
-            baslik="Kıyassız, Şeffaf ve Bilinçli Eşlik"
-            dosya="veli.webp"
-            alt="Velinin ödev listesi: gönderilen ödevler, alınan puan, yanlış yapılan soruların numaraları ve süresi yaklaşan ödev"
-            maddeler={[
-              'Çocuğunun akademik yolculuğunu anlık ve net izleme.',
-              'İletişim sınırları korunmuş, güvenli okul-aile bağı.',
-              'Sadece eksikleri değil, gösterilen çabayı da fark etme imkânı.',
-            ]}
-          />
-
-          <YonetimBlok />
+        <div className="mt-9">
+          <EwaluVideo />
         </div>
       </div>
     </section>
   );
 }
 
-/**
- * Rol bloğu: üç madde ve o rolün gerçek ekran görüntüsü.
- *
- * ÜÇ ROL, ÜÇ EKRAN — ve dördüncüsü yok. Bu bilinçli: sistemde
- * `ogretmen`, `ogrenci`, `veli` rolleri var (`types/api.ts`), okul
- * yönetimi girişi yok. Aşağıdaki `YonetimBlok` bu yüzden ekran
- * görüntüsü ve giriş bağlantısı taşımıyor.
- *
- * UYDURMA VERİ NOTU her görselin ALTINDA. Ekran görüntüleri sahte veriyle
- * üretildi; gerçek bir öğrenciye aitmiş gibi göstermemek için tek satırlık
- * bir açıklama duruyor. Bu bir "teknik disclaimer" değil, bir görsel
- * altyazısı — uydurma veriyi gerçekmiş gibi sunmamak Part L'nin konusu.
- */
-function RolBlok({
-  kicker,
-  baslik,
-  dosya,
-  alt,
-  maddeler,
-  ters = false,
-}: {
-  kicker: string;
-  baslik: string;
-  dosya: string;
-  alt: string;
-  maddeler: string[];
-  ters?: boolean;
-}) {
-  return (
-    <div
-      data-blok="rol"
-      className={`flex flex-col gap-7 md:items-center md:gap-10 ${
-        ters ? 'md:flex-row-reverse' : 'md:flex-row'
-      }`}
-    >
-      <div className="md:flex-1">
-        <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-muted">
-          {kicker}
-        </p>
-        <h3 className="mt-1 font-display text-[21px] font-semibold leading-[1.25] text-ink">
-          {baslik}
-        </h3>
-        <Maddeler>
-          {maddeler.map((m) => (
-            <Madde key={m}>{m}</Madde>
-          ))}
-        </Maddeler>
-      </div>
-
-      <figure className="md:w-[280px] md:shrink-0">
-        <img
-          src={`/yeni/tanitim-ekranlar/${dosya}`}
-          alt={alt}
-          width={780}
-          height={1520}
-          loading="lazy"
-          decoding="async"
-          className="mx-auto w-full max-w-[280px] rounded-sk-lg border border-line shadow-sk-md"
-        />
-        <figcaption className="mt-2 text-center text-[12px] text-muted">
-          Örnek ekran — adlar ve puanlar uydurmadır.
-        </figcaption>
-      </figure>
-    </div>
-  );
-}
-
-/**
- * Dördüncü paydaş: okul yönetimi.
- *
- * ÜÇ MADDE ÖĞRETMENİN, BİREBİR — yalnız "Bosphorus" Türkçeleştirildi
- * (Kural 18: kullanıcıya görünen metin Türkçe).
- *
- * BU BLOK NEDEN FARKLI GÖRÜNÜYOR: üçü rol, bu kurum. Sistemde okul
- * yönetimi girişi, kurum panosu ya da idari rapor YOK — ve maddelerin
- * hiçbiri zaten bir özellik vaat etmiyor ("yakışan altyapı",
- * "bütünleşme", "somut gösterge"). Ama diğer üçüyle birebir aynı kalıpta
- * dursaydı dördüncü bir giriş varmış gibi okunurdu. Çözüm tek bir
- * savunmacı cümle yazmak değil, bloğu farklı kurmak: ekran görüntüsü
- * yok, giriş bağlantısı yok, tek geometrik vurgu burada.
- * `scripts/tanitim-denetimi.mjs` 7. grubu bunu ölçüyor.
- */
-function YonetimBlok() {
-  return (
-    <div
-      data-blok="yonetim"
-      className="rounded-sk-lg border border-line bg-surface p-6 md:p-8"
-    >
-      <div className="flex items-start gap-4">
-        <StarEight boyut={26} bicim="cizgi" className="mt-1 shrink-0 text-amber" />
-        <div>
-          <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-muted">
-            Okul Yönetimi İçin
-          </p>
-          <h3 className="mt-1 font-display text-[21px] font-semibold leading-[1.25] text-ink">
-            Kurumsal Vizyon ve Standart
-          </h3>
-          <Maddeler>
-            <Madde>Boğaz hattının prestijli lise geleneğine yakışan dijital altyapı.</Madde>
-            <Madde>Akademik disiplin ile teknolojik inovasyonun bütünleşmesi.</Madde>
-            <Madde>Süreç odaklı eğitim anlayışının somut göstergesi.</Madde>
-          </Maddeler>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ============================================================
-   4 — EWALU
+   10 — DEĞERLENDİRME
    ============================================================ */
 
-function EwaluBolumu() {
+function Degerlendirme() {
   return (
-    <Bolum baslik="Ewalu: Öğrenme Yolculuğunda İlham Veren Bir Eşlikçi" zemin="yuzey">
-      <div className="mt-5 flex items-start gap-4">
-        <EwaluFigure poz="karsilama" boyut={80} dekoratif className="shrink-0" />
-        <p className="text-[17px] leading-[1.65] text-ink">
-          Ewalu, SEKİZ ekosisteminde öğrencileri karşılayan, başarıyı fark eden ve zorlanılan
-          anlarda yapıcı geri bildirimlerle öğrenme merakını canlı tutan dijital maskottur.
-          Öğrenciye cevabı vermek yerine düşünme cesareti kazandırır; öğrenme disiplinini
-          keyifli bir alışkanlığa dönüştürür.
-        </p>
-      </div>
-
-      <div className="mt-7">
-        <EwaluVideo />
-      </div>
+    <Bolum baslik="Değerlendirme, öğrenmeyi görünür kılar.">
+      <P>
+        Test türündeki ödevler, önceden belirlenmiş aynı kurallar doğrultusunda sistem
+        tarafından otomatik olarak değerlendirilir.
+      </P>
+      <P>
+        Açık uçlu ödevlerde son kontrol ve puanlama öğretmen tarafından yapılır.
+      </P>
+      <Not>Öğretmenin değerlendirmesi sistemin temel parçalarından biridir.</Not>
     </Bolum>
   );
 }
 
 /* ============================================================
-   5 — GÜVEN
+   11 — GELİŞİM
+   ============================================================ */
+
+function Gelisim() {
+  return (
+    <Bolum baslik="Puanın ötesinde, gelişim." zemin="yuzey">
+      <P>
+        SEKİZ öğrencinin yalnızca tek bir ödevde aldığı sonucu değil, çalışmalar boyunca
+        oluşan genel gelişimini görmesine yardımcı olur.
+      </P>
+      <P>
+        Öğrenci kendi ortalamasını ve gelişim alanlarını takip eder. Öğretmen öğrencinin ve
+        sınıfın genel gelişimini görür.
+      </P>
+      {/* KIYASLAMA YOK — ve bu bir slogan değil, sunucudaki bir sınır:
+          `kendi_karnem` ve `veli_paneli` sınıf ortalamasını, sıralamayı
+          ve başka öğrencinin verisini bilerek döndürmüyor (0026/0029),
+          testleri de bunu ölçüyor. */}
+      <Not>
+        Öğrenciye ve veliye başka öğrencilerin puanları veya sıralamaları gösterilmez. Amaç
+        kıyaslama değil, kişisel gelişimdir.
+      </Not>
+    </Bolum>
+  );
+}
+
+/* ============================================================
+   12 — SÜREKLİ GELİŞEN PLATFORM
+
+   MARKANIN GELECEK VİZYONU. Sayfanın ikinci koyu durağı: bu bölüm
+   diğerlerinin arasında kaybolmamalı.
+   ============================================================ */
+
+function Gelecek() {
+  return (
+    <section className="bg-ink text-paper">
+      <div className="mx-auto max-w-[44rem] px-5 py-20 md:py-24">
+        <h2 className="font-display text-[26px] font-semibold leading-[1.25] md:text-[32px]">
+          SEKİZ gelişmeye devam ediyor.
+        </h2>
+        <p className="mt-6 text-[17px] leading-[1.7] text-paper/90">
+          SEKİZ tamamlanmış ve değişmeyecek bir ürün olarak tasarlanmadı. Gerçek sınıf
+          deneyimi, öğrencilerin ihtiyaçları, öğretmen geri bildirimleri ve gelişen
+          teknolojiler doğrultusunda sürekli geliştirilmeye devam edecek.
+        </p>
+        <p className="mt-5 text-[17px] leading-[1.7] text-paper/90">
+          Yeni ihtiyaçlar ortaya çıktıkça yeni özellikler eklenecek; mevcut deneyim sürekli
+          iyileştirilecek.
+        </p>
+
+        <div className="mt-9 border-t border-paper/20 pt-7">
+          <p className="font-display text-[20px] font-semibold leading-[1.35] md:text-[22px]">
+            Çünkü öğrenme sürekli gelişiyorsa, onu destekleyen teknoloji de gelişmeye devam
+            etmelidir.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   13 — GÜVEN
+
+   KISA. Öğretmenin kuralı: tanıtım sayfasında gereksiz teknik
+   güvenlik ayrıntısı anlatma.
    ============================================================ */
 
 function Guven() {
   return (
-    <Bolum baslik="Güvenilir Altyapı, Sorumlu Teknoloji">
-      {/*
-        SATICI ADI VE ÜLKE YOK — öğretmenin kararı. Brief "İsveç merkezli
-        … Supabase" diyordu; ölçüm bunu doğrulamadı (bölge Zürih /
-        eu-central-2, yani İsviçre; şirket de İsveç merkezli değil).
-        Doğrulanmamış bir iddiayı yayımlamaktansa (Kural 15) satıcı ve
-        ülke sayfadan tümüyle çıktı. Bölge bilgisi `docs/kvkk-notlari.md`
-        içinde duruyor.
-
-        Üç madde de OLUMLU KİPTE ve üçü de bugün doğru:
-          · dosyalar özel bir kovada, imzalı ve kısa ömürlü adresle açılıyor
-          · öğretmen PIN'i bcrypt ile saklanıyor (0003)
-          · bu sayfa hiçbir sunucuya istek atmıyor — denetimin 1. grubu
-            bunu davranış olarak ölçüyor
-      */}
-      <p className="mt-4 text-[17px] leading-[1.65] text-ink">
-        Öğrenci verileri ve akademik içerikler, üst düzey güvenlik standartlarına sahip bir
-        veritabanı altyapısıyla korunur. Şeffaf, gizlilik odaklı ve kesintisiz bir deneyim
-        sunar.
-      </p>
-
-      <Maddeler className="mt-5">
-        <Madde>Ödev dosyaları ve çözüm görselleri yalnızca yetkili erişimle görüntülenir.</Madde>
-        <Madde>Öğretmen giriş bilgisi geri döndürülemez biçimde saklanır.</Madde>
-        <Madde>Bu tanıtım sayfası çerez kullanmaz ve ziyaretçi takibi yapmaz.</Madde>
-      </Maddeler>
+    <Bolum baslik="Eğitimde güven, sistemin temelidir.">
+      <P>Veriler Supabase altyapısında, Zürih / İsviçre bölgesinde tutulur.</P>
+      <P>
+        Ödev dosyaları ve öğrenci çözüm görsellerine yalnızca yetkili erişim sağlanır.
+      </P>
+      <Not>Bu tanıtım sayfası çerez kullanmaz ve ziyaretçi takibi yapmaz.</Not>
     </Bolum>
   );
 }
 
 /* ============================================================
-   6 — KÜNYE VE KAPANIŞ
+   14–15 — HİKÂYE VE KAPANIŞ
    ============================================================ */
 
 function Kunye() {
   return (
     <footer>
       {/* AÇIK ZEMİN: mühür lacivert bir çizim, koyu zeminde kaybolur.
-          Bu yüzden künye açık, kapanış bandı koyu — ikisi ayrı. */}
+          Bu yüzden hikâye açık, kapanış koyu — ikisi ayrı bant. */}
       <div className="bg-surface">
-        <div className="mx-auto max-w-[42rem] px-5 py-14 text-center">
-          {/* Mühür yalnız 96 px ve üstünde (Kural 8). `dekoratif`: okulun
-              tam adı hemen altındaki künye cümlesinde GÖRÜNÜR METİN olarak
-              geçiyor; işaretlemeseydik ekran okuyucu adı iki kez okurdu. */}
-          <div className="flex justify-center">
-            <SchoolCrest boyut={160} dekoratif />
-          </div>
-
-          <p className="mx-auto mt-6 max-w-[34rem] text-[16px] leading-[1.65] text-ink">
-            İstanbul Beşiktaş Arnavutköy Korkmaz Yiğit Anadolu Lisesi Matematik Öğretmeni{' '}
-            <strong className="font-semibold">Buket Topuzoğlu</strong> tarafından sınıf içi
-            gerçek ihtiyaçlardan doğarak geliştirilmiştir.
+        <div className="mx-auto max-w-[42rem] px-5 py-16 text-center md:py-20">
+          <h2 className="font-display text-[26px] font-semibold leading-[1.2] text-ink md:text-[30px]">
+            Bir öğretmenin gerçek sınıf deneyiminden doğdu.
+          </h2>
+          <p className="mx-auto mt-6 max-w-[34rem] text-[17px] leading-[1.7] text-ink">
+            SEKİZ, matematik öğretmeni Buket Topuzoğlu tarafından öğrencilerin ödev,
+            değerlendirme ve gelişim süreçlerini daha görünür ve yönetilebilir hâle getirmek
+            amacıyla geliştirildi. Gerçek sınıf ihtiyaçlarından doğdu ve gelişmeye devam
+            ediyor.
           </p>
 
-          <GeometricDivider className="my-9" />
+          {/* Mühür yalnız 96 px ve üstünde (Kural 8). `dekoratif`: okulun
+              tam adı hemen altında görünür metin olarak geçiyor;
+              işaretlemeseydik ekran okuyucu adı iki kez okurdu. */}
+          <div className="mt-12 flex justify-center">
+            <SchoolCrest boyut={160} dekoratif />
+          </div>
+          <p className="mt-6 font-display text-[21px] font-semibold text-ink">
+            Buket Topuzoğlu
+          </p>
+          <p className="mt-1 text-[16px] text-muted">Matematik Öğretmeni</p>
+          <p className="mt-5 text-[15px] text-ink">Arnavutköy Korkmaz Yiğit Anadolu Lisesi</p>
+          <p className="text-[15px] text-muted">Beşiktaş · İstanbul</p>
         </div>
       </div>
 
       <div className="bg-ink text-paper">
-        <div className="mx-auto max-w-[42rem] px-5 py-16 text-center">
-          {/* Sayfadaki ikinci ve son 8 → ∞ hareketi: açılışta ve kapanışta,
-              arası hareketsiz (Kural 12). Hareket azaltma tercihi açıksa
-              dönmüyor, doğrudan ∞ duruyor. */}
+        <div className="mx-auto max-w-[42rem] px-5 py-20 text-center md:py-24">
+          {/* Sayfadaki ikinci ve son 8 → ∞ hareketi: açılışta ve
+              kapanışta, arası hareketsiz (Kural 12). Hareket azaltma
+              tercihi açıksa dönmüyor, doğrudan ∞ duruyor. */}
           <div className="flex justify-center text-paper">
             <Sekiz8Mark boyut={64} acilistaDonsun gecikme={200} etiket={null} />
           </div>
 
-          {/* MARKA CÜMLESİ — sayfada TAM BİR KEZ, burada. Öğretmenin
-              kararı: yeni H1 başlık oldu, marka cümlesi kapanışta kaldı.
-              Denetim bir kez geçtiğini ayrıca sayıyor. */}
-          <p className="mt-7 font-display text-[26px] font-semibold leading-[1.25]">
+          <p className="mt-9 font-display text-[30px] font-semibold leading-[1.2] md:text-[38px]">
             Öğrenmenin sonu yok.
           </p>
 
           <a
             href="/yeni/"
-            className="mt-9 inline-flex min-h-[48px] items-center rounded-sk-sm bg-paper px-6 text-[16px] font-bold text-ink"
+            className="mt-10 inline-flex min-h-[48px] items-center rounded-sk-sm bg-paper px-6 text-[16px] font-bold text-ink"
           >
             Giriş ekranına git
           </a>
 
-          <p className="mt-10 text-[14px] font-bold tracking-[0.12em] text-paper">SEKİZ</p>
+          <p className="mt-12 text-[14px] font-bold tracking-[0.16em] text-paper">SEKİZ</p>
           <p className="mt-1 text-[13px] text-paper/70">Buket Topuzoğlu · Matematik</p>
-          <p className="mt-6 text-[13px] text-paper/60">
-            © 2026 SEKİZ. Tüm hakları saklıdır.
-          </p>
         </div>
       </div>
     </footer>

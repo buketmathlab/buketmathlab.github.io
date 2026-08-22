@@ -102,12 +102,26 @@ const OGRENCI_ODEVLERI = {
         puan: 83,
         ogretmen_puan: null,
         ogretmen_yorum: null,
-        cevaplar: {},
+        /* TESLİM SONRASI EKRANIN TAMAMI İÇİN. Cevaplar ve anahtar
+         * birlikte olmadan sonuç kartı yalnız puanı gösterir; tanıtım
+         * sayfası "teslimden sonra cevap anahtarına ulaşır" diyor ve o
+         * cümlenin görsel karşılığı bu ekran.
+         * 4 ve 9 yanlış — veli görselindeki `yanlis_sorular` ile aynı. */
+        cevaplar: {
+          1: 'C', 2: 'A', 3: 'D', 4: 'B', 5: 'E', 6: 'A',
+          7: 'C', 8: 'D', 9: 'A', 10: 'B', 11: 'E', 12: 'C',
+        },
         gecikmeli: false,
       },
-      konu_analizi: [],
-      cevap_anahtari: null,
-      anahtar_yolu: null,
+      konu_analizi: [
+        { konu: 'Mutlak Değer', toplam: 7, dogru: 6, yanlis: 1, bos: 0 },
+        { konu: 'Eşitsizlikler', toplam: 5, dogru: 4, yanlis: 1, bos: 0 },
+      ],
+      cevap_anahtari: {
+        1: 'C', 2: 'A', 3: 'D', 4: 'E', 5: 'E', 6: 'A',
+        7: 'C', 8: 'D', 9: 'B', 10: 'B', 11: 'E', 12: 'C',
+      },
+      anahtar_yolu: 'anahtar/d3.pdf',
     },
     {
       id: 'd4',
@@ -156,6 +170,7 @@ const OGRETMEN_PANOSU = {
 
 const VELI_PANELI = {
   ogrenci: { ad: 'Elif Yıldırım', sinif: '10C', tur: 'okul' },
+  genel_ortalama: 81.4,
   okunmamis_mesaj: 1,
   son_gorulme: an(-3),
   odemeler: [],
@@ -206,10 +221,60 @@ const VELI_PANELI = {
   ],
 };
 
+/* Öğrencinin KENDİ konu karnesi (0026 + 0029).
+ * Sınıf ortalaması, sıralama ve başka öğrencinin verisi yok — uç bunları
+ * bilerek döndürmüyor ve tanıtım sayfası da bunu söylüyor. */
+const KENDI_KARNEM = {
+  kapsam: { ad: 'Elif Yıldırım', sinif: '10C' },
+  odev_sayisi: 6,
+  genel_ortalama: 81.4,
+  konular: [
+    { konu: 'Üslü ve Köklü Sayılar', toplam: 18, dogru: 11, yanlis: 6, bos: 1 },
+    { konu: 'Eşitsizlikler', toplam: 12, dogru: 9, yanlis: 3, bos: 0 },
+    { konu: 'Mutlak Değer', toplam: 14, dogru: 13, yanlis: 1, bos: 0 },
+  ],
+  gelisim: [
+    { odev: 'Üslü ve Köklü Sayılar — Değerlendirme', tarih: gun(-38), tur: 'test', deger: 62 },
+    { odev: 'Eşitsizlikler testi', tarih: gun(-24), tur: 'test', deger: 75 },
+    { odev: 'Denklemler — açık uçlu', tarih: gun(-15), tur: 'acik', deger: 86 },
+    { odev: 'Mutlak Değer — test', tarih: gun(-3), tur: 'test', deger: 83 },
+  ],
+};
+
+/* Öğretmenin sınıf karnesi (0013) ve sınıfın konu dökümü (0023). */
+const SINIF_OGRENCILERI = {
+  sinif: { id: '10C', ad: '10C', ozel: false, arsiv: false },
+  degerlendirilen_odev: 6,
+  ogrenciler: [
+    { id: 'o1', ad: 'Elif Yıldırım', tur: 'okul', yapti: 6, yapmadi: 0, ortalama_yapan: 81.4, ortalama_tum: 81.4 },
+    { id: 'o2', ad: 'Mert Çağlar', tur: 'okul', yapti: 5, yapmadi: 1, ortalama_yapan: 74.2, ortalama_tum: 61.8 },
+    { id: 'o3', ad: 'Zeynep Şahin', tur: 'okul', yapti: 4, yapmadi: 2, ortalama_yapan: 88.0, ortalama_tum: 58.7 },
+    { id: 'o4', ad: 'Ahmet Öztürk', tur: 'okul', yapti: 6, yapmadi: 0, ortalama_yapan: 93.5, ortalama_tum: 93.5 },
+  ],
+};
+const KONU_KARNESI = {
+  kapsam: { tur: 'sinif', ad: '10C', sinif: '10C', mevcut: 28 },
+  odev_sayisi: 6,
+  konular: [
+    { konu: 'Üslü ve Köklü Sayılar', toplam: 168, dogru: 94, yanlis: 58, bos: 16 },
+    { konu: 'Eşitsizlikler', toplam: 112, dogru: 78, yanlis: 27, bos: 7 },
+    { konu: 'Mutlak Değer', toplam: 140, dogru: 121, yanlis: 17, bos: 2 },
+  ],
+  gelisim: [
+    { odev: 'Üslü ve Köklü Sayılar — Değerlendirme', tarih: gun(-38), tur: 'test', deger: 58.4, gonderen: 25, mevcut: 28 },
+    { odev: 'Eşitsizlikler testi', tarih: gun(-24), tur: 'test', deger: 71.2, gonderen: 27, mevcut: 28 },
+    { odev: 'Denklemler — açık uçlu', tarih: gun(-15), tur: 'acik', deger: 79.6, gonderen: 24, mevcut: 28 },
+    { odev: 'Mutlak Değer — test', tarih: gun(-3), tur: 'test', deger: 86.1, gonderen: 28, mevcut: 28 },
+  ],
+};
+
 const CEVAPLAR = {
   ogrenci_odevleri: OGRENCI_ODEVLERI,
   ogretmen_panosu: OGRETMEN_PANOSU,
   veli_paneli: VELI_PANELI,
+  kendi_karnem: KENDI_KARNEM,
+  sinif_ogrencileri: SINIF_OGRENCILERI,
+  konu_karnesi: KONU_KARNESI,
   bildirim_sayilari: { okunmamis_mesaj: 2, puan_bekleyen: 6 },
 };
 
@@ -297,8 +362,27 @@ const VELI_OTURUM = {
 };
 const OGRETMEN_OTURUM = { rol: 'ogretmen', token: 'g'.repeat(64) };
 
+/* ALTI EKRAN, ÜÇ AKIŞ.
+ *
+ * Tanıtım sayfası öğrencinin, öğretmenin ve velinin ne gördüğünü
+ * ANLATIYOR; bu görseller o cümlelerin karşılığı. Hepsi gerçek
+ * uygulamanın gerçek ekranları — uydurma olan yalnız veri.
+ *
+ * Daha fazlasını çekmedim: her cümleye bir ekran koymak sayfayı bir
+ * ekran görüntüsü galerisine çevirir ve indirilecek bayt üçe katlanır.
+ * Seçilen altı ekran, üç rolün de en çok anlatan anıdır.
+ */
 await cek('ogrenci.webp', '/ogrenci/odevler', OGRENCI_OTURUM);
+/* Teslimden SONRAKİ an: puan, Ewalu'nun cümlesi, doğru/yanlış dökümü ve
+ * cevap anahtarı karşılaştırması bir arada. Sayfanın "teslimden sonra
+ * cevap anahtarına ulaşır" cümlesinin kanıtı bu ekran. */
+await cek('ogrenci-sonuc.webp', '/ogrenci/odev/d3', OGRENCI_OTURUM);
+/* Dönem geneli: kendi ortalaması ve konu alanları. Sınıf ortalaması ve
+ * sıralama YOK — uç bunları döndürmüyor (0026). */
+await cek('ogrenci-konular.webp', '/ogrenci/konularim', OGRENCI_OTURUM);
 await cek('ogretmen.webp', '/ogretmen', OGRETMEN_OTURUM);
+/* Sınıf karnesi: öğrenci ortalamaları + sınıfın konu dökümü + gelişim. */
+await cek('ogretmen-sinif.webp', '/ogretmen/siniflar/10C', OGRETMEN_OTURUM);
 /* VELİDE PANO DEĞİL ÖDEV LİSTESİ.
  * Pano ölçüldü: içeriği 760 px'lik çerçevenin yarısında bitiyor ve ekran
  * seyrek görünüyordu. Tanıtımın 5. bölümü zaten "yaptığı ve yapmadığı
