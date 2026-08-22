@@ -568,19 +568,17 @@ function EwaluBolumu() {
         <div className="mt-6 flex items-start gap-5">
           <EwaluFigure poz="karsilama" boyut={88} dekoratif className="shrink-0" />
           <div>
-            {/* İKİ KISA CÜMLE, TEK TAMLAMA.
-                Önceki hâli "Ewalu, SEKİZ'in öğrencinin öğrenme yolculuğuna
-                eşlik eden dijital asistanıdır." idi: arka arkaya iki
-                tamlama ("SEKİZ'in öğrencinin") cümleyi düşürüyordu, ve
-                "eşlik eden / eşlik etmek" alttaki paragrafla tekrar
-                ediyordu. Tanım ayrı cümle, ne yaptığı ayrı cümle. */}
+            {/* TEK PARAGRAF, İKİ CÜMLE — iki kez kısaltıldı.
+                1) "Ewalu, SEKİZ'in öğrencinin öğrenme yolculuğuna eşlik
+                   eden dijital asistanıdır." — arka arkaya iki tamlama
+                   ("SEKİZ'in öğrencinin") cümleyi düşürüyordu.
+                2) "SEKİZ deneyimine insani bir yüz kazandırır" çıkarıldı:
+                   öğretmen gereksiz buldu. Ayrıca kalan cümle birinciyle
+                   tekrar ediyordu, o yüzden ikisi tek paragrafta
+                   birleştirildi. Ne yaptığı bir kez söyleniyor. */}
             <p className="text-[17px] leading-[1.7] text-ink">
               Ewalu, SEKİZ'in dijital asistanıdır. Öğrenciyi karşılar ve ödev sonucunu
-              aldığında ona eşlik eder.
-            </p>
-            <p className="mt-4 text-[16px] leading-[1.65] text-muted">
-              Çalışma tamamlandığında uygun geri bildirim dilini sunar ve SEKİZ deneyimine
-              insani bir yüz kazandırır.
+              aldığında ona uygun geri bildirimi sunar.
             </p>
           </div>
         </div>
