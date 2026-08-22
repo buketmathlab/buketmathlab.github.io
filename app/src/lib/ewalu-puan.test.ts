@@ -52,7 +52,13 @@ describe('puanMesaji', () => {
 
   it('her cümle bir sonraki adımı söylüyor', () => {
     // Yorum tek başına bir şey yaptırmaz; beş bandın beşi de eylem içeriyor.
-    const eylem = /çalış|bak|incele|fark et|belirle|bul/i;
+    //
+    // LİSTE GENİŞLEDİ, ÖLÇÜM GEVŞEMEDİ. Öğretmenin dil düzeltmesiyle üç
+    // bant yeniden yazıldı ve iki yeni fiil geldi: "yeniden çöz" ve
+    // "gözden geçir". Testin sorduğu şey aynı — "bu cümle öğrenciye bir
+    // sonraki adımı söylüyor mu"; yalnız o adımın söylenebileceği fiiller
+    // arttı. Eylemsiz bir cümle yazılırsa test yine kırılır.
+    const eylem = /çalış|bak|incele|fark et|belirle|bul|çöz|gözden geçir/i;
     for (const p of [90, 75, 60, 30]) {
       expect(puanMesaji(p).cumle).toMatch(eylem);
     }
