@@ -44,6 +44,17 @@ import { sekizgenYolu } from '@/lib/geometri';
  *      Kural 5 gereği testleri hiçbir zaman yapay zekâ puanlamayacak.
  *      Öğretmen aynı sıfatı bir önceki turda video altyazısından da
  *      kendisi çıkarmıştı.
+ *   6. EWALU SORU ÇÖZERKEN YANINDA DEĞİL. Bu bölümün gövdesi bir kez daha
+ *      daraltıldı; öğretmenin kuralı: "Ewalu, öğrencinin soru çözdüğü
+ *      sırada öğrencinin yanında bulunan interaktif bir öğretmen veya
+ *      sohbet asistanı değildir." Önceki metin "zorlanılan anlarda yapıcı
+ *      geri bildirimlerle" ve "cevabı vermek yerine düşünme cesareti
+ *      kazandırır" diyordu — ikisi de tam olarak bunu ima ediyordu.
+ *      ÖLÇÜLDÜ: üründe soru çözerken ipucu veren hiçbir yer yok; Ewalu
+ *      yalnız gönderim sonrası sonuç kartında görünüyor (`OdevTeslim`,
+ *      `puanMesaji`). Mesajları öğretmenin düzenleyebileceği bir ekran da
+ *      YOK — bu yüzden sayfa "öğretmenin belirlediği mesajlar" demiyor;
+ *      olmayan bir ayar ekranı vaat etmek olurdu (Part L).
  *
  * SUNUCUYA HİÇ İSTEK ATMIYOR: ne oturum sağlayıcı, ne Supabase istemcisi.
  * Sıfır çerez, sıfır takip — sayfanın kendi cümlesi bunu söylüyor ve
@@ -446,10 +457,8 @@ function EwaluBolumu() {
       <div className="mt-5 flex items-start gap-4">
         <EwaluFigure poz="karsilama" boyut={80} dekoratif className="shrink-0" />
         <p className="text-[17px] leading-[1.65] text-ink">
-          Ewalu, SEKİZ ekosisteminde öğrencileri karşılayan, başarıyı fark eden ve zorlanılan
-          anlarda yapıcı geri bildirimlerle öğrenme merakını canlı tutan dijital maskottur.
-          Öğrenciye cevabı vermek yerine düşünme cesareti kazandırır; öğrenme disiplinini
-          keyifli bir alışkanlığa dönüştürür.
+          Ewalu, SEKİZ'in öğrencinin öğrenme yolculuğuna eşlik eden dijital asistanıdır.
+          Öğrenciyi karşılar ve ödevi tamamlandığında sonucuna eşlik eder.
         </p>
       </div>
 
