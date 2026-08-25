@@ -434,7 +434,14 @@ console.log('\n5. Metindeki iddialar');
    * kararı). Konumu 6. grup ayrıca ölçüyor; burada varlığı. */
   bak('okul adı sayfada', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(metin));
   bak('konum sayfada', /Beşiktaş · İstanbul/.test(metin));
-  bak('öğretmen kimliği sayfada', /Buket Topuzoğlu/.test(metin) && /Matematik Öğretmeni/.test(metin));
+  /* "Matematik Öğretmeni" başlığı hero'dan kalktı (mühürün altında ada
+   * ikinci kez yer vermek tekrardı). Kimlik hâlâ sayfada ve hâlâ
+   * ölçülüyor — hikâye bölümü "matematik öğretmeni Buket Topuzoğlu"
+   * diyor. Ölçüm küçük harfe de bakıyor; iddia aynı, yeri değişti. */
+  bak(
+    'öğretmen kimliği sayfada',
+    /Buket Topuzoğlu/.test(metin) && /matematik öğretmeni/i.test(metin),
+  );
 
   /* YAZARLIK — sayfanın söylemesi gereken şey. Öğretmenin isteği:
    * SEKİZ'i tasarlayanın bir yazılım şirketi değil kendisi olduğu
@@ -508,8 +515,10 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
   const ilkBolum = await sayfa.evaluate(
     () => document.querySelector('main section')?.textContent ?? '',
   );
+  /* Ad hero'da HÂLÂ var — ama artık ayrı bir satır olarak değil,
+   * `SekizWordmark`ın altındaki "Buket Topuzoğlu · Matematik" olarak.
+   * Ölçüm ayakta: marka bloğu bir gün adsız bırakılırsa kırılır. */
   bak('Hero: öğretmen adı ilk bölümde', /Buket Topuzoğlu/.test(ilkBolum));
-  bak('Hero: "Matematik Öğretmeni" ilk bölümde', /Matematik Öğretmeni/.test(ilkBolum));
   bak('Hero: okul adı ilk bölümde', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(ilkBolum));
   bak('Hero: konum ilk bölümde', /Beşiktaş · İstanbul/.test(ilkBolum));
 

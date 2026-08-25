@@ -301,11 +301,12 @@ function Hero() {
         <div className="flex justify-center">
           <SchoolCrest boyut={120} dekoratif />
         </div>
-        <p className="mt-5 font-display text-[21px] font-semibold leading-[1.25] text-ink">
-          Buket Topuzoğlu
-        </p>
-        <p className="mt-1 text-[15px] text-muted">Matematik Öğretmeni</p>
-        <p className="mt-4 text-[15px] leading-[1.5] text-ink">
+        {/* ÖĞRETMEN ADI BURADA TEKRAR YAZILMIYOR. Bir tur boyunca
+            mühürün altında "Buket Topuzoğlu / Matematik Öğretmeni"
+            duruyordu; ölçüldü ve gereksiz olduğu görüldü: hemen
+            aşağıdaki `SekizWordmark` zaten "Buket Topuzoğlu · Matematik"
+            yazıyor. Aynı ad iki satır arayla iki kez geçiyordu. */}
+        <p className="mt-5 text-[15px] leading-[1.5] text-ink">
           Arnavutköy Korkmaz Yiğit Anadolu Lisesi
         </p>
         <p className="text-[15px] text-muted">Beşiktaş · İstanbul</p>

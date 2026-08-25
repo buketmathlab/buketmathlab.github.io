@@ -142,10 +142,16 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
 
           Uygulama içi bir rota DEĞİL, ayrı bir HTML sayfası — bu yüzden
           `Link` değil düz `a`. Adres `/yeni/tanitim/`. */}
+      {/* RENK `ink`, `link` DEĞİL — öğretmenin isteği ve doğrusu bu.
+          `--color-link` (#1a4894) genel bir bağlantı mavisi; hemen
+          üstündeki "Giriş yap" düğmesi ise `--color-ink` (#001737), yani
+          OKUL MÜHRÜNDEN ÖLÇÜLEN lacivert. İki lacivert yan yana durunca
+          aradaki fark uyumsuzluk olarak okunuyordu. Artık ikisi aynı
+          renk; bağlantı olduğu altı çizili olmasından anlaşılıyor. */}
       <p className="mt-4 text-center">
         <a
           href="/yeni/tanitim/"
-          className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-link underline"
+          className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-ink underline"
         >
           SEKİZ nedir?
         </a>
