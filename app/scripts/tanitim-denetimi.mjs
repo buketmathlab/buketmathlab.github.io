@@ -265,7 +265,7 @@ console.log('\n5. Metindeki iddialar');
   );
   bak(
     'test puanlamasının kural tabanlı olduğu yazıyor',
-    /önceden belirlenmiş aynı kurallar doğrultusunda/.test(metin),
+    /önceden belirlenmiş kurallar doğrultusunda/.test(metin),
   );
   bak(
     'çözüm fotoğrafının zorunlu olduğu yazıyor',
@@ -283,7 +283,7 @@ console.log('\n5. Metindeki iddialar');
   bak('gelecek vizyonu bölümü var', /SEKİZ gelişmeye devam ediyor/.test(metin));
   bak(
     'ekran görüntülerinin temsilî olduğu yazıyor',
-    /adlar ve puanlar temsilidir/.test(metin),
+    /isimler ve puanlar temsilidir/.test(metin),
   );
 
   /* ÇEREZ CÜMLESİ ARTIK ARANMIYOR — ve bu bir gevşetme değil.
@@ -430,10 +430,34 @@ console.log('\n5. Metindeki iddialar');
     /Sonsuzluk bir varış değil, bir yöndür/.test(metin),
   );
 
-  /* Kurum bilgisi artık HERO'DA — sayfanın ilk şeyi (öğretmenin
-   * kararı). Konumu 6. grup ayrıca ölçüyor; burada varlığı. */
-  bak('okul adı sayfada', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(metin));
-  bak('konum sayfada', /Beşiktaş · İstanbul/.test(metin));
+  /* OKUL ADI ARTIK GÖRÜNÜR METİNDE DEĞİL — MÜHÜRÜN ALT METNİNDE.
+   *
+   * Öğretmenin kararı: "Mühür yeter, yazı kalksın." Mührün kendi
+   * halkasında okul adı ve BEŞİKTAŞ zaten yazılı, yani kurum görsel
+   * olarak tanınıyor.
+   *
+   * Ama halkadaki yazı bir GÖRSEL; ekran okuyucu onu okuyamaz. Bu
+   * yüzden mühür artık `dekoratif` değil ve `alt` okulun tam adını
+   * taşıyor. Ölçüm oraya taşındı: iddia aynı ("bu sayfa okulu
+   * tanıtıyor"), ölçülen yer değişti.
+   *
+   * `innerText` alt metnini görmez, o yüzden ayrıca okunuyor. */
+  const muhurAlt = await sayfa.evaluate(
+    () => document.querySelector('img[src*="okul-muhru"]')?.getAttribute('alt') ?? '',
+  );
+  bak(
+    'okul adı mührün alt metninde',
+    /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(muhurAlt),
+    muhurAlt || '(boş)',
+  );
+  /* Ve mühür DEKORATİF DEĞİL. Biri bir gün `dekoratif` propunu geri
+   * koyarsa `alt` boşalır, `aria-hidden` gelir ve okul adı ekran
+   * okuyucudan SESSİZCE düşer — sayfada başka hiçbir yerde yazmadığı
+   * için de kimse fark etmez. Bu ölçüm tam olarak onu yakalıyor. */
+  const muhurGizli = await sayfa.evaluate(
+    () => document.querySelector('img[src*="okul-muhru"]')?.getAttribute('aria-hidden') ?? null,
+  );
+  bak('mühür ekran okuyucudan gizlenmiyor', muhurGizli === null, `aria-hidden=${muhurGizli}`);
   /* "Matematik Öğretmeni" başlığı hero'dan kalktı (mühürün altında ada
    * ikinci kez yer vermek tekrardı). Kimlik hâlâ sayfada ve hâlâ
    * ölçülüyor — hikâye bölümü "matematik öğretmeni Buket Topuzoğlu"
@@ -448,7 +472,7 @@ console.log('\n5. Metindeki iddialar');
    * anlaşılsın. Cümle silinirse denetim kırılır. */
   bak(
     'SEKİZ\'i kimin tasarladığı yazıyor',
-    /fikir olarak da işleyiş olarak da tasarlayan/.test(metin),
+    /fikir olarak da yazılım olarak da tasarlayan/.test(metin),
   );
 
   await sayfa.close();
@@ -517,10 +541,14 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
   );
   /* Ad hero'da HÂLÂ var — ama artık ayrı bir satır olarak değil,
    * `SekizWordmark`ın altındaki "Buket Topuzoğlu · Matematik" olarak.
-   * Ölçüm ayakta: marka bloğu bir gün adsız bırakılırsa kırılır. */
+   * Ölçüm ayakta: marka bloğu bir gün adsız bırakılırsa kırılır.
+   *
+   * OKUL ADI VE KONUM ÖLÇÜMLERİ BURADAN KALKTI — metin olarak artık
+   * hero'da yok (öğretmenin kararı: "Mühür yeter, yazı kalksın").
+   * Karşılıkları 5. grupta duruyor: ad mührün `alt` metninde ölçülüyor
+   * ve mührün gizlenmediği ayrıca kontrol ediliyor. Sessizce
+   * gevşetilmiş bir ölçüm yok. */
   bak('Hero: öğretmen adı ilk bölümde', /Buket Topuzoğlu/.test(ilkBolum));
-  bak('Hero: okul adı ilk bölümde', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(ilkBolum));
-  bak('Hero: konum ilk bölümde', /Beşiktaş · İstanbul/.test(ilkBolum));
 
   /* Mühür de ilk bölümde — metin ölçümü onu yakalamaz (görsel). */
   const heroMuhur = await sayfa.evaluate(

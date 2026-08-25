@@ -69,12 +69,21 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
         <SchoolCrest boyut={120} dekoratif />
       </div>
 
-      {/* 2 ve 3 — Okul adı iki satır */}
-      <div className="mt-3 text-center">
-        <p className="text-[13px] font-bold tracking-[0.22em] text-muted">BEŞİKTAŞ</p>
-        <p className="mt-0.5 text-[14px] font-semibold text-ink">
+      {/* 2 ve 3 — Okul adı ve konum, iki satır.
+             BİÇİM ÖĞRETMENİN KARARI: eskiden üstte seyrek harf aralıklı
+             "BEŞİKTAŞ", altında okul adı vardı. Artık okul adı önce,
+             konum altında ve `·` ile — markanın ayracı (SekizWordmark
+             ile aynı). Bu blok tanıtım sayfasının hero'sundan buraya
+             taşındı; orada mühür tek başına kaldı.
+
+             Mühür BURADA `dekoratif` kalıyor: okul adı hemen altında
+             görünür metin olarak duruyor, ekran okuyucu iki kez
+             okumasın. Tanıtım sayfasında durum tersine döndü. */}
+      <div className="mt-4 text-center">
+        <p className="text-[15px] leading-[1.5] text-ink">
           Arnavutköy Korkmaz Yiğit Anadolu Lisesi
         </p>
+        <p className="text-[15px] text-muted">Beşiktaş · İstanbul</p>
       </div>
 
       <GeometricDivider className="my-6" />

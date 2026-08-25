@@ -1160,10 +1160,25 @@ hiçbir SQL değişmedi.
 
 ### Sıra değişti — ve sıra denetimde kilitli
 
-Sayfanın ilk şeyi artık **kurum kimliği**: okul mührü → *Buket Topuzoğlu ·
-Matematik Öğretmeni* → *Arnavutköy Korkmaz Yiğit Anadolu Lisesi · Beşiktaş
-· İstanbul*. Ondan sonra SEKİZ işareti, marka cümlesi ve ürünün tanımı
-geliyor.
+Sayfanın ilk şeyi artık **okul mührü**. Ondan sonra SEKİZ işareti, marka
+cümlesi ve ürünün tanımı geliyor.
+
+Mührün altında önce *Buket Topuzoğlu · Matematik Öğretmeni*, sonra da okul
+adı ve konum duruyordu; ikisi de birer tur sonra öğretmenin kararıyla
+kalktı ve sebebi aynı: **tekrardı.** Adı hemen aşağıdaki `SekizWordmark`
+zaten yazıyor; okul adı da mührün kendi halkasında yazılı ("ARNAVUTKÖY
+KORKMAZ YİĞİT ANADOLU LİSESİ · BEŞİKTAŞ"). Okul adı ve konum bu biçimiyle
+**giriş ekranına** taşındı — orada mührün altında görünür metin olarak
+duruyor.
+
+**Mühür bu yüzden `dekoratif` DEĞİL** ve bu bir ayrıntı değil. O prop
+yalnız "okul adı zaten yanında görünür metin" durumu için var; o metin
+kalkınca prop yanlış bilgi verir, `alt` boşalır ve **okul adı ekran
+okuyucudan sessizce düşer** — halkadaki yazı bir görsel, okunamaz. Sayfada
+başka hiçbir yerde yazmadığı için kimse de fark etmez. Denetim iki şeyi
+birden ölçüyor: adın mührün `alt` metninde olduğunu ve mührün
+`aria-hidden` ile gizlenmediğini. Giriş ekranında durum tersine: orada ad
+görünür metin, mühür `dekoratif`.
 
 **"Bir öğretmenin gerçek sınıf deneyiminden doğdu."** künyeden ikinci
 bölüme taşındı. Eskiden sayfanın en altındaydı; oraya kadar inen az kişi
