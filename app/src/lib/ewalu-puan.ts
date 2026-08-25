@@ -17,7 +17,9 @@ import type { EwaluPoz } from '@/components/brand/ewalu';
  *   70–84  "yanlışlarını çalışırsan" → Türkçede yanlışa çalışılmaz;
  *          yanlış yapılan SORU yeniden çözülür.
  *   50–69  "nerede zorlandığını bulalım" ile bitiyordu; öğretmenin isteği
- *          üzerine cümle umutla kapanıyor: "konu tamamlanacak".
+ *          üzerine cümle umutla kapanıyor: "konu tamamlanacak". Cümlenin
+ *          ortasındaki çağrı da onun düzeltmesiyle sadeleşti: "birlikte
+ *          inceleyelim" değil, "Yanlış yaptığın soruları inceleyelim".
  * Üçünde de yanlışın kendisi GİZLENMİYOR — "yanlış yaptığın sorular"
  * açıkça duruyor. Değişen, oradan nereye bakıldığı.
  *
@@ -57,7 +59,7 @@ const BANTLAR: ReadonlyArray<{ enAz: number; poz: EwaluPoz; cumle: string }> = [
     enAz: 50,
     poz: 'calisma',
     cumle:
-      'Konunun bir kısmını öğrenmişsin; bazı noktalar henüz tam oturmamış. Yanlış yaptığın soruları birlikte inceleyelim, eksik kalan yeri gördükçe konu tamamlanacak.',
+      'Konunun bir kısmını öğrenmişsin; bazı noktalar henüz tam oturmamış. Yanlış yaptığın soruları inceleyelim, eksik kalan yeri gördükçe konu tamamlanacak.',
   },
   {
     enAz: 0,
