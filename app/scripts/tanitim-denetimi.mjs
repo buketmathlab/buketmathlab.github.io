@@ -214,8 +214,8 @@ console.log('\n4. Ekran görüntüleri');
   );
 
   bak(
-    'Üç ekran görüntüsü de sayfada (dördüncü YOK)',
-    durum.length === 3,
+    'Altı ekran görüntüsü de sayfada',
+    durum.length === 6,
     `${durum.length} görsel`,
   );
   bak('Hiçbiri 404 değil', bozuk.length === 0, bozuk.join(', ') || '0 hata');
@@ -257,19 +257,30 @@ console.log('\n5. Metindeki iddialar');
    */
   bak(
     'anahtarın yalnız teslimden sonra açıldığı yazıyor',
-    /Teslimden sonra açılan çözümler/.test(metin),
+    /Cevap anahtarı teslimden önce açılmaz; teslimden hemen sonra açılır/.test(metin),
   );
   bak(
-    'açık uçluda değerlendirmenin öğretmende olduğu yazıyor',
-    /Açık uçlu ödevlerde pedagojik değerlendirme kontrolü/.test(metin),
+    'açık uçluda son puanı öğretmenin verdiği yazıyor',
+    /nihai puan öğretmen tarafından verilir/.test(metin),
   );
-  /* Bu bir süsleme değil, ÖLÇÜLMÜŞ bir güvence: 0026 `kendi_karnem`
-   * sınıf ortalamasını, sıralamayı ve başka öğrencinin verisini bilerek
-   * dışarıda bıraktı ve `kendi_karnem_testleri.sql` bunu doğruluyor. */
+  bak(
+    'test puanlamasının kural tabanlı olduğu yazıyor',
+    /önceden belirlenmiş aynı kurallar doğrultusunda/.test(metin),
+  );
+  bak(
+    'çözüm fotoğrafının zorunlu olduğu yazıyor',
+    /fotoğraf yüklenmeden teslim tamamlanmaz/.test(metin),
+  );
+  /* Bu bir süsleme değil, ÖLÇÜLMÜŞ bir sınır: `kendi_karnem` ve
+   * `veli_paneli` sınıf ortalamasını, sıralamayı ve başka öğrencinin
+   * verisini bilerek döndürmüyor (0026/0029) — testleri de bunu
+   * doğruluyor. Sayfa o sınırı söylüyor; denetim söylediğini ölçüyor. */
   bak(
     'kıyaslama olmadığı yazıyor',
-    /Sıralama baskısı veya kıyaslama olmadan/.test(metin),
+    /başka öğrencilerin puanları veya sıralamaları gösterilmez/.test(metin),
   );
+  bak('marka cümlesini kuran felsefe bölümü var', /matematiğin sonsuzluk fikrinden ilham alır/.test(metin));
+  bak('gelecek vizyonu bölümü var', /SEKİZ gelişmeye devam ediyor/.test(metin));
   bak(
     'ekran görüntülerinin uydurma olduğu yazıyor',
     /adlar ve puanlar uydurmadır/.test(metin),
@@ -323,18 +334,19 @@ console.log('\n5. Metindeki iddialar');
    * karar, ilk aceleci düzenlemede geri gelir.
    * ----------------------------------------------------------------- */
   const turKararlari = [
-    // Brief "İsveç merkezli … Supabase" diyordu. Ölçüm doğrulamadı:
-    // proje bölgesi Zürih (eu-central-2), yani İsviçre; Supabase şirketi
-    // de İsveç merkezli değil. Öğretmenin kararı: hiçbiri yazmasın.
-    ['İsveç', /İsveç/],
-    ['Supabase (satıcı adı)', /Supabase/i],
-    ['Zürih / İsviçre (bölge)', /Zürih|İsviçre/],
+    // "İsveç merkezli Supabase" iddiası ÖLÇÜLDÜ ve doğrulanmadı: bölge
+    // Zürih (eu-central-2), yani İSVİÇRE. Yasak olan yanlış ülke.
+    //
+    // NOT — bir önceki turda öğretmen satıcı adının ve bölgenin sayfada
+    // HİÇ geçmemesini istemişti; bu turda kararını değiştirdi ve 14.
+    // maddede "Veriler Supabase altyapısında, Zürih / İsviçre bölgesinde
+    // tutulur." diye açıkça yazdırdı. İfade doğru olduğu için yazılıyor;
+    // eski yasak (Supabase / Zürih / İsviçre) bu yüzden kaldırıldı.
+    ['İsveç', /İsveç(?!re)/],
     // Ewalu bir çizim + puan aralığına göre cümle seçen kural kümesi;
-    // yapay zekâ değil (Kural 5). Öğretmen aynı sıfatı bir önceki turda
-    // video altyazısından da kendisi çıkarmıştı.
+    // yapay zekâ değil (Kural 5). "AI üzerinden pazarlama" da yasak.
     ['akıllı maskot/asistan', /akıllı\s+(maskot|asistan)/i],
-    // Kural 18: kullanıcıya görünen metin Türkçe. Brief'te "Bosphorus
-    // hattının" yazıyordu, "Boğaz hattının" oldu.
+    // Kural 18: kullanıcıya görünen metin Türkçe.
     ['Bosphorus', /Bosphorus/i],
     // Sistemde üç rol var. Dördüncü bir giriş vaat edilmiyor.
     ['dördüncü bir giriş vaadi', /(okul yönetimi|yönetici|kurum)\s+girişi|kurum panosu/i],
@@ -343,112 +355,124 @@ console.log('\n5. Metindeki iddialar');
     bak(`tur kararı: "${ad}" geçmiyor`, !kalip.test(metin));
   }
 
-  /* MARKA CÜMLESİ — öğretmenin kararı: yeni H1 başlık oldu, marka cümlesi
-   * kapanışta TEK BİR YERDE kaldı. Sayı ölçülüyor: eskiden üç yerde
-   * geçiyordu ve brief'in "tekrar yok" ilkesi tam olarak bunu hedefliyor. */
-  const markaAdet = (metin.match(/Öğrenmenin sonu yok\./g) || []).length;
-  bak('marka cümlesi tam bir kez geçiyor', markaAdet === 1, `${markaAdet} kez`);
+  /* -------------------------------------------------------------------
+   * DİL KURALI: GERÇEĞİ GİZLEME · ÖĞRENCİYİ ETİKETLEME · GELİŞİMİ GÖSTER
+   *
+   * İKİ YÖNLÜ ÖLÇÜM ve ikinci yön en az birincisi kadar önemli.
+   *
+   * Öğretmen ilk brief'inde "yanlış" ve "eksik" kelimelerini de
+   * yumuşatmamı istemiş, sonra bunu AÇIKÇA geri almıştı: "Yanlış
+   * kelimesini her durumda daha yumuşak bir ifadeyle değiştirmeye
+   * çalışma." ve "Eksikliği tamamen gizleyen ... metinler
+   * kullanılmayacak."
+   *
+   * Bu yüzden aşağıda hem yasaklı etiketler aranıyor HEM DE gerçeği
+   * söyleyen kelimelerin sayfada DURDUĞU ölçülüyor. Biri bir gün
+   * "daha pozitif olsun" diye onları silerse denetim kırılır.
+   * ----------------------------------------------------------------- */
+  const etiketler = [
+    ['başarısız', /başarısız/i],
+    ['yetersiz', /yetersiz/i],
+    ['zayıf', /zayıf/i],
+    ['kaygı', /kaygı/i],
+    ['baskı', /baskı(?![a-zçğıöşü])/i],
+  ];
+  for (const [ad, kalip] of etiketler) {
+    bak(`etiket yok: "${ad}"`, !kalip.test(metin));
+  }
 
-  /* Öğretmenin yeni H1'i ve alt metni — sayfanın vaadi bu iki cümle. */
-  bak(
-    'yeni ana başlık yerinde',
-    /Öğrenmenin Sürekliliği, Gelişimin Netliği\./.test(metin),
-  );
-  bak('kurum rozeti yerinde', /Beşiktaş Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(metin));
-  bak('telif satırı yerinde', /© 2026 SEKİZ\. Tüm hakları saklıdır\./.test(metin));
+  bak('gerçek korunuyor: "yanlış yaptığı sorular" yazıyor', /[Yy]anlış yaptığı soruları/.test(metin));
+  bak('gerçek korunuyor: "eksik olduğu konu alanları" yazıyor', /eksik olduğu konu alanları/.test(metin));
+  bak('gerçek korunuyor: teslim edilmemiş ödev anlatılıyor', /teslim edilmedi|teslim edilmeyi bekleyen/.test(metin));
+
+  /* MARKA CÜMLESİ ÜÇ YERDE — ve bu bir tekrar kusuru değil, brief'in
+   * kendisi: hero'da H1 (2. madde), felsefe bölümünde vurgu (3. madde),
+   * kapanışta son söz (16. madde). Sayı ölçülüyor ki ne düşsün ne
+   * çoğalsın; dördüncü bir yere serpiştirilirse cümle sıradanlaşır. */
+  const markaAdet = (metin.match(/Öğrenmenin sonu yok\./g) || []).length;
+  bak('marka cümlesi tam üç yerde', markaAdet === 3, `${markaAdet} kez`);
+
+  /* Kurum bilgisi künyede, öğretmenin 15. maddesindeki biçimde. */
+  bak('okul adı künyede', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(metin));
+  bak('konum künyede', /Beşiktaş · İstanbul/.test(metin));
+  bak('öğretmen kimliği künyede', /Buket Topuzoğlu/.test(metin) && /Matematik Öğretmeni/.test(metin));
 
   await sayfa.close();
 }
 
 /* ============================================================
-   6 — DÖRDÜNCÜ PAYDAŞ VE HERO ÇAĞRILARI
+   6 — BÖLÜM RİTMİ VE GÖRSEL DAĞILIMI
 
-   Bu grubun tamamı bu turun kararlarını KODDA ölçüyor, metinde değil.
-
-   Öğretmenin kararı şuydu: "Okul Yönetimi kalsın, ayrı biçimde." Ölçülen
-   gerçek şu — sistemde üç rol var (`ogretmen`, `ogrenci`, `veli`); okul
-   yönetimi girişi, kurum panosu ya da idari rapor yok. Üç maddesi zaten
-   bir özellik vaat etmiyor, ama diğer üç rolle birebir aynı kalıpta
-   dursaydı dördüncü bir giriş varmış gibi okunurdu.
-
-   Çözüm tek bir savunmacı cümle yazmak DEĞİL, bloğu farklı kurmaktı:
-   ekran görüntüsü yok, giriş bağlantısı yok. Aşağısı bunun gerçekten
-   böyle olduğunu ölçüyor.
+   Öğretmenin brief'i yalnız metinleri değil SIRAYI da belirliyor
+   (20. madde): felsefe → öğrenci → öğretmen → veli → Ewalu → gelişim →
+   gelecek → kurucusu → kapanış. Sıra bir tercih değil anlatının kendisi;
+   biri bir bölümü yukarı taşırsa sayfa başka bir şey anlatmaya başlar.
+   Bu yüzden sıra ÖLÇÜLÜYOR, gözle bırakılmıyor.
    ============================================================ */
-console.log('\n6. Dördüncü paydaş ve hero çağrıları');
+console.log('\n6. Bölüm ritmi ve görsel dağılımı');
 {
   const sayfa = await tarayici.newPage({ viewport: { width: 1280, height: 900 } });
   await sayfa.goto(TANITIM, { waitUntil: 'networkidle' });
   await sayfa.waitForTimeout(400);
 
-  const blok = await sayfa.evaluate(() => {
-    const rol = [...document.querySelectorAll('[data-blok="rol"]')];
-    const yonetim = document.querySelector('[data-blok="yonetim"]');
-    return {
-      rolAdet: rol.length,
-      rolGorselleri: rol.map((b) => b.querySelectorAll('img').length),
-      yonetimVar: yonetim !== null,
-      yonetimGorsel: yonetim ? yonetim.querySelectorAll('img').length : -1,
-      yonetimGiris: yonetim ? yonetim.querySelectorAll('a[href^="/yeni/"]').length : -1,
-      yonetimBaslik: yonetim
-        ? (yonetim.querySelector('h3')?.textContent || '').trim()
-        : '',
-    };
-  });
+  const BEKLENEN = [
+    'Öğrenme bir sonuç değil, devam eden bir süreçtir.',
+    'Ödevden gelişime, öğrenmenin tamamı tek yerde.',
+    'Öğrenci kendi öğrenme sürecini görür.',
+    'Öğretmen yalnızca sonucu değil, öğrenmenin gelişimini görür.',
+    'Sonuç, öğrenmenin bir sonraki adımını gösterir.',
+    'Öğrenme sürecine aile de eşlik eder.',
+    'Öğrenme, iletişimle güçlenir.',
+    "SEKİZ'in öğrenme sürecindeki dijital yüzü.",
+    'Değerlendirme, öğrenmeyi görünür kılar.',
+    'Puanın ötesinde, gelişim.',
+    'SEKİZ gelişmeye devam ediyor.',
+    'Eğitimde güven, sistemin temelidir.',
+    'Bir öğretmenin gerçek sınıf deneyiminden doğdu.',
+  ];
 
-  bak('Üç rol bloğu var', blok.rolAdet === 3, `${blok.rolAdet} blok`);
-  bak(
-    'Her rol bloğunda tam bir ekran görüntüsü',
-    blok.rolGorselleri.length === 3 && blok.rolGorselleri.every((n) => n === 1),
-    blok.rolGorselleri.join('/'),
-  );
-  bak('Okul yönetimi bloğu sayfada', blok.yonetimVar, blok.yonetimBaslik);
-  bak(
-    'Okul yönetimi bloğunda EKRAN GÖRÜNTÜSÜ YOK',
-    blok.yonetimGorsel === 0,
-    `${blok.yonetimGorsel} görsel`,
-  );
-  bak(
-    'Okul yönetimi bloğunda GİRİŞ BAĞLANTISI YOK',
-    blok.yonetimGiris === 0,
-    `${blok.yonetimGiris} bağlantı`,
+  const basliklar = await sayfa.evaluate(() =>
+    [...document.querySelectorAll('h2')].map((h) => (h.textContent || '').trim()),
   );
 
-  /* HERO'NUN İKİ ÇAĞRISI. "Sistemi Keşfet ↓" bir çapaya gidiyor; çapanın
-   * gerçekten var olduğu ve tıklayınca KAYDIRDIĞI ölçülüyor. Ölü bir
-   * çapa hiçbir hata vermez, yalnız sessizce hiçbir şey yapmaz. */
-  const giris = sayfa.locator('main a[href="/yeni/"]');
-  bak('Hero: "Platforma Giriş Yap" /yeni/ adresine gidiyor', (await giris.count()) === 1);
+  bak('Bölüm sayısı beklenen', basliklar.length === BEKLENEN.length,
+    `${basliklar.length} h2 (beklenen ${BEKLENEN.length})`);
+  const sirali = basliklar.length === BEKLENEN.length &&
+    BEKLENEN.every((b, i) => basliklar[i] === b);
+  bak('Bölümler beklenen SIRADA', sirali,
+    sirali ? 'birebir' : `ilk sapma: ${basliklar.find((b, i) => b !== BEKLENEN[i]) ?? '—'}`);
 
-  const kesfet = sayfa.locator('a[href="#ekosistem"]');
-  bak('Hero: "Sistemi Keşfet" bağlantısı var', (await kesfet.count()) === 1);
+  /* HERO'DA TEK BÜYÜK CÜMLE: marka cümlesi h1. Brief 20. madde ilk
+   * ekranda yalnız birkaç temel şeyin görünmesini istiyor. */
+  const h1 = (await sayfa.locator('h1').innerText()).trim();
+  bak('Hero başlığı marka cümlesi', h1 === 'Öğrenmenin sonu yok.', h1);
 
-  const hedefVar = (await sayfa.locator('#ekosistem').count()) === 1;
-  bak('Çapa gerçekten var (#ekosistem)', hedefVar);
+  /* GÖRSEL DAĞILIMI. Altı ekranın üçe bölünmesi anlatının parçası:
+   * her rol bölümünde iki ekran. Hepsi tek bir yere yığılsaydı
+   * öğretmen ve veli bölümleri metin duvarı olarak kalırdı. */
+  const dagilim = await sayfa.evaluate(() =>
+    [...document.querySelectorAll('section')]
+      .map((b) => b.querySelectorAll('img[src*="tanitim-ekranlar"]').length)
+      .filter((n) => n > 0),
+  );
+  bak('Üç bölümde ekran var', dagilim.length === 3, `${dagilim.length} bölüm`);
+  bak('Her birinde ikişer ekran', dagilim.every((n) => n === 2), dagilim.join('/'));
 
-  for (const [ad, yer] of [
-    ['Platforma Giriş Yap', giris],
-    ['Sistemi Keşfet', kesfet],
-  ]) {
-    const kutu = await yer.first().boundingBox();
-    bak(
-      `"${ad}" 44px dokunma hedefi`,
-      kutu !== null && kutu.height >= 44,
-      `${kutu ? Math.round(kutu.height) : 0}px`,
-    );
-  }
-
-  if (hedefVar) {
-    const onceki = await sayfa.evaluate(() => window.scrollY);
-    await kesfet.click();
-    await sayfa.waitForTimeout(700);
-    const sonraki = await sayfa.evaluate(() => window.scrollY);
-    bak(
-      '"Sistemi Keşfet" gerçekten kaydırıyor',
-      sonraki > onceki + 100,
-      `${Math.round(onceki)} → ${Math.round(sonraki)}px`,
-    );
-  }
+  /* GERÇEK ÜRÜN GÖSTERİLİYOR — ve olmayan bir ekran uydurulmuyor:
+   * sayfadaki her görsel `tanitim-gorselleri.mjs`'in ürettiği dosya. */
+  const dosyalar = await sayfa.evaluate(() =>
+    [...document.querySelectorAll('img[src*="tanitim-ekranlar"]')].map((i) =>
+      (i.getAttribute('src') || '').split('/').pop(),
+    ),
+  );
+  const BEKLENEN_DOSYA = [
+    'ogrenci.webp', 'ogrenci-sonuc.webp',
+    'ogretmen.webp', 'ogretmen-sinif.webp',
+    'veli.webp', 'ogrenci-konular.webp',
+  ].sort();
+  bak('Görseller üretilen altı dosya', 
+    JSON.stringify([...dosyalar].sort()) === JSON.stringify(BEKLENEN_DOSYA),
+    dosyalar.join(', '));
 
   await sayfa.close();
 }
