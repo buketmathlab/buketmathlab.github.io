@@ -3,8 +3,13 @@
  *
  * GERÇEK ÖĞRENCİ VERİSİ HİÇBİR KOŞULDA KULLANILMAZ. Uygulama gerçek
  * sunucuya hiç bağlanmıyor: bütün RPC çağrıları burada kesilip aşağıdaki
- * UYDURMA veriyle cevaplanıyor. Adlar da puanlar da uydurma ve tanıtım
- * sayfası bunu okuyucuya ayrıca yazıyor.
+ * TEMSİLÎ veriyle cevaplanıyor. Adlar da puanlar da temsilî ve tanıtım
+ * sayfası bunu okuyucuya ayrıca yazıyor ("adlar ve puanlar temsilidir").
+ *
+ * BU BETİK, EWALU'NUN PUAN CÜMLELERİ HER DEĞİŞTİĞİNDE YENİDEN KOŞAR.
+ * Bir kez unutuldu: cümleler `lib/ewalu-puan.ts`'te düzeltildi ama
+ * `ogrenci-sonuc.webp` eski cümleyi göstermeye devam etti. Görsel donmuş
+ * bir kopya; kodla birlikte kendiliğinden güncellenmiyor.
  *
  * ÇALIŞTIRMA (depo kökünden):
  *   npm --prefix app run build
@@ -27,7 +32,7 @@ const GENISLIK = 390;
 const YUKSEKLIK = 760;
 const OLCEK = 2;
 
-/* ---------- UYDURMA VERİ ---------- */
+/* ---------- TEMSİLÎ VERİ ---------- */
 
 /**
  * Tarihler ÇEKİM ANINA göreli.
@@ -285,6 +290,24 @@ await mkdir(KOK, { recursive: true });
 
 const tarayici = await chromium.launch();
 
+/**
+ * Ekranda GÖRÜNMESİ GEREKEN metin parçaları.
+ *
+ * Ekran görüntüsü donmuş bir kopya: `lib/ewalu-puan.ts`'teki cümle
+ * değişince görsel kendiliğinden güncellenmiyor. Bir kez tam olarak bu
+ * oldu — cümleler düzeltildi, sonuç ekranı eski cümleyi göstermeye
+ * devam etti ve kimse fark etmedi.
+ *
+ * Buradaki parça o cümleden alınmıştır. Cümle değişirse bu betik
+ * ÇÖKER; yani görseli yenilemeyi unutmak artık sessiz bir hata değil.
+ * Kırıldığında yapılacak şey: parçayı yeni cümleye göre düzelt ve
+ * betiği tekrar koştur.
+ */
+const BEKLENEN_METIN = {
+  // 83 puan → 70–84 bandı (`lib/ewalu-puan.ts`).
+  'ogrenci-sonuc.webp': 'Yanlış yaptığın soruları yeniden çözersen',
+};
+
 async function cek(dosya, yol, oturum) {
   const sayfa = await tarayici.newPage({
     viewport: { width: GENISLIK, height: YUKSEKLIK },
@@ -330,6 +353,17 @@ async function cek(dosya, yol, oturum) {
   const tasma = await sayfa.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
+
+  const beklenen = BEKLENEN_METIN[dosya];
+  if (beklenen) {
+    const metin = await sayfa.evaluate(() => document.body.innerText);
+    if (!metin.includes(beklenen)) {
+      throw new Error(
+        `${dosya}: beklenen metin ekranda yok — "${beklenen}". ` +
+          'Cümle değiştiyse BEKLENEN_METIN listesini güncelleyin.',
+      );
+    }
+  }
 
   const png = await sayfa.screenshot({ type: 'png' });
   const cikti = new URL(dosya, KOK);

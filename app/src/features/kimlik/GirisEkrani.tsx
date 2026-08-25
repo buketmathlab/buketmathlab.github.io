@@ -131,6 +131,32 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
         </form>
       </Card>
 
+      {/* TANITIM SAYFASI — DÜĞMENİN HEMEN ALTINDA.
+          Eskiden sayfanın en altındaydı, videonun da altında; öğretmenin
+          ölçümü net: "çok küçük kalıyor, insanlar bunu görmez". Haklıydı
+          — oraya ancak bilerek aşağı inen biri ulaşıyordu.
+
+          Yine de forma girmiyor ve düğme gibi durmuyor: her gün giriş
+          yapan öğrenci için bu bir yol ayrımı değil, bir dipnot. Bağlantı
+          olarak kalıyor, 44 px dokunma hedefiyle.
+
+          Uygulama içi bir rota DEĞİL, ayrı bir HTML sayfası — bu yüzden
+          `Link` değil düz `a`. Adres `/yeni/tanitim/`. */}
+      {/* RENK `ink`, `link` DEĞİL — öğretmenin isteği ve doğrusu bu.
+          `--color-link` (#1a4894) genel bir bağlantı mavisi; hemen
+          üstündeki "Giriş yap" düğmesi ise `--color-ink` (#001737), yani
+          OKUL MÜHRÜNDEN ÖLÇÜLEN lacivert. İki lacivert yan yana durunca
+          aradaki fark uyumsuzluk olarak okunuyordu. Artık ikisi aynı
+          renk; bağlantı olduğu altı çizili olmasından anlaşılıyor. */}
+      <p className="mt-4 text-center">
+        <a
+          href="/yeni/tanitim/"
+          className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-ink underline"
+        >
+          SEKİZ nedir?
+        </a>
+      </p>
+
       {/* 7 — Ewalu ve mesajı */}
       <div className="mt-7 flex items-center justify-center gap-3">
         <EwaluFigure poz="karsilama" boyut={52} dekoratif />
@@ -147,23 +173,6 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
       <footer className="mt-9">
         <GeometricDivider className="mb-6" />
         <EwaluVideo />
-
-        {/* 9 — TANITIM SAYFASI (Faz 9). Öğretmenin belirlediği sekiz
-               maddenin ARDINDAN gelen tek ek öğe ve bilerek en altta:
-               videonun da altında, kod kutusunun çok aşağısında. Her gün
-               giriş yapan öğrencinin ve velinin önüne hiç çıkmıyor;
-               yalnız "bu nedir?" diye aşağı inen biri görüyor.
-
-               Uygulama içi bir rota DEĞİL, ayrı bir sayfa — bu yüzden
-               `Link` değil düz `a`. Adres `/yeni/tanitim/`. */}
-        <p className="mt-8 text-center">
-          <a
-            href="/yeni/tanitim/"
-            className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-link underline"
-          >
-            SEKİZ nedir?
-          </a>
-        </p>
       </footer>
     </main>
   );

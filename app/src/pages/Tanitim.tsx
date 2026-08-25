@@ -14,9 +14,25 @@ import { sekizgenYolu } from '@/lib/geometri';
  * nihai brief'ten; benim işim yerleşim, tipografi, görsel ritim ve
  * doğrulama.
  *
- * ═══ MARKA CÜMLESİ ═══
- * "Öğrenmenin sonu yok." — hero'da H1, felsefe bölümünde vurgu,
- * kapanışta son söz. Değiştirilmiyor.
+ * ═══ SIRA ═══
+ * Kurum kimliği sayfanın İLK şeyi: mühür → öğretmen → okul ve konum.
+ * Hemen ardından SEKİZ, marka cümlesi ve ürünün tanımı; sonra "bir
+ * öğretmenin gerçek sınıf deneyiminden doğdu". Bu sıra öğretmenin
+ * kararı ve denetimde kilitli — biri bölüm taşırsa sayfa başka bir
+ * şey anlatmaya başlar.
+ *
+ * ═══ MARKA CÜMLESİ — TAM İKİ YERDE ═══
+ * "Öğrenmenin sonu yok." — hero'da H1, kapanışta son söz. Felsefe
+ * bölümündeki ÜÇÜNCÜ tekrarı öğretmenin düzeltmesiyle kalktı: aynı
+ * cümleyi üç kez yazmak onu sıradanlaştırıyordu. Oradaki yerini
+ * sonsuzluğa bağlanan pedagojik bir cümle aldı.
+ *
+ * ═══ VELİ ÖĞRETMENİN YERİNE GEÇMEZ — VE BU SAVUNULMAZ, KURULUR ═══
+ * Veli "destek olan" değil "sürece DAHİL olan" taraf. Öğretmenin
+ * gerekçesi: veli öğretmenden pay alan biri gibi görünmemeli; burada
+ * yapılan şey ödevde şeffaflık. Aynı sebeple "veri öğretmenin yerini
+ * almaz" gibi savunmacı cümleler sayfada yok — denetim ikisini de
+ * ölçüyor (biri olumlu, biri yasaklı desen olarak).
  *
  * İSMİN MATEMATİKSEL ÇAĞRIŞIMI ŞEKİL BİLGİSİ OLARAK ANLATILMIYOR.
  * "8 yan yatınca sonsuzluk işaretidir" ve bütün varyantları YASAK.
@@ -41,9 +57,11 @@ import { sekizgenYolu } from '@/lib/geometri';
  * konumlandırıyor ve Ewalu'nun ne YAPMADIĞINI uzun uzun anlatmıyor.
  *
  * ═══ EKRAN GÖRÜNTÜLERİ ═══
- * Altısı da GERÇEK uygulamanın gerçek ekranı; uydurma olan yalnız veri
+ * Altısı da GERÇEK uygulamanın gerçek ekranı; temsilî olan yalnız veri
  * (`scripts/tanitim-gorselleri.mjs`, sunucuya sıfır istekle çekiliyor).
- * Olmayan bir özellik için ekran üretilmedi.
+ * Olmayan bir özellik için ekran üretilmedi. Görseller Ewalu'nun puan
+ * cümleleri her değiştiğinde YENİDEN ÜRETİLİR — bir kez unutuldu ve
+ * sonuç ekranı eski cümleyi göstermeye devam etti.
  *
  * SUNUCUYA HİÇ İSTEK ATMIYOR: ne oturum sağlayıcı, ne Supabase istemcisi.
  * Sıfır çerez, sıfır takip — denetimin 1. grubu bunu DAVRANIŞ olarak
@@ -55,6 +73,7 @@ export function Tanitim() {
       <UstCubuk />
       <main id="icerik">
         <Hero />
+        <Hikaye />
         <Felsefe />
         <SekizNedir />
         <Ogrenci />
@@ -66,9 +85,8 @@ export function Tanitim() {
         <Degerlendirme />
         <Gelisim />
         <Gelecek />
-        <Guven />
       </main>
-      <Kunye />
+      <Kapanis />
     </>
   );
 }
@@ -171,7 +189,7 @@ function Ekran({ dosya, alt, aciklama }: { dosya: string; alt: string; aciklama:
       />
       <figcaption className="mt-2 text-[12px] leading-[1.45] text-muted">
         {aciklama}
-        <span className="block text-[11px]">Örnek ekran — adlar ve puanlar uydurmadır.</span>
+        <span className="block text-[11px]">Örnek ekran — adlar ve puanlar temsilidir.</span>
       </figcaption>
     </figure>
   );
@@ -270,7 +288,31 @@ function Hero() {
     <section className="relative overflow-hidden">
       <SekizgenDoku />
 
-      <div className="relative mx-auto max-w-[44rem] px-5 pb-20 pt-14 text-center md:pb-28 md:pt-20">
+      <div className="relative mx-auto max-w-[44rem] px-5 pb-20 pt-12 text-center md:pb-28 md:pt-16">
+        {/* KURUM KİMLİĞİ SAYFANIN İLK ŞEYİ — öğretmenin kararı. Önce
+            mühür, altında öğretmen, altında okul ve konum; SEKİZ ancak
+            ondan sonra geliyor. Ziyaretçi ürünü tanımadan önce kimin
+            işi olduğunu görüyor.
+
+            Mühür yalnız BURADA (Kural 8: 96 px altına inilmez). Künyeden
+            kalktı — iki kez göstermek onu bir tekrar öğesine çevirirdi.
+            `dekoratif`: okul adı hemen altında görünür metin olarak
+            geçiyor, ekran okuyucu iki kez okumasın. */}
+        <div className="flex justify-center">
+          <SchoolCrest boyut={120} dekoratif />
+        </div>
+        {/* ÖĞRETMEN ADI BURADA TEKRAR YAZILMIYOR. Bir tur boyunca
+            mühürün altında "Buket Topuzoğlu / Matematik Öğretmeni"
+            duruyordu; ölçüldü ve gereksiz olduğu görüldü: hemen
+            aşağıdaki `SekizWordmark` zaten "Buket Topuzoğlu · Matematik"
+            yazıyor. Aynı ad iki satır arayla iki kez geçiyordu. */}
+        <p className="mt-5 text-[15px] leading-[1.5] text-ink">
+          Arnavutköy Korkmaz Yiğit Anadolu Lisesi
+        </p>
+        <p className="text-[15px] text-muted">Beşiktaş · İstanbul</p>
+
+        <GeometricDivider className="mx-auto my-9 max-w-[14rem]" />
+
         <div className="flex justify-center">
           <SekizWordmark boyut="lg" acilistaDonsun />
         </div>
@@ -279,9 +321,13 @@ function Hero() {
           Öğrenmenin sonu yok.
         </h1>
 
+        {/* VELİ "DESTEK OLAN" DEĞİL "DAHİL OLAN". Öğretmenin kuralı ve
+            gerekçesi net: veli öğretmenin yerine geçen ya da ondan pay
+            alan taraf değil; sürece dahil edilen, ödevde şeffaflık
+            sağlanan taraf. Denetim bu ifadeyi ayrıca ölçüyor. */}
         <p className="mx-auto mt-6 max-w-[36rem] text-[18px] leading-[1.6] text-ink md:text-[19px]">
           SEKİZ; öğrencinin öğrenme sürecini takip ettiği, öğretmenin gelişimi gördüğü ve
-          velinin bu sürece destek olduğu dijital eğitim platformudur.
+          velinin sürece dahil olduğu dijital eğitim platformudur.
         </p>
 
         {/* Dört adım. Ayraç `·` markanın ayracı (SekizWordmark ile aynı). */}
@@ -322,6 +368,51 @@ function SekizgenDoku() {
 }
 
 /* ============================================================
+   1 — HİKÂYE
+
+   KÜNYEDEN BURAYA TAŞINDI (öğretmenin kararı). Eskiden sayfanın en
+   altındaydı; oraya kadar inen az kişi ürünün kimin işi olduğunu
+   öğreniyordu. Artık ikinci bölüm: ziyaretçi SEKİZ'in ne olduğunu
+   okumadan önce nereden geldiğini biliyor.
+   ============================================================ */
+
+function Hikaye() {
+  return (
+    <section className="bg-surface">
+      <div className="mx-auto max-w-[42rem] px-5 py-16 md:py-20">
+        <h2 className="font-display text-[26px] font-semibold leading-[1.2] text-ink md:text-[30px]">
+          Bir öğretmenin gerçek sınıf deneyiminden doğdu.
+        </h2>
+
+        {/* YAZARLIK — ÖLÇÜLÜ VE DOĞRU. Öğretmenin isteği: SEKİZ'i
+            tasarlayanın bir yazılım şirketi değil kendisi olduğu
+            anlaşılsın, ama göze sokulmadan.
+
+            "Vizyoner" kelimesi BİLEREK YAZILMIYOR. Vizyon, kendini
+            ilan ederek değil son paragraftaki bakışla anlaşılır;
+            sıfatı yazmak iddiayı zayıflatırdı. */}
+        <P>
+          SEKİZ'i fikir olarak da işleyiş olarak da tasarlayan, matematik öğretmeni Buket
+          Topuzoğlu'dur. Bir yazılım şirketinin ürünü değil; sınıfın içinden, gerçek bir
+          ihtiyaçtan doğdu.
+        </P>
+        <P>
+          Öğrencilerin ödev, değerlendirme ve gelişim süreçlerini daha görünür ve
+          yönetilebilir hâle getirmek için tasarlandı. Hangi verinin kime görüneceğinden
+          öğrencinin ekranda okuyacağı cümleye kadar her karar, yılların sınıf deneyiminden
+          çıktı.
+        </P>
+        <P>
+          Bugün eğitimin ihtiyaç duyduğu şey yalnız yeni araçlar değil; o araçları sınıfı
+          tanıyarak tasarlayabilen öğretmenler. SEKİZ bu bakışın ürünü ve gelişmeye devam
+          ediyor.
+        </P>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
    2 — MARKA FELSEFESİ
    ============================================================ */
 
@@ -339,8 +430,16 @@ function Felsefe() {
 
         <GeometricDivider className="mx-auto my-10 max-w-[16rem]" />
 
-        <p className="font-display text-[22px] font-semibold text-ink md:text-[24px]">
-          Öğrenmenin sonu yok.
+        {/* BURADA ARTIK MARKA CÜMLESİ YOK. Öğretmenin düzeltmesi:
+            "Öğrenmenin sonu yok." en üstte zaten geçiyor, ikinci kez
+            yazmak onu sıradanlaştırıyordu. Yerine bölüme ait, sonsuzluğa
+            bağlanan pedagojik bir cümle.
+
+            ŞEKİL BİLGİSİ YOK: "8 yan yatınca…" ve varyantları yasak
+            (denetim ayrıca ölçüyor). Bağ düşünsel kuruluyor — sonsuzluk
+            bir bitiş değil, devam edebilme. */}
+        <p className="font-display text-[22px] font-semibold leading-[1.35] text-ink md:text-[24px]">
+          Sonsuzluk bir varış değil, bir yöndür; öğrenme de o yönde ilerler.
         </p>
       </div>
     </section>
@@ -354,8 +453,11 @@ function Felsefe() {
 function SekizNedir() {
   const roller: [string, string][] = [
     ['Öğrenci', 'Kendi öğrenme sürecini takip eder.'],
-    ['Öğretmen', 'Sınıfın gelişimini görür ve öğretimini buna göre şekillendirir.'],
-    ['Veli', 'Öğrencinin gelişimini takip eder ve sürece destek olur.'],
+    // ÖĞRETMEN İKİ ÖLÇEKTE BİRDEN GÖRÜYOR — sınıf ve tek tek öğrenci.
+    // Ürün ikisini de veriyor (`konu_karnesi` sınıf ve öğrenci ekseninde
+    // çalışıyor, 0023); cümle yalnız sınıfı söylemek yetersiz kalıyordu.
+    ['Öğretmen', 'Sınıfın ve her öğrencinin gelişimini görür, öğretimini buna göre şekillendirir.'],
+    ['Veli', 'Öğrencinin gelişimini takip eder ve sürece dahil olur.'],
   ];
 
   return (
@@ -363,7 +465,7 @@ function SekizNedir() {
       <P>
         SEKİZ; ödevlerin verildiği, çalışmaların teslim edildiği, sonuçların
         değerlendirildiği, geri bildirimlerin görüldüğü ve öğrencinin gelişiminin takip
-        edildiği bütünleşik bir eğitim platformudur.
+        edildiği bütünsel bir eğitim platformudur.
       </P>
 
       {/* Üç rol: kutu değil, sütun. Kartlara koymak sayfayı bir özellik
@@ -459,8 +561,12 @@ function Ogretmen() {
         Açık uçlu ödevlerde öğrencinin çözümü öğretmen tarafından kontrol edilir ve nihai puan
         öğretmen tarafından verilir.
       </P>
+      {/* SAVUNMACI CÜMLE KALKTI. Eskiden "Veri öğretmenin yerini almaz."
+          diye başlıyordu; öğretmenin kararı: böyle bir savunma gereksiz,
+          verinin ne YAPTIĞI söylensin yeter. Denetim "yerini alma"
+          kalıbını artık yasaklı desen olarak arıyor. */}
       <Not>
-        Veri öğretmenin yerini almaz. Öğretmenin öğrenciyi daha iyi anlamasına yardımcı olur.
+        Veri, öğretmenin öğrenciyi daha iyi tanımasına ve takip etmesine yardımcı olur.
       </Not>
     </EkranliBolum>
   );
@@ -673,67 +779,34 @@ function Gelecek() {
 }
 
 /* ============================================================
-   13 — GÜVEN
+   KAPANIŞ
 
-   KISA. Öğretmenin kuralı: tanıtım sayfasında gereksiz teknik
-   güvenlik ayrıntısı anlatma.
+   GÜVEN BÖLÜMÜ KALKTI — öğretmenin kararı. Üç cümlesi de (Supabase
+   altyapısı, Zürih/İsviçre bölgesi, yetkili erişim, çerez notu) tanıtım
+   sayfasına gereksiz teknik ayrıntı olarak girmişti.
+
+   GÜVENCE KALKMADI, YALNIZ CÜMLE KALKTI: sayfa hâlâ tek çerez yazmıyor
+   ve sunucuya tek istek atmıyor — `scripts/tanitim-denetimi.mjs` 1.
+   grubu bunu DAVRANIŞ olarak ölçmeye devam ediyor. Söylenmeyen bir
+   güvence, ölçülen bir güvenceden zayıf değil.
    ============================================================ */
 
-function Guven() {
-  return (
-    <Bolum baslik="Eğitimde güven, sistemin temelidir.">
-      <P>Veriler Supabase altyapısında, Zürih / İsviçre bölgesinde tutulur.</P>
-      <P>
-        Ödev dosyaları ve öğrenci çözüm görsellerine yalnızca yetkili erişim sağlanır.
-      </P>
-      <Not>Bu tanıtım sayfası çerez kullanmaz ve ziyaretçi takibi yapmaz.</Not>
-    </Bolum>
-  );
-}
-
-/* ============================================================
-   14–15 — HİKÂYE VE KAPANIŞ
-   ============================================================ */
-
-function Kunye() {
+function Kapanis() {
   return (
     <footer>
-      {/* AÇIK ZEMİN: mühür lacivert bir çizim, koyu zeminde kaybolur.
-          Bu yüzden hikâye açık, kapanış koyu — ikisi ayrı bant. */}
-      <div className="bg-surface">
-        <div className="mx-auto max-w-[42rem] px-5 py-16 text-center md:py-20">
-          <h2 className="font-display text-[26px] font-semibold leading-[1.2] text-ink md:text-[30px]">
-            Bir öğretmenin gerçek sınıf deneyiminden doğdu.
-          </h2>
-          <p className="mx-auto mt-6 max-w-[34rem] text-[17px] leading-[1.7] text-ink">
-            SEKİZ, matematik öğretmeni Buket Topuzoğlu tarafından öğrencilerin ödev,
-            değerlendirme ve gelişim süreçlerini daha görünür ve yönetilebilir hâle getirmek
-            amacıyla geliştirildi. Gerçek sınıf ihtiyaçlarından doğdu ve gelişmeye devam
-            ediyor.
-          </p>
-
-          {/* Mühür yalnız 96 px ve üstünde (Kural 8). `dekoratif`: okulun
-              tam adı hemen altında görünür metin olarak geçiyor;
-              işaretlemeseydik ekran okuyucu adı iki kez okurdu. */}
-          <div className="mt-12 flex justify-center">
-            <SchoolCrest boyut={160} dekoratif />
-          </div>
-          <p className="mt-6 font-display text-[21px] font-semibold text-ink">
-            Buket Topuzoğlu
-          </p>
-          <p className="mt-1 text-[16px] text-muted">Matematik Öğretmeni</p>
-          <p className="mt-5 text-[15px] text-ink">Arnavutköy Korkmaz Yiğit Anadolu Lisesi</p>
-          <p className="text-[15px] text-muted">Beşiktaş · İstanbul</p>
-        </div>
-      </div>
-
       <div className="bg-ink text-paper">
         <div className="mx-auto max-w-[42rem] px-5 py-20 text-center md:py-24">
           {/* Sayfadaki ikinci ve son 8 → ∞ hareketi: açılışta ve
               kapanışta, arası hareketsiz (Kural 12). Hareket azaltma
-              tercihi açıksa dönmüyor, doğrudan ∞ duruyor. */}
+              tercihi açıksa dönmüyor, doğrudan ∞ duruyor.
+
+              `gorununceDonsun` — ÖLÇÜLEN BİR KUSURUN DÜZELTMESİ. Burası
+              sayfanın en altı; `acilistaDonsun` ile dönüş sayfa
+              YÜKLENİRKEN oynuyordu, yani okuyucu buraya kaydırdığında
+              dönüş çoktan bitmiş oluyordu. İşaret ekrana girdiğinde
+              oynuyor. Hero'daki açılışta oynamaya devam ediyor. */}
           <div className="flex justify-center text-paper">
-            <Sekiz8Mark boyut={64} acilistaDonsun gecikme={200} etiket={null} />
+            <Sekiz8Mark boyut={64} gorununceDonsun gecikme={250} etiket={null} />
           </div>
 
           <p className="mt-9 font-display text-[30px] font-semibold leading-[1.2] md:text-[38px]">

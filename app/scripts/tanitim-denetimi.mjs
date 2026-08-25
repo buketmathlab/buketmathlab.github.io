@@ -282,16 +282,20 @@ console.log('\n5. Metindeki iddialar');
   bak('marka cümlesini kuran felsefe bölümü var', /matematiğin sonsuzluk fikrinden ilham alır/.test(metin));
   bak('gelecek vizyonu bölümü var', /SEKİZ gelişmeye devam ediyor/.test(metin));
   bak(
-    'ekran görüntülerinin uydurma olduğu yazıyor',
-    /adlar ve puanlar uydurmadır/.test(metin),
+    'ekran görüntülerinin temsilî olduğu yazıyor',
+    /adlar ve puanlar temsilidir/.test(metin),
   );
-  /* 1. grup DAVRANIŞI ölçüyor (çerez sayısı, dış istek). Bu ölçüm
-   * cümlenin sayfada durduğunu ölçüyor — ikisi birlikte "iddia var ve
-   * doğru" demek oluyor. */
-  bak(
-    'çerez/takip yapılmadığı yazıyor',
-    /çerez kullanmaz ve ziyaretçi takibi yapmaz/.test(metin),
-  );
+
+  /* ÇEREZ CÜMLESİ ARTIK ARANMIYOR — ve bu bir gevşetme değil.
+   *
+   * Öğretmen "Eğitimde güven" bölümünü tamamen kaldırdı; içindeki
+   * "çerez kullanmaz ve ziyaretçi takibi yapmaz" cümlesi de onunla
+   * birlikte gitti. Ama GÜVENCE yerinde: bu denetimin 1. grubu çerez
+   * sayısını ve sayfanın attığı dış istekleri DAVRANIŞ olarak ölçüyor
+   * ve sıfır olmadığı anda kırılıyor.
+   *
+   * Yani sayfa artık bir şey söylemiyor, ama söylenmeyen şey hâlâ
+   * doğru ve hâlâ ölçülüyor. Kaldırılan tek şey cümle. */
 
   /* BULUNMAMASI GEREKENLER — bugün YAPILMAYAN şeyler. */
   const yasakli = [
@@ -336,13 +340,25 @@ console.log('\n5. Metindeki iddialar');
   const turKararlari = [
     // "İsveç merkezli Supabase" iddiası ÖLÇÜLDÜ ve doğrulanmadı: bölge
     // Zürih (eu-central-2), yani İSVİÇRE. Yasak olan yanlış ülke.
-    //
-    // NOT — bir önceki turda öğretmen satıcı adının ve bölgenin sayfada
-    // HİÇ geçmemesini istemişti; bu turda kararını değiştirdi ve 14.
-    // maddede "Veriler Supabase altyapısında, Zürih / İsviçre bölgesinde
-    // tutulur." diye açıkça yazdırdı. İfade doğru olduğu için yazılıyor;
-    // eski yasak (Supabase / Zürih / İsviçre) bu yüzden kaldırıldı.
     ['İsveç', /İsveç(?!re)/],
+    // GÜVEN BÖLÜMÜ KALKTI. Öğretmen barındırma altyapısını, bölgeyi ve
+    // yetkili erişim notunu tanıtım sayfası için gereksiz buldu. Yasak
+    // kararı kilitliyor: bir gün "biraz teknik güven verelim" diye geri
+    // eklenirse denetim kırılır.
+    //
+    // NOT — bu karar bir tur boyunca ters yönde durmuştu (o turda cümle
+    // bilerek yazdırılmıştı). Fikir değişirse kaldırılacak yer bu üç
+    // satır; sessizce geri gelmesin diye buraya yazıldı.
+    ['barındırma altyapısı adı', /Supabase/i],
+    ['barındırma bölgesi', /Zürih|İsviçre/i],
+    ['kalkan güven bölümü', /Eğitimde güven/i],
+    // Öğretmenin kelime kararı: "bütünleşik" değil "bütünsel".
+    ['bütünleşik', /bütünleşik/i],
+    // Ekran altyazısında "uydurma" profesyonel durmuyor: "temsilidir".
+    ['uydurmadır', /uydurmadır/i],
+    // SAVUNMACI KALIP. "Veri öğretmenin yerini almaz" cümlesi kaldırıldı;
+    // sayfa verinin ne YAPMADIĞINI değil ne yaptığını söylüyor.
+    ['veri yerini almaz kalıbı', /yerini alma/i],
     // Ewalu bir çizim + puan aralığına göre cümle seçen kural kümesi;
     // yapay zekâ değil (Kural 5). "AI üzerinden pazarlama" da yasak.
     ['akıllı maskot/asistan', /akıllı\s+(maskot|asistan)/i],
@@ -385,17 +401,55 @@ console.log('\n5. Metindeki iddialar');
   bak('gerçek korunuyor: "eksik olduğu konu alanları" yazıyor', /eksik olduğu konu alanları/.test(metin));
   bak('gerçek korunuyor: teslim edilmemiş ödev anlatılıyor', /teslim edilmedi|teslim edilmeyi bekleyen/.test(metin));
 
-  /* MARKA CÜMLESİ ÜÇ YERDE — ve bu bir tekrar kusuru değil, brief'in
-   * kendisi: hero'da H1 (2. madde), felsefe bölümünde vurgu (3. madde),
-   * kapanışta son söz (16. madde). Sayı ölçülüyor ki ne düşsün ne
-   * çoğalsın; dördüncü bir yere serpiştirilirse cümle sıradanlaşır. */
-  const markaAdet = (metin.match(/Öğrenmenin sonu yok\./g) || []).length;
-  bak('marka cümlesi tam üç yerde', markaAdet === 3, `${markaAdet} kez`);
+  /* VELİ "DAHİL OLAN" TARAFTIR — iki yerde, ikisi de ölçülüyor.
+   *
+   * Öğretmenin gerekçesi kelime tercihinden ibaret değil: veli
+   * öğretmenden pay alan ya da onun yerine geçen biri gibi
+   * görünmemeli. "Destek olur" bu izlenimi veriyordu. Biri bir gün
+   * eski hâline döndürürse denetim kırılır. */
+  bak('hero: velinin sürece DAHİL olduğu yazıyor', /velinin sürece dahil olduğu/.test(metin));
+  bak('rol satırı: veli sürece DAHİL olur', /sürece dahil olur/.test(metin));
 
-  /* Kurum bilgisi künyede, öğretmenin 15. maddesindeki biçimde. */
-  bak('okul adı künyede', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(metin));
-  bak('konum künyede', /Beşiktaş · İstanbul/.test(metin));
-  bak('öğretmen kimliği künyede', /Buket Topuzoğlu/.test(metin) && /Matematik Öğretmeni/.test(metin));
+  /* Öğretmen iki ölçekte birden görüyor: sınıf VE tek tek öğrenci.
+   * Ürün ikisini de veriyor (`konu_karnesi`, 0023). */
+  bak('öğretmen her öğrencinin gelişimini de görüyor', /her öğrencinin gelişimini/.test(metin));
+
+  /* MARKA CÜMLESİ TAM İKİ YERDE — hero'da H1 ve kapanışta son söz.
+   *
+   * Üçtü; öğretmenin düzeltmesiyle felsefe bölümündeki tekrarı kalktı
+   * ("en üstte zaten kullandık"). Sayı ölçülüyor ki ne düşsün ne
+   * çoğalsın: üçüncü bir yere serpiştirilirse cümle sıradanlaşır. */
+  const markaAdet = (metin.match(/Öğrenmenin sonu yok\./g) || []).length;
+  bak('marka cümlesi tam iki yerde', markaAdet === 2, `${markaAdet} kez`);
+
+  /* Felsefe bölümünün vurgusu artık sonsuzluğa bağlanan pedagojik bir
+   * cümle. Şekil bilgisi taşımıyor — yasaklı desenler bunu ayrıca
+   * ölçüyor ("yan yat", "sonsuzluk işareti"…). */
+  bak(
+    'felsefe vurgusu sonsuzluğa bağlanıyor',
+    /Sonsuzluk bir varış değil, bir yöndür/.test(metin),
+  );
+
+  /* Kurum bilgisi artık HERO'DA — sayfanın ilk şeyi (öğretmenin
+   * kararı). Konumu 6. grup ayrıca ölçüyor; burada varlığı. */
+  bak('okul adı sayfada', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(metin));
+  bak('konum sayfada', /Beşiktaş · İstanbul/.test(metin));
+  /* "Matematik Öğretmeni" başlığı hero'dan kalktı (mühürün altında ada
+   * ikinci kez yer vermek tekrardı). Kimlik hâlâ sayfada ve hâlâ
+   * ölçülüyor — hikâye bölümü "matematik öğretmeni Buket Topuzoğlu"
+   * diyor. Ölçüm küçük harfe de bakıyor; iddia aynı, yeri değişti. */
+  bak(
+    'öğretmen kimliği sayfada',
+    /Buket Topuzoğlu/.test(metin) && /matematik öğretmeni/i.test(metin),
+  );
+
+  /* YAZARLIK — sayfanın söylemesi gereken şey. Öğretmenin isteği:
+   * SEKİZ'i tasarlayanın bir yazılım şirketi değil kendisi olduğu
+   * anlaşılsın. Cümle silinirse denetim kırılır. */
+  bak(
+    'SEKİZ\'i kimin tasarladığı yazıyor',
+    /fikir olarak da işleyiş olarak da tasarlayan/.test(metin),
+  );
 
   await sayfa.close();
 }
@@ -415,7 +469,13 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
   await sayfa.goto(TANITIM, { waitUntil: 'networkidle' });
   await sayfa.waitForTimeout(400);
 
+  /* İKİ DEĞİŞİKLİK VAR VE İKİSİ DE ÖĞRETMENİN KARARI:
+   *   1. "Bir öğretmenin gerçek sınıf deneyiminden doğdu." EN ALTTAN
+   *      İKİNCİ SIRAYA taşındı. Eskiden künyedeydi; oraya kadar inen az
+   *      kişi ürünün kimin işi olduğunu öğreniyordu.
+   *   2. "Eğitimde güven, sistemin temelidir." TAMAMEN KALKTI. */
   const BEKLENEN = [
+    'Bir öğretmenin gerçek sınıf deneyiminden doğdu.',
     'Öğrenme bir sonuç değil, devam eden bir süreçtir.',
     'Ödevden gelişime, öğrenmenin tamamı tek yerde.',
     'Öğrenci kendi öğrenme sürecini görür.',
@@ -427,8 +487,6 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
     'Değerlendirme, öğrenmeyi görünür kılar.',
     'Puanın ötesinde, gelişim.',
     'SEKİZ gelişmeye devam ediyor.',
-    'Eğitimde güven, sistemin temelidir.',
-    'Bir öğretmenin gerçek sınıf deneyiminden doğdu.',
   ];
 
   const basliklar = await sayfa.evaluate(() =>
@@ -446,6 +504,37 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
    * ekranda yalnız birkaç temel şeyin görünmesini istiyor. */
   const h1 = (await sayfa.locator('h1').innerText()).trim();
   bak('Hero başlığı marka cümlesi', h1 === 'Öğrenmenin sonu yok.', h1);
+
+  /* KURUM KİMLİĞİ SAYFANIN İLK ŞEYİ — ve bu bir yerleşim tercihi değil,
+   * öğretmenin açık talimatı: "en üstte logo, altında öğretmen ismi ve
+   * okul ilçe il adı olmalı."
+   *
+   * Metnin sayfada BİR YERDE geçmesi yetmez (5. grup onu ölçüyor);
+   * burada ölçülen KONUM: üçü de ilk bölümün içinde mi. Biri künyeye
+   * geri taşınırsa 5. grup geçmeye devam eder, bu ölçüm kırılır. */
+  const ilkBolum = await sayfa.evaluate(
+    () => document.querySelector('main section')?.textContent ?? '',
+  );
+  /* Ad hero'da HÂLÂ var — ama artık ayrı bir satır olarak değil,
+   * `SekizWordmark`ın altındaki "Buket Topuzoğlu · Matematik" olarak.
+   * Ölçüm ayakta: marka bloğu bir gün adsız bırakılırsa kırılır. */
+  bak('Hero: öğretmen adı ilk bölümde', /Buket Topuzoğlu/.test(ilkBolum));
+  bak('Hero: okul adı ilk bölümde', /Arnavutköy Korkmaz Yiğit Anadolu Lisesi/.test(ilkBolum));
+  bak('Hero: konum ilk bölümde', /Beşiktaş · İstanbul/.test(ilkBolum));
+
+  /* Mühür de ilk bölümde — metin ölçümü onu yakalamaz (görsel). */
+  const heroMuhur = await sayfa.evaluate(
+    () => document.querySelectorAll('main section:first-of-type img[src*="okul-muhru"]').length,
+  );
+  bak('Hero: okul mührü ilk bölümde', heroMuhur === 1, `${heroMuhur} adet`);
+
+  /* MÜHÜR TAM BİR KEZ. Künyeden kalktı, hero'ya geçti. İkisinde birden
+   * durursa tekrar öğesine dönüşür; hiç durmazsa kurum kimliği kaybolur.
+   * Kural 8: mühür yeniden çizilmiyor, yalnız yeri değişiyor. */
+  const muhurAdet = await sayfa.evaluate(
+    () => document.querySelectorAll('img[src*="okul-muhru"]').length,
+  );
+  bak('Okul mührü tam bir kez', muhurAdet === 1, `${muhurAdet} adet`);
 
   /* GÖRSEL DAĞILIMI. Altı ekranın üçe bölünmesi anlatının parçası:
    * her rol bölümünde iki ekran. Hepsi tek bir yere yığılsaydı
@@ -493,10 +582,26 @@ console.log('\n7. Giriş ekranı bağlantısı');
   if (adet === 1) {
     const kutu = await bag.boundingBox();
     const formKutu = await sayfa.locator('form').boundingBox();
+    const formSonu = formKutu.y + formKutu.height;
+    const mesafe = Math.round(kutu.y - formSonu);
     bak(
       'Bağlantı giriş formunun AŞAĞISINDA',
-      kutu.y > formKutu.y + formKutu.height,
-      `bağlantı ${Math.round(kutu.y)}px · form sonu ${Math.round(formKutu.y + formKutu.height)}px`,
+      kutu.y > formSonu,
+      `bağlantı ${Math.round(kutu.y)}px · form sonu ${Math.round(formSonu)}px`,
+    );
+
+    /* BAĞLANTI DÜĞMEYE YAKIN — ve bu bir estetik tercih değil, ölçülmüş
+     * bir kusurun düzeltmesi. Eskiden sayfanın en altındaydı: videonun
+     * da altında, "Giriş yap" düğmesinden ~600 px aşağıda. Öğretmenin
+     * ifadesi: "çok küçük kalıyor, insanlar bunu görmez."
+     *
+     * Sınır 120 px: düğmenin hemen altındaki bir dipnotu geçirir, ama
+     * bağlantı bir gün tekrar videonun altına kayarsa denetim kırılır.
+     * Bu, bir sayı değil bir kararın kilidi. */
+    bak(
+      'Bağlantı "Giriş yap" düğmesine YAKIN',
+      mesafe <= 120,
+      `form sonuna ${mesafe}px`,
     );
     bak('Bağlantı 44px dokunma hedefi', kutu.height >= 44, `${Math.round(kutu.height)}px`);
   }

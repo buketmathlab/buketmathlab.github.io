@@ -56,6 +56,12 @@
 
   /* --- Hareket --- */
   --ease-sk: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Yumuşak giriş VE çıkış. `--ease-sk` bir ease-OUT: başta hızlı
+     davranıyor, bu yüzden kısa bir hareket "olup bitmiş" gibi
+     okunuyor. 8 → ∞ dönüşü fark edilmek zorunda olduğu için o
+     hareket bu eğriyi kullanıyor: yavaşça başlıyor, dönüyor,
+     yerine oturuyor. */
+  --ease-sk-yumusak: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 /* ============================================================

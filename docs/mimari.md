@@ -1151,3 +1151,100 @@ kanıtı onu bozduğunda **hiçbir ölçüm kırılmadı** — çünkü React za
 unmount'ta state'i atıyor; o satır hiçbir iş yapmıyordu. Süs kod
 kaldırıldı ve ölçüm gerçek bir riske çevrildi: kodların tarayıcı
 deposuna yazılması.
+
+## Tanıtım sayfası — editoryal tur (kurum kimliği başa, güven bölümü kalktı)
+
+Öğretmen sayfayı canlıda baştan sona okuyup madde madde düzeltme verdi.
+Tur kod değil **metin, sıra ve iki davranış** turuydu; hiçbir özellik ve
+hiçbir SQL değişmedi.
+
+### Sıra değişti — ve sıra denetimde kilitli
+
+Sayfanın ilk şeyi artık **kurum kimliği**: okul mührü → *Buket Topuzoğlu ·
+Matematik Öğretmeni* → *Arnavutköy Korkmaz Yiğit Anadolu Lisesi · Beşiktaş
+· İstanbul*. Ondan sonra SEKİZ işareti, marka cümlesi ve ürünün tanımı
+geliyor.
+
+**"Bir öğretmenin gerçek sınıf deneyiminden doğdu."** künyeden ikinci
+bölüme taşındı. Eskiden sayfanın en altındaydı; oraya kadar inen az kişi
+ürünün kimin işi olduğunu öğreniyordu.
+
+**Mühür tam bir yerde.** Künyeden kalktı, hero'ya geçti; iki kez durursa
+tekrar öğesine dönüşür. Denetim sayıyor (`img[src*="okul-muhru"]` = 1) ve
+ilk bölümün içinde olduğunu ayrıca ölçüyor — metnin sayfada bir yerde
+geçmesi yetmez, KONUM ölçülüyor.
+
+### "Eğitimde güven, sistemin temelidir." bölümü tamamen kalktı
+
+Üç cümlesi de (barındırma altyapısının adı, Zürih/İsviçre bölgesi, yetkili
+erişim notu, çerez notu) öğretmene tanıtım sayfası için gereksiz teknik
+ayrıntı geldi.
+
+**Güvence kalkmadı, yalnız cümle kalktı.** Sayfa hâlâ tek çerez yazmıyor ve
+sunucuya tek istek atmıyor; `scripts/tanitim-denetimi.mjs` 1. grubu bunu
+DAVRANIŞ olarak ölçmeye devam ediyor. Kaldırılan ölçüm yalnız "bu cümle
+sayfada duruyor mu" idi. Söylenmeyen ama ölçülen bir güvence, söylenip
+ölçülmeyenden güçlüdür.
+
+Karar denetimde kilitli: `Supabase`, `Zürih|İsviçre` ve `Eğitimde güven`
+artık yasaklı desen. Bu karar bir tur boyunca ters yönde durmuştu (o turda
+cümle bilerek yazdırılmıştı); fikir yine değişirse kaldırılacak yer o üç
+satır.
+
+### Veli "destek olan" değil "dahil olan"
+
+Öğretmenin gerekçesi kelime tercihinden ibaret değil: **veli, öğretmenden
+pay alan ya da onun yerine geçen taraf gibi görünmemeli.** Yapılan şey
+ödevde şeffaflık — veli sürece dahil ediliyor.
+
+Aynı sebeple savunmacı cümleler de kalktı: *"Veri öğretmenin yerini
+almaz."* silindi, yerine verinin ne YAPTIĞI yazıldı. Denetim iki yönlü
+ölçüyor — `sürece dahil ol` aranıyor, `yerini alma` yasaklanıyor.
+
+### Kelime kararları
+
+| Eski | Yeni | Sebep |
+|---|---|---|
+| bütünleşik bir eğitim platformu | **bütünsel** | öğretmenin kelime tercihi |
+| adlar ve puanlar **uydurmadır** | **temsilidir** | "uydurma" profesyonel durmuyor |
+| Sınıfın gelişimini görür | **Sınıfın ve her öğrencinin** gelişimini görür | ürün ikisini de veriyor (`konu_karnesi`, 0023) |
+
+Marka cümlesi **üç yerden ikiye** indi: hero ve kapanış. Felsefe
+bölümündeki üçüncü tekrarı kalktı ("en üstte zaten kullandık"), yerine
+sonsuzluğa bağlanan pedagojik bir cümle geldi. Sayı ölçülüyor.
+
+### Yazarlık — sayfanın söylemesi gereken şey
+
+Öğretmenin isteği: SEKİZ'i tasarlayanın bir yazılım şirketi değil kendisi
+olduğu anlaşılsın, ama göze sokulmadan. Metin bunu söylüyor ve **"vizyoner"
+kelimesi bilerek yazılmıyor** — vizyon kendini ilan ederek değil, son
+paragraftaki bakışla anlaşılır. Cümle silinirse denetim kırılır.
+
+### İki davranış değişikliği
+
+**"SEKİZ nedir?" bağlantısı yukarı çıktı.** Giriş ekranında videonun da
+altındaydı; öğretmenin ölçümü net: "çok küçük kalıyor, insanlar bunu
+görmez". Artık "Giriş yap" düğmesinin hemen altında. Yine de düğme gibi
+durmuyor — her gün giriş yapan öğrenci için bu bir yol ayrımı değil,
+dipnot. Denetim **düğmeye uzaklığını** ölçüyor (≤ 120 px); bağlantı bir gün
+tekrar aşağı kayarsa kırılır.
+
+**8 → ∞ dönüşü yavaşladı ve doğru anda oynuyor.** Süre `700ms` → `1500ms`;
+eğri `--ease-sk` (bir ease-OUT, başta hızlı) yerine yeni
+`--ease-sk-yumusak`. Ama asıl kusur hız değildi: kapanıştaki işaret
+`acilistaDonsun` ile sayfa YÜKLENİRKEN dönüyordu, yani okuyucu oraya
+kaydırdığında hareket çoktan bitmiş oluyordu. Yeni `gorununceDonsun` propu
+(`IntersectionObserver`, tek seferlik, eşik 0.6) işareti ekrana girdiğinde
+oynatıyor. Gözlemci yoksa doğrudan dönüyor — işaret hiçbir koşulda 8
+olarak donup kalmıyor (Part VIII). Hareket azaltma tercihi açıkken davranış
+aynı: dönüş yok, doğrudan ∞.
+
+### Ekran görüntüleri artık kendi doğruluğunu ölçüyor
+
+`ogrenci-sonuc.webp` ESKİ Ewalu cümlesini gösteriyordu: görseller
+`lib/ewalu-puan.ts` düzeltilmeden önce çekilmişti ve görsel donmuş bir
+kopya olduğu için kodla birlikte güncellenmiyordu. Kimse fark etmedi.
+
+`scripts/tanitim-gorselleri.mjs` içine `BEKLENEN_METIN` tablosu eklendi:
+çekilen ekranda beklenen cümle parçası yoksa betik **çöküyor**. Yani
+görseli yenilemeyi unutmak artık sessiz bir hata değil.
