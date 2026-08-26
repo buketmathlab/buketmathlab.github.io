@@ -189,7 +189,7 @@ function Ekran({ dosya, alt, aciklama }: { dosya: string; alt: string; aciklama:
       />
       <figcaption className="mt-2 text-[12px] leading-[1.45] text-muted">
         {aciklama}
-        <span className="block text-[11px]">Örnek ekran — adlar ve puanlar temsilidir.</span>
+        <span className="block text-[11px]">Örnek ekran — isimler ve puanlar temsilidir.</span>
       </figcaption>
     </figure>
   );
@@ -298,18 +298,24 @@ function Hero() {
             kalktı — iki kez göstermek onu bir tekrar öğesine çevirirdi.
             `dekoratif`: okul adı hemen altında görünür metin olarak
             geçiyor, ekran okuyucu iki kez okumasın. */}
+        {/* MÜHÜR TEK BAŞINA — ve `dekoratif` DEĞİL.
+
+            Mührün altında bir tur boyunca önce "Buket Topuzoğlu /
+            Matematik Öğretmeni", sonra da okul adı ve konum duruyordu.
+            İkisi de öğretmenin kararıyla kalktı: adı zaten hemen
+            aşağıdaki `SekizWordmark` yazıyor, okul adı da mührün kendi
+            halkasında ("ARNAVUTKÖY KORKMAZ YİĞİT ANADOLU LİSESİ ·
+            BEŞİKTAŞ"). İkisi de tekrardı.
+
+            `dekoratif` BU YÜZDEN KALDIRILDI, unutulduğu için değil. O
+            prop yalnız "okul adı zaten yanında görünür metin" durumu
+            için var (SchoolCrest.tsx). O metin kalkınca prop yanlış
+            bilgi verir ve ekran okuyucu kullanan biri kurumu HİÇ
+            duymaz — mührün halkasındaki yazıyı okuyamaz. Propsuz hâlde
+            `alt` okulun tam adını taşıyor. Denetim bunu ölçüyor. */}
         <div className="flex justify-center">
-          <SchoolCrest boyut={120} dekoratif />
+          <SchoolCrest boyut={120} />
         </div>
-        {/* ÖĞRETMEN ADI BURADA TEKRAR YAZILMIYOR. Bir tur boyunca
-            mühürün altında "Buket Topuzoğlu / Matematik Öğretmeni"
-            duruyordu; ölçüldü ve gereksiz olduğu görüldü: hemen
-            aşağıdaki `SekizWordmark` zaten "Buket Topuzoğlu · Matematik"
-            yazıyor. Aynı ad iki satır arayla iki kez geçiyordu. */}
-        <p className="mt-5 text-[15px] leading-[1.5] text-ink">
-          Arnavutköy Korkmaz Yiğit Anadolu Lisesi
-        </p>
-        <p className="text-[15px] text-muted">Beşiktaş · İstanbul</p>
 
         <GeometricDivider className="mx-auto my-9 max-w-[14rem]" />
 
@@ -392,7 +398,7 @@ function Hikaye() {
             ilan ederek değil son paragraftaki bakışla anlaşılır;
             sıfatı yazmak iddiayı zayıflatırdı. */}
         <P>
-          SEKİZ'i fikir olarak da işleyiş olarak da tasarlayan, matematik öğretmeni Buket
+          SEKİZ'i fikir olarak da yazılım olarak da tasarlayan, matematik öğretmeni Buket
           Topuzoğlu'dur. Bir yazılım şirketinin ürünü değil; sınıfın içinden, gerçek bir
           ihtiyaçtan doğdu.
         </P>
@@ -705,8 +711,8 @@ function Degerlendirme() {
   return (
     <Bolum baslik="Değerlendirme, öğrenmeyi görünür kılar.">
       <P>
-        Test türündeki ödevler, önceden belirlenmiş aynı kurallar doğrultusunda sistem
-        tarafından otomatik olarak değerlendirilir.
+        Test türündeki ödevler, önceden belirlenmiş kurallar doğrultusunda sistem tarafından
+        otomatik olarak değerlendirilir.
       </P>
       <P>
         Açık uçlu ödevlerde son kontrol ve puanlama öğretmen tarafından yapılır.
