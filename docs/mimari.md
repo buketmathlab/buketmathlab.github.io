@@ -1263,3 +1263,63 @@ kopya olduğu için kodla birlikte güncellenmiyordu. Kimse fark etmedi.
 `scripts/tanitim-gorselleri.mjs` içine `BEKLENEN_METIN` tablosu eklendi:
 çekilen ekranda beklenen cümle parçası yoksa betik **çöküyor**. Yani
 görseli yenilemeyi unutmak artık sessiz bir hata değil.
+
+## Projeyi uyanık tutan zamanlayıcı (yeni SQL yok)
+
+**Olay.** 2026 Ağustos'unda Supabase, ücretsiz plandaki projeyi 7 günlük
+hareketsizlik sonrası **duraklattı**. Yaz tatiliydi, kimse girmedi. Site
+açık görünüyordu (GitHub Pages 200 dönüyor) ama her veri çağrısı ölü
+adrese gidiyordu: ne öğretmen, ne öğrenci, ne veli giriş yapabiliyordu.
+
+Okul 15 Eylül'de açılıyor. O sabah sistemin kapalı olması kabul edilemez.
+
+### Ölçüm — "birileri siteye bakar" neden yetmiyor
+
+| Ne yapılıyor | Supabase'e istek |
+|---|---|
+| Tanıtım sayfasını açmak | **yok** — sayfa istemciyi hiç içe aktarmıyor |
+| `/yeni/` açıp giriş ekranını görmek | **yok** — açılışta çağrılan uç yok |
+| Sürüm denetimi (`surum.json`) | **yok** — GitHub Pages'e gidiyor |
+| Kod yazıp "Giriş yap"a basmak | **var** (`giris`) |
+
+Yani sayfayı açmak sayacı sıfırlamıyor; gerçek bir veritabanı çağrısı
+gerekiyor.
+
+### Yoklamanın neden zararsız olduğu — üçü de kaynaktan ölçüldü
+
+`.github/workflows/uyanik-tut.yml`, üç günde bir `bildirim_sayilari`
+ucunu **64 karakterlik geçersiz bir jetonla** çağırıyor.
+
+1. **Yazma yok.** `_oturum`, geçersiz jetonda `oturumlar`'a tek SELECT
+   atıp `28000` fırlatıyor; `update … son_gorulme` satırına hiç
+   ulaşılmıyor (`0003_guvenlik_fonksiyonlari.sql`).
+2. **Kilit sayacı kirlenmiyor.** `_deneme_kaydet` yalnız `giris` içinden
+   çağrılıyor (0003 ve 0028). Öğretmen kendi kilidine takılmıyor.
+3. **Sahte öğrenci yok.** Öğrenci eklemek `ogrenciler`, `giris_kodlari`
+   ve `denetim_izi`'ne gerçek satırlar yazardı ve 720 gerçek öğrencinin
+   arasında unutulmuş test kayıtları bırakırdı.
+
+Jetonun 32 karakterden **uzun** olması bilinçli: `_oturum` kısa jetonu
+veritabanına hiç gitmeden reddediyor. Uzun jeton gerçek bir sorgu
+attırıyor — istenen tam olarak bu.
+
+### Aynı dosya bir nöbetçi
+
+`400` + `28000` başarı sayılıyor; bağlantısızlık, `5xx`, zaman aşımı ve
+`PGRST202` (uç yok) başarısızlık. Yani proje yine duraklarsa ya da bir uç
+kaybolursa GitHub e-posta atıyor — sorun 15 Eylül sabahı öğrencilerden
+değil, üç gün içinde öğreniliyor.
+
+Karar mantığının dört yönü de simüle edilerek ölçüldü; duraklamış proje
+üzerinde gerçek koşu da yapıldı ve nöbetçinin **öttüğü** görüldü.
+
+### Dürüst sınırlar
+
+- Bu, ücretsiz planın duraklatma mekanizmasını **dolanıyor**. Supabase
+  "hareket" tanımını değiştirirse çalışmayabilir; garanti yok. Pro planı
+  tam olarak bu ihtiyacın karşılığı ve üstüne günlük otomatik yedek
+  veriyor.
+- **Duraklamış projeyi uyandırmaz.** Önce panelden uyandırılması gerekir.
+- **Yedek yerine geçmez.** Uyanık kalmak, veri kaybına karşı koruma
+  değil — bu depo bir veritabanını zaten bir kez kaybetti.
+- GitHub, 60 gün hareketsiz depolarda zamanlanmış işleri durdurur.

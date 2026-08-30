@@ -1,0 +1,133 @@
+# SEKİZ — Supabase projesini uyanık tutan zamanlayıcı ve sessiz nöbetçi.
+#
+# NEDEN VAR
+# Supabase ücretsiz planda 7 gün hiç istek gelmeyen projeyi duraklatıyor.
+# 2026 Ağustos'unda tam bu oldu: yaz tatilinde kimse girmedi, proje
+# duraklatıldı ve site açık göründüğü hâlde hiç kimse giriş yapamaz oldu.
+# Okul 15 Eylül'de açılıyor; o sabah sistemin kapalı olması kabul edilemez.
+#
+# NEDEN "BİRİLERİ SİTEYE BAKAR" YETMİYOR — ÖLÇÜLDÜ
+# Tanıtım sayfası Supabase istemcisini hiç içe aktarmıyor; uygulama
+# açılışta hiçbir uç çağırmıyor; sürüm denetimi GitHub Pages'e gidiyor.
+# Yani sayfayı açmak veritabanına TEK BİR istek bile göndermiyor. Sayacı
+# ancak gerçek bir veritabanı çağrısı sıfırlıyor.
+#
+# BU YOKLAMA NEDEN ZARARSIZ — ÜÇÜ DE KAYNAKTAN ÖLÇÜLDÜ
+#   1) `_oturum`, 64 karakterlik GEÇERSİZ jetonda `oturumlar`'a tek SELECT
+#      atıp `28000` fırlatıyor. `update … son_gorulme` satırına hiç
+#      ulaşılmıyor (0003_guvenlik_fonksiyonlari.sql). Yani okuma var,
+#      YAZMA YOK.
+#   2) Kilit sayacı kirlenmiyor: `_deneme_kaydet` yalnız `giris` içinden
+#      çağrılıyor (0003 ve 0028). Bozuk jetonlu uç çağrısı
+#      `giris_denemeleri`'ne dokunmuyor — öğretmen kendi kilidine takılmaz.
+#   3) Sahte öğrenci üretilmiyor: öğrenci eklemek `ogrenciler`,
+#      `giris_kodlari` ve `denetim_izi`'ne gerçek satırlar yazardı ve 720
+#      gerçek öğrencinin arasında unutulmuş test kayıtları bırakırdı.
+#
+# AYNI DOSYA BİR NÖBETÇİ
+#   400 + 28000  → başarı, veritabanı yanıt verdi.
+#   Bağlantı yok / 5xx / zaman aşımı / PGRST202 → başarısızlık, GitHub
+#   e-posta atıyor. Proje bir gün yine duraklarsa ya da bir uç kaybolursa
+#   bu üç gün içinde öğrenilir, 15 Eylül sabahı öğrencilerden değil.
+#
+# DÜRÜST SINIRLAR
+#   - Bu, ücretsiz planın duraklatma mekanizmasını dolanıyor. Supabase
+#     "hareket" tanımını değiştirirse çalışmayabilir; garanti yok. Pro
+#     planı tam olarak bu ihtiyacın karşılığı.
+#   - DURAKLAMIŞ projeyi UYANDIRMAZ. Önce panelden uyandırılması gerekir.
+#   - Yedek yerine geçmez. Uyanık kalmak, veri kaybına karşı koruma değil.
+#   - GitHub, 60 gün hareketsiz depolarda zamanlanmış işleri durdurur.
+
+name: Supabase uyanık tut
+
+on:
+  schedule:
+    # Üç günde bir, 06:00 UTC (09:00 TR). En büyük boşluk 3 gün — 7 günlük
+    # sınırın çok altında, bir koşu kaçsa bile pay kalıyor.
+    - cron: '0 6 */3 * *'
+  # Elle tetikleme: öğretmen okul açılmadan önce "şu an uyanık mı?" diye
+  # bakmak isterse Actions sekmesinden çalıştırabilir.
+  workflow_dispatch:
+
+# Depoyu yalnız okuyoruz; yazma yetkisi istemiyoruz.
+permissions:
+  contents: read
+
+jobs:
+  yokla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yapılandırmayı app/.env'den oku
+        id: yapilandirma
+        run: |
+          set -euo pipefail
+          # TEK KAYNAK: adres ve anahtar uygulamanın kullandığı dosyadan
+          # okunuyor. İkinci bir kopya tutulsaydı biri değişince öbürü
+          # sessizce eskirdi. Anon anahtarı gizli değil — yayımlanan
+          # paketin içinde zaten duruyor.
+          ADRES=$(grep -m1 '^VITE_SUPABASE_URL=' app/.env | cut -d= -f2-)
+          ANAHTAR=$(grep -m1 '^VITE_SUPABASE_ANON_KEY=' app/.env | cut -d= -f2-)
+
+          if [ -z "$ADRES" ] || [ -z "$ANAHTAR" ]; then
+            echo "::error::app/.env içinde adres ya da anon anahtarı bulunamadı."
+            exit 1
+          fi
+
+          echo "adres=$ADRES" >> "$GITHUB_OUTPUT"
+          # Anahtar günlüğe düşmesin diye maskeleniyor.
+          echo "::add-mask::$ANAHTAR"
+          echo "anahtar=$ANAHTAR" >> "$GITHUB_OUTPUT"
+          echo "Proje: $ADRES"
+
+      - name: Veritabanını yokla (veri yazmadan)
+        env:
+          ADRES: ${{ steps.yapilandirma.outputs.adres }}
+          ANAHTAR: ${{ steps.yapilandirma.outputs.anahtar }}
+        run: |
+          set -uo pipefail
+
+          # 64 karakterlik, hiçbir oturuma karşılık gelmeyen jeton.
+          # 32 karakterden UZUN olması bilinçli: `_oturum` kısa jetonu
+          # veritabanına hiç gitmeden reddediyor. Uzun jeton, `oturumlar`
+          # tablosuna gerçek bir sorgu attırıyor — asıl istediğimiz bu.
+          JETON=$(printf 'z%.0s' $(seq 64))
+
+          CIKTI=$(curl -sS -m 45 \
+            -w '\n%{http_code}' \
+            -X POST "$ADRES/rest/v1/rpc/bildirim_sayilari" \
+            -H "apikey: $ANAHTAR" \
+            -H "Authorization: Bearer $ANAHTAR" \
+            -H 'Content-Type: application/json' \
+            -d "{\"p_token\":\"$JETON\"}" 2>&1) || true
+
+          KOD=$(printf '%s' "$CIKTI" | tail -n1)
+          GOVDE=$(printf '%s' "$CIKTI" | sed '$d')
+
+          echo "HTTP: ${KOD:-yanıt yok}"
+          echo "Gövde: $GOVDE"
+
+          # BEKLENEN BAŞARI: 400 + 28000 (oturum geçersiz).
+          # Bu, veritabanının sorguyu gerçekten çalıştırdığının kanıtı.
+          if [ "$KOD" = "400" ] && printf '%s' "$GOVDE" | grep -q '28000'; then
+            echo "✓ Veritabanı ayakta ve yanıt veriyor — sayaç sıfırlandı."
+            exit 0
+          fi
+
+          # PGRST202 = uç yok. Veritabanı ayakta ama bir migration eksik;
+          # sessizce geçilmemeli.
+          if printf '%s' "$GOVDE" | grep -q 'PGRST202'; then
+            echo "::error::Veritabanı yanıt veriyor ama 'bildirim_sayilari' ucu YOK. Bir migration eksik olabilir (0022)."
+            exit 1
+          fi
+
+          if [ -z "$KOD" ] || [ "$KOD" = "000" ]; then
+            echo "::error::Projeye hiç ulaşılamadı. Muhtemelen DURAKLATILMIŞ. supabase.com/dashboard adresinden uyandırın."
+            exit 1
+          fi
+
+          echo "::error::Beklenmeyen yanıt (HTTP $KOD). Proje duraklatılmış ya da bir uç değişmiş olabilir."
+          exit 1
