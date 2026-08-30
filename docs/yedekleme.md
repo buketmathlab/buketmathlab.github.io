@@ -29,6 +29,54 @@ etkilenmez.
 Kimseyle paylaşmayın. Bir veliye iletmek cevap anahtarını iletmek olur
 (Kural 6). Ortak bir bilgisayarın indirilenler klasöründe bırakmayın.
 
+### Nereye kaydedilir
+
+**Kural: iki kopya, iki ayrı yer.** En az biri, elde taşınan cihazda
+**olmayacak** — iPad düşerse yedek de gitmesin.
+
+**Önce nereye iniyor.** iPad/iPhone Safari'de Dosyalar → İndirilenler;
+bilgisayarda `İndirilenler` / `Downloads`. **Burası son durak değil:**
+geçici bir klasör, karışır ve zamanla temizlenir. Dosya oradan alınıp
+kalıcı bir yere taşınır.
+
+**Ana kopya — kişisel bulutta paylaşılmamış bir klasör.** iCloud Drive
+ya da Drive içinde `SEKİZ yedek` gibi bir klasör açılır; şart, klasörün
+**paylaşılmamış** olması. iPad'de: dosyaya basılı tut → Paylaş →
+Dosyalara Kaydet.
+
+**İkinci kopya — kendinize e-posta ya da ev bilgisayarı.** E-posta için
+dürüst not: uzun ömürlü ve aranabilir, hesap ele geçerse dosya da gider.
+**Kabul edilebilir bir ikinci kopya, ama tek başına dayanak değil.**
+
+#### Nereye konmaz
+
+| Yer | Neden |
+|---|---|
+| Okulun ortak bilgisayarı ya da ortak sürücüsü | İçinde öğrenci ve veli giriş kodları var |
+| Paylaşılmış bir bulut klasörü | Cevap anahtarları da içinde — bir veliye ulaşırsa Kural 6 çiğnenir |
+| WhatsApp'ta kendine | Telefon yedeğine girer; telefonu eline alan görür |
+| Ödev PDF'leriyle aynı klasör | Yanlışlıkla paylaşma riski |
+
+#### Biriktirilir, üzerine yazılmaz
+
+Dosya adı tarihlidir (`yedekDosyaAdi()`, `app/src/lib/yedek.ts`), yani
+hepsi aynı klasöre atılınca kendiliğinden sıralanır. **Son üç dört dosya
+saklanır.**
+
+Gerekçe somut: bugünkü yedek bir sorun sırasında alınmış olabilir. O
+bozuksa dünkü işe yarar. Tek dosya tutup her seferinde üzerine yazmak
+tam olarak o güvenceyi yok eder.
+
+#### Kişisel veri
+
+Dosyada gerçek öğrenci adları ve giriş kodları var. Ekran kilidi olan
+**kişisel** bir cihazda tutulur.
+
+**Bu belgeye kişisel e-posta adresi, telefon ya da hesap adı
+yazılmıyor** — depo herkese açık (ölçüldü: oturumsuz istek `raw`
+adresinden de `200` dönüyor). Yönerge bu yüzden genel: "kendinize
+e-posta", adresin kendisi değil.
+
 ### Dosyada ne var, ne yok
 
 | Var | Yok |
