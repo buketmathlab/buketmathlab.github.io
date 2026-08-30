@@ -110,10 +110,19 @@ jobs:
           echo "HTTP: ${KOD:-yanıt yok}"
           echo "Gövde: $GOVDE"
 
-          # BEKLENEN BAŞARI: 400 + 28000 (oturum geçersiz).
-          # Bu, veritabanının sorguyu gerçekten çalıştırdığının kanıtı.
-          if [ "$KOD" = "400" ] && printf '%s' "$GOVDE" | grep -q '28000'; then
-            echo "✓ Veritabanı ayakta ve yanıt veriyor — sayaç sıfırlandı."
+          # BAŞARI ÖLÇÜTÜ GÖVDEDEKİ `28000` — HTTP KODU DEĞİL.
+          #
+          # İlk yazdığımda ölçüt "400 + 28000" idi ve bu YANLIŞTI. Proje
+          # uyandıktan sonra canlıya karşı ölçtüm: Supabase, 28xxx
+          # sqlstate'ini HTTP **403**'e eşliyor, 400'e değil. Yani sağlıklı
+          # bir projede iş akışı her koşuda "başarısız" diyecekti — üç günde
+          # bir yanlış alarm, ve öğretmen alarma güvenmeyi bırakırdı.
+          #
+          # Doğru sinyal HTTP kodu değil: veritabanının fonksiyonu GERÇEKTEN
+          # çalıştırıp jetonu reddettiğinin kanıtı olan `28000`. Supabase
+          # eşlemeyi yarın yine değiştirse bile bu ölçüt ayakta kalır.
+          if printf '%s' "$GOVDE" | grep -q '28000'; then
+            echo "✓ Veritabanı ayakta ve yanıt veriyor (HTTP $KOD) — sayaç sıfırlandı."
             exit 0
           fi
 

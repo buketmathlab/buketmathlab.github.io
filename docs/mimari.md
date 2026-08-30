@@ -1305,13 +1305,24 @@ attırıyor — istenen tam olarak bu.
 
 ### Aynı dosya bir nöbetçi
 
-`400` + `28000` başarı sayılıyor; bağlantısızlık, `5xx`, zaman aşımı ve
-`PGRST202` (uç yok) başarısızlık. Yani proje yine duraklarsa ya da bir uç
-kaybolursa GitHub e-posta atıyor — sorun 15 Eylül sabahı öğrencilerden
+Başarı ölçütü **gövdedeki `28000`**; bağlantısızlık, `5xx`, zaman aşımı
+ve `PGRST202` (uç yok) başarısızlık. Yani proje yine duraklarsa ya da bir
+uç kaybolursa GitHub e-posta atıyor — sorun 15 Eylül sabahı öğrencilerden
 değil, üç gün içinde öğreniliyor.
 
-Karar mantığının dört yönü de simüle edilerek ölçüldü; duraklamış proje
-üzerinde gerçek koşu da yapıldı ve nöbetçinin **öttüğü** görüldü.
+**ÖLÇÜT ÖNCE YANLIŞ YAZILDI.** İlk hâli "HTTP 400 + 28000" idi. Proje
+uyandıktan sonra canlıya karşı ölçüldü: Supabase `28xxx` sqlstate'ini
+HTTP **403**'e eşliyor. Yani sağlıklı bir projede iş akışı her koşuda
+"başarısız" diyecek, üç günde bir yanlış alarm üretecek ve öğretmeni
+alarma güvenmemeye alıştıracaktı — sessiz kalan nöbetçi kadar zararlı.
+
+Doğru sinyal HTTP kodu değil, veritabanının fonksiyonu gerçekten
+çalıştırıp jetonu reddettiğinin kanıtı olan `28000`. Ölçüt buna
+taşındı; Supabase eşlemeyi yarın yine değiştirse de ayakta kalır.
+
+Karar mantığının beş yönü simüle edilerek ölçüldü (403+28000, 400+28000,
+000, 521, PGRST202); ayrıca duraklamış projede nöbetçinin **öttüğü**,
+uyanmış projede **sustuğu** gerçek koşuyla görüldü.
 
 ### Dürüst sınırlar
 
