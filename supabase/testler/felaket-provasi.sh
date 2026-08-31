@@ -81,6 +81,12 @@ begin
     values (v_b, now() + interval '2 days', 'online', 'https://ornek/ders');
   insert into public.odemeler (ogrenci_id, tutar, tarih, odendi)
     values (v_b, 1500.50, current_date, true);
+
+  -- 0032: öğretmenin KENDİ YAZDIĞI Ewalu cümlesi. Provanın konusu tam da
+  -- bu: cümleler `ayarlar` tablosuna konsaydı yedeğe hiç girmez ve burada
+  -- kaybolurlardı. Metin bilerek kesme işaretli ve Türkçe karakterli.
+  insert into public.ewalu_mesajlari (bant, cumle) values
+    (50, 'Öğretmenin''in yazdığı özel cümle — şığ değil, sağlam çalış.');
 end $$;
 SQL
 
@@ -92,6 +98,8 @@ PARMAK="select 'siniflar='||count(*) from public.siniflar
  union all select 'mesajlar='||count(*) from public.mesajlar
  union all select 'dersler='||count(*) from public.dersler
  union all select 'odemeler='||count(*) from public.odemeler
+ union all select 'ewalu='||count(*) from public.ewalu_mesajlari
+ union all select 'ewalu_cumle='||cumle from public.ewalu_mesajlari
  union all select 'ad='||ad from public.ogrenciler order by 1"
 psql_ -t -A -d "$CANLI" -c "$PARMAK" > "$IS/once.txt"
 
@@ -117,6 +125,9 @@ def yaz(ad, veri):
         'onayliyorum boolean := false;', 'onayliyorum boolean := true;'))
 yaz(f'{is_}/iyi.sql', d)
 yaz(f'{is_}/eksik.sql', {k: v for k, v in d.items() if k != 'mesajlar'})
+# 0032 ÖNCESİ bir yedek: `ewalu_mesajlari` anahtarı hiç yok. Öğretmenin
+# ELİNDEKİ MEVCUT yedek tam olarak böyle. Reddedilmemeli.
+yaz(f'{is_}/eski.sql', {k: v for k, v in d.items() if k != 'ewalu_mesajlari'})
 PY
 
 if psql_ -q -d "$YENI" -f "$IS/eksik.sql" 2>"$IS/hata.txt"; then
@@ -126,6 +137,21 @@ grep -q 'tablosu eksik' "$IS/hata.txt" || { echo "    HATA: yanlış gerekçe"; 
 n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.siniflar")
 [ "$n" = "13" ] || { echo "    HATA: reddederken veri sildi (sınıf=$n)"; exit 1; }
 echo "    reddedildi ve hiçbir şey silmedi: OK"
+
+echo "==> 4b. ESKİ yedek (0032 öncesi) KABUL edilmeli"
+# Öğretmenin elinde bugün duran yedek `ewalu_mesajlari` taşımıyor. Sıkı
+# denetim onu da reddetseydi, dosya tam işe yarayacağı gün — felaket
+# gününde — geri yüklenemezdi. Bu ölçüm o kapıyı açık tutuyor.
+if ! psql_ -q -d "$YENI" -f "$IS/eski.sql" 2>"$IS/eski-hata.txt"; then
+  echo "    HATA: 0032 öncesi yedek reddedildi!"; cat "$IS/eski-hata.txt"; exit 1
+fi
+n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.ewalu_mesajlari")
+[ "$n" = "0" ] || { echo "    HATA: eski yedekten $n cümle geldi, 0 olmalıydı"; exit 1; }
+# Eski yedek gerçekten yüklendi mi — sessizce "kabul edip hiçbir şey
+# yapmamak" da bir kusur olurdu.
+n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.ogrenciler")
+[ "$n" != "0" ] || { echo "    HATA: eski yedek kabul edildi ama hiçbir şey yazılmadı"; exit 1; }
+echo "    kabul edildi, Ewalu cümlesi boş (varsayılana düşecek): OK"
 
 echo "==> 5. Geri yükleme"
 psql_ -q -d "$YENI" -f "$IS/iyi.sql" 2>&1 | sed 's/^psql[^:]*: NOTICE:  /    /'

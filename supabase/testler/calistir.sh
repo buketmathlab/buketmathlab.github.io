@@ -147,6 +147,10 @@ echo "==> Kardeş ödevlere yayma testleri (0031)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/kardes_yayma_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Ewalu mesaj testleri (0032)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/ewalu_mesaj_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Faz 11 güvenlik denetimi"
 psql_ -d "$DB" -f "$KOK/supabase/testler/guvenlik_denetimi.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

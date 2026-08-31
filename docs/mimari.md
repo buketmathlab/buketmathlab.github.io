@@ -1193,6 +1193,103 @@ girmesi güvenli.
 
 İkisi de yalnız her denetim tek tek geri alındığı için görüldü.
 
+## Ewalu'nun cümlelerini öğretmen yazsın (0032)
+
+Ewalu'nun puana göre söylediği beş cümle koda gömülüydü
+(`lib/ewalu-puan.ts`); bir kelimesini değiştirmek bir geliştirme turu
+gerektiriyordu. 0032 o kapıyı öğretmene açıyor.
+
+### Sözleşme: varsayılanlar kodda kalıyor
+
+**Yeni tablo BOŞ başlıyor** ve yalnız "öğretmen bu bandı DEĞİŞTİRDİ"
+bilgisini taşıyor. Üç sonucu var:
+
+1. Migration hiçbir metni sahiplenmiyor; cümlelerin tek doğruluk kaynağı
+   `lib/ewalu-puan.ts` olmayı sürdürüyor. İki yerde iki "varsayılan"
+   oluşup zamanla ayrışmıyor.
+2. **0032 çalıştırılmasa bile ekran bugünkü gibi çalışıyor** — uç yoksa
+   istemci varsayılana düşüyor (`ucYok` deseni, Part VIII).
+3. **"Varsayılana dön" satırı SİLMEK demek.** Ayrı bir bayrak ya da
+   varsayılan metni tabloya geri yazmak gerekmiyor: `ewalu_mesaj_yaz`'a
+   `p_cumle = null` gitmesi yeterli.
+
+### Neden `ayarlar`'a KONMADI — ölçülerek karar verildi
+
+`disa_aktar` sekiz tabloyu yediliyordu ve **`ayarlar` aralarında yoktu**.
+Cümleleri oraya koysaydım öğretmenin kendi yazdığı metinler yedeğe hiç
+girmez, bir geri yüklemede **sessizce kaybolurdu**. `ayarlar`'ı yedeğe
+eklemek de yanlış olurdu: içinde `ogretmen_pin_hash` var ve
+`docs/yedekleme.md` PIN'in yedekte **bulunmamasını** açık bir güvence
+olarak yazıyor — yedek dosyası kişisel buluta ve e-postaya gidiyor.
+
+Ayrı tablo ikisini birden çözüyor. Yedek zinciri **üç yerde birden**
+güncellendi: `disa_aktar`, `geri-yukle.sql`'in `tablolar` dizisi ve
+felaket provası (özel cümle yedeklenip geri yükleniyor, parmak izinde
+birebir karşılaştırılıyor).
+
+**Eski yedekler de geri yüklenebiliyor.** `geri-yukle.sql`'in yapı
+denetimi dizideki her tablonun dosyada bulunmasını şart koşuyordu; 0032
+öncesi bir yedekte `ewalu_mesajlari` anahtarı yok ve kural sıkı
+uygulansaydı öğretmenin elindeki mevcut yedek **felaket gününde
+reddedilirdi**. Bu yüzden 0032 ve sonrası tablolar "isteğe bağlı": yoksa
+boş sayılıyor — ki doğru sonuç zaten bu, özel cümle yoksa varsayılanlar
+söylenir. Sekiz çekirdek tablo isteğe bağlı DEĞİL.
+
+### `ogrenci_odevleri`'ne dokunulmadı
+
+Cümleyi o yanıta eklemek 300 satırlık bir gövdeyi birebir kopyalamayı
+gerektirirdi ve 0016'da ezberden gövde yazmak iki hataya yol açmıştı;
+üstelik `ogrenci_odevleri` öğrencinin en kritik ucu. Ayrı ve küçük bir
+okuma ucu (`ewalu_mesajlari`) yazıldı — 0031'de `odev_guncelle`'ye
+dokunmama kararının aynısı.
+
+Öğrencinin ekranında bu ucun **hatası bilerek yutuluyor**: bir ayar
+ucunun ulaşılamaz olması, çocuğun sonuç kartını bozmamalı.
+
+### Kim ne yapabiliyor
+
+| | okuma | yazma |
+|---|---|---|
+| Öğretmen | ✓ | ✓ |
+| Öğrenci | ✓ (kartındaki cümleyi o görüyor) | ✗ |
+| Veli | ✗ | ✗ |
+
+Veli sınırı ölçülmüş bir gerekçeye dayanıyor: bu cümle yalnız öğrencinin
+teslim sonucu kartında çıkıyor ve "sen" diye sesleniyor; velinin hiçbir
+ekranında yok. En dar yetki.
+
+`guvenlik_denetimi.sql`'in beyaz listesi rol ayrımı yapmadığı için
+`ewalu_mesajlari` oraya girdi; velinin reddedildiği daha dar kural
+`ewalu_mesaj_testleri.sql` 4. grubunda ayrıca ölçülüyor. **Muafiyet dar
+tutuldu:** yazma ucu `ewalu_mesaj_yaz` listede yok, yani öğretmene özel
+olduğu orada ölçülmeye devam ediyor.
+
+### Değişmeyenler — ve nedeni
+
+- **Puan aralıkları sabit** (0–49 / 50–69 / 70–84 / 85–99 / 100).
+  Aralıkları da açmak, çakışmama ve 0–100'ü boşluksuz kaplama
+  denetimlerini sunucuda zorlamayı gerektirir; ayrı bir tur.
+- **Poz seçilemiyor:** `kutlama` yalnız 85 ve üstünde. Öğretmenin kendi
+  kararıydı; ekran onu gevşetmiyor ve `puanMesaji`'de `ozel` pozu
+  etkilemiyor (testte ayrıca ölçülüyor).
+- **Sistem cümlesi** ("Ödevin alındı ve puanlandı.") düzenlenemiyor —
+  o "ne oldu"yu söyleyen sabit bilgi, Ewalu'nun sözü değil.
+
+### Yasaklı kelime UYARIR, ENGELLEMEZ
+
+Liste `lib/karne-sozu.ts`'teki `YASAKLI_KELIMELER` — ikinci bir liste
+yazılmadı (aynı hata `eslint.config.js`'te iki kez yaşandı).
+Engellememesi bilinçli: kural öğretmenin kendi kuralı ve kendi ürününün
+metnini yazarken onu bloke etmek haddimiz değil. Denetim bunu ayrıca
+ölçüyor — uyarı çıkıyor **ve** Kaydet düğmesi etkin kalıyor.
+
+### Denetim izi
+
+Her değişiklik `ewalu_mesaji_degisti`, her geri alma
+`ewalu_mesaji_varsayilana_dondu` olarak **eski ve yeni cümleyle birlikte**
+yazılıyor. Bu metin her çocuğun okuduğu metin; "ne zaman ne yazıldı,
+öncesi neydi" izsiz kalmamalı (Part XLIII ruhu).
+
 ## Kod fişleri — kesilip dağıtılmak üzere (yeni SQL yok)
 
 Okullar açılırken ~720 öğrenciye giriş kodu dağıtılacak. Ölçüldü: bugüne

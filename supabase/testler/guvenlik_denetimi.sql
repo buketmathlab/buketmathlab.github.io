@@ -85,6 +85,14 @@ begin
                'dosya_erisim_izni', 'kendi_karnem', 'mesaj_gonder',
                'odev_gonder', 'ogrenci_mesajlari', 'ogrenci_odevleri',
                'okundu_isaretle', 'veli_paneli',
+               -- 0032: `ewalu_mesajlari` ÖĞRENCİYE açık (sonuç kartındaki
+               -- cümleyi o okuyor) ama VELİYE KAPALI. Bu liste rol ayrımı
+               -- yapmadığı için buradaki muafiyet velinin reddedildiğini
+               -- ölçmez; o daha dar kural `ewalu_mesaj_testleri.sql` 4.
+               -- grubunda ayrıca ölçülüyor. Muafiyet dar tutuldu: YAZMA ucu
+               -- `ewalu_mesaj_yaz` listede YOK, yani öğretmene özel olduğu
+               -- burada ölçülmeye devam ediyor.
+               'ewalu_mesajlari',
                -- rol şartı taşımayan üçlü (1c ayrıca sayıyor)
                'giris', 'cikis', 'pin_ayarla'
              )
