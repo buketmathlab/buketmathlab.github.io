@@ -19,6 +19,7 @@
     "toplu-denetim": "node scripts/toplu-ogrenci-denetimi.mjs",
     "kabuk-denetim": "node scripts/kabuk-denetimi.mjs",
     "coklu-denetim": "node scripts/coklu-sinif-denetimi.mjs",
+    "yayma-denetim": "node scripts/kardes-yayma-denetimi.mjs",
     "tanitim-gorseller": "node scripts/tanitim-gorselleri.mjs",
     "tanitim-denetim": "node scripts/tanitim-denetimi.mjs"
   },

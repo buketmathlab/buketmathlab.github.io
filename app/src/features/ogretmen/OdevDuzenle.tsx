@@ -18,9 +18,10 @@ import { KonuAtama } from './KonuAtama';
 import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
+import { KardeslereYayma } from './KardeslereYayma';
 import { sunucudanOku, sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
 import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
-import type { Sinif } from '@/types/api';
+import type { KardesDetay, Sinif } from '@/types/api';
 
 type OdevDetay = {
   id: string;
@@ -45,6 +46,11 @@ type OdevDetay = {
    * ya da 0030 henüz çalıştırılmadıysa — gelmez.
    */
   kardesler?: string[] | null;
+  /**
+   * Kardeş başına karar bilgisi (0031). 0031 çalıştırılmadıysa gelmez ve
+   * yayma kartı hiç çizilmez.
+   */
+  kardes_detay?: KardesDetay[] | null;
 };
 
 type PuanDegisimi = { ogrenci: string; eski_puan: number | null; yeni_puan: number };
@@ -199,11 +205,21 @@ export function OdevDuzenle() {
       });
 
       const degisti = sonuc.yeniden_puanlanan ?? [];
+      // KARDEŞİ VARSA SAYFADA KALINIYOR. Yayma kararı kaydetmenin ARDINDAN
+      // veriliyor (öğretmenin kararı: "kaydettikten sonra düğmeyle"); listeye
+      // dönersek düğme, tam da gerektiği anda ekrandan kaybolurdu. Bu ödevin
+      // kendi sınıfında hiç gönderim yokken bile kardeşlerde olabilir.
+      const kardesVar = (detay.kardes_detay?.length ?? 0) > 0;
       if (degisti.length > 0) {
         // Not değiştiyse sayfada kal ve göster — bildirim kaybolur, bu bilgi
         // kaybolmamalı.
         setDegisenler(degisti);
         bildir(`Kaydedildi — ${degisti.length} öğrencinin puanı değişti`, 'basari');
+        yenile();
+      } else if (kardesVar) {
+        bildir('Ödev güncellendi', 'basari');
+        // `anahtar_ayni` yeniden ölçülsün: kaydetmeden önceki değere bakıp
+        // "anahtar aynı" demek yanlış bilgi olurdu.
         yenile();
       } else {
         bildir('Ödev güncellendi', 'basari');
@@ -257,24 +273,42 @@ export function OdevDuzenle() {
               </Card>
             )}
 
-            {/* KARDEŞ UYARISI (0030).
+            {/* KARDEŞ ÖDEVLER.
                 Bu ödev birden çok sınıfa birlikte verildiyse kopyalar
-                BAĞIMSIZ: buradaki düzeltme diğerlerine geçmiyor. Sessiz
-                kalsaydık bir cevap anahtarı düzeltmesi öbür sınıflarda
-                yanlış notu sessizce bırakırdı — 0008'in otomatik yeniden
-                puanlaması tam olarak bunun için yazılmıştı. */}
-            {detay.kardesler && detay.kardesler.length > 0 && (
-              <Card vurgu="uyari" className="mb-4">
-                <p className="text-[15px] text-ink">
-                  Bu ödev <strong>{[detay.sinif, ...detay.kardesler].join(', ')}</strong>{' '}
-                  sınıflarına birlikte verildi.
-                </p>
-                <p className="mt-1 text-[14px] text-muted">
-                  Buradaki değişiklik yalnız <strong>{detay.sinif}</strong> sınıfını
-                  etkiler. Diğerlerini de değiştirmek isterseniz onları ayrı ayrı
-                  düzenleyin.
-                </p>
-              </Card>
+                BAĞIMSIZ: buradaki düzeltme kendiliğinden diğerlerine
+                geçmiyor. 0030'da tehlike yalnız GÖRÜNÜR kılınmıştı
+                ("onları ayrı ayrı düzenleyin"); 0031 ona bir çıkış yolu
+                veriyor.
+
+                İKİ AYRI DURUM, İKİ AYRI KART:
+
+                - `kardes_detay` GELİYORSA (0031 çalıştırılmış): yayma
+                  kartı çıkıyor, düğmesiyle birlikte.
+                - GELMİYORSA (0031 henüz çalıştırılmamış): 0030'un
+                  bugünkü uyarısı aynen duruyor. Ekran bozulmuyor, yalnız
+                  düğme hiç çıkmıyor — `ucYok` deseni. */}
+            {detay.kardes_detay && detay.kardes_detay.length > 0 ? (
+              <KardeslereYayma
+                odevId={detay.id}
+                kaynakSinif={detay.sinif}
+                kardesler={detay.kardes_detay}
+                onYayildi={yenile}
+              />
+            ) : (
+              detay.kardesler &&
+              detay.kardesler.length > 0 && (
+                <Card vurgu="uyari" className="mb-4">
+                  <p className="text-[15px] text-ink">
+                    Bu ödev <strong>{[detay.sinif, ...detay.kardesler].join(', ')}</strong>{' '}
+                    sınıflarına birlikte verildi.
+                  </p>
+                  <p className="mt-1 text-[14px] text-muted">
+                    Buradaki değişiklik yalnız <strong>{detay.sinif}</strong> sınıfını
+                    etkiler. Diğerlerini de değiştirmek isterseniz onları ayrı ayrı
+                    düzenleyin.
+                  </p>
+                </Card>
+              )
             )}
 
             <Card>

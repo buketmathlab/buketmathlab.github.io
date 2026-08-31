@@ -78,7 +78,16 @@ const ODEV_DETAY={id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',sinif_i
   son_tarih:gun(3),soru_sayisi:6,gec_teslim:false,sik_sayisi:5,
   cevap_anahtari:{1:'A',2:'B',3:'C',4:'D',5:'E',6:'A'},
   konular:{1:'Türev',2:'Türev',3:'Türev',4:'Limit',5:'Limit',6:'Limit'},
-  anahtar_yolu:'odev/anahtar.pdf',odev_yolu:'odev/soru.pdf',yayinda:true,gonderim_sayisi:3};
+  anahtar_yolu:'odev/anahtar.pdf',odev_yolu:'odev/soru.pdf',yayinda:true,gonderim_sayisi:3,
+  // 0031: kardeşli ödev seçildi ki YAYMA KARTI da her turda ölçülsün.
+  // Kardeşsiz sahte veri bırakmak, ekranın en yeni bölümünü 360 px taşma ve
+  // 44 px dokunma hedefi ölçümünün tamamen dışında bırakırdı.
+  // Üçü bilerek farklı: biri arşivde (atlanacak), biri anahtarı ayrışmış,
+  // biri aynı — üç etiketin üçü de aynı ekranda çiziliyor.
+  kardesler:['11A','11C','10D'],
+  kardes_detay:[{id:'a2',sinif:'11A',gonderim_sayisi:28,anahtar_ayni:false,arsiv:false},
+                {id:'a5',sinif:'11C',gonderim_sayisi:31,anahtar_ayni:true,arsiv:false},
+                {id:'a6',sinif:'10D',gonderim_sayisi:19,anahtar_ayni:false,arsiv:true}]};
 const KONU_ONERILERI=['Türev','Limit','Üslü Sayılar','Köklü Sayılar'];
 // Rozetler AÇIKKEN ölçülüyor: sıfır dönseydi denetim rozetsiz bir
 // arayüzü denetlerdi ve dokunma hedefi/taşma etkisi hiç görülmezdi.

@@ -109,6 +109,34 @@ export type OdevSatiri = {
   kardesler?: string[] | null;
 };
 
+/**
+ * `odev_detay.kardes_detay` (0031) — kardeş ödev başına karar bilgisi.
+ *
+ * `kardesler` (0030) yalnız sınıf ADI dizisi döndürüyor ve yayma düğmesi
+ * için yetmiyor: öğretmenin, hangi sınıfta kaç gönderim olduğunu ve
+ * anahtarın şu an ayrışıp ayrışmadığını görmesi gerekiyor. `kardesler`
+ * AYNEN duruyor — `Odevler.tsx` onu dizi olarak kullanıyor.
+ */
+export type KardesDetay = {
+  id: string;
+  sinif: string;
+  gonderim_sayisi: number;
+  /** Bu kardeşin cevap anahtarı kaynak ödevinkiyle aynı mı. */
+  anahtar_ayni: boolean;
+  /** Arşivdeki sınıf yaymada ATLANIR (0016 kuralı). */
+  arsiv: boolean;
+};
+
+/** `odev_kardeslere_yay` (0031) yanıtı — kardeş başına bir satır. */
+export type YaymaRaporu = {
+  sinif: string;
+  odev_id: string;
+  /** Yalnız puanı GERÇEKTEN değişen öğrenciler; değişmeyen buraya girmez. */
+  yeniden_puanlanan: Array<{ ogrenci: string; eski_puan: number | null; yeni_puan: number }>;
+  /** Atlandıysa nedeni; atlanmadıysa null. */
+  atlandi: 'arsiv' | null;
+};
+
 /** `odevler_coklu_olustur` (0030) yanıtı. */
 export type CokluOdevSonucu = {
   /** Tek sınıfa verildiyse null: kardeşi olmayan ödevin grubu yok. */
