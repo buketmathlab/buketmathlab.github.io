@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -25,6 +26,7 @@ import { rpc } from '@/services/supabase';
 export function Ayarlar() {
   const { oturum } = useOturum();
   const { bildir } = useToast();
+  const git = useNavigate();
   const [eski, setEski] = useState('');
   const [yeni1, setYeni1] = useState('');
   const [yeni2, setYeni2] = useState('');
@@ -166,6 +168,22 @@ export function Ayarlar() {
             PIN’i değiştir
           </Button>
         </form>
+      </Card>
+
+      {/* 0032: Ewalu'nun puan cümleleri.
+          Ayrı bir ekran, çünkü beş bant × (önizleme + metin kutusu + iki
+          düğme) bu sayfayı PIN formu görünmeyecek kadar uzatırdı. Buradan
+          giriliyor: ikisi de nadir ve kasıtlı işler. */}
+      <Card className="mt-4">
+        <h2 className="mb-1 text-[18px] text-ink">Ewalu’nun söyledikleri</h2>
+        <p className="mb-4 text-[14px] text-muted">
+          Öğrenci ödevini gönderdiğinde puanına göre Ewalu bir cümle söyler. Bu
+          cümleleri kendiniz yazabilir, istediğiniz zaman varsayılana
+          dönebilirsiniz.
+        </p>
+        <Button tur="ikincil" onClick={() => git('/ogretmen/ayarlar/ewalu')}>
+          Cümleleri düzenle
+        </Button>
       </Card>
     </>
   );

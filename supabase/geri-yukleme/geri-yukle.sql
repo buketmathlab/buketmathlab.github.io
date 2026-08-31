@@ -63,8 +63,27 @@ BURAYA-YAPISTIRIN
   onayliyorum boolean := false;
 
   -- Ebeveynden çocuğa yazma sırası; silme bunun tersi.
+  --
+  -- `ewalu_mesajlari` (0032) SONDA ve YABANCI ANAHTARI YOK — sırası
+  -- serbest, kalabalık etmesin diye sona konuldu.
   tablolar text[] := array['siniflar','ogrenciler','giris_kodlari','odevler',
-                           'gonderimler','mesajlar','dersler','odemeler'];
+                           'gonderimler','mesajlar','dersler','odemeler',
+                           'ewalu_mesajlari'];
+
+  -- ESKİ YEDEKLER DE GERİ YÜKLENEBİLMELİ.
+  --
+  -- Aşağıdaki yapı denetimi, dizideki her tablonun dosyada BULUNMASINI
+  -- şart koşuyor. 0032'den ÖNCE alınmış bir yedekte `ewalu_mesajlari`
+  -- anahtarı yok; kural sıkı uygulansaydı öğretmenin elindeki mevcut
+  -- yedek felaket gününde REDDEDİLİRDİ — tam da işe yarayacağı anda.
+  --
+  -- Bu yüzden 0032 ve sonrasında eklenen tablolar "isteğe bağlı": yoksa
+  -- boş sayılıyor. Boş olması doğru sonucu veriyor — özel cümle yoksa
+  -- Ewalu kodda duran varsayılanları söylüyor.
+  --
+  -- Sekiz çekirdek tablo İSTEĞE BAĞLI DEĞİL: biri eksikse dosya bozuktur
+  -- ve hiçbir şeye dokunmadan reddedilir.
+  istege_bagli text[] := array['ewalu_mesajlari'];
   t text;
   kolonlar text;
   n integer;
@@ -83,7 +102,15 @@ begin
   -- Felaket provasında yakalandı.
   foreach t in array tablolar loop
     if coalesce(jsonb_typeof(yedek->t), 'yok') <> 'array' then
-      raise exception 'Bu dosya SEKİZ yedeği gibi görünmüyor: "%" tablosu eksik.', t;
+      -- İsteğe bağlı tablo eksikse dosya bozuk değil, yalnız ESKİ. Boş
+      -- diziye tamamlanıyor; aşağıdaki yazma ve sayım döngüleri bunu
+      -- normal bir "0 satır" gibi işliyor.
+      if t = any(istege_bagli) then
+        yedek := jsonb_set(yedek, array[t], '[]'::jsonb);
+        raise notice 'Not: yedekte "%" yok (0032 öncesi dosya); boş kabul edildi.', t;
+      else
+        raise exception 'Bu dosya SEKİZ yedeği gibi görünmüyor: "%" tablosu eksik.', t;
+      end if;
     end if;
   end loop;
 
@@ -91,7 +118,7 @@ begin
     raise exception E'ONAY GEREKİYOR.\n'
       '  Bu script şu tabloların TAMAMINI siler ve yedekten yazar:\n'
       '  siniflar, ogrenciler, giris_kodlari, odevler, gonderimler,\n'
-      '  mesajlar, dersler, odemeler.\n'
+      '  mesajlar, dersler, odemeler, ewalu_mesajlari.\n'
       '  Devam etmek için 2. ADIM''daki `onayliyorum` satırını true yapın.\n'
       '  Yedekte bulunan: % sınıf, % öğrenci, % ödev, % gönderim.',
       jsonb_array_length(yedek->'siniflar'),

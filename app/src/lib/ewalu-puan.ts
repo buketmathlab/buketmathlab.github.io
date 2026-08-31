@@ -30,6 +30,15 @@ import type { EwaluPoz } from '@/components/brand/ewalu';
 export type PuanMesaji = { poz: EwaluPoz; cumle: string };
 
 /**
+ * Öğretmenin yazdığı cümleler: bant → cümle (0032).
+ *
+ * Sunucu YALNIZ değiştirilmiş bantları döndürüyor; burada da yalnız onlar
+ * duruyor. Boş nesne "hiçbir şey değiştirilmemiş" demek ve aşağıdaki
+ * varsayılanlar olduğu gibi kullanılıyor.
+ */
+export type OzelCumleler = Partial<Record<number, string>>;
+
+/**
  * Bantlar ARTAN sırada; `bul` ilk eşleşeni döndürür.
  *
  * `enAz` dahildir: 85 → 85–99 bandı. Sınırların hepsi birim testte tek tek
@@ -69,16 +78,46 @@ const BANTLAR: ReadonlyArray<{ enAz: number; poz: EwaluPoz; cumle: string }> = [
   },
 ];
 
+/** Öğretmenin düzenleyebildiği bantlar — ekran ve testler bunu kullanıyor. */
+export const BANT_NOKTALARI = BANTLAR.map((b) => b.enAz);
+
+/** Bir bandın kodda duran varsayılan cümlesi (ekranda "Varsayılana dön" için). */
+export function varsayilanCumle(bant: number): string | null {
+  return BANTLAR.find((b) => b.enAz === bant)?.cumle ?? null;
+}
+
+/** Bir bandın aralığını okunur biçimde: `85–99`, `100`. */
+export function bantAraligi(bant: number): string {
+  const i = BANTLAR.findIndex((b) => b.enAz === bant);
+  if (i < 0) return String(bant);
+  const ust = i === 0 ? 100 : BANTLAR[i - 1]!.enAz - 1;
+  return ust === bant ? String(bant) : `${bant}–${ust}`;
+}
+
 /**
  * Puanı olan bir gönderim için Ewalu'nun söyleyeceği.
  *
  * Puan 0–100 dışına çıkamaz (sunucu `_puanla` ve `acik_puanla` bunu
  * zorluyor) ama savunmacı davranıyoruz: aralık dışı bir değer gelirse en
  * yakın bant seçilir, ekran boş kalmaz.
+ *
+ * `ozel` — öğretmenin yazdığı cümleler (0032). Verilmezse ya da o bant için
+ * kayıt yoksa yukarıdaki varsayılan çıkıyor. Sunucu ulaşılamazsa istemci
+ * bu parametreyi hiç göndermiyor ve ekran bugünkü gibi çalışıyor.
+ *
+ * POZ `ozel`'DEN ETKİLENMİYOR ve bu bilinçli. `kutlama` yalnız 85 ve
+ * üstünde; öğretmenin kendi kararıydı ve ayar ekranı onu gevşetmiyor.
+ * 20 alan bir öğrenciye kutlayan bir ayı göstermek, cümle ne olursa olsun
+ * alay gibi okunur.
  */
-export function puanMesaji(puan: number): PuanMesaji {
+export function puanMesaji(puan: number, ozel?: OzelCumleler | null): PuanMesaji {
   const p = Number.isFinite(puan) ? Math.min(100, Math.max(0, Math.round(puan))) : 0;
   // BANTLAR azalan `enAz` sırasında; ilk eşleşen doğru bant.
   const bant = BANTLAR.find((b) => p >= b.enAz) ?? BANTLAR[BANTLAR.length - 1]!;
-  return { poz: bant.poz, cumle: bant.cumle };
+
+  // `btrim` sunucuda zaten uygulanıyor; burada yalnız boş bir değerin
+  // varsayılanı EZMEMESİ için savunma. Boş bir cümle sonuç kartında
+  // Ewalu'yu sessiz bırakırdı.
+  const yazilan = ozel?.[bant.enAz]?.trim();
+  return { poz: bant.poz, cumle: yazilan ? yazilan : bant.cumle };
 }

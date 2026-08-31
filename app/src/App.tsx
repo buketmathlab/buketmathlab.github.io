@@ -21,6 +21,7 @@ import { OgrenciMesajlar } from '@/features/ogrenci/OgrenciMesajlar';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Ayarlar } from '@/features/ogretmen/Ayarlar';
+import { EwaluMesajlari } from '@/features/ogretmen/EwaluMesajlari';
 import { OgrenciDetay } from '@/features/ogretmen/OgrenciDetay';
 import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
@@ -148,6 +149,10 @@ function Yonlendirme() {
             gidilebiliyor; acil olan sınıfın altına gömülmesin. */}
         <Route path="veliler" element={<Veliler />} />
         <Route path="ayarlar" element={<Ayarlar />} />
+        {/* 0032: Ewalu'nun puan cümleleri. Ayarlar'ın ALTINDA ayrı bir
+            ekran — beş bant, beş önizleme ve beş metin kutusu Ayarlar'ı
+            PIN formunun görünmediği kadar uzatırdı. */}
+        <Route path="ayarlar/ewalu" element={<EwaluMesajlari />} />
         <Route path="veliler/sinif/:id" element={<SinifVelileriEkrani />} />
         <Route path="veliler/yazisma/:id" element={<VeliYazismasi />} />
       </Route>

@@ -8,7 +8,7 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
 import { KonuListesi } from '@/components/ui/KonuListesi';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
-import { puanMesaji } from '@/lib/ewalu-puan';
+import { puanMesaji, type OzelCumleler } from '@/lib/ewalu-puan';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -58,6 +58,26 @@ export function OdevTeslim() {
   const { veri, durum, hata, yenile } = useVeri<OgrenciOdevleri>('ogrenci_odevleri', {
     p_token: oturum?.token,
   });
+
+  /**
+   * Öğretmenin yazdığı Ewalu cümleleri (0032).
+   *
+   * AYRI BİR UÇ, `ogrenci_odevleri`'ne EKLENMEDİ: oraya eklemek 300
+   * satırlık bir gövdeyi kopyalamayı gerektirirdi ve 0016'da ezberden
+   * gövde yazmak iki hataya yol açmıştı.
+   *
+   * HATASI YUTULUYOR ve bu bilinçli: `useVeri`'nin hatası burada hiç
+   * okunmuyor. 0032 çalıştırılmadıysa ya da uç bir an ulaşılamazsa
+   * `ozelCumleler` boş kalıyor ve `puanMesaji` koddaki varsayılana
+   * düşüyor. Bir AYAR ucunun erişilemez olması, öğrencinin sonuç
+   * kartını bozmamalı (Part VIII).
+   */
+  const { veri: ozelListe } = useVeri<Array<{ bant: number; cumle: string }>>(
+    'ewalu_mesajlari',
+    { p_token: oturum?.token },
+  );
+  const ozelCumleler: OzelCumleler = {};
+  for (const s of ozelListe ?? []) ozelCumleler[s.bant] = s.cumle;
 
   const odev: OgrenciOdev | undefined = veri?.odevler.find((o) => o.id === id);
 
@@ -148,6 +168,7 @@ export function OdevTeslim() {
           onGonder={gonder}
           onPdf={pdfAc}
           onGeri={() => git('/ogrenci')}
+          ozelCumleler={ozelCumleler}
         />
       )}
     </AsyncBoundary>
@@ -165,6 +186,8 @@ type IcerikProps = {
   onGonder: () => void;
   onPdf: (yol: string) => void;
   onGeri: () => void;
+  /** Öğretmenin yazdığı Ewalu cümleleri (0032); boşsa varsayılanlar. */
+  ozelCumleler: OzelCumleler;
 };
 
 function OdevIcerigi({
@@ -178,6 +201,7 @@ function OdevIcerigi({
   onGonder,
   onPdf,
   onGeri,
+  ozelCumleler,
 }: IcerikProps) {
   const sure = sureDurumu(odev.son_tarih);
   const gonderildi = odev.gonderim !== null;
@@ -235,7 +259,7 @@ function OdevIcerigi({
       </Card>
 
       {gonderildi ? (
-        <Sonuc odev={odev} onPdf={onPdf} />
+        <Sonuc odev={odev} onPdf={onPdf} ozelCumleler={ozelCumleler} />
       ) : sinifKapali ? (
         <Card vurgu="uyari">
           <p className="mb-2 font-semibold text-ink">Bu sınıf kapatılmış.</p>
@@ -341,8 +365,8 @@ function OdevIcerigi({
  * Figür `dekoratif`: cümle zaten yanında görünür metin olarak duruyor,
  * ekran okuyucunun ayrıca pozu tarif etmesi tekrar olurdu.
  */
-function EwaluSozu({ puan }: { puan: number }) {
-  const { poz, cumle } = puanMesaji(puan);
+function EwaluSozu({ puan, ozelCumleler }: { puan: number; ozelCumleler: OzelCumleler }) {
+  const { poz, cumle } = puanMesaji(puan, ozelCumleler);
   return (
     <div className="mt-4 flex items-start gap-3 border-t border-line pt-4">
       <EwaluFigure poz={poz} boyut={52} dekoratif className="shrink-0" />
@@ -351,7 +375,15 @@ function EwaluSozu({ puan }: { puan: number }) {
   );
 }
 
-function Sonuc({ odev, onPdf }: { odev: OgrenciOdev; onPdf: (yol: string) => void }) {
+function Sonuc({
+  odev,
+  onPdf,
+  ozelCumleler,
+}: {
+  odev: OgrenciOdev;
+  onPdf: (yol: string) => void;
+  ozelCumleler: OzelCumleler;
+}) {
   const g = odev.gonderim;
   if (!g) return null;
 
@@ -392,7 +424,7 @@ function Sonuc({ odev, onPdf }: { odev: OgrenciOdev; onPdf: (yol: string) => voi
         {/* Ewalu YALNIZ puan varsa konuşuyor. Açık uçlu ödev henüz
             puanlanmadıysa söyleyecek bir şeyi yok; olmayan bir puana cümle
             uydurmuyoruz. */}
-        {puan !== null && <EwaluSozu puan={puan} />}
+        {puan !== null && <EwaluSozu puan={puan} ozelCumleler={ozelCumleler} />}
 
         {g.dogru !== null && (
           <p className="mt-3 text-[14px] text-ink">

@@ -1076,9 +1076,8 @@ puanlaması tam olarak bunun için yazılmıştı. Bu yüzden `odev_detay` ve
 "buradaki değişiklik yalnız 9B'yi etkiler" diyor, liste satırı
 "9A · +2 sınıf" gösteriyor.
 
-**Düzeltmeyi kardeşlere yaymak bu turda YAPILMADI** — ayrı ve daha büyük
-bir tur (yeniden puanlamanın kardeşlere yayılması + denetim izi).
-Tehlike gizlenmedi, görünür kılındı.
+**Düzeltmeyi kardeşlere yaymak 0030'da YAPILMADI**; tehlike gizlenmedi,
+görünür kılındı. 0031 o boşluğu kapatıyor (aşağıdaki bölüm).
 
 ### 0030 çalıştırılmamışsa
 
@@ -1095,6 +1094,201 @@ düşülüyor, çok sınıf seçiliyse Türkçe ve anlaşılır bir cümle çık
    kez gönderiyordum; tavan kaldırılınca mükerrer denetimi devreye girip
    test yine geçiyordu. Geri alma kanıtı yakaladı; test 21 **gerçek ve
    ayrı** sınıfla yeniden yazıldı.
+
+## Düzeltmeyi kardeş ödevlere yayma (0031)
+
+0030 kopyaları bağımsız bıraktı ve düzeltmeyi yaymayı **bilerek** dışarıda
+bıraktı. Ölçülen sonucu şuydu: öğretmen 10U'da bir anahtar hatasını
+düzeltince 10V ve 10W'de **yanlış notlar sessizce kalıyordu**. Ekran bunu
+söylüyordu ("diğerlerini ayrı ayrı düzenleyin") ama bir çıkış yolu
+vermiyordu. 0031 o yolu açıyor.
+
+Tek yeni uç: **`odev_kardeslere_yay(p_token, p_id)`** — öğretmene özel.
+Kaynak ödevin içeriğini aynı `grup_id`'yi paylaşan kardeşlere kopyalıyor
+ve her birinin gönderimlerini yeniden puanlıyor.
+
+### Ne taşınıyor, ne taşınmıyor — ve bu kilitli
+
+Öğretmenin kararı: **içerik + başlık**.
+
+| Taşınır | Taşınmaz |
+|---|---|
+| `cevap_anahtari`, `soru_sayisi`, `sik_sayisi` | `son_tarih` |
+| `konular` | `gec_teslim` |
+| `anahtar_url`, `odev_url` | `yayinda` |
+| `baslik`, `aciklama` | `sinif_id`, `grup_id` |
+
+Sağ sütun gerekçeli: **her sınıfın kendi programı var.** 10W'ye bilerek
+verilen uzun süre, bir anahtar düzeltmesiyle bozulmamalı.
+
+Bu karar yorumda bırakılmadı, **migration'ın kendi denetimi** olarak
+yazıldı: gövdede `son_tarih|gec_teslim|yayinda|sinif_id` alanlarından
+birine `= d.` ile atama yapılırsa migration patlıyor. Biri bir gün kapsamı
+sessizce genişletemiyor. Test de aynı şeyi çalışma anında ölçüyor
+(5. grup).
+
+### `odev_guncelle`'ye DOKUNULMADI — bilinçli
+
+İmzasına bir `p_kardeslere_yay` parametresi eklemek 0007 tuzağını davet
+ederdi: eski imza `grant`'iyle birlikte ayakta kalır ve arayüz sessizce
+eski davranışa düşebilirdi. Ayrı uç hem o tuzağı hiç açmıyor hem de
+"kaydettikten sonra ayrı bir karar" akışının doğal karşılığı.
+
+### Arşivdeki kardeş atlanıyor — ve raporda yazıyor
+
+0016'nın kuralı: arşivdeki sınıf öğretmenin hiçbir listesinde yok.
+Görünmeyen bir sınıfın notunu sessizce değiştirmek o kuralı delerdi. O
+kardeş atlanıyor, raporda `atlandi: 'arsiv'` olarak dönüyor ve ekranda
+"Atlandı — bu sınıf arşivde" diye yazıyor. Düğmenin metni de yalnız
+yayılabilecek sınıfları sayıyor; yayılmayacak bir sınıfı düğmede vaat
+edip raporda "atlandı" göstermek şaşırtırdı.
+
+### Rapor yalnız GERÇEKTEN değişen puanları taşıyor
+
+`yeniden_puanlanan`'a bir öğrenci ancak `yeni.puan is distinct from
+g.puan` ise giriyor. Testte Zeynep bilerek her iki anahtarda da yanlış
+olan bir cevap veriyor: puanı değişmiyor ve **raporda yer almıyor**.
+"Her öğrenciyi rapora yaz" hatası böyle yakalanıyor.
+
+Denetim izi iki katmanlı (Part XLIII): her kardeş ödev için
+`kardeslere_yayildi` (eski/yeni gövdeyle), puanı değişen her gönderim
+için mevcut `yeniden_puanlandi` kaydı. "Hangi düzeltme nereden geldi"
+izden okunabiliyor.
+
+### `odev_detay`: `kardes_detay` eklendi, `kardesler` AYNEN duruyor
+
+`kardesler` yalnız sınıf **adı** dizisi döndürüyor ve yayma düğmesi için
+yetmiyor. Yeni `kardes_detay` her kardeş için `id`, `sinif`,
+`gonderim_sayisi`, `anahtar_ayni` ve `arsiv` taşıyor. `kardesler`'in
+**şekli değişmedi**: `Odevler.tsx` onu dizi olarak kullanıyor,
+değiştirmek o ekranı kırardı.
+
+### Arayüz: onay olmadan hiçbir not değişmiyor
+
+Kart, kaydettikten sonra ekranda kalıyor (kardeşi olan ödevde listeye
+dönülmüyor — düğme tam gerektiği anda kaybolurdu). Düğme bir onay
+diyaloğu açıyor; diyalog taşınacakları ve **taşınmayacakları** tek tek
+yazıyor. Denetim bunu "düğme var mı" diye değil, **onaylanmadan ağa tek
+bir yayma çağrısı gitmediğini sayarak** ölçüyor.
+
+### 0031 çalıştırılmamışsa
+
+`odev_detay` `kardes_detay` alanını hiç döndürmüyor; yayma kartı ve
+düğmesi **hiç çizilmiyor** ve 0030'un bugünkü uyarısı yerinde kalıyor
+(`ucYok` deseni, Part VIII). Bu yüzden sürümün 0031'den önce yayına
+girmesi güvenli.
+
+### Geri alma kanıtında bulunan iki gerçek kusur (kendi hatalarım)
+
+1. **`kardes_detay` alanı tamamen kaldırıldığında test GEÇİYORDU.**
+   `jsonb_array_length(NULL)` NULL döner ve `NULL <> 3` de NULL'dur —
+   yani `if` hiç tetiklenmiyordu. Aynı NULL tuzağı geri yükleme
+   betiğinde de yaşanmıştı (`docs/yedekleme.md`). Denetimler
+   `is distinct from` ve `jsonb_typeof(...) is distinct from 'array'`
+   ile yeniden yazıldı.
+2. **Migration'ın kendi denetimi de boştu.** `pg_get_functiondef(...)
+   not like '%kardes_detay%'` deseni, alan `kardes_detay_yok` diye
+   yeniden adlandırıldığında da eşleşiyordu. Anahtar adı artık
+   tırnaklarıyla aranıyor.
+
+İkisi de yalnız her denetim tek tek geri alındığı için görüldü.
+
+## Ewalu'nun cümlelerini öğretmen yazsın (0032)
+
+Ewalu'nun puana göre söylediği beş cümle koda gömülüydü
+(`lib/ewalu-puan.ts`); bir kelimesini değiştirmek bir geliştirme turu
+gerektiriyordu. 0032 o kapıyı öğretmene açıyor.
+
+### Sözleşme: varsayılanlar kodda kalıyor
+
+**Yeni tablo BOŞ başlıyor** ve yalnız "öğretmen bu bandı DEĞİŞTİRDİ"
+bilgisini taşıyor. Üç sonucu var:
+
+1. Migration hiçbir metni sahiplenmiyor; cümlelerin tek doğruluk kaynağı
+   `lib/ewalu-puan.ts` olmayı sürdürüyor. İki yerde iki "varsayılan"
+   oluşup zamanla ayrışmıyor.
+2. **0032 çalıştırılmasa bile ekran bugünkü gibi çalışıyor** — uç yoksa
+   istemci varsayılana düşüyor (`ucYok` deseni, Part VIII).
+3. **"Varsayılana dön" satırı SİLMEK demek.** Ayrı bir bayrak ya da
+   varsayılan metni tabloya geri yazmak gerekmiyor: `ewalu_mesaj_yaz`'a
+   `p_cumle = null` gitmesi yeterli.
+
+### Neden `ayarlar`'a KONMADI — ölçülerek karar verildi
+
+`disa_aktar` sekiz tabloyu yediliyordu ve **`ayarlar` aralarında yoktu**.
+Cümleleri oraya koysaydım öğretmenin kendi yazdığı metinler yedeğe hiç
+girmez, bir geri yüklemede **sessizce kaybolurdu**. `ayarlar`'ı yedeğe
+eklemek de yanlış olurdu: içinde `ogretmen_pin_hash` var ve
+`docs/yedekleme.md` PIN'in yedekte **bulunmamasını** açık bir güvence
+olarak yazıyor — yedek dosyası kişisel buluta ve e-postaya gidiyor.
+
+Ayrı tablo ikisini birden çözüyor. Yedek zinciri **üç yerde birden**
+güncellendi: `disa_aktar`, `geri-yukle.sql`'in `tablolar` dizisi ve
+felaket provası (özel cümle yedeklenip geri yükleniyor, parmak izinde
+birebir karşılaştırılıyor).
+
+**Eski yedekler de geri yüklenebiliyor.** `geri-yukle.sql`'in yapı
+denetimi dizideki her tablonun dosyada bulunmasını şart koşuyordu; 0032
+öncesi bir yedekte `ewalu_mesajlari` anahtarı yok ve kural sıkı
+uygulansaydı öğretmenin elindeki mevcut yedek **felaket gününde
+reddedilirdi**. Bu yüzden 0032 ve sonrası tablolar "isteğe bağlı": yoksa
+boş sayılıyor — ki doğru sonuç zaten bu, özel cümle yoksa varsayılanlar
+söylenir. Sekiz çekirdek tablo isteğe bağlı DEĞİL.
+
+### `ogrenci_odevleri`'ne dokunulmadı
+
+Cümleyi o yanıta eklemek 300 satırlık bir gövdeyi birebir kopyalamayı
+gerektirirdi ve 0016'da ezberden gövde yazmak iki hataya yol açmıştı;
+üstelik `ogrenci_odevleri` öğrencinin en kritik ucu. Ayrı ve küçük bir
+okuma ucu (`ewalu_mesajlari`) yazıldı — 0031'de `odev_guncelle`'ye
+dokunmama kararının aynısı.
+
+Öğrencinin ekranında bu ucun **hatası bilerek yutuluyor**: bir ayar
+ucunun ulaşılamaz olması, çocuğun sonuç kartını bozmamalı.
+
+### Kim ne yapabiliyor
+
+| | okuma | yazma |
+|---|---|---|
+| Öğretmen | ✓ | ✓ |
+| Öğrenci | ✓ (kartındaki cümleyi o görüyor) | ✗ |
+| Veli | ✗ | ✗ |
+
+Veli sınırı ölçülmüş bir gerekçeye dayanıyor: bu cümle yalnız öğrencinin
+teslim sonucu kartında çıkıyor ve "sen" diye sesleniyor; velinin hiçbir
+ekranında yok. En dar yetki.
+
+`guvenlik_denetimi.sql`'in beyaz listesi rol ayrımı yapmadığı için
+`ewalu_mesajlari` oraya girdi; velinin reddedildiği daha dar kural
+`ewalu_mesaj_testleri.sql` 4. grubunda ayrıca ölçülüyor. **Muafiyet dar
+tutuldu:** yazma ucu `ewalu_mesaj_yaz` listede yok, yani öğretmene özel
+olduğu orada ölçülmeye devam ediyor.
+
+### Değişmeyenler — ve nedeni
+
+- **Puan aralıkları sabit** (0–49 / 50–69 / 70–84 / 85–99 / 100).
+  Aralıkları da açmak, çakışmama ve 0–100'ü boşluksuz kaplama
+  denetimlerini sunucuda zorlamayı gerektirir; ayrı bir tur.
+- **Poz seçilemiyor:** `kutlama` yalnız 85 ve üstünde. Öğretmenin kendi
+  kararıydı; ekran onu gevşetmiyor ve `puanMesaji`'de `ozel` pozu
+  etkilemiyor (testte ayrıca ölçülüyor).
+- **Sistem cümlesi** ("Ödevin alındı ve puanlandı.") düzenlenemiyor —
+  o "ne oldu"yu söyleyen sabit bilgi, Ewalu'nun sözü değil.
+
+### Yasaklı kelime UYARIR, ENGELLEMEZ
+
+Liste `lib/karne-sozu.ts`'teki `YASAKLI_KELIMELER` — ikinci bir liste
+yazılmadı (aynı hata `eslint.config.js`'te iki kez yaşandı).
+Engellememesi bilinçli: kural öğretmenin kendi kuralı ve kendi ürününün
+metnini yazarken onu bloke etmek haddimiz değil. Denetim bunu ayrıca
+ölçüyor — uyarı çıkıyor **ve** Kaydet düğmesi etkin kalıyor.
+
+### Denetim izi
+
+Her değişiklik `ewalu_mesaji_degisti`, her geri alma
+`ewalu_mesaji_varsayilana_dondu` olarak **eski ve yeni cümleyle birlikte**
+yazılıyor. Bu metin her çocuğun okuduğu metin; "ne zaman ne yazıldı,
+öncesi neydi" izsiz kalmamalı (Part XLIII ruhu).
 
 ## Kod fişleri — kesilip dağıtılmak üzere (yeni SQL yok)
 

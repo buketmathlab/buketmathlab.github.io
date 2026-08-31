@@ -78,7 +78,17 @@ const ODEV_DETAY={id:'a1',baslik:'Türev testi',aciklama:null,tur:'test',sinif_i
   son_tarih:gun(3),soru_sayisi:6,gec_teslim:false,sik_sayisi:5,
   cevap_anahtari:{1:'A',2:'B',3:'C',4:'D',5:'E',6:'A'},
   konular:{1:'Türev',2:'Türev',3:'Türev',4:'Limit',5:'Limit',6:'Limit'},
-  anahtar_yolu:'odev/anahtar.pdf',odev_yolu:'odev/soru.pdf',yayinda:true,gonderim_sayisi:3};
+  anahtar_yolu:'odev/anahtar.pdf',odev_yolu:'odev/soru.pdf',yayinda:true,gonderim_sayisi:3,
+  // 0031: kardeşli ödev seçildi ki YAYMA KARTI da her turda ölçülsün.
+  // Kardeşsiz sahte veri bırakmak, ekranın en yeni bölümünü 360 px taşma ve
+  // 44 px dokunma hedefi ölçümünün tamamen dışında bırakırdı.
+  // Üçü bilerek farklı: biri arşivde (atlanacak), biri anahtarı ayrışmış,
+  // biri aynı — üç etiketin üçü de aynı ekranda çiziliyor.
+  kardesler:['11A','11C','10D'],
+  kardes_detay:[{id:'a2',sinif:'11A',gonderim_sayisi:28,anahtar_ayni:false,arsiv:false},
+                {id:'a5',sinif:'11C',gonderim_sayisi:31,anahtar_ayni:true,arsiv:false},
+                {id:'a6',sinif:'10D',gonderim_sayisi:19,anahtar_ayni:false,arsiv:true}]};
+const EWALU_MESAJLARI=[{bant:50,cumle:'Öğretmenin yazdığı örnek cümle — yarı yoldasın, kalanı birlikte tamamlayacağız.'}];
 const KONU_ONERILERI=['Türev','Limit','Üslü Sayılar','Köklü Sayılar'];
 // Rozetler AÇIKKEN ölçülüyor: sıfır dönseydi denetim rozetsiz bir
 // arayüzü denetlerdi ve dokunma hedefi/taşma etkisi hiç görülmezdi.
@@ -106,7 +116,7 @@ const KENDI_KARNEM={kapsam:{ad:'Ada Yıldırım',sinif:'9A'},odev_sayisi:2,
            {konu:'Kesirler',toplam:2,dogru:2,yanlis:0,bos:0}],
   gelisim:[{odev:'Kesirler denemesi',tarih:gun(-3),tur:'test',deger:50},
            {odev:'Kesirler yazılı',tarih:gun(-2),tur:'acik',deger:70}]};
-const CEVAP={kendi_karnem:KENDI_KARNEM,ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+const CEVAP={kendi_karnem:KENDI_KARNEM,ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,ewalu_mesajlari:EWALU_MESAJLARI,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 let tasmali=0;
@@ -123,6 +133,10 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             // biri her turda ölçüm dışında kalmıştı.
                             ['Yeni ödev','/ogretmen/odevler/yeni'],
                             ['Ayarlar','/ogretmen/ayarlar'],
+                            // 0032: beş bant × (önizleme + metin kutusu + iki
+                            // düğme) — 360 px'de taşma riski en yüksek yeni
+                            // ekran, listeye giriyor.
+                            ['Ewalu mesajları','/ogretmen/ayarlar/ewalu'],
                             ['Öğrenci detayı','/ogretmen/ogrenciler/o9'],
                             ['Toplu ekleme','/ogretmen/ogrenciler/toplu'],
                             ['Kodlar','/ogretmen/kodlar'],

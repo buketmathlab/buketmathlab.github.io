@@ -87,6 +87,12 @@ e-posta", adresin kendisi değil.
 | Ödevler, cevap anahtarları, konular | Okundu işaretleri |
 | Gönderimler ve puanlar | Oturumlar (zaten kimlik bilgisidir, yedeğe girmemesi doğrudur) |
 | Mesajlar, dersler, ödemeler | |
+| **Ewalu için yazdığınız cümleler** (0032) | |
+
+**0032 öncesi alınmış yedekler hâlâ geçerli.** Elinizdeki dosyada Ewalu
+cümleleri yok; geri yükleme onu reddetmiyor, o tabloyu boş bırakıyor ve
+Ewalu koddaki varsayılan cümleleri söylemeye devam ediyor. Provada
+ölçüldü.
 
 **Fotoğraflar en önemli eksik.** Proje silinirse Storage'daki dosyalar da
 silinir ve JSON onları geri getirmez. Öğrencilerin çözüm fotoğrafları için
