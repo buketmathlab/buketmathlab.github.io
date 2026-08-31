@@ -24,6 +24,28 @@ const GIRIS = 'http://127.0.0.1:8788/yeni/';
 let olcum = 0;
 let kusur = 0;
 
+/**
+ * Türkçe farkında küçültme — VE BU BİR ÖZENTİ DEĞİL, ÖLÇÜLMÜŞ BİR TUZAK.
+ *
+ * Sayfa bazı etiketleri CSS `text-transform: uppercase` ile çiziyor ve
+ * `innerText` DÖNÜŞMÜŞ hâli döndürüyor: "Matematik Öğretmeni" ekrana
+ * "MATEMATİK ÖĞRETMENİ" olarak geliyor.
+ *
+ * JavaScript'in `/…/i` bayrağı basit kıvrım (simple case folding)
+ * kullanıyor ve U+0130 (İ) için 'i' karşılığı YOK. Yani
+ * `/matematik öğretmeni/i` bu metinle EŞLEŞMİYOR — ölçüm sessizce
+ * "cümle sayfada yok" diyor. Bu tuzak bu turda gerçekten yakalandı;
+ * 0024'te `toLowerCase()`'in "ALİ"yi birleşen noktalı `ali̇` yapması da
+ * aynı ailedendi.
+ *
+ * `toLocaleLowerCase('tr')` doğru dönüşümü yapıyor (İ → i, I → ı).
+ * Büyük/küçük harfe duyarsız arama BU fonksiyondan geçirilerek
+ * yapılıyor, `/…/i` ile değil.
+ */
+function kucult(s) {
+  return s.toLocaleLowerCase('tr');
+}
+
 function bak(baslik, kosul, ayrinti = '') {
   olcum += 1;
   if (kosul) {
@@ -279,8 +301,80 @@ console.log('\n5. Metindeki iddialar');
     'kıyaslama olmadığı yazıyor',
     /başka öğrencilerin puanları veya sıralamaları gösterilmez/.test(metin),
   );
-  bak('marka cümlesini kuran felsefe bölümü var', /matematiğin sonsuzluk fikrinden ilham alır/.test(metin));
+  /* FELSEFE BAĞI "8 RAKAMI" ÜZERİNDEN — ÖLÇÜM TAŞINDI, GEVŞETİLMEDİ.
+   *
+   *   eski: "matematiğin sonsuzluk fikrinden ilham alır"
+   *   yeni: "8 rakamından alır"
+   *
+   * İddia aynı: sayfa ismin arkasındaki matematiksel bağı gerçekten
+   * kuruyor mu. Değişen, öğretmenin bu turdaki talimatı — bağ SAYI
+   * üzerinden anlatılacak. "8 şeklinden" yasaklı desen olarak aşağıda. */
+  bak('8 → sonsuzluk bağı 8 RAKAMI üzerinden kuruluyor', /8 rakam/.test(metin));
   bak('gelecek vizyonu bölümü var', /SEKİZ gelişmeye devam ediyor/.test(metin));
+
+  /* BU TURDA GELEN İKİ YENİ BÖLÜM ve hero'nun künye satırı.
+   * Üçü de brief'in açık maddeleri; silinirse denetim kırılır. */
+  bak('"SEKİZ neden var?" bölümü var', /SEKİZ neden var\?/.test(metin));
+  bak('"Sınıftan doğdu." bölümü var', /Sınıftan doğdu\./.test(metin));
+  bak(
+    'hero künye satırı: fikir + pedagojik tasarım + yazılım geliştirme',
+    /Fikir, pedagojik tasarım ve yazılım geliştirme/.test(metin),
+  );
+  /* KÜNYE BÖLÜMÜNÜN KENDİ METNİ ÖLÇÜLÜYOR, sayfanın tamamı değil.
+   *
+   * Sayfada bir yerde "matematik öğretmeni" geçmesi yetmez — hikâye
+   * bölümü zaten öyle diyor ve o ölçüm ayrıca duruyor. Burada sorulan
+   * şey künye bloğunun gerçekten künye olup olmadığı: ad, unvan ve
+   * rolün kapsamı bir arada mı.
+   *
+   * Unvan `uppercase` ile çiziliyor ve `innerText` dönüşmüş hâli
+   * döndürüyor; ölçüm o yüzden büyük/küçük harfe bakmıyor. */
+  const kunyeMetni = await sayfa.evaluate(() => {
+    const b = [...document.querySelectorAll('h2')].find((h) =>
+      /arkasındaki yaklaşım/.test(h.textContent || ''),
+    );
+    // `innerText` satır sarmalarını \n olarak döndürüyor; boşluk
+    // normalize edilmezse aranan cümle kelimenin ortasından bölünmüş
+    // hâlde geliyor ve ölçüm sessizce yanlış sonuç veriyor.
+    return (b?.closest('section')?.innerText ?? '').replace(/\s+/g, ' ');
+  });
+  bak(
+    'künyede ad, unvan ve rolün kapsamı bir arada',
+    /Buket Topuzoğlu/.test(kunyeMetni) &&
+      kucult(kunyeMetni).includes('matematik öğretmeni') &&
+      kucult(kunyeMetni).includes('fikir, pedagojik tasarım ve yazılım geliştirme'),
+    `${kunyeMetni.length} karakter`,
+  );
+
+  /* META AÇIKLAMA SAYFAYLA AYNI ŞEYİ SÖYLEMELİ.
+   *
+   * ÖLÇÜLEN BİR ÇELİŞKİYDİ: `tanitim/index.html` SEKİZ'i "matematik
+   * ödevleri için kurulmuş bir uygulama" diye tanıtıyordu, oysa sayfanın
+   * ilk cümlesi bunu değil bir öğrenme platformunu anlatıyor. Arama
+   * sonucunda ve paylaşım kartında görünen cümle burasıdır; sayfayla
+   * ayrıştığı anda ziyaretçi iki farklı ürün okumuş olur.
+   *
+   * `innerText` meta etiketlerini görmez, o yüzden ayrıca okunuyor. */
+  const metalar = await sayfa.evaluate(() => ({
+    aciklama: document.querySelector('meta[name="description"]')?.content ?? '',
+    og: document.querySelector('meta[property="og:description"]')?.content ?? '',
+    baslik: document.title,
+  }));
+  bak(
+    'meta açıklama "öğrenme platformu" diyor',
+    /öğrenme platformu/i.test(metalar.aciklama),
+    metalar.aciklama.slice(0, 60) + '…',
+  );
+  bak(
+    'meta açıklama eski konumlandırmayı taşımıyor',
+    !/ödevleri için kurulmuş bir uygulama/i.test(metalar.aciklama),
+  );
+  bak(
+    'og açıklamasında veli SÜRECE DAHİL olan taraf',
+    /sürece dahil olur/i.test(metalar.og) && !/gidişatını izler/i.test(metalar.og),
+    metalar.og.slice(0, 60) + '…',
+  );
+  bak('sayfa başlığı korundu', metalar.baslik.startsWith('SEKİZ nedir?'), metalar.baslik);
   bak(
     'ekran görüntülerinin temsilî olduğu yazıyor',
     /isimler ve puanlar temsilidir/.test(metin),
@@ -372,6 +466,43 @@ console.log('\n5. Metindeki iddialar');
   }
 
   /* -------------------------------------------------------------------
+   * PROFESYONELLEŞTİRME TURUNUN YASAKLARI.
+   *
+   * Hepsi öğretmenin bu turdaki brief'inde AÇIKÇA yazılı. İkisi
+   * özellikle önemli:
+   *
+   *  1. "Sonsuzluk bir varış değil, bir yöndür" — bu cümleyi bir önceki
+   *     turda ben taslak olarak yazmıştım ve öğretmen ONAYLAMIŞTI.
+   *     Şimdi açıkça geri çekti. Onaylanmış bir cümlenin geri çekilmesi
+   *     tam olarak sessizce geri gelebilecek türden bir karardır; bu
+   *     yüzden yasaklı desen olarak buraya yazıldı.
+   *
+   *  2. "8 şeklinden" — bağ bir çizim benzerliğinden değil, sayının
+   *     matematikteki çağrışımından kuruluyor. Yukarıdaki olumlu ölçüm
+   *     ("8 rakam") ile birlikte iki yönlü çalışıyor: bağ VAR ama şekil
+   *     üzerinden DEĞİL.
+   * ----------------------------------------------------------------- */
+  const briefYasaklari = [
+    ['geri çekilen felsefe cümlesi', /Sonsuzluk bir varış değil/i],
+    ['8 şeklinden', /8\s*şeklinden|şeklinden (alır|esinlen|ilham)/i],
+    // Abartılı pazarlama sıfatları — brief: "kesinlikle kullanma".
+    ['devrim dili', /devrim|çığır açan|benzersiz|oyunun kurallarını değiştiren/i],
+    ['geleceği ilan eden dil', /geleceğin eğitimi|eğitimde yeni çağ|dünyayı değiştiren/i],
+    ['mükemmellik iddiası', /mükemmel|eşsiz/i],
+    // Öğretmeni öven sıfat. Yazarlık anlatılıyor, öğretmen övülmüyor.
+    ['vizyoner/benzersiz öğretmen', /(vizyoner|benzersiz|geleceği değiştiren)\s+(öğretmen|eğitimci)/i],
+    // Klişe. Brief: "Öğrenme bir yolculuktur" gibi ifadeler kullanılmayacak.
+    ['yolculuk klişesi', /öğrenme bir yolculuk/i],
+    // Kapanışta OLUMSUZ TANIMLAMA yasak: SEKİZ ne OLDUĞUYLA anlatılıyor.
+    ['olumsuz kapanış tanımı', /sadece bir ödev takip uygulaması değil/i],
+    // Veliye seslenirken "çocuğunuzun eksikleri" çağrışımı yasak.
+    ['çocuğunuzun eksikleri', /çocuğunuzun eksik/i],
+  ];
+  for (const [ad, kalip] of briefYasaklari) {
+    bak(`brief: "${ad}" geçmiyor`, !kalip.test(metin));
+  }
+
+  /* -------------------------------------------------------------------
    * DİL KURALI: GERÇEĞİ GİZLEME · ÖĞRENCİYİ ETİKETLEME · GELİŞİMİ GÖSTER
    *
    * İKİ YÖNLÜ ÖLÇÜM ve ikinci yön en az birincisi kadar önemli.
@@ -399,7 +530,66 @@ console.log('\n5. Metindeki iddialar');
 
   bak('gerçek korunuyor: "yanlış yaptığı sorular" yazıyor', /[Yy]anlış yaptığı soruları/.test(metin));
   bak('gerçek korunuyor: "eksik olduğu konu alanları" yazıyor', /eksik olduğu konu alanları/.test(metin));
-  bak('gerçek korunuyor: teslim edilmemiş ödev anlatılıyor', /teslim edilmedi|teslim edilmeyi bekleyen/.test(metin));
+
+  /* TAMAMLANMAMIŞ ÖDEV — ÖLÇÜM TAŞINDI, GEVŞETİLMEDİ.
+   *
+   * Brief iki cümleyi birden düzeltti:
+   *   öğrenci:  "…teslim edilmeyi bekleyenleri takip eder."
+   *          →  "…tamamlaması gereken ve sıradaki çalışmalarını…"
+   *   öğretmen: "…hangi ödevin henüz teslim edilmediğini görür."
+   *          →  "…hangi ödevlerin henüz tamamlanmadığını görür."
+   *
+   * Eski desen (`teslim edilmedi|teslim edilmeyi bekleyen`) artık
+   * sayfada olmayan bir cümleyi arıyordu. İDDİA AYNI ve kalıcı dil
+   * kuralının sayfadaki kilidi olmayı sürdürüyor: tamamlanmamış ödev
+   * gizlenmiyor, iki ayrı yerde AÇIKÇA anlatılıyor. İkisi de ayrı ayrı
+   * ölçülüyor ki biri silinince öbürü örtmesin. */
+  bak(
+    'gerçek korunuyor: öğrencinin tamamlaması gerekenler anlatılıyor',
+    /tamamlaması gereken/.test(metin),
+  );
+  bak(
+    'gerçek korunuyor: tamamlanmamış ödev öğretmene anlatılıyor',
+    /henüz tamamlanmadığını/.test(metin),
+  );
+
+  /* VELİ BÖLÜMÜNDE "EKSİK" YOK — AMA SAYFADA VAR. İKİ YÖNLÜ KİLİT.
+   *
+   * Öğretmenin kararı bir KAPSAM kararı, bir dil değişikliği değil:
+   * "Yalnız veli bölümünde kalksın." Veliye seslenen cümlelerde
+   * "çocuğunuzun eksikleri" çağrışımı istemiyor; ama öğrenciyi anlatan
+   * koyu banttaki "eksik olduğu konu alanları" kalıcı dil kuralının
+   * kapsamında ve AYNEN duruyor.
+   *
+   * Tek yönlü ölçmek yetmez ve bu bilerek böyle kuruldu:
+   *   • yalnız "veli bölümünde eksik yok" ölçseydik, biri bir gün
+   *     kelimeyi sayfanın HER YERİNDEN silerdi ve denetim geçerdi;
+   *   • yalnız "sayfada eksik var" ölçseydik, veli bölümüne geri
+   *     gelmesi fark edilmezdi.
+   * İkisi birlikte kararı tam olarak kilitliyor. Yukarıdaki
+   * "eksik olduğu konu alanları" ölçümü bu çiftin ikinci yarısı. */
+  const veliMetni = await sayfa.evaluate(() => {
+    const b = [...document.querySelectorAll('h2')].find((h) =>
+      /Öğrenme sürecine aile de eşlik eder/.test(h.textContent || ''),
+    );
+    // `innerText` satır sarmalarını \n olarak döndürüyor; boşluk
+    // normalize edilmezse aranan cümle kelimenin ortasından bölünmüş
+    // hâlde geliyor ve ölçüm sessizce yanlış sonuç veriyor.
+    return (b?.closest('section')?.innerText ?? '').replace(/\s+/g, ' ');
+  });
+  bak(
+    'veli bölümü gerçekten bulundu',
+    /Öğrenme sürecine aile de eşlik eder/.test(veliMetni),
+    `${veliMetni.length} karakter`,
+  );
+  bak(
+    'veli bölümünün KENDİ metninde "eksik" geçmiyor',
+    // `/eksik/i` "EKSİK" ile EŞLEŞMEZ (İ tuzağı, yukarıdaki `kucult`
+    // açıklaması). Bu ölçüm bir YOKLUK ölçtüğü için tuzak burada en
+    // tehlikeli hâlinde: yanlış eşleşme sessizce "temiz" derdi.
+    veliMetni.length > 0 && !kucult(veliMetni).includes('eksik'),
+    (veliMetni.match(/[^.]*eksik[^.]*\./i) || ['—'])[0].trim().slice(0, 70),
+  );
 
   /* VELİ "DAHİL OLAN" TARAFTIR — iki yerde, ikisi de ölçülüyor.
    *
@@ -422,12 +612,19 @@ console.log('\n5. Metindeki iddialar');
   const markaAdet = (metin.match(/Öğrenmenin sonu yok\./g) || []).length;
   bak('marka cümlesi tam iki yerde', markaAdet === 2, `${markaAdet} kez`);
 
-  /* Felsefe bölümünün vurgusu artık sonsuzluğa bağlanan pedagojik bir
-   * cümle. Şekil bilgisi taşımıyor — yasaklı desenler bunu ayrıca
-   * ölçüyor ("yan yat", "sonsuzluk işareti"…). */
+  /* FELSEFE VURGU CÜMLESİ — ÖLÇÜM TAŞINDI.
+   *
+   * Bir önceki tur "Sonsuzluk bir varış değil, bir yöndür…" cümlesini
+   * ölçüyordu; öğretmen bu turda o cümleyi açıkça geri çekti ve yerine
+   * geçen cümle ölçülüyor. Eski cümle ayrıca YASAKLI desen olarak
+   * duruyor — yani bu iki ölçüm birlikte hem yeninin durduğunu hem
+   * eskinin geri gelmediğini kilitliyor.
+   *
+   * Şekil bilgisi yok: "yan yat", "sonsuzluk işareti", "8 şeklinden"
+   * hepsi yasaklı desen olarak ayrıca aranıyor. */
   bak(
-    'felsefe vurgusu sonsuzluğa bağlanıyor',
-    /Sonsuzluk bir varış değil, bir yöndür/.test(metin),
+    'felsefe vurgu cümlesi yerinde',
+    /Çözülen her problem, sorulacak yeni bir soruyu mümkün kılar/.test(metin),
   );
 
   /* OKUL ADI ARTIK GÖRÜNÜR METİNDE DEĞİL — MÜHÜRÜN ALT METNİNDE.
@@ -464,7 +661,7 @@ console.log('\n5. Metindeki iddialar');
    * diyor. Ölçüm küçük harfe de bakıyor; iddia aynı, yeri değişti. */
   bak(
     'öğretmen kimliği sayfada',
-    /Buket Topuzoğlu/.test(metin) && /matematik öğretmeni/i.test(metin),
+    /Buket Topuzoğlu/.test(metin) && kucult(metin).includes('matematik öğretmeni'),
   );
 
   /* YAZARLIK — sayfanın söylemesi gereken şey. Öğretmenin isteği:
@@ -493,13 +690,17 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
   await sayfa.goto(TANITIM, { waitUntil: 'networkidle' });
   await sayfa.waitForTimeout(400);
 
-  /* İKİ DEĞİŞİKLİK VAR VE İKİSİ DE ÖĞRETMENİN KARARI:
-   *   1. "Bir öğretmenin gerçek sınıf deneyiminden doğdu." EN ALTTAN
-   *      İKİNCİ SIRAYA taşındı. Eskiden künyedeydi; oraya kadar inen az
-   *      kişi ürünün kimin işi olduğunu öğreniyordu.
-   *   2. "Eğitimde güven, sistemin temelidir." TAMAMEN KALKTI. */
+  /* BU TURDA SIRA 12 → 14 BÖLÜM. Üç değişiklik, üçü de brief'in maddesi:
+   *   1. Başa "SEKİZ neden var?" girdi — problemi anlatan kısa bölüm.
+   *      Ziyaretçi çözümü okumadan önce soruyu okuyor.
+   *   2. "Bir öğretmenin gerçek sınıf deneyiminden doğdu." başlığı
+   *      "Sınıftan doğdu." oldu. Bölüm yerinde, yalnız başlık kısaldı.
+   *   3. Sona "SEKİZ'in arkasındaki yaklaşım" künyesi eklendi.
+   *
+   * Liste GEVŞETİLMEDİ, uzadı: sıra hâlâ birebir ölçülüyor. */
   const BEKLENEN = [
-    'Bir öğretmenin gerçek sınıf deneyiminden doğdu.',
+    'SEKİZ neden var?',
+    'Sınıftan doğdu.',
     'Öğrenme bir sonuç değil, devam eden bir süreçtir.',
     'Ödevden gelişime, öğrenmenin tamamı tek yerde.',
     'Öğrenci kendi öğrenme sürecini görür.',
@@ -511,6 +712,7 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
     'Değerlendirme, öğrenmeyi görünür kılar.',
     'Puanın ötesinde, gelişim.',
     'SEKİZ gelişmeye devam ediyor.',
+    "SEKİZ'in arkasındaki yaklaşım",
   ];
 
   const basliklar = await sayfa.evaluate(() =>

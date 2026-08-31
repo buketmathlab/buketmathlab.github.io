@@ -22,7 +22,8 @@
     "yayma-denetim": "node scripts/kardes-yayma-denetimi.mjs",
     "ewalu-denetim": "node scripts/ewalu-mesaj-denetimi.mjs",
     "tanitim-gorseller": "node scripts/tanitim-gorselleri.mjs",
-    "tanitim-denetim": "node scripts/tanitim-denetimi.mjs"
+    "tanitim-denetim": "node scripts/tanitim-denetimi.mjs",
+    "tanitim-geri-alma": "node scripts/geri-alma-tanitim.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.5",
