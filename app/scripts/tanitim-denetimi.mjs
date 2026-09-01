@@ -277,9 +277,13 @@ console.log('\n5. Metindeki iddialar');
    *   eski: "son değerlendirme öğretmen tarafından yapılır"
    *   yeni: "Açık uçlu ödevlerde pedagojik değerlendirme kontrolü" (Kural 5)
    */
+  /* KURAL 6 GÜVENCESİ — ÖLÇÜM TAŞINDI, İDDİA AYNI.
+   * Cümle bu turda kalın girişli bir maddeye geçti: "Cevap Anahtarı:
+   * Teslimden önce açılmaz; teslimden hemen sonra açılır." Desen artık
+   * maddenin GÖVDESİNİ arıyor; "cevap anahtarı" ön eki başlıkta. */
   bak(
     'anahtarın yalnız teslimden sonra açıldığı yazıyor',
-    /Cevap anahtarı teslimden önce açılmaz; teslimden hemen sonra açılır/.test(metin),
+    /Teslimden önce açılmaz; teslimden hemen sonra açılır/.test(metin),
   );
   bak(
     'açık uçluda son puanı öğretmenin verdiği yazıyor',
@@ -315,11 +319,46 @@ console.log('\n5. Metindeki iddialar');
   /* BU TURDA GELEN İKİ YENİ BÖLÜM ve hero'nun künye satırı.
    * Üçü de brief'in açık maddeleri; silinirse denetim kırılır. */
   bak('"SEKİZ neden var?" bölümü var', /SEKİZ neden var\?/.test(metin));
-  bak('"Sınıftan doğdu." bölümü var', /Sınıftan doğdu\./.test(metin));
+  bak(
+    '"Bir öğretmenin sınıf deneyiminden doğdu." bölümü var',
+    /Bir öğretmenin sınıf deneyiminden doğdu\./.test(metin),
+  );
   bak(
     'hero künye satırı: fikir + pedagojik tasarım + yazılım geliştirme',
     /Fikir, pedagojik tasarım ve yazılım geliştirme/.test(metin),
   );
+
+  /* -------------------------------------------------------------------
+   * BRIEF'İN KENDİ CÜMLELERİ SAYFADA MI.
+   *
+   * Metin turlarının sessiz riski şu: cümle bir tur yazılır, sonraki
+   * turda bir yeniden düzenlemede kaybolur ve kimse fark etmez.
+   * Aşağıdakilerin her biri brief'in bir bölümünün ÇEKİRDEĞİ.
+   * ----------------------------------------------------------------- */
+  bak(
+    'hero alt başlığı brief\'ten',
+    /şeffaf, yönetilebilir ve anlamlı verilerle/.test(metin),
+  );
+  bak(
+    'künye anlatısı: masa başı teorisi değil, tahta başı',
+    /tahta başındaki gerçek sınıf dinamiğiyle/.test(metin),
+  );
+  bak(
+    'öğretmenin zaman kazancı anlatılıyor',
+    /Bürokratik ödev kontrolü/.test(metin),
+  );
+  bak(
+    'velinin gördüğü: karmaşık grafik değil somut veri',
+    /karmaşık grafikler yerine anlaşılır, somut ve yapıcı verilerle/.test(metin),
+  );
+
+  /* TÜRKÇE YAZIM DÜZELTMELERİNİN KİLİDİ.
+   *
+   * Brief "sıfır Türkçe yazım hatası" istiyor ama kendi metninde iki
+   * hata taşıyordu: "Motive" (isim gerekiyor) ve "imkanı" (şapkasız).
+   * Düzeltmeler ölçülmezse bir sonraki kopyala-yapıştırda geri gelir. */
+  bak('yazım: "Motivasyon" (Motive değil)', /Süreç Odaklı Motivasyon/.test(metin));
+  bak('yazım: "imkânı" (şapkalı)', /tespit etme imkânı/.test(metin) && !/imkanı/.test(metin));
   /* KÜNYE BÖLÜMÜNÜN KENDİ METNİ ÖLÇÜLÜYOR, sayfanın tamamı değil.
    *
    * Sayfada bir yerde "matematik öğretmeni" geçmesi yetmez — hikâye
@@ -482,6 +521,17 @@ console.log('\n5. Metindeki iddialar');
    *     ("8 rakam") ile birlikte iki yönlü çalışıyor: bağ VAR ama şekil
    *     üzerinden DEĞİL.
    * ----------------------------------------------------------------- */
+  /* ÖNEMLİ — BU LİSTE BU TURDA GEVŞETİLMEDİ.
+   *
+   * Öğretmen brief'in iki cümlesini ("8'in kesintisiz akışı…" ve
+   * "…sonsuz bir yolculuğa dönüştürür") aynen istedi; ikisinin de
+   * bugüne kadarki kurallarla RUHEN çakıştığını söylemiştim
+   * (şekil bilgisi verme, yolculuk klişesi).
+   *
+   * Desenleri tek tek ölçtüm: hiçbiriyle eşleşmiyorlar. Yani tek bir
+   * yasak bile kaldırılmadı — sayfa artık o iki cümleyi taşıyor VE
+   * aşağıdaki liste hâlâ tamamen yürürlükte. Bu blok geçtiği sürece
+   * kanıt da duruyor. */
   const briefYasaklari = [
     ['geri çekilen felsefe cümlesi', /Sonsuzluk bir varış değil/i],
     ['8 şeklinden', /8\s*şeklinden|şeklinden (alır|esinlen|ilham)/i],
@@ -570,7 +620,7 @@ console.log('\n5. Metindeki iddialar');
    * "eksik olduğu konu alanları" ölçümü bu çiftin ikinci yarısı. */
   const veliMetni = await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll('h2')].find((h) =>
-      /Öğrenme sürecine aile de eşlik eder/.test(h.textContent || ''),
+      /Şeffaf ve anlamlı bilgi akışı/.test(h.textContent || ''),
     );
     // `innerText` satır sarmalarını \n olarak döndürüyor; boşluk
     // normalize edilmezse aranan cümle kelimenin ortasından bölünmüş
@@ -579,7 +629,7 @@ console.log('\n5. Metindeki iddialar');
   });
   bak(
     'veli bölümü gerçekten bulundu',
-    /Öğrenme sürecine aile de eşlik eder/.test(veliMetni),
+    /Şeffaf ve anlamlı bilgi akışı/.test(veliMetni),
     `${veliMetni.length} karakter`,
   );
   bak(
@@ -604,13 +654,18 @@ console.log('\n5. Metindeki iddialar');
    * Ürün ikisini de veriyor (`konu_karnesi`, 0023). */
   bak('öğretmen her öğrencinin gelişimini de görüyor', /her öğrencinin gelişimini/.test(metin));
 
-  /* MARKA CÜMLESİ TAM İKİ YERDE — hero'da H1 ve kapanışta son söz.
+  /* MARKA CÜMLESİ TAM BİR YERDE — YALNIZ KAPANIŞTA.
    *
-   * Üçtü; öğretmenin düzeltmesiyle felsefe bölümündeki tekrarı kalktı
-   * ("en üstte zaten kullandık"). Sayı ölçülüyor ki ne düşsün ne
-   * çoğalsın: üçüncü bir yere serpiştirilirse cümle sıradanlaşır. */
+   * Üçtü, ikiye indi, bu turda BİRE indi: öğretmen hero başlığı olarak
+   * kendi cümlesini yazdı ve H1 olmasını istedi.
+   *
+   * SAYI YİNE TAM ÖLÇÜLÜYOR ve bu bir gevşetme değil: cümle ne
+   * düşebilir (kapanıştan silinirse kırılır) ne çoğalabilir (ikinci
+   * bir yere serpiştirilirse kırılır). Değişen yalnız kararın kendisi.
+   * Bir tur önce `2` yazıyordu; geri istenirse değiştirilecek yer bu
+   * satır ve hero'daki `h1`. */
   const markaAdet = (metin.match(/Öğrenmenin sonu yok\./g) || []).length;
-  bak('marka cümlesi tam iki yerde', markaAdet === 2, `${markaAdet} kez`);
+  bak('marka cümlesi tam bir yerde (kapanış)', markaAdet === 1, `${markaAdet} kez`);
 
   /* FELSEFE VURGU CÜMLESİ — ÖLÇÜM TAŞINDI.
    *
@@ -622,9 +677,12 @@ console.log('\n5. Metindeki iddialar');
    *
    * Şekil bilgisi yok: "yan yat", "sonsuzluk işareti", "8 şeklinden"
    * hepsi yasaklı desen olarak ayrıca aranıyor. */
+  /* VURGU CÜMLESİ ARTIK ÖĞRETMENİN — ÖLÇÜM TAŞINDI.
+   * Bir önceki tur buraya benim taslağımı ("Çözülen her problem…")
+   * yazmıştım; brief kendi manifesto cümlesini getirdi. */
   bak(
     'felsefe vurgu cümlesi yerinde',
-    /Çözülen her problem, sorulacak yeni bir soruyu mümkün kılar/.test(metin),
+    /8’in kesintisiz akışı, öğrenmenin bitmeyen doğası/.test(metin),
   );
 
   /* OKUL ADI ARTIK GÖRÜNÜR METİNDE DEĞİL — MÜHÜRÜN ALT METNİNDE.
@@ -667,9 +725,18 @@ console.log('\n5. Metindeki iddialar');
   /* YAZARLIK — sayfanın söylemesi gereken şey. Öğretmenin isteği:
    * SEKİZ'i tasarlayanın bir yazılım şirketi değil kendisi olduğu
    * anlaşılsın. Cümle silinirse denetim kırılır. */
+  /* YAZARLIK — ÖLÇÜM TAŞINDI. Brief cümleyi yeniden yazdı; iddia aynı
+   * ve hatta daha açık: hem KİMİN tasarladığı hem de bir yazılım
+   * şirketinin ürünü OLMADIĞI yazıyor. İkisi ayrı ayrı ölçülüyor. */
   bak(
     'SEKİZ\'i kimin tasarladığı yazıyor',
-    /fikir olarak da yazılım olarak da tasarlayan/.test(metin),
+    /Fikir aşamasından kod satırlarına kadar matematik öğretmeni Buket Topuzoğlu tarafından tasarlandı/.test(
+      metin,
+    ),
+  );
+  bak(
+    'bir yazılım şirketinin ürünü olmadığı yazıyor',
+    /bir yazılım şirketinin masa başı teorisiyle değil/.test(metin),
   );
 
   await sayfa.close();
@@ -698,15 +765,23 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
    *   3. Sona "SEKİZ'in arkasındaki yaklaşım" künyesi eklendi.
    *
    * Liste GEVŞETİLMEDİ, uzadı: sıra hâlâ birebir ölçülüyor. */
+  /* BU TURDA BEŞ BAŞLIK DEĞİŞTİ, SIRA VE SAYI AYNI (14).
+   * Hepsi brief'ten:
+   *   Sınıftan doğdu.            → Bir öğretmenin sınıf deneyiminden doğdu.
+   *   Öğrenme bir sonuç değil…   → felsefeden ÖĞRETMEN bölümüne taşındı
+   *   (felsefe)                  → İsmini matematiğin sonsuzluk düşüncesinden alır.
+   *   Öğrenci kendi öğrenme…     → Kendi gelişim yolculuğunun farkında.
+   *   Öğrenme sürecine aile de…  → Şeffaf ve anlamlı bilgi akışı.
+   * Liste GEVŞETİLMEDİ: sıra hâlâ birebir ölçülüyor. */
   const BEKLENEN = [
     'SEKİZ neden var?',
-    'Sınıftan doğdu.',
-    'Öğrenme bir sonuç değil, devam eden bir süreçtir.',
+    'Bir öğretmenin sınıf deneyiminden doğdu.',
+    'İsmini matematiğin sonsuzluk düşüncesinden alır.',
     'Ödevden gelişime, öğrenmenin tamamı tek yerde.',
-    'Öğrenci kendi öğrenme sürecini görür.',
-    'Öğretmen yalnızca sonucu değil, öğrenmenin gelişimini görür.',
+    'Kendi gelişim yolculuğunun farkında.',
+    'Öğrenme bir sonuç değil, devam eden bir süreçtir.',
     'Sonuç, öğrenmenin bir sonraki adımını gösterir.',
-    'Öğrenme sürecine aile de eşlik eder.',
+    'Şeffaf ve anlamlı bilgi akışı.',
     'Öğrenme, iletişimle güçlenir.',
     "SEKİZ'in öğrenme sürecindeki dijital yüzü.",
     'Değerlendirme, öğrenmeyi görünür kılar.',
@@ -728,8 +803,18 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
 
   /* HERO'DA TEK BÜYÜK CÜMLE: marka cümlesi h1. Brief 20. madde ilk
    * ekranda yalnız birkaç temel şeyin görünmesini istiyor. */
+  /* H1 ARTIK MARKA CÜMLESİ DEĞİL — ÖLÇÜM TAŞINDI.
+   *
+   * Brief hero başlığı olarak "Sınıfın Gerçek İhtiyacından Doğan
+   * Pedagojik Takip Sistemi: SEKİZ" istiyordu; öğretmen ikisini de
+   * seçmedi ve kendi cümlesini yazdı. İddia aynı: hero'nun tek büyük
+   * cümlesi ne olduğu ÖLÇÜLÜYOR, gözle bırakılmıyor. */
   const h1 = (await sayfa.locator('h1').innerText()).trim();
-  bak('Hero başlığı marka cümlesi', h1 === 'Öğrenmenin sonu yok.', h1);
+  bak(
+    'Hero başlığı öğretmenin cümlesi',
+    h1 === 'Sonsuz bir öğrenme döngüsü için tasarlandı.',
+    h1,
+  );
 
   /* KURUM KİMLİĞİ SAYFANIN İLK ŞEYİ — ve bu bir yerleşim tercihi değil,
    * öğretmenin açık talimatı: "en üstte logo, altında öğretmen ismi ve

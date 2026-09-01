@@ -1560,6 +1560,91 @@ Koruma olmasaydı denetim sessizce ESKİ paketi ölçer, iki yama da
 `{false && <Bolum />}` biçimine çevrildi: bölüm DOM'dan gerçekten kalkıyor,
 bileşene yapılan başvuru duruyor.
 
+## Tanıtım sayfası — öğretmenin yeni brief'i (metin turu)
+
+Hero, felsefe, üç rol ve gelecek bölümlerinin metinleri birebir yazılmış
+bir brief geldi. Ürünün hiçbir ekranı, hiçbir SQL ve hiçbir tasarım
+tokenı değişmedi.
+
+### Brief'i sayfaya karşı ölçtüm — beş çakışma, dördü öğretmenin kararı
+
+| Çakışma | Kararı |
+|---|---|
+| Brief'in hero başlığı ile kilitli marka cümlesi | **İkisi de değil** — kendi cümlesini yazdı: *"Sonsuz bir öğrenme döngüsü için tasarlandı."*, H1 olsun |
+| Brief dört bölüm, sayfa 14 bölüm | **Mevcut bölümler kalsın** |
+| *"sonsuz bir yolculuğa"* ve *"8'in kesintisiz akışı"* kendi yasaklarına takılıyor | **Cümleler aynen girsin** |
+| Üç rol "interactive tabs" ile isteniyor | **Mevcut madde yapısı kalsın** |
+
+**Üçüncü kararın ölçülen sonucu.** Yasakların *desenlerini* tek tek
+kontrol ettim — `öğrenme bir yolculuk`, `sınırsız yolculuk`,
+`8 şeklinden|şeklinden alır`, `yan yat`, `sonsuzluk işareti`. Brief'in
+iki cümlesi hiçbiriyle eşleşmiyor. **Tek bir yasak bile
+gevşetilmedi**; çakışan şey kuralın ruhu, harfi değil. Denetimin
+yasaklı-desen bloğu geçtiği sürece bu kanıt da duruyor.
+
+### Marka cümlesi ikiden bire indi
+
+H1 artık marka cümlesi olmadığı için *"Öğrenmenin sonu yok."* yalnız
+kapanışta. Denetimdeki sayı kilidi `2` → **`1`**.
+
+Bu bir gevşetme değil: sayı yine **tam** ölçülüyor, yani cümle ne
+düşebilir ne çoğalabilir. Geri alma kanıtı ikisini de ayrı ayrı
+gösteriyor — H1'i eski cümleye döndürünce bir ölçüm, cümleyi ikinci bir
+bölüme serpiştirince başka bir ölçüm kırılıyor. Bir tur önce tersi
+seçilmişti; değiştirilecek yer hero'daki `h1` ve o sayı.
+
+### Maddeler ekleniyor, güvenceler silinmiyor
+
+Brief'in rol maddeleri **fayda** anlatıyor; bugünkü maddeler ürünün
+**ölçülen sınırlarını**. İkisi birbirinin yerini tutmuyor, bu yüzden
+her rol listesi = brief'in üç maddesi + korunan güvence maddeleri:
+
+| Korunan | Neden |
+|---|---|
+| "Teslimden önce açılmaz; teslimden hemen sonra açılır." | Kural 6 / Part XXI |
+| "…fotoğraf yüklenmeden teslim tamamlanmaz." | ölçülen ürün davranışı |
+| "…**tamamlaması gereken**…" | kalıcı dil kuralı |
+| "…**henüz tamamlanmadığını** görür." | kalıcı dil kuralı |
+
+Dördü de geri alma kanıtında **ayrı ayrı** bozulup kırıldı.
+
+`Maddeler` bileşeni `[giriş, metin]` ikilisini de kabul ediyor; giriş
+`font-semibold` çiziliyor. Yeni renk, ikon ya da kutu yok.
+
+### Brief'in üç UX talimatı uygulanmadı — gerekçeleriyle
+
+**Yazı tipi değişmedi.** Brief "Inter / Plus Jakarta Sans" öneriyor;
+Fraunces + Manrope Faz 0'dan beri markanın kendisi ve KVKK gerekçesiyle
+CDN'den değil kendi sunucumuzdan servis ediliyorlar. Brief'in kendi
+üçüncü maddesi de "maintain existing background/brand aesthetics" diyor
+— talimat kendi içinde çelişiyordu, marka tarafı korundu.
+
+**`border-indigo-500` kullanılmadı.** Indigo palette'te yok; renkler okul
+mührünün laciverdinden ve Ewalu'nun paletinden türetildi ve 18 token
+çifti WCAG AA'dan **bir küme olarak** geçti. Dışarıdan bir renk eklemek
+o denetimi anlamsız kılardı.
+
+**Sekme kurulmadı** (öğretmenin kararı): sekme aynı anda iki rolü gizler,
+altı ekran görüntüsünün üçe bölünmüş dağılımını bozar ve sayfayı arama
+motoruna tek rol olarak gösterirdi.
+
+### Türkçe düzeltmeler — brief'in kendi kuralı
+
+Brief "sıfır Türkçe yazım hatası" istiyordu ama kendi metninde iki hata
+taşıyordu: **"Motive"** (isim gerekiyor → *Motivasyon*) ve **"imkanı"**
+(şapkasız → *imkânı*). Ayrıca başlıklar İngilizce Title Case yazılmıştı;
+Türkçe'de bu bir çeviri izi ve sayfanın bütün başlıkları cümle
+düzeninde. Üçü de düzeltildi ve **düzeltmeler ölçülüyor** — bir sonraki
+kopyala-yapıştırda geri gelmesinler diye.
+
+### Bu turda kırılan dört ölçüm — ve hepsi benim yeniden yazımım
+
+Denetim ilk koşuda dört kusur verdi ve dördü de gerçekti: cevap anahtarı
+güvencesi kalın girişli maddeye taşınınca deseni tutmadı, veli bölümünün
+seçicisi eski `h2`'yi arıyordu, yazarlık cümlesi brief'in cümlesiyle
+değişmişti. Dördü de **taşındı, gevşetilmedi**; yazarlık ölçümü ikiye
+bölündü (kimin tasarladığı + bir yazılım şirketinin ürünü olmadığı).
+
 ## Projeyi uyanık tutan zamanlayıcı (yeni SQL yok)
 
 **Olay.** 2026 Ağustos'unda Supabase, ücretsiz plandaki projeyi 7 günlük

@@ -1,5 +1,5 @@
 /**
- * GERİ ALMA KANITI — tanıtım profesyonelleştirme turu.
+ * GERİ ALMA KANITI — tanıtım metin turu (öğretmenin yeni brief'i).
  *
  * Bir denetim ancak KIRILDIĞI görüldüğünde bir şey ölçüyordur. Bu betik
  * bu turda eklenen/taşınan ölçümlerin her birini tek tek bozuyor ve
@@ -35,36 +35,73 @@ const META = `${KOK}app/tanitim/index.html`;
  */
 const YAMALAR = [
   {
-    ad: 'Hero künye satırı silinirse',
+    ad: 'Yeni H1 eski marka cümlesine dönerse',
     dosya: SAYFA,
-    eski: 'Fikir, pedagojik tasarım ve yazılım geliştirme\n        </p>',
-    yeni: 'Ödev · Değerlendirme\n        </p>',
-    bekleyen: 'hero künye satırı',
+    eski: '          Sonsuz bir öğrenme döngüsü için tasarlandı.',
+    yeni: '          Öğrenmenin sonu yok.',
+    bekleyen: 'Hero başlığı öğretmenin cümlesi',
   },
   {
-    ad: '"SEKİZ neden var?" bölümü kaldırılırsa',
+    // MARKA CÜMLESİ SAYISININ KİLİDİ — sayı TAM ölçülüyor, yani cümle
+    // ÇOĞALIRSA da kırılıyor. Yukarıdaki yama düşmeyi, bu yama
+    // çoğalmayı kanıtlıyor.
+    ad: 'Marka cümlesi ikinci bir yere serpiştirilirse',
     dosya: SAYFA,
-    // `{false && …}` ile çiziliyor: bölüm DOM'dan gerçekten kalkıyor
-    // ama bileşene yapılan başvuru duruyor. Düz silme, TS6133
-    // ("kullanılmayan bileşen") ile DERLEMEYİ kırıyordu ve o zaman
-    // ölçüm hiç yapılamıyordu — betiğin derleme koruması bunu yakaladı.
-    eski: '        <NedenVar />',
-    yeni: '        {false && <NedenVar />}',
-    bekleyen: '"SEKİZ neden var?" bölümü var',
+    eski: '      <Not>SEKİZ, bu görünürlüğü kurmak için var.</Not>',
+    yeni: '      <Not>SEKİZ, bu görünürlüğü kurmak için var. Öğrenmenin sonu yok.</Not>',
+    bekleyen: 'marka cümlesi tam bir yerde',
   },
   {
-    ad: 'Künye bölümü kaldırılırsa',
+    ad: 'Hero alt başlığı brief metninden çıkarsa',
     dosya: SAYFA,
-    eski: '        <Kunye />',
-    yeni: '        {false && <Kunye />}',
-    bekleyen: 'künyede ad, unvan ve rolün kapsamı',
+    eski: 'Öğrenci gelişimini ve ödev süreçlerini şeffaf, yönetilebilir ve anlamlı verilerle',
+    yeni: 'Öğrenci gelişimini ve ödev süreçlerini anlaşılır biçimde',
+    bekleyen: "hero alt başlığı brief'ten",
   },
   {
-    ad: 'Hikâye başlığı eski uzun hâline dönerse',
+    // VELİ CÜMLESİ HERO'DAN DÜŞERSE. Brief'in alt başlığı veliden hiç
+    // söz etmiyor; rol satırı bu yüzden bilerek korundu.
+    ad: 'Hero rol satırı silinirse (veli düşer)',
     dosya: SAYFA,
-    eski: '          Sınıftan doğdu.\n',
-    yeni: '          Bir öğretmenin gerçek sınıf deneyiminden doğdu.\n',
-    bekleyen: '"Sınıftan doğdu." bölümü var',
+    eski: 'sürece dahil olduğu bir zemin kurar.',
+    yeni: 'birlikte ilerlediği bir zemin kurar.',
+    bekleyen: 'hero: velinin sürece DAHİL olduğu',
+  },
+  {
+    ad: 'Künye anlatısı brief metninden çıkarsa',
+    dosya: SAYFA,
+    eski: 'tahta başındaki gerçek',
+    yeni: 'gerçek',
+    bekleyen: 'künye anlatısı: masa başı teorisi değil',
+  },
+  {
+    ad: "SEKİZ'i kimin tasarladığı silinirse",
+    dosya: SAYFA,
+    eski:
+      'Fikir aşamasından kod satırlarına kadar matematik\n          öğretmeni Buket Topuzoğlu tarafından tasarlandı.',
+    yeni: 'Uzun bir süre boyunca tasarlandı.',
+    bekleyen: "SEKİZ'i kimin tasarladığı yazıyor",
+  },
+  {
+    ad: 'Hikâye başlığı bir önceki tura dönerse',
+    dosya: SAYFA,
+    eski: '          Bir öğretmenin sınıf deneyiminden doğdu.',
+    yeni: '          Sınıftan doğdu.',
+    bekleyen: '"Bir öğretmenin sınıf deneyiminden doğdu." bölümü var',
+  },
+  {
+    ad: 'Felsefe başlığı brief metninden çıkarsa',
+    dosya: SAYFA,
+    eski: '          İsmini matematiğin sonsuzluk düşüncesinden alır.',
+    yeni: '          Öğrenmenin doğası.',
+    bekleyen: 'Bölümler beklenen SIRADA',
+  },
+  {
+    ad: 'Felsefe vurgu cümlesi brief metninden çıkarsa',
+    dosya: SAYFA,
+    eski: '8’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ',
+    yeni: 'Öğrenmenin bitmeyen doğası: SEKİZ',
+    bekleyen: 'felsefe vurgu cümlesi yerinde',
   },
   {
     ad: 'Bağ "8 rakamı" yerine şekil üzerinden kurulursa',
@@ -76,39 +113,81 @@ const YAMALAR = [
   {
     ad: 'Geri çekilen felsefe cümlesi sayfaya geri konursa',
     dosya: SAYFA,
-    eski: 'Çözülen her problem, sorulacak yeni bir soruyu mümkün kılar.',
-    yeni: 'Sonsuzluk bir varış değil, bir yöndür; öğrenme de o yönde ilerler.',
+    eski: '          Bu yüzden SEKİZ ödevi bir görev listesi gibi değil',
+    yeni:
+      '          Sonsuzluk bir varış değil, bir yöndür. Bu yüzden SEKİZ ödevi bir görev listesi gibi değil',
     bekleyen: 'geri çekilen felsefe cümlesi',
   },
   {
-    ad: 'Öğrenci maddesi eski ifadeye dönerse',
+    // KORUNAN GÜVENCE 1 — kalıcı dil kuralı (öğrenci tarafı).
+    ad: 'Öğrenci maddesinden "tamamlaması gereken" düşerse',
     dosya: SAYFA,
-    eski:
-      "'Tamamladığı, tamamlaması gereken ve sıradaki çalışmalarını tek ekrandan takip eder.'",
-    yeni:
-      "'Bütün ödevlerini tek ekranda görür; tamamladıklarını takip eder.'",
+    eski: "'Tamamladığı, tamamlaması gereken ve sıradaki çalışmalarını tek ekrandan takip eder.',",
+    yeni: "'Tamamladığı ve sıradaki çalışmalarını tek ekrandan takip eder.',",
     bekleyen: 'öğrencinin tamamlaması gerekenler',
   },
   {
+    // KORUNAN GÜVENCE 2 — Kural 6 / Part XXI.
+    ad: 'Cevap anahtarı güvencesi maddeden düşerse',
+    dosya: SAYFA,
+    eski: "'Teslimden önce açılmaz; teslimden hemen sonra açılır.",
+    yeni: "'Teslimden sonra görünür.",
+    bekleyen: 'anahtarın yalnız teslimden sonra açıldığı',
+  },
+  {
+    // KORUNAN GÜVENCE 3 — ölçülen ürün davranışı.
+    ad: 'Fotoğraf zorunluluğu maddeden düşerse',
+    dosya: SAYFA,
+    eski: 'fotoğraf yüklenmeden teslim tamamlanmaz.',
+    yeni: 'fotoğrafını da ekler.',
+    bekleyen: 'çözüm fotoğrafının zorunlu olduğu',
+  },
+  {
+    // KORUNAN GÜVENCE 4 — kalıcı dil kuralı (öğretmen tarafı).
     ad: 'Öğretmen maddesinden tamamlanmamış ödev düşerse',
     dosya: SAYFA,
-    eski:
-      "'Hangi öğrencilerin çalışmalarını tamamladığını, hangi ödevlerin henüz tamamlanmadığını görür.'",
-    yeni: "'Hangi öğrencilerin çalışmalarını tamamladığını görür.'",
+    eski: "'Hangi öğrencilerin çalışmalarını tamamladığını, hangi ödevlerin henüz tamamlanmadığını görür.',",
+    yeni: "'Hangi öğrencilerin çalışmalarını tamamladığını görür.',",
     bekleyen: 'tamamlanmamış ödev öğretmene anlatılıyor',
   },
   {
-    // İKİ YÖNLÜ KİLİDİN BİRİNCİ YARISI: "eksik" veli bölümüne geri gelirse.
+    ad: 'Öğretmenin zaman kazancı maddesi silinirse',
+    dosya: SAYFA,
+    eski: 'Bürokratik ödev kontrolü',
+    yeni: 'Ödev kontrolü',
+    bekleyen: 'öğretmenin zaman kazancı anlatılıyor',
+  },
+  {
+    ad: 'Türkçe yazım düzeltmesi geri alınırsa (imkânı → imkanı)',
+    dosya: SAYFA,
+    eski: 'tespit etme imkânı sunar.',
+    yeni: 'tespit etme imkanı sunar.',
+    bekleyen: 'yazım: "imkânı"',
+  },
+  {
+    ad: 'Türkçe yazım düzeltmesi geri alınırsa (Motivasyon → Motive)',
+    dosya: SAYFA,
+    eski: "'Süreç Odaklı Motivasyon',",
+    yeni: "'Süreç Odaklı Motive',",
+    bekleyen: 'yazım: "Motivasyon"',
+  },
+  {
+    ad: 'Veli maddesi brief metninden çıkarsa',
+    dosya: SAYFA,
+    eski: 'karmaşık grafikler yerine anlaşılır, somut ve yapıcı verilerle',
+    yeni: 'grafiklerle',
+    bekleyen: 'velinin gördüğü: karmaşık grafik değil somut veri',
+  },
+  {
+    // İKİ YÖNLÜ KİLİDİN BİRİNCİ YARISI.
     ad: '"eksik" veli bölümüne geri gelirse',
     dosya: SAYFA,
-    eski: 'Öğrencinin gelişimini güçlendirebileceği konu\n        alanları veli tarafından da görülebilir.',
-    yeni: 'Öğrencinin eksik olduğu konu\n        alanları veli tarafından da görülebilir.',
+    eski: 'gelişimini güçlendirebileceği konu alanlarını takip edebilir.',
+    yeni: 'eksik olduğu konu alanlarını takip edebilir.',
     bekleyen: 'veli bölümünün KENDİ metninde "eksik"',
   },
   {
-    // İKİ YÖNLÜ KİLİDİN İKİNCİ YARISI: gerçek sayfadan tamamen silinirse.
-    // Bu yama tek başına birinci ölçümü KIRMAZ (veli bölümü zaten temiz);
-    // kalıcı dil kuralının kilidi tam olarak burada.
+    // İKİ YÖNLÜ KİLİDİN İKİNCİ YARISI — tek başına birinciyi KIRMAZ.
     ad: '"eksik olduğu konu alanları" sayfadan tamamen silinirse',
     dosya: SAYFA,
     eski: 'Yanlış yaptığı soruları ve eksik olduğu\n          konu alanlarını da görünür hâle getirir.',
@@ -118,16 +197,15 @@ const YAMALAR = [
   {
     ad: 'Sayfaya övgü sıfatı girerse',
     dosya: SAYFA,
-    eski: '          Sınıftan doğdu.\n',
-    yeni: '          Sınıftan doğdu. Vizyoner bir öğretmenin benzersiz ürünü.\n',
+    eski: '          Bir öğretmenin sınıf deneyiminden doğdu.',
+    yeni: '          Bir öğretmenin sınıf deneyiminden doğdu. Vizyoner ve benzersiz bir ürün.',
     bekleyen: 'devrim dili',
   },
   {
     ad: 'Kapanış olumsuz tanımlamaya dönerse',
     dosya: SAYFA,
     eski: '            Öğrenmenin sonu yok.\n',
-    yeni:
-      '            SEKİZ sadece bir ödev takip uygulaması değildir.\n',
+    yeni: '            SEKİZ sadece bir ödev takip uygulaması değildir.\n',
     bekleyen: 'olumsuz kapanış tanımı',
   },
   {
@@ -138,15 +216,6 @@ const YAMALAR = [
     yeni:
       "content=\"SEKİZ — Arnavutköy Korkmaz Yiğit Anadolu Lisesi'nde matematik ödevleri için kurulmuş bir uygulama.\"",
     bekleyen: 'meta açıklama',
-  },
-  {
-    ad: 'og açıklamasında veli yine "izleyen" taraf olursa',
-    dosya: META,
-    eski:
-      'content="Ödev, değerlendirme, geri bildirim ve gelişim tek yerde. Öğrenci kendi gelişimini takip eder, öğretmen süreci görür, veli sürece dahil olur."',
-    yeni:
-      'content="Ödev, teslim ve gelişim tek yerde. Veli çocuğunun gidişatını izler."',
-    bekleyen: 'og açıklamasında veli',
   },
   {
     ad: 'Bölüm sırası kayarsa',
