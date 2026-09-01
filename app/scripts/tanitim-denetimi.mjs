@@ -323,9 +323,33 @@ console.log('\n5. Metindeki iddialar');
     '"Bir öğretmenin sınıf deneyiminden doğdu." bölümü var',
     /Bir öğretmenin sınıf deneyiminden doğdu\./.test(metin),
   );
+  /* KÜNYE SATIRI HERO'DAN KALKTI — İKİ YÖNLÜ KİLİT.
+   *
+   * Bir tur önce hero'da "Fikir, pedagojik tasarım ve yazılım
+   * geliştirme" duruyordu ve VARLIĞI ölçülüyordu; öğretmen bu turda
+   * kaldırılmasını istedi.
+   *
+   * Ölçüm silinmedi, TERSİNE ÇEVRİLDİ ve ikiye ayrıldı: hero'da
+   * olmadığı VE künye bölümünde durduğu ayrı ayrı ölçülüyor. Yalnız
+   * "hero'da yok" ölçseydik cümle sayfadan tamamen silinebilirdi;
+   * yalnız "künyede var" ölçseydik hero'ya geri gelebilirdi. */
+  const heroMetni = await sayfa.evaluate(
+    () => (document.querySelector('main section')?.innerText ?? '').replace(/\s+/g, ' '),
+  );
   bak(
-    'hero künye satırı: fikir + pedagojik tasarım + yazılım geliştirme',
-    /Fikir, pedagojik tasarım ve yazılım geliştirme/.test(metin),
+    'hero künye satırı KALKTI',
+    heroMetni.length > 0 && !/Fikir, pedagojik tasarım/.test(heroMetni),
+    `${heroMetni.length} karakter`,
+  );
+  bak(
+    'aynı cümle künye bölümünde DURUYOR',
+    /fikir, pedagojik tasarım ve yazılım geliştirme/i.test(metin),
+  );
+
+  /* HERO'NUN TEK TANIM CÜMLESİ — öğretmenin kendi cümlesi. */
+  bak(
+    'hero tanım cümlesi: dijital eğitim platformu',
+    /dijital eğitim platformudur/.test(metin),
   );
 
   /* -------------------------------------------------------------------
@@ -335,9 +359,12 @@ console.log('\n5. Metindeki iddialar');
    * turda bir yeniden düzenlemede kaybolur ve kimse fark etmez.
    * Aşağıdakilerin her biri brief'in bir bölümünün ÇEKİRDEĞİ.
    * ----------------------------------------------------------------- */
+  /* BRIEF'İN ALT BAŞLIĞI ÇIKTI — öğretmenin talimatı ("bu cümle hiç
+   * olmasın"). H1 de "…için tasarlandı." ile bittiği için art arda aynı
+   * bitişi okutuyordu. Yasak olarak yazılıyor ki geri gelmesin. */
   bak(
-    'hero alt başlığı brief\'ten',
-    /şeffaf, yönetilebilir ve anlamlı verilerle/.test(metin),
+    'kalkan alt başlık geri gelmemiş',
+    !/şeffaf, yönetilebilir ve anlamlı verilerle/.test(metin),
   );
   bak(
     'künye anlatısı: masa başı teorisi değil, tahta başı',
@@ -348,8 +375,42 @@ console.log('\n5. Metindeki iddialar');
     /Bürokratik ödev kontrolü/.test(metin),
   );
   bak(
-    'velinin gördüğü: karmaşık grafik değil somut veri',
-    /karmaşık grafikler yerine anlaşılır, somut ve yapıcı verilerle/.test(metin),
+    'öğretmen iki ölçekte birden: sınıf ritmi + bireysel gelişim',
+    /sınıfın genel ritmini, öğrencinin bireysel gelişimini görür/i.test(metin),
+  );
+  bak(
+    'nokta atışı müdahale: bireysel ihtiyaçlar',
+    /öğrencilerin bireysel ihtiyaçlarını anında tespit etme imkânı/.test(metin),
+  );
+  /* BAŞLIK OLARAK "YANLIŞ" YOK — öğretmenin açık talimatı. Kelime
+   * GÖVDEDE duruyor ve yukarıdaki "yanlış yaptığı sorular" ölçümü onu
+   * ayrıca arıyor; yasaklanan şey onu bir başlığa çıkarmak. */
+  const rolBasliklari = await sayfa.evaluate(() =>
+    [...document.querySelectorAll('li span.font-semibold')].map((e) => e.textContent ?? ''),
+  );
+  bak(
+    'hiçbir madde başlığı "yanlış" ile başlamıyor',
+    rolBasliklari.length > 0 && !rolBasliklari.some((b) => kucult(b).includes('yanlış')),
+    `${rolBasliklari.length} madde başlığı`,
+  );
+
+  /* ÖĞRENCİ: gönderdikten sonra ne gördüğü — öğretmenin bu turdaki
+   * açık isteği (puan, doğru/yanlış, genel ortalama, konu alanları). */
+  bak(
+    'öğrenci gönderdikten sonra puanını ve gelişimini görüyor',
+    /Ödevini gönderdikten sonra aldığı puanı/.test(metin) &&
+      /tüm ödevlerden genel ortalamasını/.test(metin),
+  );
+  /* "KARMAŞIK GRAFİKLER YERİNE" ÇIKTI — öğretmenin talimatı: olumsuz
+   * bir örnek üzerinden anlatma. Ölçüm kalan olumlu yarıya taşındı ve
+   * kalkan yarı ayrıca yasaklandı. */
+  bak(
+    'velinin gördüğü: somut ve yapıcı veri',
+    /Süreci anlaşılır, somut ve yapıcı verilerle takip eder/.test(metin),
+  );
+  bak(
+    'olumsuz örnek ("karmaşık grafikler") geri gelmemiş',
+    !/karmaşık grafik/i.test(metin),
   );
 
   /* TÜRKÇE YAZIM DÜZELTMELERİNİN KİLİDİ.
@@ -594,13 +655,26 @@ console.log('\n5. Metindeki iddialar');
    * kuralının sayfadaki kilidi olmayı sürdürüyor: tamamlanmamış ödev
    * gizlenmiyor, iki ayrı yerde AÇIKÇA anlatılıyor. İkisi de ayrı ayrı
    * ölçülüyor ki biri silinince öbürü örtmesin. */
+  /* YAPILMAMIŞ ÖDEV — ÖLÇÜMLER TAŞINDI, İDDİA AYNI VE HÂLÂ İKİ YERDE.
+   *
+   * Öğretmen bu turda iki BAŞLIĞI kaldırdı ("Tamamlanmamış Çalışma",
+   * "Tamamlanmamış Ödev"): olumsuzu ayrı bir başlık olarak öne
+   * çıkarmaya gerek görmedi ve bilgi zaten başka maddelerin içinde
+   * duruyordu. Kalkan şey BAŞLIK, gerçek değil.
+   *
+   * Kalıcı dil kuralı ("Teslim edilmemiş ödev gizlenmez") bu yüzden
+   * gevşemedi; desenler gerçeğin şu an yazılı olduğu iki cümleye
+   * taşındı ve yine AYRI AYRI ölçülüyor ki biri silinince öbürü
+   * örtmesin:
+   *   öğretmen → "yalnızca ödevin yapılıp yapılmadığını değil…"
+   *   veli     → "yaptığı ve yapmadığı ödevleri…" */
   bak(
-    'gerçek korunuyor: öğrencinin tamamlaması gerekenler anlatılıyor',
-    /tamamlaması gereken/.test(metin),
+    'gerçek korunuyor: yapılmayan ödev öğretmene anlatılıyor',
+    /ödevin yapılıp yapılmadığını/.test(metin),
   );
   bak(
-    'gerçek korunuyor: tamamlanmamış ödev öğretmene anlatılıyor',
-    /henüz tamamlanmadığını/.test(metin),
+    'gerçek korunuyor: yapılmayan ödev veliye anlatılıyor',
+    /yaptığı ve yapmadığı ödevleri/.test(metin),
   );
 
   /* VELİ BÖLÜMÜNDE "EKSİK" YOK — AMA SAYFADA VAR. İKİ YÖNLÜ KİLİT.
@@ -620,7 +694,7 @@ console.log('\n5. Metindeki iddialar');
    * "eksik olduğu konu alanları" ölçümü bu çiftin ikinci yarısı. */
   const veliMetni = await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll('h2')].find((h) =>
-      /Şeffaf ve anlamlı bilgi akışı/.test(h.textContent || ''),
+      /Öğrenme sürecine aile de eşlik eder/.test(h.textContent || ''),
     );
     // `innerText` satır sarmalarını \n olarak döndürüyor; boşluk
     // normalize edilmezse aranan cümle kelimenin ortasından bölünmüş
@@ -629,16 +703,27 @@ console.log('\n5. Metindeki iddialar');
   });
   bak(
     'veli bölümü gerçekten bulundu',
-    /Şeffaf ve anlamlı bilgi akışı/.test(veliMetni),
+    /Öğrenme sürecine aile de eşlik eder/.test(veliMetni),
     `${veliMetni.length} karakter`,
   );
+  /* ⚠ BU ÖLÇÜM BU TURDA TERSİNE ÇEVRİLDİ — ve gerekçesi kayda geçiyor.
+   *
+   * İki tur önce öğretmene sormuştum, cevabı "yalnız veli bölümünde
+   * kalksın" olmuştu ve burada "veli bölümünün kendi metninde `eksik`
+   * YOK" diye kilitlenmişti. Bu turda öğretmen cümleyi kelimesi
+   * kelimesine geri yazdırdı. Son talimat geçerli.
+   *
+   * GEVŞEME DEĞİL, YÖN DEĞİŞİKLİĞİ: cümlenin sayfada DURDUĞU ölçülüyor.
+   * Asıl kural — brief'in yasağı — zaten ayrı bir desende ve yürürlükte:
+   * `çocuğunuzun eksik…`. Yani veliye "sizin çocuğunuzun eksikleri"
+   * diye seslenmek hâlâ imkânsız.
+   *
+   * `kucult` KULLANILIYOR: `/eksik/i` Türkçe "EKSİK" ile eşleşmez
+   * (U+0130 tuzağı, yukarıdaki açıklama). */
   bak(
-    'veli bölümünün KENDİ metninde "eksik" geçmiyor',
-    // `/eksik/i` "EKSİK" ile EŞLEŞMEZ (İ tuzağı, yukarıdaki `kucult`
-    // açıklaması). Bu ölçüm bir YOKLUK ölçtüğü için tuzak burada en
-    // tehlikeli hâlinde: yanlış eşleşme sessizce "temiz" derdi.
-    veliMetni.length > 0 && !kucult(veliMetni).includes('eksik'),
-    (veliMetni.match(/[^.]*eksik[^.]*\./i) || ['—'])[0].trim().slice(0, 70),
+    'veli bölümünde konu alanları cümlesi duruyor',
+    kucult(veliMetni).includes('eksik olduğu veya daha fazla çalışabileceği'),
+    veliMetni.slice(0, 60) + '…',
   );
 
   /* VELİ "DAHİL OLAN" TARAFTIR — iki yerde, ikisi de ölçülüyor.
@@ -765,13 +850,15 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
    *   3. Sona "SEKİZ'in arkasındaki yaklaşım" künyesi eklendi.
    *
    * Liste GEVŞETİLMEDİ, uzadı: sıra hâlâ birebir ölçülüyor. */
-  /* BU TURDA BEŞ BAŞLIK DEĞİŞTİ, SIRA VE SAYI AYNI (14).
-   * Hepsi brief'ten:
-   *   Sınıftan doğdu.            → Bir öğretmenin sınıf deneyiminden doğdu.
-   *   Öğrenme bir sonuç değil…   → felsefeden ÖĞRETMEN bölümüne taşındı
-   *   (felsefe)                  → İsmini matematiğin sonsuzluk düşüncesinden alır.
-   *   Öğrenci kendi öğrenme…     → Kendi gelişim yolculuğunun farkında.
-   *   Öğrenme sürecine aile de…  → Şeffaf ve anlamlı bilgi akışı.
+  /* SIRA VE SAYI AYNI (14); başlıklar iki turda değişti.
+   *
+   * Öğretmenin son düzeltmeleri:
+   *   Öğretmen bölümü → "Öğretmen sınıfın genel ritmini, öğrencinin
+   *     bireysel gelişimini görür." (brief'in oraya koyduğu
+   *     "Öğrenme bir sonuç değil…" bir kopyala-yapıştır kaymasıydı;
+   *     o dize artık sayfada geçmiyor)
+   *   Veli bölümü → "Öğrenme sürecine aile de eşlik eder." geri geldi
+   *
    * Liste GEVŞETİLMEDİ: sıra hâlâ birebir ölçülüyor. */
   const BEKLENEN = [
     'SEKİZ neden var?',
@@ -779,9 +866,9 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
     'İsmini matematiğin sonsuzluk düşüncesinden alır.',
     'Ödevden gelişime, öğrenmenin tamamı tek yerde.',
     'Kendi gelişim yolculuğunun farkında.',
-    'Öğrenme bir sonuç değil, devam eden bir süreçtir.',
+    'Öğretmen sınıfın genel ritmini, öğrencinin bireysel gelişimini görür.',
     'Sonuç, öğrenmenin bir sonraki adımını gösterir.',
-    'Şeffaf ve anlamlı bilgi akışı.',
+    'Öğrenme sürecine aile de eşlik eder.',
     'Öğrenme, iletişimle güçlenir.',
     "SEKİZ'in öğrenme sürecindeki dijital yüzü.",
     'Değerlendirme, öğrenmeyi görünür kılar.',

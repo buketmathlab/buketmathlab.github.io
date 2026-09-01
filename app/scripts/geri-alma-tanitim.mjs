@@ -52,20 +52,46 @@ const YAMALAR = [
     bekleyen: 'marka cümlesi tam bir yerde',
   },
   {
-    ad: 'Hero alt başlığı brief metninden çıkarsa',
+    // KALKAN ALT BAŞLIK GERİ GELİRSE.
+    ad: 'Kalkan hero alt başlığı geri konursa',
     dosya: SAYFA,
-    eski: 'Öğrenci gelişimini ve ödev süreçlerini şeffaf, yönetilebilir ve anlamlı verilerle',
-    yeni: 'Öğrenci gelişimini ve ödev süreçlerini anlaşılır biçimde',
-    bekleyen: "hero alt başlığı brief'ten",
+    eski: '        <p className="mx-auto mt-6 max-w-[36rem] text-[18px]',
+    yeni:
+      '        <p>Öğrenci gelişimini ve ödev süreçlerini şeffaf, yönetilebilir ve anlamlı verilerle görünür kılmak için tasarlandı.</p>\n        <p className="mx-auto mt-6 max-w-[36rem] text-[18px]',
+    bekleyen: 'kalkan alt başlık geri gelmemiş',
   },
   {
-    // VELİ CÜMLESİ HERO'DAN DÜŞERSE. Brief'in alt başlığı veliden hiç
-    // söz etmiyor; rol satırı bu yüzden bilerek korundu.
-    ad: 'Hero rol satırı silinirse (veli düşer)',
+    // HERO'NUN TEK TANIM CÜMLESİ.
+    ad: 'Hero tanım cümlesi silinirse',
     dosya: SAYFA,
-    eski: 'sürece dahil olduğu bir zemin kurar.',
-    yeni: 'birlikte ilerlediği bir zemin kurar.',
+    eski: 'velinin sürece dahil olduğu dijital eğitim platformudur.',
+    yeni: 'velinin de yer aldığı bir uygulamadır.',
+    bekleyen: 'hero tanım cümlesi: dijital eğitim platformu',
+  },
+  {
+    // VELİ CÜMLESİ HERO'DAN DÜŞERSE.
+    ad: 'Hero tanımından veli düşerse',
+    dosya: SAYFA,
+    eski: 've\n          velinin sürece dahil olduğu dijital eğitim platformudur.',
+    yeni: 'dijital eğitim platformudur.',
     bekleyen: 'hero: velinin sürece DAHİL olduğu',
+  },
+  {
+    // KÜNYE SATIRI HERO'YA GERİ GELİRSE — iki yönlü kilidin yarısı.
+    ad: 'Künye satırı hero\'ya geri konursa',
+    dosya: SAYFA,
+    eski: '        <h1 className="mt-10 font-display',
+    yeni:
+      '        <p>Fikir, pedagojik tasarım ve yazılım geliştirme</p>\n        <h1 className="mt-10 font-display',
+    bekleyen: 'hero künye satırı KALKTI',
+  },
+  {
+    // KİLİDİN ÖBÜR YARISI: cümle künyeden de silinirse.
+    ad: 'Künye satırı künye bölümünden de silinirse',
+    dosya: SAYFA,
+    eski: "fikir, pedagojik tasarım ve yazılım geliştirme süreçleri",
+    yeni: "SEKİZ'in süreçleri",
+    bekleyen: 'aynı cümle künye bölümünde DURUYOR',
   },
   {
     ad: 'Künye anlatısı brief metninden çıkarsa',
@@ -119,12 +145,20 @@ const YAMALAR = [
     bekleyen: 'geri çekilen felsefe cümlesi',
   },
   {
-    // KORUNAN GÜVENCE 1 — kalıcı dil kuralı (öğrenci tarafı).
-    ad: 'Öğrenci maddesinden "tamamlaması gereken" düşerse',
+    // KALICI DİL KURALI 1 — yapılmayan ödev, veli tarafı.
+    ad: 'Veli maddesinden "yapmadığı ödevleri" düşerse',
     dosya: SAYFA,
-    eski: "'Tamamladığı, tamamlaması gereken ve sıradaki çalışmalarını tek ekrandan takip eder.',",
-    yeni: "'Tamamladığı ve sıradaki çalışmalarını tek ekrandan takip eder.',",
-    bekleyen: 'öğrencinin tamamlaması gerekenler',
+    eski: 'öğrencinin yaptığı ve yapmadığı ödevleri,',
+    yeni: 'öğrencinin ödevlerini,',
+    bekleyen: 'yapılmayan ödev veliye anlatılıyor',
+  },
+  {
+    // ÖĞRENCİNİN GÖNDERDİKTEN SONRA GÖRDÜKLERİ — bu turun isteği.
+    ad: 'Öğrencinin puan/ortalama maddesi silinirse',
+    dosya: SAYFA,
+    eski: "'Ödevini gönderdikten sonra aldığı puanı,",
+    yeni: "'Sonuçlarını görür. Eski hâl:",
+    bekleyen: 'öğrenci gönderdikten sonra puanını',
   },
   {
     // KORUNAN GÜVENCE 2 — Kural 6 / Part XXI.
@@ -143,12 +177,34 @@ const YAMALAR = [
     bekleyen: 'çözüm fotoğrafının zorunlu olduğu',
   },
   {
-    // KORUNAN GÜVENCE 4 — kalıcı dil kuralı (öğretmen tarafı).
-    ad: 'Öğretmen maddesinden tamamlanmamış ödev düşerse',
+    // KALICI DİL KURALI 2 — yapılmayan ödev, öğretmen tarafı.
+    ad: 'Öğretmen maddesinden "ödevin yapılıp yapılmadığı" düşerse',
     dosya: SAYFA,
-    eski: "'Hangi öğrencilerin çalışmalarını tamamladığını, hangi ödevlerin henüz tamamlanmadığını görür.',",
-    yeni: "'Hangi öğrencilerin çalışmalarını tamamladığını görür.',",
-    bekleyen: 'tamamlanmamış ödev öğretmene anlatılıyor',
+    eski: 'yalnızca ödevin yapılıp yapılmadığını değil, ',
+    yeni: '',
+    bekleyen: 'yapılmayan ödev öğretmene anlatılıyor',
+  },
+  {
+    // BAŞLIK OLARAK "YANLIŞ" YASAĞI.
+    ad: 'Bir madde başlığı "Yanlışlar" olursa',
+    dosya: SAYFA,
+    eski: "'Soru ve Puan Dökümü',",
+    yeni: "'Yanlışlar ve Konular',",
+    bekleyen: 'hiçbir madde başlığı "yanlış" ile başlamıyor',
+  },
+  {
+    ad: 'Öğretmen başlığı iki ölçeği anlatmayı bırakırsa',
+    dosya: SAYFA,
+    eski: 'baslik="Öğretmen sınıfın genel ritmini, öğrencinin bireysel gelişimini görür."',
+    yeni: 'baslik="Öğretmen süreci görür."',
+    bekleyen: 'öğretmen iki ölçekte birden',
+  },
+  {
+    ad: '"Nokta atışı" maddesi eski hâline dönerse',
+    dosya: SAYFA,
+    eski: 'öğrencilerin bireysel ihtiyaçlarını anında tespit etme imkânı',
+    yeni: 'kişiselleştirilmiş ihtiyaçları anında tespit etme imkânı',
+    bekleyen: 'nokta atışı müdahale: bireysel ihtiyaçlar',
   },
   {
     ad: 'Öğretmenin zaman kazancı maddesi silinirse',
@@ -172,19 +228,27 @@ const YAMALAR = [
     bekleyen: 'yazım: "Motivasyon"',
   },
   {
-    ad: 'Veli maddesi brief metninden çıkarsa',
+    ad: 'Veli maddesi somut veri demeyi bırakırsa',
     dosya: SAYFA,
-    eski: 'karmaşık grafikler yerine anlaşılır, somut ve yapıcı verilerle',
-    yeni: 'grafiklerle',
-    bekleyen: 'velinin gördüğü: karmaşık grafik değil somut veri',
+    eski: 'Süreci anlaşılır, somut ve yapıcı verilerle takip eder.',
+    yeni: 'Süreci takip eder.',
+    bekleyen: 'velinin gördüğü: somut ve yapıcı veri',
   },
   {
-    // İKİ YÖNLÜ KİLİDİN BİRİNCİ YARISI.
-    ad: '"eksik" veli bölümüne geri gelirse',
+    // OLUMSUZ ÖRNEK GERİ GELİRSE.
+    ad: '"karmaşık grafikler yerine" geri konursa',
     dosya: SAYFA,
-    eski: 'gelişimini güçlendirebileceği konu alanlarını takip edebilir.',
-    yeni: 'eksik olduğu konu alanlarını takip edebilir.',
-    bekleyen: 'veli bölümünün KENDİ metninde "eksik"',
+    eski: 'Süreci anlaşılır, somut ve yapıcı verilerle takip eder.',
+    yeni: 'Süreci karmaşık grafikler yerine anlaşılır verilerle takip eder.',
+    bekleyen: 'olumsuz örnek ("karmaşık grafikler") geri gelmemiş',
+  },
+  {
+    // ÖĞRETMENİN GERİ İSTEDİĞİ CÜMLE SİLİNİRSE.
+    ad: 'Veli konu alanları cümlesi silinirse',
+    dosya: SAYFA,
+    eski: 'Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu alanları',
+    yeni: 'Konu alanları',
+    bekleyen: 'veli bölümünde konu alanları cümlesi duruyor',
   },
   {
     // İKİ YÖNLÜ KİLİDİN İKİNCİ YARISI — tek başına birinciyi KIRMAZ.

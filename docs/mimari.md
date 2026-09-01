@@ -1645,6 +1645,67 @@ seçicisi eski `h2`'yi arıyordu, yazarlık cümlesi brief'in cümlesiyle
 değişmişti. Dördü de **taşındı, gevşetilmedi**; yazarlık ölçümü ikiye
 bölündü (kimin tasarladığı + bir yazılım şirketinin ürünü olmadığı).
 
+### Öğretmenin madde madde düzeltmesi (aynı turun ikinci yarısı)
+
+Sayfa yayımlanmadan önce öğretmen metni okuyup madde madde düzeltti.
+Üçü **kendi önceki kararını geri alıyor** ve bu yüzden kayda geçiyor.
+
+**Hero sadeleşti.** "Fikir, pedagojik tasarım ve yazılım geliştirme"
+satırı ve brief'in alt başlığı ("…şeffaf, yönetilebilir ve anlamlı
+verilerle görünür kılmak için tasarlandı.") kalktı; yerine tek tanım
+cümlesi geldi:
+
+> SEKİZ; öğrencinin öğrenme sürecini takip ettiği, öğretmenin gelişimi
+> gördüğü ve velinin sürece dahil olduğu dijital eğitim platformudur.
+
+Bu, H1'in de "…için tasarlandı." ile bitmesinden doğan tekrarı çözüyor —
+bir tur önce dürüst not olarak yazmıştım, öğretmen cümleyi tamamen
+kaldırarak çözdü.
+
+Künye satırı **silinmedi, tek yerde toplandı**: aynı cümle sayfanın
+sonundaki künye bölümünde duruyor. Denetim **iki yönlü** kilitliyor —
+hero'da OLMADIĞI ve künyede DURDUĞU ayrı ayrı ölçülüyor.
+
+**⚠ "eksik" veli bölümüne geri geldi.** İki tur önce açıkça sormuştum ve
+cevabı *"yalnız veli bölümünde kalksın"* olmuştu; cümle çıkarılmış ve
+"veli bölümünün kendi metninde `eksik` YOK" diye kilitlenmişti. Bu turda
+öğretmen cümleyi kelimesi kelimesine geri yazdırdı:
+
+> Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu alanları
+> veli tarafından da görülebilir.
+
+Son talimat geçerli; **kilidin o yarısı tersine çevrildi** (artık
+cümlenin DURDUĞU ölçülüyor). Asıl kural gevşemedi: `çocuğunuzun eksik…`
+hâlâ yasaklı desen, yani veliye "sizin çocuğunuzun eksikleri" diye
+seslenmek hâlâ imkânsız. Kalıcı dil kuralıyla da uyumlu — cümle gerçeği
+söylüyor ve öğrenciyi etiketlemiyor.
+
+**İki "tamamlanmamış" başlığı kalktı, gerçek kalktı sanılmasın.**
+Öğretmen olumsuzu ayrı bir BAŞLIK olarak öne çıkarmak istemedi. Bilgi
+zaten iki maddenin gövdesinde duruyor ve denetim **ikisini de ayrı ayrı**
+ölçmeye devam ediyor:
+
+| Nerede | Cümle |
+|---|---|
+| Öğretmen | "yalnızca **ödevin yapılıp yapılmadığını** değil…" |
+| Veli | "öğrencinin **yaptığı ve yapmadığı** ödevleri…" |
+
+Kalkan şey başlık, gerçek değil — kalıcı dil kuralı ("teslim edilmemiş
+ödev gizlenmez") yerinde.
+
+**Başlık olarak "yanlış" yasak, gövdede serbest.** Öğretmenin talimatı:
+"yanlışlar ve konular" gibi bir madde başlığı olmasın. Kelime gövdede
+duruyor ("doğru ve yanlış yaptığı sorular") ve o ayrıca ölçülüyor.
+Denetim artık **bütün madde başlıklarını** tarayıp hiçbirinin "yanlış"
+içermediğini kontrol ediyor — tek bir desen değil, kural.
+
+Diğer düzeltmeler: öğretmen başlığı iki ölçeği birden söylüyor ("sınıfın
+genel ritmini, öğrencinin bireysel gelişimini"); veli başlığı eski hâline
+döndü; "Pozitif İletişim" maddesi kalktı (iletişim okulla değil
+öğretmenle kuruluyor — `mesaj_gonder` yalnız veli↔öğretmen kanalı, 0025);
+"karmaşık grafikler yerine" çıktı (olumsuz örnekle anlatma); "Gördükleri"
+başlığı üç somut başlığa bölündü.
+
 ## Projeyi uyanık tutan zamanlayıcı (yeni SQL yok)
 
 **Olay.** 2026 Ağustos'unda Supabase, ücretsiz plandaki projeyi 7 günlük

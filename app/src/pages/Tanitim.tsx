@@ -359,26 +359,15 @@ function Hero() {
           <SekizWordmark boyut="lg" acilistaDonsun />
         </div>
 
-        {/* KÜNYE SATIRI — YALNIZ YENİ BİLGİ. Brief hero'da "Fikir,
-            pedagojik tasarım ve yazılım geliştirme / Buket Topuzoğlu ·
-            Matematik Öğretmeni" istiyor. Ama adı bir satır yukarıdaki
-            `SekizWordmark` zaten yazıyor ("Buket Topuzoğlu · Matematik")
-            ve öğretmen bir önceki turda mührün altındaki ikinci ad
-            satırını BİLEREK kaldırmıştı ("gerek yok").
+        {/* HERO'DA KÜNYE SATIRI YOK — VE BU BİR UNUTMA DEĞİL.
+            Bir tur önce buraya "Fikir, pedagojik tasarım ve yazılım
+            geliştirme" girmişti (brief hero'da tam künye istiyordu);
+            öğretmen bu turda kaldırılmasını istedi.
 
-            Bu yüzden hero'ya adın kendisi ikinci kez girmiyor; giren
-            şey ROLÜN KAPSAMI. Tam künye (ad + unvan + açıklama) sayfanın
-            sonundaki "SEKİZ'in arkasındaki yaklaşım" bölümünde. */}
-        {/* BÜYÜK HARFE ÇEVRİLMİYOR — ve bu bir tercih değil, ölçülmüş
-            bir karar. Sayfanın `ustBaslik` idiyomu `uppercase` ama o
-            idiyom TEK KELİMELİK etiketler için ("Öğrenci", "Veli").
-            Altı kelimelik bir künye cümlesi 12 px'de tamamı büyük
-            harfle okunmuyor; üstelik Türkçe'de `text-transform`
-            i → İ dönüşümüne bağımlı kalıyor. Cümle cümle gibi
-            duruyor. */}
-        <p className="mt-4 text-[13px] leading-[1.5] text-muted">
-          Fikir, pedagojik tasarım ve yazılım geliştirme
-        </p>
+            BİLGİ KAYBOLMADI: aynı cümle sayfanın sonundaki "SEKİZ'in
+            arkasındaki yaklaşım" bölümünde tam künyenin içinde duruyor
+            ve denetim onu orada ölçüyor. Ayrıca hero'da OLMADIĞI da
+            ölçülüyor — iki yönlü kilit, sessizce geri gelmesin. */}
 
         {/* H1 ARTIK MARKA CÜMLESİ DEĞİL — ÖĞRETMENİN KARARI.
             Brief hero başlığı olarak "Sınıfın Gerçek İhtiyacından Doğan
@@ -394,23 +383,20 @@ function Hero() {
           Sonsuz bir öğrenme döngüsü için tasarlandı.
         </h1>
 
-        {/* ALT BAŞLIK BRIEF'TEN, BİREBİR. */}
-        <p className="mx-auto mt-6 max-w-[36rem] text-[18px] leading-[1.6] text-ink md:text-[19px]">
-          Öğrenci gelişimini ve ödev süreçlerini şeffaf, yönetilebilir ve anlamlı verilerle
-          görünür kılmak için tasarlandı.
-        </p>
-
-        {/* ROL SATIRI BİLEREK KORUNDU — brief'in alt başlığı veliden hiç
-            söz etmiyor.
+        {/* TEK TANIM CÜMLESİ — ÖĞRETMENİN KENDİ CÜMLESİ.
+            Brief'in alt başlığı ("…şeffaf, yönetilebilir ve anlamlı
+            verilerle görünür kılmak için tasarlandı.") bu turda çıktı:
+            H1 de "…için tasarlandı." ile bittiği için art arda aynı
+            bitişi okutuyordu, ve öğretmen o cümlenin hiç olmamasını
+            istedi.
 
             VELİ "DESTEK OLAN" DEĞİL "DAHİL OLAN". Öğretmenin kuralı ve
             gerekçesi net: veli öğretmenin yerine geçen ya da ondan pay
             alan taraf değil; sürece dahil edilen, ödevde şeffaflık
-            sağlanan taraf. Denetim bu ifadeyi ayrıca ölçüyor — cümle
-            düşseydi o kilit kırılırdı. */}
-        <p className="mx-auto mt-4 max-w-[36rem] text-[17px] leading-[1.6] text-muted">
-          Öğrencinin kendi gelişimini takip ettiği, öğretmenin süreci gördüğü ve velinin
-          sürece dahil olduğu bir zemin kurar.
+            sağlanan taraf. Denetim bu ifadeyi ayrıca ölçüyor. */}
+        <p className="mx-auto mt-6 max-w-[36rem] text-[18px] leading-[1.6] text-ink md:text-[19px]">
+          SEKİZ; öğrencinin öğrenme sürecini takip ettiği, öğretmenin gelişimi gördüğü ve
+          velinin sürece dahil olduğu dijital eğitim platformudur.
         </p>
 
         {/* Dört adım. Ayraç `·` markanın ayracı (SekizWordmark ile aynı). */}
@@ -708,17 +694,24 @@ function Ogrenci() {
             'Öz Düzenleme Becerisi',
             'Öğrenci neyi başardığını ve hangi alanda gelişmesi gerektiğini kendi panelinden kolayca takip eder.',
           ],
-          [
-            'Tamamlanmamış Çalışma',
-            'Tamamladığı, tamamlaması gereken ve sıradaki çalışmalarını tek ekrandan takip eder.',
-          ],
+          /* "TAMAMLANMAMIŞ ÇALIŞMA" MADDESİ BU TURDA KALKTI.
+             Öğretmenin gerekçesi: "Sade ve Odaklı Takip" maddesi zaten
+             "sıradaki sorumluluklar" diyor, ikinci bir madde gereksiz
+             tekrar. Gerçek gizlenmiyor — yapılmamış ödev sayfada hâlâ
+             AÇIKÇA yazılı: öğretmen maddesinde "ödevin yapılıp
+             yapılmadığını", veli maddesinde "yaptığı ve yapmadığı
+             ödevleri". Denetim ikisini de ölçüyor. */
           [
             'Teslim Akışı',
             'Ödevini çözüm fotoğrafıyla teslim eder — fotoğraf yüklenmeden teslim tamamlanmaz.',
           ],
           [
             'Cevap Anahtarı',
-            'Teslimden önce açılmaz; teslimden hemen sonra açılır. Test türündeki ödevlerde puan teslim anında görünür.',
+            'Teslimden önce açılmaz; teslimden hemen sonra açılır.',
+          ],
+          [
+            'Puan ve Gelişim',
+            'Ödevini gönderdikten sonra aldığı puanı, doğru ve yanlış yaptığı soruları, tüm ödevlerden genel ortalamasını ve gelişimini güçlendirebileceği konu alanlarını takip eder.',
           ],
         ]}
       />
@@ -735,15 +728,13 @@ function Ogretmen() {
   return (
     <EkranliBolum
       ustBaslik="Öğretmen"
-      /* BAŞLIK BRIEF'TEN. Bu dize bir tur önce FELSEFE bölümünün
-         başlığıydı; brief onu öğretmen kartının başlığı olarak
-         istiyor ve felsefe bölümüne kendi yeni başlığını veriyor.
-         İkisi de kullanılıyor, tekrar yok.
-
-         Bir kopyala-yapıştır kayması olabileceğini öğretmene söyledim;
-         öyleyse bugünkü hâline ("Öğretmen yalnızca sonucu değil,
-         öğrenmenin gelişimini görür.") tek satırda döner. */
-      baslik="Öğrenme bir sonuç değil, devam eden bir süreçtir."
+      /* BAŞLIK ÖĞRETMENİN KENDİ CÜMLESİ.
+         Bir tur önce brief'in "Öğrenme bir sonuç değil, devam eden bir
+         süreçtir." dizesi buradaydı; bunun bir kopyala-yapıştır kayması
+         olabileceğini söylemiştim ve öğretmen bu turda gerçek öğretmen
+         başlığını yazdı. İki ölçek — sınıf ve tek tek öğrenci — başlığın
+         kendisinde duruyor. */
+      baslik="Öğretmen sınıfın genel ritmini, öğrencinin bireysel gelişimini görür."
       ters
       ekranlar={
         <>
@@ -774,19 +765,30 @@ function Ogretmen() {
           ],
           [
             'Nokta Atışı Müdahale',
-            'Sınıfın genel eksiklerini ve kişiselleştirilmiş ihtiyaçları anında tespit etme imkânı sunar.',
+            'Sınıfın genel eksiklerini ve öğrencilerin bireysel ihtiyaçlarını anında tespit etme imkânı sunar.',
           ],
           [
             'Zaman Yönetimi',
             'Bürokratik ödev kontrolü yükünü hafifleterek öğretmenin enerjisini doğrudan eğitime odaklamasına yardımcı olur.',
           ],
+          /* "TAMAMLANMAMIŞ ÖDEV" MADDESİ BU TURDA KALKTI.
+             Öğretmenin gerekçesi: olumsuzu ayrı bir BAŞLIK olarak öne
+             çıkarmaya gerek yok; bilgi zaten "Bütünsel Gelişim
+             Takibi"nin içinde ("ödevin yapılıp yapılmadığını"). Yani
+             kalkan şey başlık, gerçek değil — denetim o ifadeyi orada
+             ölçmeye devam ediyor.
+
+             BAŞLIK "YANLIŞLAR" OLAMAZ — öğretmenin açık talimatı.
+             Kelime GÖVDEDE duruyor ("doğru ve yanlış yaptığı sorular"):
+             kalıcı dil kuralı "yanlış"ı yumuşatmayı yasaklıyor, ama onu
+             bir başlık hâline getirmeyi de gerektirmiyor. */
           [
-            'Tamamlanmamış Ödev',
-            'Hangi öğrencilerin çalışmalarını tamamladığını, hangi ödevlerin henüz tamamlanmadığını görür.',
+            'Soru ve Puan Dökümü',
+            'Öğrencilerin doğru ve yanlış yaptığı soruları, bir ödevin sınıf ortalamasını, her öğrencinin o ödevden aldığı puanı ve tüm ödevlerden genel ortalamasını görür.',
           ],
           [
-            'Yanlışlar ve Konular',
-            'Öğrencilerin yanlış yaptığı soruları, ödev ve sınıf ortalamalarını, sınıfın hangi matematik konularında gelişime ihtiyaç duyduğunu inceler.',
+            'Konu Alanları',
+            'Sınıfın hangi matematik konularında gelişime ihtiyaç duyduğunu görür.',
           ],
         ]}
       />
@@ -840,9 +842,10 @@ function Veli() {
   return (
     <EkranliBolum
       ustBaslik="Veli"
-      /* BAŞLIK BRIEF'TEN, "Veli:" ÖN EKİ OLMADAN — rol adı zaten
-         `ustBaslik` olarak hemen üstünde. Türkçe cümle düzeni + nokta. */
-      baslik="Şeffaf ve anlamlı bilgi akışı."
+      /* BAŞLIK ESKİ HÂLİNE DÖNDÜ — öğretmenin bu turdaki kararı.
+         Bir tur önce brief'in "Şeffaf ve Anlamlı Bilgi Akışı" başlığı
+         girmişti; öğretmen bu başlığın geri gelmesini istedi. */
+      baslik="Öğrenme sürecine aile de eşlik eder."
       zemin="yuzey"
       ekranlar={
         <>
@@ -859,40 +862,56 @@ function Veli() {
         </>
       }
     >
-      {/* MADDELER BRIEF'TEN, BİREBİR. Dördüncüsü mevcut metinden korundu:
-          velinin GERÇEKTE ne gördüğünü söyleyen tek cümle o.
+      {/* ⚠ "EKSİK" VELİ BÖLÜMÜNE GERİ GELDİ — VE BU BİR KARAR DEĞİŞİKLİĞİ.
+          Kayda geçiyor çünkü iki tur önce TAM TERSİ seçilmişti.
 
-          "EKSİK" BU BÖLÜMDE YOK — VE BU BİR KAPSAM KARARI.
-          Kalıcı dil kuralı hâlâ yürürlükte: "Yanlış kelimesini her
-          durumda daha yumuşak bir ifadeyle değiştirmeye çalışma."
-          Öğrencinin durumunu anlatan koyu banttaki "eksik olduğu konu
-          alanları" AYNEN DURUYOR ve denetim onu ölçüyor.
+          O turda öğretmene açıkça sormuştum ve cevabı "yalnız veli
+          bölümünde kalksın" olmuştu; cümle çıkarılmış ve denetimde
+          "veli bölümünün kendi metninde `eksik` YOK" diye kilitlenmişti.
+          Bu turda öğretmen cümleyi kelimesi kelimesine geri yazdırdı:
+          "Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu
+          alanları veli tarafından görülebilir."
 
-          Değişen yalnız VELİYE SESLENEN cümleler: brief bu bölümde
-          "çocuğunuzun eksikleri" çağrışımını istemiyor. Öğretmenin
-          kararı birebir buydu: "Yalnız veli bölümünde kalksın."
+          Son talimat geçerli. O yüzden kilidin O YARISI KALKTI — ama
+          diğer yarısı DURUYOR ve asıl kural zaten oydu:
+          `çocuğunuzun eksik…` hâlâ YASAKLI desen. Yani veliye "sizin
+          çocuğunuzun eksikleri" diye seslenmek hâlâ imkânsız; öğrencinin
+          durumunu nesnel olarak yazmak serbest.
 
-          Denetim bunu İKİ YÖNLÜ kilitliyor: veli bölümünün kendi
-          metninde "eksik" YOK, ama sayfada "eksik olduğu konu alanları"
-          VAR. Biri bir gün "hepsinden temizleyelim" derse ikinci ölçüm
-          kırılır. Ürünün hiçbir ekranı bu turda değişmedi. */}
+          Kalıcı dil kuralıyla da uyumlu: "GERÇEĞİ GİZLEME." Bu cümle
+          gerçeği söylüyor ve öğrenciyi etiketlemiyor.
+
+          Fikir yine değişirse değiştirilecek yer: aşağıdaki "Konu
+          Alanları" maddesi ve denetimdeki `çocuğunuzun eksik` yasağı. */}
       <Maddeler
         maddeler={[
+          /* "KARMAŞIK GRAFİKLER YERİNE" ÇIKTI — öğretmenin talimatı:
+             olumsuz bir örnek üzerinden anlatma, doğrudan söyle. */
           [
             'Doğru ve Zamanında Bilgilendirme',
-            'Süreci karmaşık grafikler yerine anlaşılır, somut ve yapıcı verilerle takip eder.',
+            'Süreci anlaşılır, somut ve yapıcı verilerle takip eder.',
           ],
           [
             'Güvenli Eğitim İş Birliği',
             'Çocuğunun akademik disiplinini ve sorumluluk bilincini objektif bir zeminde gözlemler.',
           ],
+          /* "POZİTİF İLETİŞİM" MADDESİ TAMAMEN KALKTI.
+             İki ayrı gerekçe: iletişim OKULLA değil öğretmenle kuruluyor
+             (ölçüldü — `mesaj_gonder` yalnız veli↔öğretmen kanalı,
+             0025), ve öğretmen o maddenin süslü dilini istemedi.
+             İletişimin kendisi zaten "Öğrenme, iletişimle güçlenir."
+             bölümünde sade bir cümleyle anlatılıyor. */
           [
-            'Pozitif İletişim',
-            'Öğretmen ve okul ile olan iletişimi anlık ve sağlıklı bir bilgi akışına dönüştürür.',
+            'Ödev ve Puan Takibi',
+            'Veli, öğrencinin yaptığı ve yapmadığı ödevleri, ödevden aldığı puanı ve ödevlerden genel ortalamasını görebilir.',
           ],
           [
-            'Gördükleri',
-            'Öğrencinin yaptığı ve yapmadığı ödevleri, puanlarını, genel ortalamasını ve gelişimini güçlendirebileceği konu alanlarını takip edebilir.',
+            'Konu Alanları',
+            'Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu alanları veli tarafından da görülebilir.',
+          ],
+          [
+            'Doğru Zamanda Destek',
+            'Bu görünürlük, öğrencinin ihtiyaç duyduğu desteğin doğru zamanda verilmesine yardımcı olur.',
           ],
         ]}
       />
