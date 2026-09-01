@@ -144,14 +144,11 @@ const YAMALAR = [
       '          Sonsuzluk bir varış değil, bir yöndür. Bu yüzden SEKİZ ödevi bir görev listesi gibi değil',
     bekleyen: 'geri çekilen felsefe cümlesi',
   },
-  {
-    // KALICI DİL KURALI 1 — yapılmayan ödev, veli tarafı.
-    ad: 'Veli maddesinden "yapmadığı ödevleri" düşerse',
-    dosya: SAYFA,
-    eski: 'öğrencinin yaptığı ve yapmadığı ödevleri,',
-    yeni: 'öğrencinin ödevlerini,',
-    bekleyen: 'yapılmayan ödev veliye anlatılıyor',
-  },
+  /* VELİ TARAFINDAKİ "yapmadığı ödevleri" YAMASI KALDIRILDI.
+     Öğretmen o cümleyi "öğrencisinin ödev durumunu…" ile değiştirdi;
+     ölçüm de bu yüzden denetimden çıkarıldı (gerekçesi orada yazılı).
+     Bozulacak bir iddia kalmadığı için yama da kalktı — var olmayan
+     bir ölçümü "yakalandı" diye saymak, sayının kendisini bozardı. */
   {
     // ÖĞRENCİNİN GÖNDERDİKTEN SONRA GÖRDÜKLERİ — bu turun isteği.
     ad: 'Öğrencinin puan/ortalama maddesi silinirse',
@@ -164,8 +161,8 @@ const YAMALAR = [
     // KORUNAN GÜVENCE 2 — Kural 6 / Part XXI.
     ad: 'Cevap anahtarı güvencesi maddeden düşerse',
     dosya: SAYFA,
-    eski: "'Teslimden önce açılmaz; teslimden hemen sonra açılır.",
-    yeni: "'Teslimden sonra görünür.",
+    eski: "'Cevap anahtarı ödev tesliminden önce erişime kapalıdır;",
+    yeni: "'Cevap anahtarı teslimden sonra görünür.",
     bekleyen: 'anahtarın yalnız teslimden sonra açıldığı',
   },
   {
@@ -230,15 +227,15 @@ const YAMALAR = [
   {
     ad: 'Veli maddesi somut veri demeyi bırakırsa',
     dosya: SAYFA,
-    eski: 'Süreci anlaşılır, somut ve yapıcı verilerle takip eder.',
+    eski: 'Süreci anlaşılır, somut ve anlık verilerle yapıcı bir şekilde takip eder.',
     yeni: 'Süreci takip eder.',
-    bekleyen: 'velinin gördüğü: somut ve yapıcı veri',
+    bekleyen: 'velinin gördüğü: somut, anlık ve yapıcı veri',
   },
   {
     // OLUMSUZ ÖRNEK GERİ GELİRSE.
     ad: '"karmaşık grafikler yerine" geri konursa',
     dosya: SAYFA,
-    eski: 'Süreci anlaşılır, somut ve yapıcı verilerle takip eder.',
+    eski: 'Süreci anlaşılır, somut ve anlık verilerle yapıcı bir şekilde takip eder.',
     yeni: 'Süreci karmaşık grafikler yerine anlaşılır verilerle takip eder.',
     bekleyen: 'olumsuz örnek ("karmaşık grafikler") geri gelmemiş',
   },

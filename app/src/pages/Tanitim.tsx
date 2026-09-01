@@ -703,15 +703,15 @@ function Ogrenci() {
              ödevleri". Denetim ikisini de ölçüyor. */
           [
             'Teslim Akışı',
-            'Ödevini çözüm fotoğrafıyla teslim eder — fotoğraf yüklenmeden teslim tamamlanmaz.',
+            'Ödevini çözüm fotoğrafıyla teslim eder, fotoğraf yüklenmeden teslim tamamlanmaz.',
           ],
           [
             'Cevap Anahtarı',
-            'Teslimden önce açılmaz; teslimden hemen sonra açılır.',
+            'Cevap anahtarı ödev tesliminden önce erişime kapalıdır; teslimin hemen ardından açılarak öğrencinin kendi çözümlerini incelemesine, hatalarını anında fark edip kendini geliştirmesine olanak tanır.',
           ],
           [
             'Puan ve Gelişim',
-            'Ödevini gönderdikten sonra aldığı puanı, doğru ve yanlış yaptığı soruları, tüm ödevlerden genel ortalamasını ve gelişimini güçlendirebileceği konu alanlarını takip eder.',
+            'Ödevini gönderdikten sonra aldığı puanı, soru bazlı doğru-yanlış analizini, tüm ödevlerden genel başarı ortalamasını ve gelişimini güçlendirebileceği konu alanlarını takip eder.',
           ],
         ]}
       />
@@ -784,7 +784,7 @@ function Ogretmen() {
              bir başlık hâline getirmeyi de gerektirmiyor. */
           [
             'Soru ve Puan Dökümü',
-            'Öğrencilerin doğru ve yanlış yaptığı soruları, bir ödevin sınıf ortalamasını, her öğrencinin o ödevden aldığı puanı ve tüm ödevlerden genel ortalamasını görür.',
+            'Öğrencilerin bireysel ödev puanlarını, genel ortalamalarını ve sınıfın o ödevdeki başarısını takip eder. Aynı zamanda soru bazlı doğru-yanlış dağılımını detaylıca analiz eder.',
           ],
           [
             'Konu Alanları',
@@ -889,7 +889,7 @@ function Veli() {
              olumsuz bir örnek üzerinden anlatma, doğrudan söyle. */
           [
             'Doğru ve Zamanında Bilgilendirme',
-            'Süreci anlaşılır, somut ve yapıcı verilerle takip eder.',
+            'Süreci anlaşılır, somut ve anlık verilerle yapıcı bir şekilde takip eder.',
           ],
           [
             'Güvenli Eğitim İş Birliği',
@@ -903,7 +903,7 @@ function Veli() {
              bölümünde sade bir cümleyle anlatılıyor. */
           [
             'Ödev ve Puan Takibi',
-            'Veli, öğrencinin yaptığı ve yapmadığı ödevleri, ödevden aldığı puanı ve ödevlerden genel ortalamasını görebilir.',
+            'Veli; öğrencisinin ödev durumunu, aldığı puanları ve genel başarı ortalamasını takip edebilir.',
           ],
           [
             'Konu Alanları',

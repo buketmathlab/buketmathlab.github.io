@@ -277,13 +277,15 @@ console.log('\n5. Metindeki iddialar');
    *   eski: "son değerlendirme öğretmen tarafından yapılır"
    *   yeni: "Açık uçlu ödevlerde pedagojik değerlendirme kontrolü" (Kural 5)
    */
-  /* KURAL 6 GÜVENCESİ — ÖLÇÜM TAŞINDI, İDDİA AYNI.
-   * Cümle bu turda kalın girişli bir maddeye geçti: "Cevap Anahtarı:
-   * Teslimden önce açılmaz; teslimden hemen sonra açılır." Desen artık
-   * maddenin GÖVDESİNİ arıyor; "cevap anahtarı" ön eki başlıkta. */
+  /* KURAL 6 GÜVENCESİ — ÖLÇÜM YİNE TAŞINDI, İDDİA AYNI VE DAHA AÇIK.
+   * Öğretmen cümleyi genişletti: artık yalnız "ne zaman açılıyor"u
+   * değil, NİÇİN açıldığını da söylüyor. Desen iki yarıyı birden
+   * arıyor — "önce kapalı" ve "hemen sonra açık" — çünkü kuralın özü
+   * o ikisinin BİRLİKTE doğru olması. */
   bak(
     'anahtarın yalnız teslimden sonra açıldığı yazıyor',
-    /Teslimden önce açılmaz; teslimden hemen sonra açılır/.test(metin),
+    /ödev tesliminden önce erişime kapalıdır/.test(metin) &&
+      /teslimin hemen ardından açıl/.test(metin),
   );
   bak(
     'açık uçluda son puanı öğretmenin verdiği yazıyor',
@@ -399,14 +401,14 @@ console.log('\n5. Metindeki iddialar');
   bak(
     'öğrenci gönderdikten sonra puanını ve gelişimini görüyor',
     /Ödevini gönderdikten sonra aldığı puanı/.test(metin) &&
-      /tüm ödevlerden genel ortalamasını/.test(metin),
+      /tüm ödevlerden genel başarı ortalamasını/.test(metin),
   );
   /* "KARMAŞIK GRAFİKLER YERİNE" ÇIKTI — öğretmenin talimatı: olumsuz
    * bir örnek üzerinden anlatma. Ölçüm kalan olumlu yarıya taşındı ve
    * kalkan yarı ayrıca yasaklandı. */
   bak(
-    'velinin gördüğü: somut ve yapıcı veri',
-    /Süreci anlaşılır, somut ve yapıcı verilerle takip eder/.test(metin),
+    'velinin gördüğü: somut, anlık ve yapıcı veri',
+    /Süreci anlaşılır, somut ve anlık verilerle yapıcı bir şekilde takip eder/.test(metin),
   );
   bak(
     'olumsuz örnek ("karmaşık grafikler") geri gelmemiş',
@@ -672,10 +674,28 @@ console.log('\n5. Metindeki iddialar');
     'gerçek korunuyor: yapılmayan ödev öğretmene anlatılıyor',
     /ödevin yapılıp yapılmadığını/.test(metin),
   );
-  bak(
-    'gerçek korunuyor: yapılmayan ödev veliye anlatılıyor',
-    /yaptığı ve yapmadığı ödevleri/.test(metin),
-  );
+
+  /* ⚠ VELİ TARAFINDAKİ İKİNCİ ÖLÇÜM BU TURDA KALDIRILDI — sessizce
+   * değil, gerekçesiyle.
+   *
+   * Veli maddesi öğretmenin yeni metniyle değişti:
+   *   eski: "öğrencinin YAPTIĞI VE YAPMADIĞI ödevleri…"
+   *   yeni: "öğrencisinin ÖDEV DURUMUNU…"
+   *
+   * "Ödev durumu" yapılmayan ödevi kapsıyor ama onu AÇIKÇA söylemiyor.
+   * Bu yüzden ölçümü yeni cümleye "taşımadım": taşısaydım daha zayıf
+   * bir iddiayı eski adıyla ölçüyor olurdum ve kilit kendini kandırırdı.
+   *
+   * KALICI DİL KURALI YİNE DE AYAKTA, ÜÇ AYRI YERDE:
+   *   • öğretmen maddesi — "ödevin yapılıp yapılmadığını" (yukarıda
+   *     ölçülüyor)
+   *   • veli maddesi — "eksik olduğu veya daha fazla çalışabileceği
+   *     konu alanları" (aşağıda ölçülüyor)
+   *   • ÜRÜNÜN KENDİSİ — veli ekranı hâlâ "Teslim edilmedi" diyor ve bu
+   *     turda ürünün hiçbir ekranına dokunulmadı
+   *
+   * Öğretmene bildirildi; veli maddesine açık ifadeyi geri koymak
+   * isterse tek satırlık iş. */
 
   /* VELİ BÖLÜMÜNDE "EKSİK" YOK — AMA SAYFADA VAR. İKİ YÖNLÜ KİLİT.
    *
