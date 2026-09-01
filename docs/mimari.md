@@ -1458,6 +1458,254 @@ kopya olduğu için kodla birlikte güncellenmiyordu. Kimse fark etmedi.
 çekilen ekranda beklenen cümle parçası yoksa betik **çöküyor**. Yani
 görseli yenilemeyi unutmak artık sessiz bir hata değil.
 
+## Tanıtım sayfası — profesyonelleştirme turu (12 → 14 bölüm)
+
+Öğretmen ayrıntılı bir marka ve içerik brief'i verdi. Turun tek cümlelik
+kuralı onun kendi ifadesi: **"Redesign değil, refinement."** Arka plan,
+renkler, tipografi, sekizgen doku, 8 → ∞ hareketi ve `Bolum` /
+`EkranliBolum` / `Maddeler` düzeni değişmedi; değişen içerik, hiyerarşi
+ve belirli cümleler. **Ürünün hiçbir ekranına dokunulmadı**, yeni SQL yok.
+
+### İki yeni bölüm
+
+**"SEKİZ neden var?"** (1. bölüm) problemi anlatıyor, çözümü değil:
+ödev, teslim, sonuç ve gelişim ayrı kanallara dağıldığında öğrenme süreci
+görünmez oluyor. Ziyaretçi çözümü okumadan önce soruyu okuyor.
+
+**"SEKİZ'in arkasındaki yaklaşım"** (14. bölüm) tam künye: ad, unvan ve
+rolün kapsamı. İki koyu bandın (Gelecek ve kapanış) arasında açık zemin
+olarak duruyor; konumu ritim kararı.
+
+Hero'ya adın kendisi ikinci kez girmedi. Brief hero'da tam künyeyi
+istiyordu ama `SekizWordmark` adı zaten yazıyor ve öğretmen bir önceki
+turda mührün altındaki ikinci ad satırını bilerek kaldırmıştı. Hero'ya
+yalnız **yeni bilgi** girdi: *"Fikir, pedagojik tasarım ve yazılım
+geliştirme"*.
+
+### 8 rakamı — "8 şeklinden" değil
+
+Öğretmenin açık talimatı: bağ bir çizim benzerliğinden değil **sayının**
+matematikteki çağrışımından kurulacak. Denetim iki yönlü çalışıyor: bağın
+kurulduğu (`8 rakam`) ölçülüyor ve `8 şeklinden` yasaklı desen.
+
+**Bir önceki turun onaylanmış vurgu cümlesi geri çekildi.** *"Sonsuzluk
+bir varış değil, bir yöndür…"* benim taslağımdı ve öğretmen onaylamıştı;
+bu turda kullanılmamasını istedi. Yerine *"Çözülen her problem, sorulacak
+yeni bir soruyu mümkün kılar."* geldi. Geri çekilen cümle **yasaklı desen
+olarak** yazıldı — onaylanmış bir cümlenin geri çekilmesi tam olarak
+sessizce geri gelebilecek türden bir karar.
+
+### "Eksik" — kapsam kararı, dil değişikliği değil
+
+Brief veli bölümünde "çocuğunuzun eksikleri" çağrışımını yasaklıyor; ama
+kalıcı dil kuralı ("Yanlış kelimesini her durumda daha yumuşak bir
+ifadeyle değiştirmeye çalışma") hâlâ yürürlükte. Öğretmenin kararı
+çelişkiyi kapsam ayrımıyla çözdü: **"Yalnız veli bölümünde kalksın."**
+
+Yani veliye seslenen cümlede yumuşak dil, öğrenciyi anlatan cümlede ve
+ürünün kendi ekranlarında gerçek olduğu gibi. Koyu banttaki *"Yanlış
+yaptığı soruları ve eksik olduğu konu alanlarını da görünür hâle
+getirir."* aynen duruyor.
+
+Denetim bunu **iki yönlü** kilitliyor ve tek yön yetmezdi:
+
+| Ölçüm | Ne yakalıyor |
+|---|---|
+| Veli bölümünün KENDİ metninde `eksik` **yok** | kelimenin oraya geri gelmesi |
+| Sayfada `eksik olduğu konu alanları` **var** | kelimenin her yerden silinmesi |
+
+Yalnız birincisi ölçülseydi biri bir gün kelimeyi sayfanın tamamından
+siler ve denetim geçerdi. Geri alma kanıtında ikisi **ayrı ayrı** bozulup
+kırıldıkları gösterildi.
+
+### Tamamlanmamış ödev — ölçüm taşındı, gevşetilmedi
+
+Brief iki cümleyi düzeltti: *"teslim edilmeyi bekleyenler"* →
+*"tamamlaması gereken"*, ve *"hangi ödevin henüz teslim edilmediğini"* →
+*"hangi ödevlerin henüz tamamlanmadığını"*. Eski desen artık sayfada
+olmayan bir cümleyi arıyordu; iddia aynı kaldı ve **iki ayrı ölçüme**
+bölündü ki biri silinince öbürü örtmesin.
+
+### Meta etiketler sayfayla çelişiyordu
+
+Ölçülen bir çelişkiydi: `tanitim/index.html` SEKİZ'i *"matematik ödevleri
+için kurulmuş bir uygulama"* diye tanıtıyordu, oysa brief bu
+konumlandırmayı açıkça reddediyor. `description`, `og:description` ve
+`noscript` bloğu sayfanın diline çekildi; `title`, favicon, `viewport` ve
+`og:url` değişmedi. Denetim artık meta etiketleri de okuyor.
+
+### Türkçe büyük harf tuzağı — denetimde yakalandı
+
+Künye unvanı CSS `text-transform: uppercase` ile çiziliyor ve `innerText`
+dönüşmüş hâli döndürüyor: "MATEMATİK ÖĞRETMENİ". JavaScript'in `/…/i`
+bayrağı **basit kıvrım** kullanıyor ve U+0130 (İ) için `i` karşılığı yok —
+yani `/matematik öğretmeni/i` bu metinle **eşleşmiyor** ve ölçüm sessizce
+"cümle sayfada yok" diyor.
+
+0024'te `toLowerCase()`'in "ALİ"yi birleşen noktalı `ali̇` yapması aynı
+aileden bir tuzaktı. Denetime `kucult()` yardımcısı eklendi
+(`toLocaleLowerCase('tr')`); büyük/küçük harfe duyarsız arama artık ondan
+geçiyor. Veli bölümünün `eksik` kilidi de aynı yoldan geçiyor — bir
+YOKLUK ölçtüğü için tuzak orada en tehlikeli hâlinde: yanlış eşleşme
+sessizce "temiz" derdi.
+
+### Geri alma kanıtı
+
+`scripts/geri-alma-tanitim.mjs` (`npm run tanitim-geri-alma`) — 15 yama,
+15'i de yakalandı. Betik **derleme kırılırsa duruyor** ve bu turda o
+koruma gerçekten iş gördü: iki yama bir bileşenin JSX çağrısını silince
+TS6133 ("kullanılmayan bileşen") derlemeyi kırdı ve ölçüm yapılamadı.
+Koruma olmasaydı denetim sessizce ESKİ paketi ölçer, iki yama da
+"yakalandı" görünürdü — 0030'da tam olarak bu yaşanmıştı. Yamalar
+`{false && <Bolum />}` biçimine çevrildi: bölüm DOM'dan gerçekten kalkıyor,
+bileşene yapılan başvuru duruyor.
+
+## Tanıtım sayfası — öğretmenin yeni brief'i (metin turu)
+
+Hero, felsefe, üç rol ve gelecek bölümlerinin metinleri birebir yazılmış
+bir brief geldi. Ürünün hiçbir ekranı, hiçbir SQL ve hiçbir tasarım
+tokenı değişmedi.
+
+### Brief'i sayfaya karşı ölçtüm — beş çakışma, dördü öğretmenin kararı
+
+| Çakışma | Kararı |
+|---|---|
+| Brief'in hero başlığı ile kilitli marka cümlesi | **İkisi de değil** — kendi cümlesini yazdı: *"Sonsuz bir öğrenme döngüsü için tasarlandı."*, H1 olsun |
+| Brief dört bölüm, sayfa 14 bölüm | **Mevcut bölümler kalsın** |
+| *"sonsuz bir yolculuğa"* ve *"8'in kesintisiz akışı"* kendi yasaklarına takılıyor | **Cümleler aynen girsin** |
+| Üç rol "interactive tabs" ile isteniyor | **Mevcut madde yapısı kalsın** |
+
+**Üçüncü kararın ölçülen sonucu.** Yasakların *desenlerini* tek tek
+kontrol ettim — `öğrenme bir yolculuk`, `sınırsız yolculuk`,
+`8 şeklinden|şeklinden alır`, `yan yat`, `sonsuzluk işareti`. Brief'in
+iki cümlesi hiçbiriyle eşleşmiyor. **Tek bir yasak bile
+gevşetilmedi**; çakışan şey kuralın ruhu, harfi değil. Denetimin
+yasaklı-desen bloğu geçtiği sürece bu kanıt da duruyor.
+
+### Marka cümlesi ikiden bire indi
+
+H1 artık marka cümlesi olmadığı için *"Öğrenmenin sonu yok."* yalnız
+kapanışta. Denetimdeki sayı kilidi `2` → **`1`**.
+
+Bu bir gevşetme değil: sayı yine **tam** ölçülüyor, yani cümle ne
+düşebilir ne çoğalabilir. Geri alma kanıtı ikisini de ayrı ayrı
+gösteriyor — H1'i eski cümleye döndürünce bir ölçüm, cümleyi ikinci bir
+bölüme serpiştirince başka bir ölçüm kırılıyor. Bir tur önce tersi
+seçilmişti; değiştirilecek yer hero'daki `h1` ve o sayı.
+
+### Maddeler ekleniyor, güvenceler silinmiyor
+
+Brief'in rol maddeleri **fayda** anlatıyor; bugünkü maddeler ürünün
+**ölçülen sınırlarını**. İkisi birbirinin yerini tutmuyor, bu yüzden
+her rol listesi = brief'in üç maddesi + korunan güvence maddeleri:
+
+| Korunan | Neden |
+|---|---|
+| "Teslimden önce açılmaz; teslimden hemen sonra açılır." | Kural 6 / Part XXI |
+| "…fotoğraf yüklenmeden teslim tamamlanmaz." | ölçülen ürün davranışı |
+| "…**tamamlaması gereken**…" | kalıcı dil kuralı |
+| "…**henüz tamamlanmadığını** görür." | kalıcı dil kuralı |
+
+Dördü de geri alma kanıtında **ayrı ayrı** bozulup kırıldı.
+
+`Maddeler` bileşeni `[giriş, metin]` ikilisini de kabul ediyor; giriş
+`font-semibold` çiziliyor. Yeni renk, ikon ya da kutu yok.
+
+### Brief'in üç UX talimatı uygulanmadı — gerekçeleriyle
+
+**Yazı tipi değişmedi.** Brief "Inter / Plus Jakarta Sans" öneriyor;
+Fraunces + Manrope Faz 0'dan beri markanın kendisi ve KVKK gerekçesiyle
+CDN'den değil kendi sunucumuzdan servis ediliyorlar. Brief'in kendi
+üçüncü maddesi de "maintain existing background/brand aesthetics" diyor
+— talimat kendi içinde çelişiyordu, marka tarafı korundu.
+
+**`border-indigo-500` kullanılmadı.** Indigo palette'te yok; renkler okul
+mührünün laciverdinden ve Ewalu'nun paletinden türetildi ve 18 token
+çifti WCAG AA'dan **bir küme olarak** geçti. Dışarıdan bir renk eklemek
+o denetimi anlamsız kılardı.
+
+**Sekme kurulmadı** (öğretmenin kararı): sekme aynı anda iki rolü gizler,
+altı ekran görüntüsünün üçe bölünmüş dağılımını bozar ve sayfayı arama
+motoruna tek rol olarak gösterirdi.
+
+### Türkçe düzeltmeler — brief'in kendi kuralı
+
+Brief "sıfır Türkçe yazım hatası" istiyordu ama kendi metninde iki hata
+taşıyordu: **"Motive"** (isim gerekiyor → *Motivasyon*) ve **"imkanı"**
+(şapkasız → *imkânı*). Ayrıca başlıklar İngilizce Title Case yazılmıştı;
+Türkçe'de bu bir çeviri izi ve sayfanın bütün başlıkları cümle
+düzeninde. Üçü de düzeltildi ve **düzeltmeler ölçülüyor** — bir sonraki
+kopyala-yapıştırda geri gelmesinler diye.
+
+### Bu turda kırılan dört ölçüm — ve hepsi benim yeniden yazımım
+
+Denetim ilk koşuda dört kusur verdi ve dördü de gerçekti: cevap anahtarı
+güvencesi kalın girişli maddeye taşınınca deseni tutmadı, veli bölümünün
+seçicisi eski `h2`'yi arıyordu, yazarlık cümlesi brief'in cümlesiyle
+değişmişti. Dördü de **taşındı, gevşetilmedi**; yazarlık ölçümü ikiye
+bölündü (kimin tasarladığı + bir yazılım şirketinin ürünü olmadığı).
+
+### Öğretmenin madde madde düzeltmesi (aynı turun ikinci yarısı)
+
+Sayfa yayımlanmadan önce öğretmen metni okuyup madde madde düzeltti.
+Üçü **kendi önceki kararını geri alıyor** ve bu yüzden kayda geçiyor.
+
+**Hero sadeleşti.** "Fikir, pedagojik tasarım ve yazılım geliştirme"
+satırı ve brief'in alt başlığı ("…şeffaf, yönetilebilir ve anlamlı
+verilerle görünür kılmak için tasarlandı.") kalktı; yerine tek tanım
+cümlesi geldi:
+
+> SEKİZ; öğrencinin öğrenme sürecini takip ettiği, öğretmenin gelişimi
+> gördüğü ve velinin sürece dahil olduğu dijital eğitim platformudur.
+
+Bu, H1'in de "…için tasarlandı." ile bitmesinden doğan tekrarı çözüyor —
+bir tur önce dürüst not olarak yazmıştım, öğretmen cümleyi tamamen
+kaldırarak çözdü.
+
+Künye satırı **silinmedi, tek yerde toplandı**: aynı cümle sayfanın
+sonundaki künye bölümünde duruyor. Denetim **iki yönlü** kilitliyor —
+hero'da OLMADIĞI ve künyede DURDUĞU ayrı ayrı ölçülüyor.
+
+**⚠ "eksik" veli bölümüne geri geldi.** İki tur önce açıkça sormuştum ve
+cevabı *"yalnız veli bölümünde kalksın"* olmuştu; cümle çıkarılmış ve
+"veli bölümünün kendi metninde `eksik` YOK" diye kilitlenmişti. Bu turda
+öğretmen cümleyi kelimesi kelimesine geri yazdırdı:
+
+> Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu alanları
+> veli tarafından da görülebilir.
+
+Son talimat geçerli; **kilidin o yarısı tersine çevrildi** (artık
+cümlenin DURDUĞU ölçülüyor). Asıl kural gevşemedi: `çocuğunuzun eksik…`
+hâlâ yasaklı desen, yani veliye "sizin çocuğunuzun eksikleri" diye
+seslenmek hâlâ imkânsız. Kalıcı dil kuralıyla da uyumlu — cümle gerçeği
+söylüyor ve öğrenciyi etiketlemiyor.
+
+**İki "tamamlanmamış" başlığı kalktı, gerçek kalktı sanılmasın.**
+Öğretmen olumsuzu ayrı bir BAŞLIK olarak öne çıkarmak istemedi. Bilgi
+zaten iki maddenin gövdesinde duruyor ve denetim **ikisini de ayrı ayrı**
+ölçmeye devam ediyor:
+
+| Nerede | Cümle |
+|---|---|
+| Öğretmen | "yalnızca **ödevin yapılıp yapılmadığını** değil…" |
+| Veli | "öğrencinin **yaptığı ve yapmadığı** ödevleri…" |
+
+Kalkan şey başlık, gerçek değil — kalıcı dil kuralı ("teslim edilmemiş
+ödev gizlenmez") yerinde.
+
+**Başlık olarak "yanlış" yasak, gövdede serbest.** Öğretmenin talimatı:
+"yanlışlar ve konular" gibi bir madde başlığı olmasın. Kelime gövdede
+duruyor ("doğru ve yanlış yaptığı sorular") ve o ayrıca ölçülüyor.
+Denetim artık **bütün madde başlıklarını** tarayıp hiçbirinin "yanlış"
+içermediğini kontrol ediyor — tek bir desen değil, kural.
+
+Diğer düzeltmeler: öğretmen başlığı iki ölçeği birden söylüyor ("sınıfın
+genel ritmini, öğrencinin bireysel gelişimini"); veli başlığı eski hâline
+döndü; "Pozitif İletişim" maddesi kalktı (iletişim okulla değil
+öğretmenle kuruluyor — `mesaj_gonder` yalnız veli↔öğretmen kanalı, 0025);
+"karmaşık grafikler yerine" çıktı (olumsuz örnekle anlatma); "Gördükleri"
+başlığı üç somut başlığa bölündü.
+
 ## Projeyi uyanık tutan zamanlayıcı (yeni SQL yok)
 
 **Olay.** 2026 Ağustos'unda Supabase, ücretsiz plandaki projeyi 7 günlük
