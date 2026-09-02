@@ -315,21 +315,16 @@ const YAMALAR = [
   },
   {
     // ÖĞRETMENİN GERİ İSTEDİĞİ CÜMLE SİLİNİRSE.
+    /* ⚠ BU YAMANIN BİR MÜKERRERİ VARDI VE KALDIRILDI.
+       Bu turda "Veli bölümünden 'eksik olduğu' ifadesi silinirse" diye
+       ikinci bir yama yazmıştım; koşuda ikisi de AYNI ölçümü kırdı
+       ("veli bölümünde konu alanları cümlesi duruyor"). Aynı kilidi iki
+       ad altında kırmak sayıyı şişirir, kanıtı güçlendirmez — bu
+       sayfada üç kez tam bu sebeple ölçüm/yama kaldırıldı. */
     ad: 'Veli konu alanları cümlesi silinirse',
     dosya: SAYFA,
     eski: 'Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu alanları',
     yeni: 'Konu alanları',
-    bekleyen: 'veli bölümünde konu alanları cümlesi duruyor',
-  },
-  {
-    /* ÇAPA TAŞINDI. Eski yama silinen koyu banttaki cümleye yapışıyordu
-       ve ölçtüğü iki kilit bu turda kaldırıldı (gerekçesi denetimde).
-       "eksik" GERÇEĞİ hâlâ sayfada: veli bölümündeki cümlede duruyor ve
-       kendi ölçümüyle kilitli. Bu yama artık onu kanıtlıyor. */
-    ad: 'Veli bölümünden "eksik olduğu" ifadesi silinirse',
-    dosya: SAYFA,
-    eski: "            'Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu alanları veli tarafından da görülebilir.',",
-    yeni: "            'Konu alanları veli tarafından da görülebilir.',",
     bekleyen: 'veli bölümünde konu alanları cümlesi duruyor',
   },
   {

@@ -1763,6 +1763,84 @@ Aynı sebeple ikinci bir ölçüm de kaldırıldı: hikâye bölümündeki
 "SEKİZ bir yazılım şirketinin ürünü değil" ölçümüyle **aynı iddiayı**
 ölçüyordu.
 
+## Tanıtım sayfası — sadeleştirme (13 → 8 bölüm)
+
+Öğretmenin isteği, kendi ifadesiyle: *"tek bir başlıkta daha sade, kafa
+karışıklığı olmadan."*
+
+| Değişiklik | Sonucu |
+|---|---|
+| "Bir öğretmenin sınıf deneyiminden doğdu." + "SEKİZ gelişmeye devam ediyor." | **tek bölüm**: "Öğretmen Deneyimiyle Şekillenen, Sürekli Gelişen Platform" — metnin üç paragrafını öğretmen yazdı ve birebir verdi |
+| Slogan "8'in kesintisiz akışı…" | felsefe bölümünden **bu bölümün altına taşındı** |
+| "SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır." | bölüm olmaktan çıkıp **hero'da slogan** oldu |
+| "Sonuç, öğrenmenin bir sonraki adımını gösterir." | **kalktı** |
+| "Değerlendirme, öğrenmeyi görünür kılar." | **kalktı** |
+| "Puanın ötesinde, gelişim." | **kalktı** — tek cümlesi taşındı |
+
+Kıyaslama cümlesi ("Öğrenciye ve veliye başka öğrencilerin puanları veya
+sıralamaları gösterilmez…") "Ödevden gelişime…" bölümüne taşındı; yeri
+öğretmenin seçimi — üç rolü birden anlatan bölüm, cümle de hem
+öğrenciden hem veliden söz ediyor.
+
+### Başlık yazımı bir istisna ve bilinçli
+
+Yeni başlık Title Case ve noktasız; sayfanın diğer yedi başlığı cümle
+düzeninde ve noktalı. Farkı sordum, **"yazdığınız gibi kalsın"** dedi.
+Denetim o yüzden birebir dizeyi arıyor.
+
+### Koyu bant kalmadı — ve bu bir karar
+
+Sayfada iki koyu bant vardı: biri silinen "Sonuç, öğrenmenin bir sonraki
+adımını gösterir." bölümü, öbürü birleşen "SEKİZ gelişmeye devam
+ediyor." bölümü. Birleşik bölümü koyu yapmayı düşündüm ama metin 180
+kelime; 360 px'de ters kontrastlı 180 kelime okuma yükü ve hero'nun
+hemen ardında iki tam genişlik bloğu üst üste gelirdi. İstenen şey
+"sade". **Sonuç: sayfada artık orta yerde koyu bant yok**, yalnız
+kapanış koyu. Tek satırlık bir değişiklik.
+
+### ⚠ ÜÇ KİLİT KALKTI — üçü de öğretmenin açık kararıyla
+
+Bu sayfada bugüne kadarki en ağır kaldırma ve gizlenmiyor.
+
+**1–2. "Yanlış yaptığı soruları…" ve "eksik olduğu konu alanları".**
+Silinen koyu banttaki cümle şuydu:
+
+> SEKİZ öğrencinin yalnızca puanını göstermez. **Yanlış yaptığı
+> soruları** ve **eksik olduğu konu alanlarını** da görünür hâle getirir.
+
+Sordum ve sonucu birebir gösterdim: "yanlış yaptığı soruları" ifadesinin
+sayfada **başka hiçbir yerde geçmediğini** ölçtüm, ve kendi kalıcı
+kuralını hatırlattım — *"Yanlış kelimesini her durumda daha yumuşak bir
+ifadeyle değiştirmeye çalışma."* Kararı: **"Kalksın."**
+
+**Kural ürünün içinde aynen duruyor.** Bu tur hiçbir ürün ekranına
+dokunulmadı: veli ekranı hâlâ "Teslim edilmedi" diyor, öğrencinin sonuç
+kartı hâlâ yanlış sayısını gösteriyor. Kalkan şey yalnız tanıtım
+sayfasındaki cümle.
+
+İkincisi için ayrıca: **"eksik olduğu konu alanları" gerçeği sayfadan
+kalkmadı.** Veli bölümü hâlâ "Öğrencinin eksik olduğu veya daha fazla
+çalışabileceği konu alanları veli tarafından da görülebilir." diyor ve
+bu **kendi ölçümüyle kilitli**. Eski deseni o cümleye uyarlamak, aynı
+dizeyi ikinci bir ad altında ölçmek olurdu.
+
+**3. "Test türündeki ödevler, önceden belirlenmiş kurallar…"**
+Sordum, "Kalksın" dedi. **Kural 5 güvencesi kalkmadı — ölçüldü:**
+Öğretmen bölümü zaten "Açık uçlu ödevlerde öğrencinin çözümü öğretmen
+tarafından kontrol edilir ve **nihai puan öğretmen tarafından verilir**"
+diyor ve denetim onu ayrıca ölçüyor. Kalkan tek şey, testin **sabit
+kurallarla** puanlandığının yazılı olması.
+
+### Kalkan başlıklar yasak oldu
+
+Bu sayfanın kurulu deseni: bir bölüm kaldırıldığında ölçümü **silinmiyor,
+yönü çevriliyor**. Altı başlığın da sayfada olmadığı ölçülüyor, geri alma
+kanıtı dördünü tek tek geri koyup denetimin kırıldığını gösteriyor.
+
+Slogan da artık **sayıyla** kilitli (tam bir yerde) — taşınırken ikinci
+bir kopya bırakmak tam da sessizce olabilecek türden bir hataydı. İsim
+sloganı iki yönlü: hero'da **var** ve bölüm başlığı **değil**.
+
 ## Projeyi uyanık tutan zamanlayıcı (yeni SQL yok)
 
 **Olay.** 2026 Ağustos'unda Supabase, ücretsiz plandaki projeyi 7 günlük
