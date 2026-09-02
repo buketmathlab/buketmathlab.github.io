@@ -1706,6 +1706,63 @@ döndü; "Pozitif İletişim" maddesi kalktı (iletişim okulla değil
 "karmaşık grafikler yerine" çıktı (olumsuz örnekle anlatma); "Gördükleri"
 başlığı üç somut başlığa bölündü.
 
+## Tanıtım sayfası — öğretmenin beş düzeltmesi (14 → 13 bölüm)
+
+Öğretmen birleştirilen sayfayı canlıda okudu ve beş düzeltme verdi.
+Dördü kesindi; belirsiz olanı ("bir öğretmenin sınıf deneyiminden doğdu —
+yazısı tamamen çok kötü olmuş") sordum, kararı **bölüm kalsın, metni
+yeniden yaz** oldu.
+
+| Düzeltme | Sonucu |
+|---|---|
+| "SEKİZ neden var?" bölümü | **tamamen kalktı** — sayfa Hero'dan sonra doğrudan hikâyeyle açılıyor |
+| Hikâye gövdesi | tek uzun paragraf → iki kısa paragraf |
+| Felsefe başlığı | "İsmini matematiğin…" → **"SEKİZ ismini matematiğin…"** (cümlenin öznesi yoktu) |
+| Felsefe gövdesi | **tamamen kalktı**; bölüm artık başlık → ayraç → vurgu cümlesi |
+| Gelecek gövdesi | yeniden yazıldı (aşağıda) |
+| Künyedeki "SEKİZ bu ölçüyle tasarlandı…" | **kalktı** |
+
+### Kalkan iki şey ölçüme yasak olarak geri döndü
+
+Bu turun deseni: kaldırılan bir cümlenin ölçümü **silinmiyor, yönü
+çevriliyor**. "SEKİZ neden var?" başlığının sayfada **olmadığı** ve
+künyenin ölçü cümlesinin geçmediği artık ölçülüyor. Böylece ikisi de
+sessizce geri gelemez ve geri alma kanıtı bunu tek tek gösteriyor.
+
+### Gelecek bölümü — şikâyet ölçülebilir hâle getirildi
+
+Öğretmenin üç düzeltmesi vardı: "geliş-" kökü çok sık ve yan yana
+kullanılmıştı (tek paragrafta üç kez), "SEKİZ tamamlanıp dondurulmuş…"
+cümlesi en başta olmasındı, ve ilk cümle geliştirmenin süreceğini
+söylemeliydi.
+
+Metin düzeltmesi ölçülmezse ilk aceleci düzenlemede geri gelir. Bu
+yüzden ikisi de kilitlendi: **ilk paragraf** "SEKİZ yenilenmeye devam
+edecek." ile başlıyor **ve** "dondurulmuş" içermiyor (iki yönlü), ve
+**gövdede "geliş-" kökü hiç geçmiyor**. Kelime yalnız başlıkta ve
+öğretmenin kendi kapanış cümlesinde kalıyor — ölçüm o ikisini bilerek
+dışarıda bırakıyor, aksi hâlde kilit hiçbir zaman tutmazdı.
+
+### Bir kilit zayıfladı — ve gizlenmiyor
+
+`8 → sonsuzluk bağı 8 RAKAMI üzerinden kuruluyor` ölçümü **kaldırıldı**.
+Sebebi taşınacak yer olmaması: "8 rakamından alır" cümlesi öğretmenin
+kaldırttığı felsefe gövdesindeydi ve sayfada başka hiçbir yerde
+geçmiyor. Vurgu cümlesindeki "8'in kesintisiz akışı" zaten ayrı bir
+ölçümle kilitli; aynı dizeyi ikinci bir ad altında ölçmek sayıyı
+şişirir, güvenceyi artırmaz.
+
+**Kaybolan:** "bağ sayı üzerinden anlatılıyor" iddiasının ölçülmesi.
+**Duran:** `8 şeklinden|şeklinden alır`, `yan yat`,
+`sonsuzluk işareti|sembolü` yasakları — şekil üzerinden bir bağ sessizce
+geri gelemez, ve geri alma kanıtı başlığı "8 şeklinden alır" hâline
+çevirip bunu gösteriyor.
+
+Aynı sebeple ikinci bir ölçüm de kaldırıldı: hikâye bölümündeki
+"tahta başındaki gerçek sınıf dinamiğiyle", yeniden yazımdan sonra
+"SEKİZ bir yazılım şirketinin ürünü değil" ölçümüyle **aynı iddiayı**
+ölçüyordu.
+
 ## Projeyi uyanık tutan zamanlayıcı (yeni SQL yok)
 
 **Olay.** 2026 Ağustos'unda Supabase, ücretsiz plandaki projeyi 7 günlük
