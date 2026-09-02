@@ -14,13 +14,17 @@ import { sekizgenYolu } from '@/lib/geometri';
  * nihai brief'ten; benim işim yerleşim, tipografi, görsel ritim ve
  * doğrulama.
  *
- * ═══ SIRA — 14 BÖLÜM ═══
- * Kurum kimliği sayfanın İLK şeyi: mühür, ardından SEKİZ, künye satırı,
- * başlık ve tanım. Sonra sırayla: SEKİZ neden var? → bir öğretmenin
- * sınıf deneyiminden doğdu → felsefe → ürün → üç rol → Ewalu →
- * değerlendirme → gelişim → gelecek → künye. Bu sıra öğretmenin kararı
- * ve denetimde kilitli — biri bölüm taşırsa sayfa başka bir şey
- * anlatmaya başlar.
+ * ═══ SIRA — 13 BÖLÜM ═══
+ * Kurum kimliği sayfanın İLK şeyi: mühür, ardından SEKİZ, başlık ve
+ * tanım. Sonra sırayla: bir öğretmenin sınıf deneyiminden doğdu →
+ * felsefe → ürün → üç rol → Ewalu → değerlendirme → gelişim → gelecek
+ * → künye. Bu sıra öğretmenin kararı ve denetimde kilitli — biri bölüm
+ * taşırsa sayfa başka bir şey anlatmaya başlar.
+ *
+ * "SEKİZ NEDEN VAR?" BÖLÜMÜ KALKTI (14 → 13). Bir tur önce brief'in
+ * maddesi olarak eklenmişti; öğretmen sayfayı canlıda okuyup tamamen
+ * çıkarılmasını istedi. Denetim artık başlığın sayfada OLMADIĞINI
+ * ölçüyor — ölçüm silinmedi, yönü çevrildi.
  *
  * ROL BÖLÜMLERİ AYRI KALIYOR, SEKME OLMUYOR. Brief üç rolü "interactive
  * tabs" ile istiyordu; öğretmenin kararı mevcut yapının korunması.
@@ -87,7 +91,6 @@ export function Tanitim() {
       <UstCubuk />
       <main id="icerik">
         <Hero />
-        <NedenVar />
         <Hikaye />
         <Felsefe />
         <SekizNedir />
@@ -437,39 +440,20 @@ function SekizgenDoku() {
 }
 
 /* ============================================================
-   1 — SEKİZ NEDEN VAR?
+   "SEKİZ NEDEN VAR?" BÖLÜMÜ BU TURDA KALKTI — ÖĞRETMENİN KARARI.
 
-   PROBLEMİ ANLATIYOR, ÇÖZÜMÜ DEĞİL. Çözüm sonraki bölümlerin işi;
-   burada yalnız SEKİZ'in cevap verdiği soru duruyor. Kısa ve ekran
-   görüntüsüz: sayfanın en başında bir özellik listesi değil, bir
-   gerekçe okunuyor.
+   Bir tur önce brief'in maddesi olarak eklenmişti (problemi anlatan
+   kısa açılış bölümü); öğretmen sayfayı canlıda okuyup "tamamen çıkar"
+   dedi. Sayfa 14 → 13 bölüm ve artık Hero'dan sonra doğrudan hikâye
+   bölümüyle açılıyor.
 
-   DİL SINIRI: burada bir öğrenci ya da veli SUÇLANMIYOR. Anlatılan
-   şey dağınıklığın kendisi — "kaygı" ve "baskı" marka dilinde
-   geçmiyor, denetim ikisini de arıyor.
+   SESSİZCE GERİ GELEMEZ: denetim artık başlığın sayfada OLMADIĞINI
+   ölçüyor (ölçüm silinmedi, yönü çevrildi) ve geri alma kanıtı bunu
+   ayrıca gösteriyor.
    ============================================================ */
 
-function NedenVar() {
-  return (
-    <Bolum baslik="SEKİZ neden var?">
-      <P>
-        Ödev bir yerde duyuruluyor, teslim başka bir kanaldan geliyor, sonuç bir deftere
-        yazılıyor, gelişim ise kimsenin bakamadığı bir yerde kalıyor. Parçaların her biri tek
-        başına çalışıyor olabilir; birbirine bağlanmadıklarında öğrenme süreci görünmez
-        oluyor.
-      </P>
-      <P>
-        Görünmeyen bir süreç yönetilemiyor. Öğrenci nerede olduğunu bilmiyor, öğretmen
-        sınıfın hangi konuda zorlandığını çoğu zaman sınavdan sonra fark ediyor, veli ise
-        sürecin dışında kalıyor.
-      </P>
-      <Not>SEKİZ, bu görünürlüğü kurmak için var.</Not>
-    </Bolum>
-  );
-}
-
 /* ============================================================
-   2 — SINIFTAN DOĞDU
+   1 — SINIFTAN DOĞDU
 
    KÜNYEDEN BURAYA TAŞINDI (öğretmenin kararı). Eskiden sayfanın en
    altındaydı; oraya kadar inen az kişi ürünün kimin işi olduğunu
@@ -493,31 +477,37 @@ function Hikaye() {
           Bir öğretmenin sınıf deneyiminden doğdu.
         </h2>
 
-        {/* GÖVDE BRIEF'TEN, BİREBİR.
-            Brief bu bloğu hero'nun İÇİNDE istiyordu; bölüm zaten
-            hero'dan hemen sonra geliyor ve okuma sırası aynı (mühür →
-            SEKİZ → başlık → tanım → künye anlatısı). Hero'ya almak
-            390 px'lik bir telefonda hero'yu ~1400 px'e çıkarır ve
-            "SEKİZ neden var?" iki ekran aşağı düşerdi.
+        {/* GÖVDE BU TURDA YENİDEN YAZILDI — öğretmenin değerlendirmesi:
+            "yazısı tamamen çok kötü olmuş". Yerine geçecek cümleyi
+            vermediği için sordum; kararı "bölüm kalsın, metni yeniden
+            yaz" oldu. AŞAĞIDAKİ İKİ PARAGRAF BENİM TASLAĞIM.
 
-            SON CÜMLE ASIL YERİNE DÖNDÜ. "Bugün eğitimin ihtiyaç duyduğu
-            şey yalnızca yeni dijital araçlar değil…" geçen tur künye
-            bölümüne taşınmıştı; brief onu buraya geri koyuyor, bu yüzden
-            künyedeki kopyası kalktı. Aynı düşünce iki yerde durursa
-            ikisi de zayıflıyor.
+            NE DEĞİŞTİ: tek blokta altı satırlık bir paragraf, iki kısa
+            paragrafa indi. Kalkan şey soyut kapanışlardı ("yılların
+            sınıf içi gözlemine dayanır", "kurgulayan bir öğretmen
+            yaklaşımıdır"); kalan şey bölümün üç iddiası.
 
-            "Vizyoner" kelimesi BURADA DA YOK — övgü sıfatları brief'te
-            açıkça yasak ve denetim hepsini yasaklı desen olarak arıyor.
-            Yazarlık sıfatla değil, kararların nereden çıktığıyla
-            anlatılıyor. */}
+            ÜÇ İDDİA KORUNDU ve üçü de denetimde kilitli:
+              1. SEKİZ bir yazılım şirketinin ürünü DEĞİL
+              2. fikirden koda kadar tasarlayan Buket Topuzoğlu
+              3. kimliği: matematik öğretmeni
+
+            SON CÜMLEDEKİ ÖRNEK UYDURMA DEĞİL: "velinin neyi görüp neyi
+            görmeyeceği" ürünün gerçekten sunucuda zorladığı bir sınır
+            (Kural 6 — veliye cevap anahtarı hiçbir koşulda gitmiyor,
+            `veli_paneli` testleri bunu ölçüyor).
+
+            ÖVGÜ SIFATI YOK — "vizyoner", "benzersiz", "devrim" denetimde
+            yasaklı desen; yazarlık sıfatla değil kararların nereden
+            çıktığıyla anlatılıyor. */}
         <P>
-          SEKİZ, bir yazılım şirketinin masa başı teorisiyle değil; tahta başındaki gerçek
-          sınıf dinamiğiyle şekillendi. Fikir aşamasından kod satırlarına kadar matematik
-          öğretmeni Buket Topuzoğlu tarafından tasarlandı. Hangi verinin kime görüneceğinden
-          öğrencinin ekranda okuyacağı tek bir cümleye kadar her detay, yılların sınıf içi
-          gözlemine dayanır. Bugün eğitimin ihtiyaç duyduğu şey yalnızca yeni dijital araçlar
-          değil; o araçları sınıfı ve öğrenciyi gerçekten tanıyarak kurgulayan bir öğretmen
-          yaklaşımıdır.
+          SEKİZ bir yazılım şirketinin ürünü değil. Bir matematik öğretmeninin kendi
+          sınıfında gördüğü ihtiyaçtan doğdu.
+        </P>
+        <P>
+          Fikrinden kod satırlarına kadar Buket Topuzoğlu tarafından tasarlandı. Hangi
+          verinin kime görüneceği, öğrencinin ekranda okuyacağı cümle, velinin neyi görüp
+          neyi görmeyeceği — her karar sınıfın içinden çıktı.
         </P>
       </div>
     </section>
@@ -525,47 +515,42 @@ function Hikaye() {
 }
 
 /* ============================================================
-   3 — MARKA FELSEFESİ
+   2 — MARKA FELSEFESİ
    ============================================================ */
 
 function Felsefe() {
   return (
     <section className="bg-surface">
       <div className="mx-auto max-w-[42rem] px-5 py-20 text-center md:py-24">
-        {/* BAŞLIK BRIEF'TEN. Türkçe cümle düzenine çevrildi ve nokta
-            eklendi: brief İngilizce Title Case yazıyor ("İsmini
-            Matematiğin Sonsuzluk Düşüncesinden Alır"), sayfanın bütün
-            başlıkları ise cümle düzeninde. Title Case Türkçe'de bir
-            çeviri izi; brief'in kendi kuralı da "sıfır Türkçe yazım
-            hatası" diyor.
+        {/* BAŞLIK BU TURDA DÜZELTİLDİ — öğretmenin gerekçesi haklıydı:
+            "İsmini matematiğin sonsuzluk düşüncesinden alır." cümlesi
+            KİMİN ismi olduğunu söylemiyordu. Özne yazıldı.
 
-            BU BAŞLIK BİR YER AÇIYOR: "Öğrenme bir sonuç değil, devam
-            eden bir süreçtir." buradan çıkıp brief'in istediği yere —
-            öğretmen bölümünün başlığına — geçti. Böylece öğretmenin iki
-            dizesi de kullanılıyor ve hiçbiri tekrarlanmıyor. */}
+            "SEKİZ" BÜYÜK HARF: marka sayfanın her yerinde böyle yazılıyor
+            (öğretmen mesajında "Sekiz" yazmıştı; bu bir yazım tercihi
+            değil, sayfanın kendi tutarlılığı).
+
+            Türkçe cümle düzeni ve sondaki nokta korunuyor — brief'in
+            İngilizce Title Case'i sayfanın bütün başlıklarıyla
+            çelişiyordu. */}
         <h2 className="font-display text-[28px] font-semibold leading-[1.25] text-ink md:text-[34px]">
-          İsmini matematiğin sonsuzluk düşüncesinden alır.
+          SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır.
         </h2>
-        {/* BAĞ "8 RAKAMI" ÜZERİNDEN KURULUYOR — "8 ŞEKLİNDEN" DEĞİL.
-            Öğretmenin bu turdaki açık talimatı: "8 şeklinden" hiçbir
-            biçimde kullanılmayacak; ilham bir çizim benzerliğinden değil
-            SAYININ matematikteki çağrışımından geliyor. Denetim
-            "şeklinden alır" kalıbını yasaklı desen olarak arıyor.
 
-            ŞEKİL BİLGİSİ ZATEN YASAK: "8 yan yatınca…" ve varyantları
-            (denetim ayrıca ölçüyor). İşaretin kendisi dönüşümü
-            GÖSTEREREK anlatıyor; cümlenin işi açıklamak değil. */}
-        <p className="mx-auto mt-6 max-w-[34rem] text-[17px] leading-[1.7] text-ink">
-          SEKİZ adını, matematikte sonsuzluğu çağrıştıran 8 rakamından alır. Matematikte
-          sonsuzluk bir sayı değildir; her adımdan sonra bir adımın daha mümkün olduğunu
-          söyler. Öğrenme de böyle ilerler: bir kazanım tamamlanır, öğrenmenin kendisi
-          tamamlanmaz.
-        </p>
-        <p className="mx-auto mt-5 max-w-[34rem] text-[17px] leading-[1.7] text-ink">
-          Bu yüzden SEKİZ ödevi bir görev listesi gibi değil, bir gelişim çizgisi gibi ele
-          alır. Puan bir hüküm değil, nereye bakılacağını gösteren bir işarettir.
-        </p>
+        {/* GÖVDE BU TURDA TAMAMEN KALKTI — öğretmenin talimatı: "altındaki
+            yazı tamamen çıksın, bunun yerine … yazısı gelsin sadece".
+            Bölüm artık başlık → ayraç → vurgu cümlesi.
 
+            KALKAN İKİ PARAGRAFIN TAŞIDIĞI ŞEY: "SEKİZ adını, matematikte
+            sonsuzluğu çağrıştıran 8 RAKAMINDAN alır…" ve ödevin bir görev
+            listesi değil gelişim çizgisi olduğu.
+
+            BUNUN ÖLÇÜLEBİLİR BEDELİ VAR VE GİZLENMİYOR: denetimdeki
+            "8 → sonsuzluk bağı 8 RAKAMI üzerinden kuruluyor" ölçümünün
+            taşınacağı bir yer kalmadı ve KALDIRILDI (gerekçesi
+            `tanitim-denetimi.mjs` içinde yazılı). Yasak tarafı duruyor:
+            "8 şeklinden", "yan yat", "sonsuzluk işareti" hâlâ yasaklı
+            desen, yani şekil üzerinden bir bağ sessizce geri gelemez. */}
         <GeometricDivider className="mx-auto my-10 max-w-[16rem]" />
 
         {/* BURADA MARKA CÜMLESİ YOK. Öğretmenin düzeltmesi: "Öğrenmenin
@@ -599,7 +584,7 @@ function Felsefe() {
 }
 
 /* ============================================================
-   4 — SEKİZ NEDİR?
+   3 — SEKİZ NEDİR?
    ============================================================ */
 
 function SekizNedir() {
@@ -636,7 +621,7 @@ function SekizNedir() {
 }
 
 /* ============================================================
-   5 — ÖĞRENCİ
+   4 — ÖĞRENCİ
    ============================================================ */
 
 function Ogrenci() {
@@ -721,7 +706,7 @@ function Ogrenci() {
 }
 
 /* ============================================================
-   6 — ÖĞRETMEN
+   5 — ÖĞRETMEN
    ============================================================ */
 
 function Ogretmen() {
@@ -808,7 +793,7 @@ function Ogretmen() {
 }
 
 /* ============================================================
-   7 — GERİ BİLDİRİM
+   6 — GERİ BİLDİRİM
 
    KOYU BANT. Sayfanın ortasında ritmi kıran tek tipografik durak;
    art arda gelen üç rol bölümünden sonra gözün dinlendiği yer.
@@ -835,7 +820,7 @@ function GeriBildirim() {
 }
 
 /* ============================================================
-   8 — VELİ
+   7 — VELİ
    ============================================================ */
 
 function Veli() {
@@ -924,7 +909,7 @@ function Veli() {
 }
 
 /* ============================================================
-   9 — İLETİŞİM
+   8 — İLETİŞİM
    ============================================================ */
 
 function Iletisim() {
@@ -939,7 +924,7 @@ function Iletisim() {
 }
 
 /* ============================================================
-   10 — EWALU
+   9 — EWALU
    ============================================================ */
 
 function EwaluBolumu() {
@@ -980,7 +965,7 @@ function EwaluBolumu() {
 }
 
 /* ============================================================
-   11 — DEĞERLENDİRME
+   10 — DEĞERLENDİRME
    ============================================================ */
 
 function Degerlendirme() {
@@ -999,7 +984,7 @@ function Degerlendirme() {
 }
 
 /* ============================================================
-   12 — GELİŞİM
+   11 — GELİŞİM
    ============================================================ */
 
 function Gelisim() {
@@ -1026,7 +1011,7 @@ function Gelisim() {
 }
 
 /* ============================================================
-   13 — SÜREKLİ GELİŞEN PLATFORM
+   12 — SÜREKLİ GELİŞEN PLATFORM
 
    MARKANIN GELECEK VİZYONU. Sayfanın ikinci koyu durağı: bu bölüm
    diğerlerinin arasında kaybolmamalı.
@@ -1039,13 +1024,30 @@ function Gelecek() {
         <h2 className="font-display text-[26px] font-semibold leading-[1.25] md:text-[32px]">
           SEKİZ gelişmeye devam ediyor.
         </h2>
-        {/* GÖVDE BRIEF'TEN, BİREBİR. İki paragraf tek paragrafa indi;
-            içerik aynı, ifade öğretmenin. */}
+        {/* GÖVDE BU TURDA YENİDEN YAZILDI — öğretmenin üç düzeltmesi:
+              1. "geliş-" kökü çok sık ve yan yana kullanılmıştı
+                 (geliştirilmeye · gelişen · gelişmeye)
+              2. "SEKİZ, tamamlanıp dondurulmuş…" cümlesi EN BAŞTA
+                 OLMASIN — bölüm bir olumsuzlukla açılmasın
+              3. İlk cümle, geliştirmenin süreceğini söylesin
+            AŞAĞIDAKİ İKİ PARAGRAF BENİM TASLAĞIM; içerik öğretmenin.
+
+            "geliş-" KÖKÜ GÖVDEDE HİÇ GEÇMİYOR. Kelime yalnız başlıkta ve
+            öğretmenin kendi kapanış cümlesinde kalıyor — ikisi de
+            değişmedi. Denetim bunu ayrıca ölçüyor, gözle bırakılmıyor:
+            bir gün biri "sürekli geliştirilecek" diye yazarsa şikâyetin
+            konusu olan yığılma sessizce geri gelirdi.
+
+            SIRA DA ÖLÇÜLÜYOR: ilk paragrafın yenilenme sözüyle başladığı
+            ve "dondurulmuş" cümlesini TAŞIMADIĞI iki yönlü kilitli. */}
         <p className="mt-6 text-[17px] leading-[1.7] text-paper/90">
-          SEKİZ, tamamlanıp dondurulmuş ve değişmeyecek bir ürün olarak tasarlanmadı. Gerçek
-          sınıf deneyimi, öğretmen ve öğrencilerin değişen ihtiyaçları ve gelişen teknolojiler
-          doğrultusunda sürekli geliştirilmeye devam edecektir. Yeni ihtiyaçlar doğdukça yeni
-          özellikler eklenecek, mevcut deneyim aralıksız şekilde iyileştirilecektir.
+          SEKİZ yenilenmeye devam edecek. Gerçek sınıf deneyimi, öğretmenin ve öğrencilerin
+          değişen ihtiyaçları ve yeni teknolojiler ürünün yönünü belirlemeyi sürdürecek.
+        </p>
+        <p className="mt-5 text-[17px] leading-[1.7] text-paper/90">
+          Yeni ihtiyaçlar doğdukça yeni özellikler eklenecek, mevcut deneyim aralıksız
+          iyileştirilecek. SEKİZ tamamlanıp dondurulmuş, değişmeyecek bir ürün olarak
+          tasarlanmadı.
         </p>
 
         <div className="mt-9 border-t border-paper/20 pt-7">
@@ -1060,7 +1062,7 @@ function Gelecek() {
 }
 
 /* ============================================================
-   14 — SEKİZ'İN ARKASINDAKİ YAKLAŞIM
+   13 — SEKİZ'İN ARKASINDAKİ YAKLAŞIM
 
    KÜNYE, ÖZGEÇMİŞ DEĞİL. Brief'in istediği tam künye burada duruyor:
    ad, unvan ve rolün kapsamı. Hero yalnız yeni bilgiyi taşıyor
@@ -1093,15 +1095,16 @@ function Kunye() {
         </p>
       </div>
 
-      {/* BU BÖLÜMÜN ORTA PARAGRAFI BU TURDA KALKTI, SİLİNMEDİ.
-          "Eğitim teknolojisinin değeri yeni bir araç üretmekte değil…"
-          bir tur önce buraya taşınmıştı; brief o düşünceyi künye
-          anlatısının kendi cümlesiyle sayfanın BAŞINA geri koydu
-          ("…o araçları sınıfı ve öğrenciyi gerçekten tanıyarak kurgulayan
-          bir öğretmen yaklaşımıdır."). İki yerde durursa aynı düşünceyi
-          iki kez okutur ve ikisi de zayıflar. Künye artık yalnız kimlik
-          taşıyor: ad, unvan, rolün kapsamı. */}
-      <Not>SEKİZ bu ölçüyle tasarlandı; her yeni özellik de aynı ölçüyle değerlendiriliyor.</Not>
+      {/* KAPANIŞ CÜMLESİ BU TURDA KALKTI — öğretmenin talimatı:
+          "SEKİZ bu ölçüyle tasarlandı; her yeni özellik de aynı ölçüyle
+          değerlendiriliyor." çıkarılacak. Cümle bir "ölçü"ye atıf
+          yapıyordu ama o ölçüyü tarif eden paragraf bir tur önce zaten
+          buradan kalkmıştı; geriye neye işaret ettiği belirsiz bir
+          kapanış kalmıştı.
+
+          Künye artık yalnız kimlik taşıyor: ad, unvan, rolün kapsamı.
+          Cümle denetimde YASAKLI DESEN olarak duruyor ki sessizce geri
+          gelmesin. */}
     </Bolum>
   );
 }

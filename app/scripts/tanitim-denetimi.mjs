@@ -307,20 +307,40 @@ console.log('\n5. Metindeki iddialar');
     'kıyaslama olmadığı yazıyor',
     /başka öğrencilerin puanları veya sıralamaları gösterilmez/.test(metin),
   );
-  /* FELSEFE BAĞI "8 RAKAMI" ÜZERİNDEN — ÖLÇÜM TAŞINDI, GEVŞETİLMEDİ.
+  /* ⚠ "8 RAKAMI" ÖLÇÜMÜ BU TURDA KALDIRILDI — VE BU BİR KAYIP.
    *
-   *   eski: "matematiğin sonsuzluk fikrinden ilham alır"
-   *   yeni: "8 rakamından alır"
+   * Eskiden burada şu ölçüm vardı:
+   *   bak('8 → sonsuzluk bağı 8 RAKAMI üzerinden kuruluyor', /8 rakam/…)
    *
-   * İddia aynı: sayfa ismin arkasındaki matematiksel bağı gerçekten
-   * kuruyor mu. Değişen, öğretmenin bu turdaki talimatı — bağ SAYI
-   * üzerinden anlatılacak. "8 şeklinden" yasaklı desen olarak aşağıda. */
-  bak('8 → sonsuzluk bağı 8 RAKAMI üzerinden kuruluyor', /8 rakam/.test(metin));
+   * Öğretmen felsefe bölümünün GÖVDESİNİ tamamen kaldırttı ("altındaki
+   * yazı tamamen çıksın"). "8 rakamından alır" cümlesi o gövdedeydi ve
+   * sayfada başka hiçbir yerde geçmiyor — yani ölçümün TAŞINACAK BİR
+   * YERİ YOK.
+   *
+   * Vurgu cümlesindeki "8'in kesintisiz akışı" zaten AYRI bir ölçümle
+   * kilitli (aşağıda, "felsefe vurgu cümlesi yerinde"). Aynı dizeyi
+   * ikinci bir ad altında ölçmek sayıyı şişirir, güvenceyi artırmaz —
+   * geçen tur bir ölçümü tam bu sebeple taşımak yerine kaldırmıştım.
+   *
+   * KAYBOLAN: "bağ SAYI üzerinden anlatılıyor" iddiasının ölçülmesi.
+   * DURAN: `8 şeklinden|şeklinden alır`, `yan yat`,
+   * `sonsuzluk işareti|sembolü` yasakları aynen yerinde — şekil
+   * üzerinden bir bağ sessizce geri gelemez. Ayrıca yeni başlık
+   * ("SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır.") bölüm
+   * sıra listesinde birebir ölçülüyor, yani ismin arkasındaki bağın
+   * sayfada durduğu hâlâ kilitli. */
   bak('gelecek vizyonu bölümü var', /SEKİZ gelişmeye devam ediyor/.test(metin));
 
-  /* BU TURDA GELEN İKİ YENİ BÖLÜM ve hero'nun künye satırı.
-   * Üçü de brief'in açık maddeleri; silinirse denetim kırılır. */
-  bak('"SEKİZ neden var?" bölümü var', /SEKİZ neden var\?/.test(metin));
+  /* "SEKİZ NEDEN VAR?" BÖLÜMÜ KALKTI — ÖLÇÜM SİLİNMEDİ, TERSİNE ÇEVRİLDİ.
+   *
+   * Bir tur önce bölümün VARLIĞI ölçülüyordu (brief'in maddesiydi);
+   * öğretmen sayfayı canlıda okuyup "tamamen çıkar" dedi. Ölçümü
+   * kaldırmak yerine yönünü çevirmek, bölümün sessizce geri gelmesini
+   * de engelliyor — geri alma kanıtı bunu ayrıca gösteriyor. */
+  bak(
+    '"SEKİZ neden var?" bölümü KALKTI',
+    !/SEKİZ neden var/.test(metin),
+  );
   bak(
     '"Bir öğretmenin sınıf deneyiminden doğdu." bölümü var',
     /Bir öğretmenin sınıf deneyiminden doğdu\./.test(metin),
@@ -368,10 +388,17 @@ console.log('\n5. Metindeki iddialar');
     'kalkan alt başlık geri gelmemiş',
     !/şeffaf, yönetilebilir ve anlamlı verilerle/.test(metin),
   );
-  bak(
-    'künye anlatısı: masa başı teorisi değil, tahta başı',
-    /tahta başındaki gerçek sınıf dinamiğiyle/.test(metin),
-  );
+  /* ⚠ "TAHTA BAŞI" ÖLÇÜMÜ BU TURDA KALDIRILDI — VE SEBEBİ AYNI İDDİA.
+   *
+   * Eskiden burada şu vardı:
+   *   bak('künye anlatısı: masa başı teorisi değil, tahta başı',
+   *       /tahta başındaki gerçek sınıf dinamiğiyle/…)
+   *
+   * Öğretmen hikâye bölümünün metnini beğenmedi ("yazısı tamamen çok
+   * kötü olmuş") ve yeniden yazmamı istedi. Yeni metin aynı iddiayı
+   * TEK cümlede taşıyor ("SEKİZ bir yazılım şirketinin ürünü değil") ve
+   * o cümle aşağıda ayrıca ölçülüyor. İki ad altında aynı iddiayı
+   * ölçmek ölçüm sayısını şişirir, güvenceyi artırmaz. */
   bak(
     'öğretmenin zaman kazancı anlatılıyor',
     /Bürokratik ödev kontrolü/.test(metin),
@@ -610,6 +637,13 @@ console.log('\n5. Metindeki iddialar');
     ['olumsuz kapanış tanımı', /sadece bir ödev takip uygulaması değil/i],
     // Veliye seslenirken "çocuğunuzun eksikleri" çağrışımı yasak.
     ['çocuğunuzun eksikleri', /çocuğunuzun eksik/i],
+    /* KÜNYENİN KAPANIŞ CÜMLESİ BU TURDA KALKTI — öğretmenin talimatı.
+     * "SEKİZ bu ölçüyle tasarlandı; her yeni özellik de aynı ölçüyle
+     * değerlendiriliyor." bir "ölçü"ye atıf yapıyordu ama o ölçüyü
+     * tarif eden paragraf bir tur önce zaten künyeden kalkmıştı.
+     * Kaldırılan cümleyi yasak olarak yazmak, sessizce geri gelmesini
+     * engelliyor — bu turun deseni. */
+    ['künyenin kalkan ölçü cümlesi', /bu ölçüyle tasarlandı/i],
   ];
   for (const [ad, kalip] of briefYasaklari) {
     bak(`brief: "${ad}" geçmiyor`, !kalip.test(metin));
@@ -746,6 +780,61 @@ console.log('\n5. Metindeki iddialar');
     veliMetni.slice(0, 60) + '…',
   );
 
+  /* -------------------------------------------------------------------
+   * GELECEK BÖLÜMÜ — ÖĞRETMENİN İKİ DÜZELTMESİ KİLİTLENİYOR.
+   *
+   * Şikâyeti iki başlıktaydı ve ikisi de ölçülebilir:
+   *
+   *   1. "geliş-" kökü çok sık ve yan yana kullanılmıştı
+   *      (geliştirilmeye · gelişen · gelişmeye, üçü tek paragrafta).
+   *   2. "SEKİZ, tamamlanıp dondurulmuş…" cümlesi EN BAŞTA olmasın;
+   *      bölüm olumsuzlukla değil, geliştirmenin süreceği bilgisiyle
+   *      açılsın.
+   *
+   * İKİSİ DE GÖZLE BIRAKILMIYOR. Bir metin düzeltmesi ölçülmezse ilk
+   * aceleci düzenlemede geri gelir — bu sayfada bir kez yaşandı.
+   * ----------------------------------------------------------------- */
+  const gelecekMetni = await sayfa.evaluate(() => {
+    const b = [...document.querySelectorAll('h2')].find((h) =>
+      /SEKİZ gelişmeye devam ediyor/.test(h.textContent || ''),
+    );
+    const bolum = b?.closest('section');
+    // Yalnız GÖVDE paragrafları: başlık ve kapanış vurgusu hariç.
+    // Kapanış cümlesi ("Çünkü öğrenme sürekli gelişiyorsa…") öğretmenin
+    // kendi cümlesi ve DEĞİŞMEDİ; şikâyeti gövdeyeydi. Onu ölçüme
+    // katsaydık "geliş- kökü geçmiyor" kilidi hiçbir zaman tutmazdı.
+    return [...(bolum?.querySelectorAll('p') ?? [])]
+      .filter((p) => !p.closest('div.border-t'))
+      .map((p) => (p.innerText || '').replace(/\s+/g, ' '))
+      .filter(Boolean);
+  });
+  bak(
+    'gelecek bölümünün gövdesi bulundu',
+    gelecekMetni.length === 2,
+    `${gelecekMetni.length} paragraf`,
+  );
+  /* İKİ YÖNLÜ SIRA KİLİDİ. Yalnız "ilk paragraf yenilenme diyor"
+   * ölçseydik "dondurulmuş" cümlesi onun yanına eklenebilirdi; yalnız
+   * "ilk paragrafta dondurulmuş yok" ölçseydik yenilenme sözü tamamen
+   * düşebilirdi. İkisi birlikte öğretmenin talimatını tam kilitliyor. */
+  bak(
+    'gelecek: ilk cümle yenilenme sözü veriyor',
+    /^SEKİZ yenilenmeye devam edecek\./.test(gelecekMetni[0] ?? ''),
+    (gelecekMetni[0] ?? '(yok)').slice(0, 50) + '…',
+  );
+  bak(
+    'gelecek: "dondurulmuş" cümlesi ilk paragrafta DEĞİL',
+    gelecekMetni.length > 0 && !/dondurul/i.test(gelecekMetni[0] ?? ''),
+  );
+  /* Ve öğretmenin asıl şikâyeti: kelime yığılması. Gövdede "geliş-"
+   * kökü HİÇ geçmiyor; kelime yalnız başlıkta ve kapanış vurgusunda
+   * kalıyor (ikisi de öğretmenin kendi cümlesi, ikisi de değişmedi). */
+  bak(
+    'gelecek gövdesinde "geliş-" kökü yığılmıyor',
+    gelecekMetni.every((p) => !kucult(p).includes('geliş')),
+    gelecekMetni.filter((p) => kucult(p).includes('geliş')).join(' | ') || 'temiz',
+  );
+
   /* VELİ "DAHİL OLAN" TARAFTIR — iki yerde, ikisi de ölçülüyor.
    *
    * Öğretmenin gerekçesi kelime tercihinden ibaret değil: veli
@@ -830,18 +919,28 @@ console.log('\n5. Metindeki iddialar');
   /* YAZARLIK — sayfanın söylemesi gereken şey. Öğretmenin isteği:
    * SEKİZ'i tasarlayanın bir yazılım şirketi değil kendisi olduğu
    * anlaşılsın. Cümle silinirse denetim kırılır. */
-  /* YAZARLIK — ÖLÇÜM TAŞINDI. Brief cümleyi yeniden yazdı; iddia aynı
-   * ve hatta daha açık: hem KİMİN tasarladığı hem de bir yazılım
-   * şirketinin ürünü OLMADIĞI yazıyor. İkisi ayrı ayrı ölçülüyor. */
+  /* YAZARLIK — İKİ ÖLÇÜM DE BU TURDA TAŞINDI, GEVŞETİLMEDİ.
+   *
+   * Öğretmen hikâye bölümünün metnini beğenmedi ve yeniden yazıldı.
+   * İddiaların ikisi de yeni metinde duruyor, yalnız kelimeler değişti:
+   *
+   *   eski: "…masa başı teorisiyle değil; tahta başındaki gerçek sınıf
+   *          dinamiğiyle şekillendi. Fikir aşamasından kod satırlarına
+   *          kadar matematik öğretmeni Buket Topuzoğlu tarafından…"
+   *   yeni: "SEKİZ bir yazılım şirketinin ürünü değil." +
+   *         "Fikrinden kod satırlarına kadar Buket Topuzoğlu tarafından
+   *          tasarlandı."
+   *
+   * Yeni hâl daha DOĞRUDAN: birincisi artık bir benzetmeyle değil düz
+   * cümleyle söylüyor. Kimlik ("matematik öğretmeni") ayrı bir ölçümde
+   * zaten aranıyor, o yüzden bu iki desende tekrarlanmıyor. */
   bak(
     'SEKİZ\'i kimin tasarladığı yazıyor',
-    /Fikir aşamasından kod satırlarına kadar matematik öğretmeni Buket Topuzoğlu tarafından tasarlandı/.test(
-      metin,
-    ),
+    /Fikrinden kod satırlarına kadar Buket Topuzoğlu tarafından tasarlandı/.test(metin),
   );
   bak(
     'bir yazılım şirketinin ürünü olmadığı yazıyor',
-    /bir yazılım şirketinin masa başı teorisiyle değil/.test(metin),
+    /SEKİZ bir yazılım şirketinin ürünü değil/.test(metin),
   );
 
   await sayfa.close();
@@ -870,20 +969,18 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
    *   3. Sona "SEKİZ'in arkasındaki yaklaşım" künyesi eklendi.
    *
    * Liste GEVŞETİLMEDİ, uzadı: sıra hâlâ birebir ölçülüyor. */
-  /* SIRA VE SAYI AYNI (14); başlıklar iki turda değişti.
+  /* BU TURDA SIRA 14 → 13 BÖLÜM. İki değişiklik, ikisi de öğretmenin
+   * bu turdaki düzeltmesi:
+   *   1. "SEKİZ neden var?" bölümü tamamen kalktı. Sayfa artık
+   *      Hero'dan sonra doğrudan hikâye bölümüyle açılıyor.
+   *   2. Felsefe başlığına ÖZNE girdi: "İsmini matematiğin sonsuzluk
+   *      düşüncesinden alır." cümlesi KİMİN ismi olduğunu söylemiyordu.
    *
-   * Öğretmenin son düzeltmeleri:
-   *   Öğretmen bölümü → "Öğretmen sınıfın genel ritmini, öğrencinin
-   *     bireysel gelişimini görür." (brief'in oraya koyduğu
-   *     "Öğrenme bir sonuç değil…" bir kopyala-yapıştır kaymasıydı;
-   *     o dize artık sayfada geçmiyor)
-   *   Veli bölümü → "Öğrenme sürecine aile de eşlik eder." geri geldi
-   *
-   * Liste GEVŞETİLMEDİ: sıra hâlâ birebir ölçülüyor. */
+   * Liste GEVŞETİLMEDİ, kısaldı: sıra hâlâ birebir ölçülüyor ve sayı
+   * TAM. Bir bölüm eklenirse de silinirse de kırılır. */
   const BEKLENEN = [
-    'SEKİZ neden var?',
     'Bir öğretmenin sınıf deneyiminden doğdu.',
-    'İsmini matematiğin sonsuzluk düşüncesinden alır.',
+    'SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır.',
     'Ödevden gelişime, öğrenmenin tamamı tek yerde.',
     'Kendi gelişim yolculuğunun farkında.',
     'Öğretmen sınıfın genel ritmini, öğrencinin bireysel gelişimini görür.',
