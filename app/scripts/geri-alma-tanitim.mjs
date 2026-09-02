@@ -5,10 +5,16 @@
  * bu turda eklenen/taşınan ölçümlerin her birini tek tek bozuyor ve
  * `tanitim-denetimi.mjs`'in gerçekten kırıldığını gösteriyor.
  *
- * ÖZELLİKLE İKİ YÖNLÜ KİLİT: "veli bölümünde eksik yok" ve "sayfada
- * eksik olduğu konu alanları var" ölçümleri AYRI AYRI bozuluyor. İkisi
- * birlikte öğretmenin kapsam kararını kilitliyor; yalnız biri kırılsaydı
- * kilit tek yönlü olurdu ve bunu ancak burada görebilirdik.
+ * ÖZELLİKLE İKİ YÖNLÜ KİLİTLER: "isim sloganı hero'da" / "isim sloganı
+ * bölüm BAŞLIĞI değil" ve "hero künye satırı KALKTI" / "aynı cümle künye
+ * bölümünde DURUYOR" çiftleri AYRI AYRI bozuluyor. Her çift bir kararı
+ * iki yönden kilitliyor; yalnız biri kırılsaydı kilit tek yönlü olurdu
+ * ve bunu ancak burada görebilirdik.
+ *
+ * KALKAN BÖLÜMLER DE BURADA ÖLÇÜLÜYOR. Öğretmen bir bölümü kaldırdığında
+ * denetimdeki ölçüm silinmiyor, YÖNÜ ÇEVRİLİYOR ("… geri gelmemiş").
+ * Aşağıdaki dört yama o yönün gerçekten ısırdığını gösteriyor —
+ * kırılmayan bir "yok" ölçümü hiçbir şey ölçmüyor demektir.
  *
  * DERLEME KIRILIRSA DURUYOR — 0030 turunda öğrenilen tuzak: `npm run
  * build` başarısız olduğunda denetim sessizce ESKİ paketi ölçer ve
@@ -43,12 +49,10 @@ const YAMALAR = [
   },
   {
     // MARKA CÜMLESİ SAYISININ KİLİDİ — sayı TAM ölçülüyor, yani cümle
-    // ÇOĞALIRSA da kırılıyor. Yukarıdaki yama düşmeyi, bu yama
-    // çoğalmayı kanıtlıyor.
+    // ÇOĞALIRSA da kırılıyor.
     //
-    // ÇAPA BU TURDA TAŞINDI: eskiden "SEKİZ neden var?" bölümünün
-    // kapanış notuna yapışıyordu; o bölüm tamamen kalktı. Yerine
-    // gelişim bölümünün notu kullanılıyor — iddia birebir aynı.
+    // ÇAPA YİNE TAŞINDI: bir tur önce gelişim bölümünün notundaydı, o
+    // bölüm bu turda kalktı. Şimdi öğrenci bölümünün notu.
     ad: 'Marka cümlesi ikinci bir yere serpiştirilirse',
     dosya: SAYFA,
     eski: '      <Not>Öğrenci yalnızca ödev teslim etmez;',
@@ -56,16 +60,35 @@ const YAMALAR = [
     bekleyen: 'marka cümlesi tam bir yerde',
   },
   {
-    /* KALKAN BÖLÜM GERİ GELİRSE.
-       Öğretmen "SEKİZ neden var?" bölümünü tamamen çıkarttı ve denetim
-       ölçümü silinmek yerine TERSİNE ÇEVRİLDİ. Bu yama o yönün
-       gerçekten ısırdığını gösteriyor: başlık sayfaya geri konunca
-       denetim kırılmalı. */
+    /* KALKAN BAŞLIKLAR — her biri geri konunca denetim kırılmalı.
+       Ölçümler silinmedi, yönü çevrildi; bu yamalar o yönün gerçekten
+       ısırdığını gösteriyor. */
     ad: 'Kalkan "SEKİZ neden var?" bölümü geri konursa',
     dosya: SAYFA,
-    eski: '        <Hikaye />',
-    yeni: '        <Bolum baslik="SEKİZ neden var?" />\n        <Hikaye />',
-    bekleyen: '"SEKİZ neden var?" bölümü KALKTI',
+    eski: '        <SekizNedir />',
+    yeni: '        <Bolum baslik="SEKİZ neden var?" />\n        <SekizNedir />',
+    bekleyen: 'kalkan başlık geri gelmemiş: "SEKİZ neden var?"',
+  },
+  {
+    ad: 'Kalkan "Sonuç, öğrenmenin bir sonraki adımı" bölümü geri konursa',
+    dosya: SAYFA,
+    eski: '        <Ogrenci />',
+    yeni: '        <Bolum baslik="Sonuç, öğrenmenin bir sonraki adımını gösterir." />\n        <Ogrenci />',
+    bekleyen: 'kalkan başlık geri gelmemiş: "Sonuç, öğrenmenin bir sonraki adımını gösterir."',
+  },
+  {
+    ad: 'Kalkan "Puanın ötesinde, gelişim." bölümü geri konursa',
+    dosya: SAYFA,
+    eski: '        <Iletisim />',
+    yeni: '        <Bolum baslik="Puanın ötesinde, gelişim." />\n        <Iletisim />',
+    bekleyen: 'kalkan başlık geri gelmemiş: "Puanın ötesinde, gelişim."',
+  },
+  {
+    ad: 'İsim sloganı yeniden bölüm başlığı yapılırsa',
+    dosya: SAYFA,
+    eski: '        <Kunye />',
+    yeni: '        <Bolum baslik="SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır." />\n        <Kunye />',
+    bekleyen: 'isim sloganı bölüm BAŞLIĞI değil',
   },
   {
     // KALKAN ALT BAŞLIK GERİ GELİRSE.
@@ -110,52 +133,50 @@ const YAMALAR = [
     bekleyen: 'aynı cümle künye bölümünde DURUYOR',
   },
   {
-    /* ÇAPA BU TURDA YENİ METNE TAŞINDI. Öğretmen hikâye bölümünün
-       metnini beğenmedi ve yeniden yazıldı; iddia ("bir yazılım
-       şirketinin ürünü değil") aynı, kelimeler değişti. */
-    ad: 'SEKİZ\'in bir şirket ürünü olmadığı silinirse',
+    /* ÇAPA ÖĞRETMENİN YENİ METNİNE TAŞINDI: "bir yazılım ofisinde
+       değil". İddia aynı, kelimeler öğretmenin. */
+    ad: 'Bir sirket urunu olmadigi silinirse',
     dosya: SAYFA,
-    eski: '          SEKİZ bir yazılım şirketinin ürünü değil.',
-    yeni: '          SEKİZ bir eğitim platformudur.',
+    eski: '          SEKİZ, bir yazılım ofisinde değil; bir matematik öğretmeninin, Buket Topuzoğlu’nun',
+    yeni: '          SEKİZ, bir matematik öğretmeninin, Buket Topuzoğlu’nun',
     bekleyen: 'bir yazılım şirketinin ürünü olmadığı yazıyor',
   },
   {
     ad: "SEKİZ'i kimin tasarladığı silinirse",
     dosya: SAYFA,
-    eski: '          Fikrinden kod satırlarına kadar Buket Topuzoğlu tarafından tasarlandı.',
-    yeni: '          Uzun bir süre boyunca tasarlandı.',
+    eski: '          uzun yıllara dayanan sınıf deneyiminde şekillendi. Dışarıdan bakılarak kurgulanan',
+    yeni: '          uzun yıllara dayanan deneyimle kuruldu. Dışarıdan bakılarak kurgulanan',
     bekleyen: "SEKİZ'i kimin tasarladığı yazıyor",
   },
   {
-    ad: 'Hikâye başlığı bir önceki tura dönerse',
+    /* BİRLEŞİK BÖLÜMÜN BAŞLIĞI — öğretmenin yazdığı gibi (Title Case,
+       noktasız). Eski hikâye başlığına dönerse kırılmalı. */
+    ad: 'Birleşik bölüm başlığı eski hikâye başlığına dönerse',
     dosya: SAYFA,
-    eski: '          Bir öğretmenin sınıf deneyiminden doğdu.',
-    yeni: '          Sınıftan doğdu.',
-    bekleyen: '"Bir öğretmenin sınıf deneyiminden doğdu." bölümü var',
+    eski: '          Öğretmen Deneyimiyle Şekillenen, Sürekli Gelişen Platform',
+    yeni: '          Bir öğretmenin sınıf deneyiminden doğdu.',
+    bekleyen: 'birleşik bölüm başlığı öğretmenin yazdığı gibi',
   },
   {
-    /* ÇAPA YENİ BAŞLIĞA TAŞINDI. Öğretmenin düzeltmesi: cümlenin
-       öznesi yoktu ("İsmini … alır" — kimin ismi?). */
-    ad: 'Felsefe başlığı öznesiz hâline dönerse',
+    /* İSİM SLOGANI HERO'DAN DÜŞERSE. Bölüm başlığıyken ölçülüyordu;
+       öğretmen bölümü kaldırıp cümleyi hero'ya slogan olarak koydurdu. */
+    ad: 'Isim slogani hero\'dan silinirse',
     dosya: SAYFA,
     eski: '          SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır.',
-    yeni: '          İsmini matematiğin sonsuzluk düşüncesinden alır.',
-    bekleyen: 'Bölümler beklenen SIRADA',
+    yeni: '          SEKİZ bir eğitim platformudur.',
+    bekleyen: "isim sloganı hero'da",
   },
   {
-    ad: 'Felsefe vurgu cümlesi brief metninden çıkarsa',
+    /* SLOGAN DÜŞERSE. Sayı TAM ölçülüyor; bu yama düşmeyi kanıtlıyor. */
+    ad: 'Slogan birleşik bölümden çıkarsa',
     dosya: SAYFA,
-    eski: '8’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ',
-    yeni: 'Öğrenmenin bitmeyen doğası: SEKİZ',
-    bekleyen: 'felsefe vurgu cümlesi yerinde',
+    eski: '          8’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık sonuçlara',
+    yeni: '          Öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık sonuçlara',
+    bekleyen: 'slogan tam bir yerde',
   },
   {
-    /* ŞEKİL YASAĞI — ÇAPA BAŞLIĞA TAŞINDI.
-       Eski yama felsefe GÖVDESİNDEKİ "8 rakamından alır" cümlesini
-       "8 şeklinden alır"a çeviriyordu; o gövde bu turda tamamen kalktı
-       ("8 rakam" ölçümü de bu yüzden kaldırıldı, gerekçesi denetimde).
-       Yasağın kendisi yerinde: başlık şekil üzerinden yazılırsa
-       denetim hâlâ kırılıyor. Bu yama tam olarak onu gösteriyor. */
+    /* ŞEKİL YASAĞI — ÇAPA HERO SLOGANINA TAŞINDI. Yasak listesi aynen
+       yerinde; cümle şekil üzerinden yazılırsa denetim kırılıyor. */
     ad: 'Bağ şekil üzerinden kurulursa',
     dosya: SAYFA,
     eski: '          SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır.',
@@ -172,24 +193,21 @@ const YAMALAR = [
     bekleyen: 'geri çekilen felsefe cümlesi',
   },
   {
-    /* ÖĞRETMENİN SIRA TALİMATI — "dondurulmuş" cümlesi başa dönerse.
-       Şikâyeti açıktı: bölüm bir olumsuzlukla açılmasın. Bu yama iki
-       paragrafı yer değiştirerek o kuralın gerçekten ısırdığını
-       gösteriyor. */
-    ad: 'Gelecek bölümü olumsuz cümleyle başlarsa',
+    /* ÖĞRETMENİN METNİ — 3. PARAGRAF (gelecek vizyonu). Kaybolursa sayfa
+       ürünün gelişmeye devam edeceğini hiçbir yerde söylemez. */
+    ad: 'Gelecek vizyonu paragrafı silinirse',
     dosya: SAYFA,
-    eski: '          SEKİZ yenilenmeye devam edecek. Gerçek sınıf deneyimi,',
-    yeni:
-      '          SEKİZ tamamlanıp dondurulmuş bir ürün değil. Gerçek sınıf deneyimi,',
-    bekleyen: 'gelecek: ilk cümle yenilenme sözü veriyor',
+    eski: '          yeni ihtiyaçlarla ve gelişen teknolojiyle birlikte sürekli gelişmeye, büyümeye',
+    yeni: '          yeni ihtiyaçlarla birlikte',
+    bekleyen: 'gelecek vizyonu sayfada',
   },
   {
-    /* ÖĞRETMENİN KELİME ŞİKÂYETİ — "geliş-" yığılması geri gelirse. */
-    ad: 'Gelecek gövdesine "geliştirilmeye" geri girerse',
+    /* ÖĞRETMENİN METNİ — 2. PARAGRAF (öğrencinin günlük akışı). */
+    ad: 'Öğrencinin kendi ritmi paragrafı silinirse',
     dosya: SAYFA,
-    eski: 'mevcut deneyim aralıksız\n          iyileştirilecek.',
-    yeni: 'mevcut deneyim aralıksız\n          geliştirilecek.',
-    bekleyen: 'gelecek gövdesinde "geliş-" kökü yığılmıyor',
+    eski: '          hatalarını zamanında fark eder ve eksiklerini kendi ritmiyle tamamlar. Süreç',
+    yeni: '          hatalarını fark eder. Süreç',
+    bekleyen: 'birleşik bölüm 2. paragraf: kendi ritmiyle tamamlar',
   },
   {
     /* KÜNYEDEN KALKAN CÜMLE GERİ KONURSA. */
@@ -304,18 +322,21 @@ const YAMALAR = [
     bekleyen: 'veli bölümünde konu alanları cümlesi duruyor',
   },
   {
-    // İKİ YÖNLÜ KİLİDİN İKİNCİ YARISI — tek başına birinciyi KIRMAZ.
-    ad: '"eksik olduğu konu alanları" sayfadan tamamen silinirse',
+    /* ÇAPA TAŞINDI. Eski yama silinen koyu banttaki cümleye yapışıyordu
+       ve ölçtüğü iki kilit bu turda kaldırıldı (gerekçesi denetimde).
+       "eksik" GERÇEĞİ hâlâ sayfada: veli bölümündeki cümlede duruyor ve
+       kendi ölçümüyle kilitli. Bu yama artık onu kanıtlıyor. */
+    ad: 'Veli bölümünden "eksik olduğu" ifadesi silinirse',
     dosya: SAYFA,
-    eski: 'Yanlış yaptığı soruları ve eksik olduğu\n          konu alanlarını da görünür hâle getirir.',
-    yeni: 'Yanlış yaptığı soruları da görünür hâle getirir.',
-    bekleyen: '"eksik olduğu konu alanları" yazıyor',
+    eski: "            'Öğrencinin eksik olduğu veya daha fazla çalışabileceği konu alanları veli tarafından da görülebilir.',",
+    yeni: "            'Konu alanları veli tarafından da görülebilir.',",
+    bekleyen: 'veli bölümünde konu alanları cümlesi duruyor',
   },
   {
     ad: 'Sayfaya övgü sıfatı girerse',
     dosya: SAYFA,
-    eski: '          Bir öğretmenin sınıf deneyiminden doğdu.',
-    yeni: '          Bir öğretmenin sınıf deneyiminden doğdu. Vizyoner ve benzersiz bir ürün.',
+    eski: '          Öğretmen Deneyimiyle Şekillenen, Sürekli Gelişen Platform',
+    yeni: '          Öğretmen Deneyimiyle Şekillenen Benzersiz Platform',
     bekleyen: 'devrim dili',
   },
   {
@@ -335,12 +356,10 @@ const YAMALAR = [
     bekleyen: 'meta açıklama',
   },
   {
-    /* ÇAPA TAŞINDI: eskiden kalkan "SEKİZ neden var?" bölümüyle
-       hikâyeyi yer değiştiriyordu. Şimdi hikâye ile felsefe. */
     ad: 'Bölüm sırası kayarsa',
     dosya: SAYFA,
-    eski: '        <Hikaye />\n        <Felsefe />',
-    yeni: '        <Felsefe />\n        <Hikaye />',
+    eski: '        <OgretmenDeneyimi />\n        <SekizNedir />',
+    yeni: '        <SekizNedir />\n        <OgretmenDeneyimi />',
     bekleyen: 'Bölümler beklenen SIRADA',
   },
 ];

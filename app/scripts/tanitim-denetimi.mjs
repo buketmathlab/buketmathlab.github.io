@@ -291,10 +291,18 @@ console.log('\n5. Metindeki iddialar');
     'açık uçluda son puanı öğretmenin verdiği yazıyor',
     /nihai puan öğretmen tarafından verilir/.test(metin),
   );
-  bak(
-    'test puanlamasının kural tabanlı olduğu yazıyor',
-    /önceden belirlenmiş kurallar doğrultusunda/.test(metin),
-  );
+  /* ⚠ TEST PUANLAMA ÖLÇÜMÜ BU TURDA KALDIRILDI — öğretmenin kararı.
+   *
+   * Eskiden burada "Test türündeki ödevler, önceden belirlenmiş kurallar
+   * doğrultusunda sistem tarafından otomatik olarak değerlendirilir."
+   * cümlesi ölçülüyordu. Öğretmen "Değerlendirme, öğrenmeyi görünür
+   * kılar." bölümünü komple kaldırttı; cümleyi ayrıca sordum, "Kalksın"
+   * dedi.
+   *
+   * KURAL 5 GÜVENCESİ KALKMADI — ölçüldü ve HEMEN AŞAĞIDA duruyor:
+   * "nihai puan öğretmen tarafından verilir" (Öğretmen bölümünde).
+   * Yani puanlamayı kimin yaptığı sayfada yazılı ve kilitli. Kalkan tek
+   * şey, testin SABİT KURALLARLA puanlandığının yazılı olması. */
   bak(
     'çözüm fotoğrafının zorunlu olduğu yazıyor',
     /fotoğraf yüklenmeden teslim tamamlanmaz/.test(metin),
@@ -329,7 +337,15 @@ console.log('\n5. Metindeki iddialar');
    * ("SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır.") bölüm
    * sıra listesinde birebir ölçülüyor, yani ismin arkasındaki bağın
    * sayfada durduğu hâlâ kilitli. */
-  bak('gelecek vizyonu bölümü var', /SEKİZ gelişmeye devam ediyor/.test(metin));
+  /* GELECEK VİZYONU HÂLÂ SAYFADA — AMA ARTIK AYRI BİR BÖLÜM DEĞİL.
+   * "SEKİZ gelişmeye devam ediyor." başlığı bu turda kalktı; içeriği
+   * birleşik bölümün üçüncü paragrafına girdi. Ölçüm o paragrafın
+   * çekirdek ifadesine TAŞINDI — iddia aynı: sayfa ürünün gelişmeye
+   * devam edeceğini söylüyor mu. */
+  bak(
+    'gelecek vizyonu sayfada',
+    /sürekli gelişmeye, büyümeye devam edecek dinamik bir yapıdır/.test(metin),
+  );
 
   /* "SEKİZ NEDEN VAR?" BÖLÜMÜ KALKTI — ÖLÇÜM SİLİNMEDİ, TERSİNE ÇEVRİLDİ.
    *
@@ -337,13 +353,41 @@ console.log('\n5. Metindeki iddialar');
    * öğretmen sayfayı canlıda okuyup "tamamen çıkar" dedi. Ölçümü
    * kaldırmak yerine yönünü çevirmek, bölümün sessizce geri gelmesini
    * de engelliyor — geri alma kanıtı bunu ayrıca gösteriyor. */
+  /* KALKAN BEŞ BAŞLIK — ÖLÇÜMLER SİLİNMEDİ, YÖNÜ ÇEVRİLDİ.
+   *
+   * Bu sayfanın kurulu deseni: öğretmen bir bölümü kaldırttığında
+   * ölçümü silmek yerine tersine çeviriyoruz. Böylece bölüm sessizce
+   * geri gelemez ve geri alma kanıtı her birini tek tek gösterebiliyor.
+   *
+   * Beşi de öğretmenin açık kararı; ikisi bu turda birleşerek
+   * ("Öğretmen Deneyimiyle Şekillenen, Sürekli Gelişen Platform"),
+   * üçü tamamen kalkarak, biri de sloganına indirgenerek çıktı. */
+  const kalkanBasliklar = [
+    ['SEKİZ neden var?', /SEKİZ neden var/],
+    ['Bir öğretmenin sınıf deneyiminden doğdu.', /Bir öğretmenin sınıf deneyiminden doğdu/],
+    ['SEKİZ gelişmeye devam ediyor.', /SEKİZ gelişmeye devam ediyor/],
+    ['Sonuç, öğrenmenin bir sonraki adımını gösterir.', /Sonuç, öğrenmenin bir sonraki adımını/],
+    ['Değerlendirme, öğrenmeyi görünür kılar.', /Değerlendirme, öğrenmeyi görünür kılar/],
+    ['Puanın ötesinde, gelişim.', /Puanın ötesinde, gelişim/],
+  ];
+  for (const [ad, kalip] of kalkanBasliklar) {
+    bak(`kalkan başlık geri gelmemiş: "${ad}"`, !kalip.test(metin));
+  }
+
+  /* BİRLEŞİK BÖLÜM — ÖĞRETMENİN METNİ, BİREBİR.
+   * Üç paragrafın her birinden bir çekirdek ifade ölçülüyor: bir metin
+   * turunda paragraf kaybolması sessiz olur, üçü ayrı ayrı kilitli. */
   bak(
-    '"SEKİZ neden var?" bölümü KALKTI',
-    !/SEKİZ neden var/.test(metin),
+    'birleşik bölüm başlığı öğretmenin yazdığı gibi',
+    /Öğretmen Deneyimiyle Şekillenen, Sürekli Gelişen Platform/.test(metin),
   );
   bak(
-    '"Bir öğretmenin sınıf deneyiminden doğdu." bölümü var',
-    /Bir öğretmenin sınıf deneyiminden doğdu\./.test(metin),
+    'birleşik bölüm 1. paragraf: sıfırdan tasarlandı',
+    /doğrudan ihtiyaçlara yanıt vermek üzere sıfırdan tasarlandı/.test(metin),
+  );
+  bak(
+    'birleşik bölüm 2. paragraf: kendi ritmiyle tamamlar',
+    /eksiklerini kendi ritmiyle tamamlar/.test(metin),
   );
   /* KÜNYE SATIRI HERO'DAN KALKTI — İKİ YÖNLÜ KİLİT.
    *
@@ -675,8 +719,32 @@ console.log('\n5. Metindeki iddialar');
     bak(`etiket yok: "${ad}"`, !kalip.test(metin));
   }
 
-  bak('gerçek korunuyor: "yanlış yaptığı sorular" yazıyor', /[Yy]anlış yaptığı soruları/.test(metin));
-  bak('gerçek korunuyor: "eksik olduğu konu alanları" yazıyor', /eksik olduğu konu alanları/.test(metin));
+  /* ⚠⚠ İKİ "GERÇEK KORUNUYOR" KİLİDİ BU TURDA KALDIRILDI.
+   *
+   * Bu, bu sayfadaki en ağır kaldırma ve gizlenmiyor. İkisi de şu
+   * cümleyi ölçüyordu (silinen koyu banttaki):
+   *
+   *   "SEKİZ öğrencinin yalnızca puanını göstermez. Yanlış yaptığı
+   *    soruları ve eksik olduğu konu alanlarını da görünür hâle getirir."
+   *
+   * Öğretmen "Sonuç, öğrenmenin bir sonraki adımını gösterir." bölümünü
+   * komple kaldırttı. SORDUM ve sonucu birebir gösterdim: "yanlış
+   * yaptığı soruları" ifadesinin sayfada BAŞKA HİÇBİR YERDE geçmediğini
+   * ölçtüm, ve kendi kalıcı kuralını hatırlattım ("Yanlış kelimesini her
+   * durumda daha yumuşak bir ifadeyle değiştirmeye çalışma."). Kararı:
+   * "Kalksın."
+   *
+   * KURAL ÜRÜNÜN İÇİNDE AYNEN DURUYOR — bu tur hiçbir ürün ekranına
+   * dokunulmadı; veli ekranı hâlâ "Teslim edilmedi" diyor, öğrencinin
+   * sonuç kartı hâlâ yanlış sayısını gösteriyor.
+   *
+   * İKİNCİSİ İÇİN AYRICA: "eksik olduğu konu alanları" GERÇEĞİ sayfadan
+   * kalkmadı. Veli bölümü hâlâ "Öğrencinin eksik olduğu veya daha fazla
+   * çalışabileceği konu alanları veli tarafından da görülebilir." diyor
+   * ve bu KENDİ ölçümüyle kilitli (aşağıda, "veli bölümünde konu
+   * alanları cümlesi duruyor"). Eski deseni o cümleye uyarlamak, aynı
+   * dizeyi ikinci bir ad altında ölçmek olurdu — bu sayfada iki tur
+   * boyunca tam bu sebeple ölçüm kaldırıldı. */
 
   /* TAMAMLANMAMIŞ ÖDEV — ÖLÇÜM TAŞINDI, GEVŞETİLMEDİ.
    *
@@ -781,58 +849,39 @@ console.log('\n5. Metindeki iddialar');
   );
 
   /* -------------------------------------------------------------------
-   * GELECEK BÖLÜMÜ — ÖĞRETMENİN İKİ DÜZELTMESİ KİLİTLENİYOR.
+   * BİRLEŞİK BÖLÜM — İKİ BÖLÜM TEK BAŞLIKTA.
    *
-   * Şikâyeti iki başlıktaydı ve ikisi de ölçülebilir:
+   * "Bir öğretmenin sınıf deneyiminden doğdu." ve "SEKİZ gelişmeye devam
+   * ediyor." bu turda tek bölüm oldu; metnini öğretmen yazdı ve birebir
+   * verdi. Bir önceki turun iki kilidi ("ilk cümle yenilenme sözü
+   * veriyor" ve "geliş- kökü yığılmıyor") o metne aitti ve metin
+   * tamamen değişti — YERLERİNE, yeni metnin kendi kilitleri geldi.
    *
-   *   1. "geliş-" kökü çok sık ve yan yana kullanılmıştı
-   *      (geliştirilmeye · gelişen · gelişmeye, üçü tek paragrafta).
-   *   2. "SEKİZ, tamamlanıp dondurulmuş…" cümlesi EN BAŞTA olmasın;
-   *      bölüm olumsuzlukla değil, geliştirmenin süreceği bilgisiyle
-   *      açılsın.
-   *
-   * İKİSİ DE GÖZLE BIRAKILMIYOR. Bir metin düzeltmesi ölçülmezse ilk
-   * aceleci düzenlemede geri gelir — bu sayfada bir kez yaşandı.
+   * Bölümün üç paragrafı yukarıda ayrı ayrı ölçülüyor; burada ölçülen
+   * şey YAPI: slogan gerçekten bu bölümün altında mı, ve tam bir kez mi
+   * geçiyor.
    * ----------------------------------------------------------------- */
-  const gelecekMetni = await sayfa.evaluate(() => {
+  const birlesikMetni = await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll('h2')].find((h) =>
-      /SEKİZ gelişmeye devam ediyor/.test(h.textContent || ''),
+      /Öğretmen Deneyimiyle Şekillenen/.test(h.textContent || ''),
     );
-    const bolum = b?.closest('section');
-    // Yalnız GÖVDE paragrafları: başlık ve kapanış vurgusu hariç.
-    // Kapanış cümlesi ("Çünkü öğrenme sürekli gelişiyorsa…") öğretmenin
-    // kendi cümlesi ve DEĞİŞMEDİ; şikâyeti gövdeyeydi. Onu ölçüme
-    // katsaydık "geliş- kökü geçmiyor" kilidi hiçbir zaman tutmazdı.
-    return [...(bolum?.querySelectorAll('p') ?? [])]
-      .filter((p) => !p.closest('div.border-t'))
-      .map((p) => (p.innerText || '').replace(/\s+/g, ' '))
-      .filter(Boolean);
+    return (b?.closest('section')?.innerText ?? '').replace(/\s+/g, ' ');
   });
   bak(
-    'gelecek bölümünün gövdesi bulundu',
-    gelecekMetni.length === 2,
-    `${gelecekMetni.length} paragraf`,
-  );
-  /* İKİ YÖNLÜ SIRA KİLİDİ. Yalnız "ilk paragraf yenilenme diyor"
-   * ölçseydik "dondurulmuş" cümlesi onun yanına eklenebilirdi; yalnız
-   * "ilk paragrafta dondurulmuş yok" ölçseydik yenilenme sözü tamamen
-   * düşebilirdi. İkisi birlikte öğretmenin talimatını tam kilitliyor. */
-  bak(
-    'gelecek: ilk cümle yenilenme sözü veriyor',
-    /^SEKİZ yenilenmeye devam edecek\./.test(gelecekMetni[0] ?? ''),
-    (gelecekMetni[0] ?? '(yok)').slice(0, 50) + '…',
+    'birleşik bölüm gerçekten bulundu',
+    /Öğretmen Deneyimiyle Şekillenen/.test(birlesikMetni),
+    `${birlesikMetni.length} karakter`,
   );
   bak(
-    'gelecek: "dondurulmuş" cümlesi ilk paragrafta DEĞİL',
-    gelecekMetni.length > 0 && !/dondurul/i.test(gelecekMetni[0] ?? ''),
+    'birleşik bölüm 3. paragraf: dinamik bir yapıdır',
+    /sürekli gelişmeye, büyümeye devam edecek dinamik bir yapıdır/.test(birlesikMetni),
   );
-  /* Ve öğretmenin asıl şikâyeti: kelime yığılması. Gövdede "geliş-"
-   * kökü HİÇ geçmiyor; kelime yalnız başlıkta ve kapanış vurgusunda
-   * kalıyor (ikisi de öğretmenin kendi cümlesi, ikisi de değişmedi). */
+  /* SLOGAN BU BÖLÜMÜN ALTINDA — öğretmenin talimatı: "bu yazının hemen
+   * altına da slogan olarak … gelsin". Bölümün KENDİ metninde ölçülüyor,
+   * sayfa genelinde değil; yoksa slogan başka bir yere kaysa da geçerdi. */
   bak(
-    'gelecek gövdesinde "geliş-" kökü yığılmıyor',
-    gelecekMetni.every((p) => !kucult(p).includes('geliş')),
-    gelecekMetni.filter((p) => kucult(p).includes('geliş')).join(' | ') || 'temiz',
+    'slogan birleşik bölümün altında',
+    /8’in kesintisiz akışı, öğrenmenin bitmeyen doğası/.test(birlesikMetni),
   );
 
   /* VELİ "DAHİL OLAN" TARAFTIR — iki yerde, ikisi de ölçülüyor.
@@ -874,10 +923,17 @@ console.log('\n5. Metindeki iddialar');
   /* VURGU CÜMLESİ ARTIK ÖĞRETMENİN — ÖLÇÜM TAŞINDI.
    * Bir önceki tur buraya benim taslağımı ("Çözülen her problem…")
    * yazmıştım; brief kendi manifesto cümlesini getirdi. */
-  bak(
-    'felsefe vurgu cümlesi yerinde',
-    /8’in kesintisiz akışı, öğrenmenin bitmeyen doğası/.test(metin),
-  );
+  /* SLOGAN TAM BİR YERDE — ÖLÇÜM TAŞINDI VE SAYIYA ÇEVRİLDİ.
+   *
+   * Bugüne kadar yalnız VARLIĞI ölçülüyordu ("felsefe vurgu cümlesi
+   * yerinde"). Bu turda slogan felsefe bölümünden birleşik bölüme
+   * taşındı ve o bölüm kalktı; taşınırken ikinci bir kopya bırakmak tam
+   * da sessizce olabilecek türden bir hata. Bu yüzden ölçüm marka
+   * cümlesindeki desenin aynısına çevrildi: sayı TAM ölçülüyor, yani
+   * slogan ne düşebilir ne çoğalabilir. */
+  const sloganAdet = (metin.match(/8’in kesintisiz akışı, öğrenmenin bitmeyen doğası/g) || [])
+    .length;
+  bak('slogan tam bir yerde', sloganAdet === 1, `${sloganAdet} kez`);
 
   /* OKUL ADI ARTIK GÖRÜNÜR METİNDE DEĞİL — MÜHÜRÜN ALT METNİNDE.
    *
@@ -919,28 +975,30 @@ console.log('\n5. Metindeki iddialar');
   /* YAZARLIK — sayfanın söylemesi gereken şey. Öğretmenin isteği:
    * SEKİZ'i tasarlayanın bir yazılım şirketi değil kendisi olduğu
    * anlaşılsın. Cümle silinirse denetim kırılır. */
-  /* YAZARLIK — İKİ ÖLÇÜM DE BU TURDA TAŞINDI, GEVŞETİLMEDİ.
+  /* YAZARLIK — İKİ ÖLÇÜM DE YİNE TAŞINDI, GEVŞETİLMEDİ.
    *
-   * Öğretmen hikâye bölümünün metnini beğenmedi ve yeniden yazıldı.
-   * İddiaların ikisi de yeni metinde duruyor, yalnız kelimeler değişti:
+   * Hikâye bölümü bu turda birleşik bölüme dönüştü ve metnini öğretmen
+   * kendi yazdı. İddiaların ikisi de yeni metinde duruyor:
    *
-   *   eski: "…masa başı teorisiyle değil; tahta başındaki gerçek sınıf
-   *          dinamiğiyle şekillendi. Fikir aşamasından kod satırlarına
-   *          kadar matematik öğretmeni Buket Topuzoğlu tarafından…"
-   *   yeni: "SEKİZ bir yazılım şirketinin ürünü değil." +
-   *         "Fikrinden kod satırlarına kadar Buket Topuzoğlu tarafından
-   *          tasarlandı."
+   *   eski (benim taslağım): "SEKİZ bir yazılım şirketinin ürünü değil."
+   *                          "Fikrinden kod satırlarına kadar Buket
+   *                           Topuzoğlu tarafından tasarlandı."
+   *   yeni (öğretmenin):     "SEKİZ, bir yazılım ofisinde değil; bir
+   *                           matematik öğretmeninin, Buket Topuzoğlu'nun
+   *                           uzun yıllara dayanan sınıf deneyiminde
+   *                           şekillendi."
    *
-   * Yeni hâl daha DOĞRUDAN: birincisi artık bir benzetmeyle değil düz
-   * cümleyle söylüyor. Kimlik ("matematik öğretmeni") ayrı bir ölçümde
-   * zaten aranıyor, o yüzden bu iki desende tekrarlanmıyor. */
-  bak(
-    'SEKİZ\'i kimin tasarladığı yazıyor',
-    /Fikrinden kod satırlarına kadar Buket Topuzoğlu tarafından tasarlandı/.test(metin),
-  );
+   * Öğretmenin cümlesi ikisini tek cümlede söylüyor; yine de İKİ AYRI
+   * desen olarak ölçülüyor ki biri cümleden düşerse öbürü örtmesin. */
   bak(
     'bir yazılım şirketinin ürünü olmadığı yazıyor',
-    /SEKİZ bir yazılım şirketinin ürünü değil/.test(metin),
+    /bir yazılım ofisinde değil/.test(metin),
+  );
+  bak(
+    'SEKİZ\'i kimin tasarladığı yazıyor',
+    /Buket Topuzoğlu’nun\s+uzun yıllara dayanan sınıf deneyiminde şekillendi/.test(
+      metin.replace(/\s+/g, ' '),
+    ),
   );
 
   await sayfa.close();
@@ -969,28 +1027,33 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
    *   3. Sona "SEKİZ'in arkasındaki yaklaşım" künyesi eklendi.
    *
    * Liste GEVŞETİLMEDİ, uzadı: sıra hâlâ birebir ölçülüyor. */
-  /* BU TURDA SIRA 14 → 13 BÖLÜM. İki değişiklik, ikisi de öğretmenin
-   * bu turdaki düzeltmesi:
-   *   1. "SEKİZ neden var?" bölümü tamamen kalktı. Sayfa artık
-   *      Hero'dan sonra doğrudan hikâye bölümüyle açılıyor.
-   *   2. Felsefe başlığına ÖZNE girdi: "İsmini matematiğin sonsuzluk
-   *      düşüncesinden alır." cümlesi KİMİN ismi olduğunu söylemiyordu.
+  /* BU TURDA SIRA 13 → 8 BÖLÜM. Öğretmenin isteği sadeleştirmek;
+   * kendi ifadesi: "tek bir başlıkta daha sade, kafa karışıklığı
+   * olmadan."
+   *
+   *   1. "Bir öğretmenin sınıf deneyiminden doğdu." + "SEKİZ gelişmeye
+   *      devam ediyor." → tek başlık: "Öğretmen Deneyimiyle Şekillenen,
+   *      Sürekli Gelişen Platform" (metni öğretmen yazdı)
+   *   2. "Sonuç, öğrenmenin bir sonraki adımını gösterir." kalktı
+   *   3. "Değerlendirme, öğrenmeyi görünür kılar." kalktı
+   *   4. "Puanın ötesinde, gelişim." kalktı (tek cümlesi taşındı)
+   *   5. "SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır."
+   *      bölüm olmaktan çıkıp HERO'DA slogan oldu
+   *
+   * BAŞLIK YAZIMI ÖĞRETMENİN: Title Case ve noktasız. Sayfanın diğer
+   * yedi başlığı cümle düzeninde ve noktalı; farkı sordum, "yazdığınız
+   * gibi kalsın" dedi. Ölçüm o yüzden birebir dizeyi arıyor.
    *
    * Liste GEVŞETİLMEDİ, kısaldı: sıra hâlâ birebir ölçülüyor ve sayı
    * TAM. Bir bölüm eklenirse de silinirse de kırılır. */
   const BEKLENEN = [
-    'Bir öğretmenin sınıf deneyiminden doğdu.',
-    'SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır.',
+    'Öğretmen Deneyimiyle Şekillenen, Sürekli Gelişen Platform',
     'Ödevden gelişime, öğrenmenin tamamı tek yerde.',
     'Kendi gelişim yolculuğunun farkında.',
     'Öğretmen sınıfın genel ritmini, öğrencinin bireysel gelişimini görür.',
-    'Sonuç, öğrenmenin bir sonraki adımını gösterir.',
     'Öğrenme sürecine aile de eşlik eder.',
     'Öğrenme, iletişimle güçlenir.',
     "SEKİZ'in öğrenme sürecindeki dijital yüzü.",
-    'Değerlendirme, öğrenmeyi görünür kılar.',
-    'Puanın ötesinde, gelişim.',
-    'SEKİZ gelişmeye devam ediyor.',
     "SEKİZ'in arkasındaki yaklaşım",
   ];
 
@@ -1019,6 +1082,33 @@ console.log('\n6. Bölüm ritmi ve görsel dağılımı');
     h1 === 'Sonsuz bir öğrenme döngüsü için tasarlandı.',
     h1,
   );
+
+  /* İSİM SLOGANI HERO'DA — VE ARTIK BÖLÜM BAŞLIĞI DEĞİL.
+   *
+   * "SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır." bir tur
+   * önce kendi bölümünün `h2`siydi. Öğretmen o bölümü kaldırdı ama
+   * cümlenin "uygun bir yere slogan gibi" yazılmasını istedi; yerini
+   * sorduğumda hero'yu seçti.
+   *
+   * İKİ YÖNLÜ ÖLÇÜM ve ikinci yön şart:
+   *   • yalnız "cümle hero'da" ölçseydik, biri bir gün onu yeniden bölüm
+   *     başlığı yapabilirdi ve iki yerde birden dururdu;
+   *   • yalnız "h2 değil" ölçseydik cümle sayfadan tamamen düşebilirdi.
+   * Bölüm sırası listesi zaten 8 başlığı birebir sayıyor; bu çift onun
+   * tamamlayıcısı. */
+  const heroSloganMetni = await sayfa.evaluate(
+    () => (document.querySelector('main section')?.innerText ?? '').replace(/\s+/g, ' '),
+  );
+  bak(
+    'isim sloganı hero\'da',
+    /SEKİZ ismini matematiğin sonsuzluk düşüncesinden alır\./.test(heroSloganMetni),
+  );
+  const sloganH2 = await sayfa.evaluate(() =>
+    [...document.querySelectorAll('h2')].some((h) =>
+      /SEKİZ ismini matematiğin sonsuzluk/.test(h.textContent || ''),
+    ),
+  );
+  bak('isim sloganı bölüm BAŞLIĞI değil', sloganH2 === false);
 
   /* KURUM KİMLİĞİ SAYFANIN İLK ŞEYİ — ve bu bir yerleşim tercihi değil,
    * öğretmenin açık talimatı: "en üstte logo, altında öğretmen ismi ve
