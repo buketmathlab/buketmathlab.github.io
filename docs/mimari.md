@@ -1841,6 +1841,76 @@ Slogan da artık **sayıyla** kilitli (tam bir yerde) — taşınırken ikinci
 bir kopya bırakmak tam da sessizce olabilecek türden bir hataydı. İsim
 sloganı iki yönlü: hero'da **var** ve bölüm başlığı **değil**.
 
+## Kök adres — `/yeni/`'ye yönlendirme
+
+**Olay.** Öğretmen 15 Eylül'de ~720 öğrenciye adres verecekti ve özel bir
+alan adı (`sekiz.com` gibi) alıp alamayacağını sordu. İkisini ölçerken
+gerçek bir arıza çıktı:
+
+| Ölçüm | Sonuç |
+|---|---|
+| `buketmathlab.github.io/` | `200` — açılıyor, **eski uygulama** (713 satır) |
+| Eski uygulamanın veritabanı `udrzjlvjkolzqtjtpkgi` | **`http=000`, DNS çözülmüyor** — Ağustos'ta silinen proje |
+| `buketmathlab.github.io/yeni/` | `200`, veritabanı `oymueccauhprkgdrbqtv` → canlı |
+
+Yani sondaki `/yeni/` kısmını yazmayı unutan herkes **çalışıyor görünen
+ama hiç kimsenin giremediği** bir giriş ekranına düşüyordu. Kodunu yazıp
+"olmuyor" diyecek olan 720 öğrenciydi.
+
+Özel alan adı için de ön koşuldu: alan adı deponun **köküne** bağlanır,
+yani `sekizokulu.com` alınsa bugünkü hâliyle yine ölü uygulamaya düşerdi.
+
+### En sert kural bu turda kalktı
+
+**"Kök `index.html` hiç değişmeyecek (md5 `6571fd91…`)"** Faz 0'dan beri
+yürürlükteydi ve her turda elle doğrulanıyordu. Öğretmene üç seçenek
+sundum (yönlendir / olduğu gibi bırak / yönlendir ama eskiyi `/eski/`'de
+tut); kararı **yönlendirme, eski uygulama kalksın** oldu.
+
+Eski uygulama silinmedi, git geçmişinde duruyor:
+`git show c2e11dd:index.html`. Ama açık olalım — veritabanı silindiği
+için geri getirilse de çalışmaz.
+
+### Üç katman, çünkü biri yetmez
+
+1. `<meta http-equiv="refresh">` — **JavaScript kapalıyken** çalışan tek katman
+2. `location.replace('/yeni/')` — hızlı; `href` DEĞİL, çünkü `href`
+   geçmişe kayıt bırakır ve geri tuşu kullanıcıyı buraya döndürüp yeniden
+   yönlendirir, yani geri tuşu çalışmaz hâle gelir
+3. Görünür bağlantı — ikisi de engellenirse (bazı kurumsal tarayıcılar
+   meta yenilemeyi engelliyor) elle tıklanır
+
+**Dışarıya sıfır istek — ölçülen bir iyileştirme.** Eski kök sayfa Google
+Fonts, jsDelivr ve cdnjs yüklüyordu; oraya düşen herkesin IP'si üç ayrı
+üçüncü tarafa gidiyordu. Yeni sayfa hiçbir dış kaynak yüklemiyor.
+
+### Elle kontrol yerine otomatik denetim
+
+**Ölçülen boşluk:** kök dosyanın md5'i depoda **hiçbir betikte**
+kontrol edilmiyordu — yalnız `docs/mevcut-sistem-envanteri.md`'de bir
+cümle olarak yazılıydı ve kontrolü her tur ben elle yapıyordum.
+Alışkanlık kırıldığı gün kimse fark etmezdi.
+
+`app/scripts/kok-denetimi.mjs` (`npm run kok-denetim`) 13 ölçüm yapıyor;
+en önemlileri: dosya 4 KB'nin altında kalıyor (yeniden bir uygulamaya
+dönüşemez), hedef iki katmanda da `/yeni/`, üçüncü taraf kaynak yok,
+tarayıcıda gerçekten düşüyor ve **JavaScript kapalıyken de düşüyor**.
+
+Sonuncusu tek başına önemli: `location.replace` çalışmazsa geriye yalnız
+meta yenileme kalıyor. Ölçülmezse, biri bir gün o satırı silince
+JavaScript'i kapalı kullanıcı **sessizce** kaybolur — geri alma kanıtı
+(`npm run kok-geri-alma`, 7/7) tam olarak bunu gösteriyor.
+
+### Özel alan adı — teknik engel kalmadı
+
+Ölçülen durum: `sekiz.com`, `sekiz.net`, `sekiz.org`, `sekiz.app` ve
+`sekizapp.com` **alınmış**; `sekizokulu.com`, `sekizplatform.com`,
+`sekizogrenme.com` ve `buketmathlab.com` boşta görünüyor.
+
+Alan adı satın alındığında yapılacaklar tek tur: `CNAME` dosyası + dört
+DNS kaydı + GitHub sertifikasının beklenmesi. `CNAME` şimdiden
+konmuyor — elde gerçek bir alan adı yokken anlamsız.
+
 ## Projeyi uyanık tutan zamanlayıcı (yeni SQL yok)
 
 **Olay.** 2026 Ağustos'unda Supabase, ücretsiz plandaki projeyi 7 günlük

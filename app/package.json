@@ -23,7 +23,9 @@
     "ewalu-denetim": "node scripts/ewalu-mesaj-denetimi.mjs",
     "tanitim-gorseller": "node scripts/tanitim-gorselleri.mjs",
     "tanitim-denetim": "node scripts/tanitim-denetimi.mjs",
-    "tanitim-geri-alma": "node scripts/geri-alma-tanitim.mjs"
+    "tanitim-geri-alma": "node scripts/geri-alma-tanitim.mjs",
+    "kok-denetim": "node scripts/kok-denetimi.mjs",
+    "kok-geri-alma": "node scripts/geri-alma-kok.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.5",
