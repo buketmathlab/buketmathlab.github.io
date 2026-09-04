@@ -10,11 +10,27 @@ Tespit tarihi: Faz 0.
 
 | Konu | Durum |
 |---|---|
-| Adres | `https://buketmathlab.github.io/` (HTTP 200, canlı) |
+| Adres | ~~`https://buketmathlab.github.io/`~~ — **kök artık `/yeni/`'ye yönlendiriyor** |
 | Kaynak | Depo kökündeki tek dosya: `index.html`, 713 satır |
 | Doğrulama | Canlı kopyanın md5'i depodaki dosyayla aynı (`6571fd91…`) |
 | Build | Yok. `package.json` yok, `.github/` yok. |
 | Bağımlılıklar | CDN'den: `@supabase/supabase-js@2`, `pdf.js@3.11.174`, Google Fonts |
+
+> **BU BÖLÜM ARTIK TARİHÎ KAYIT.** Yukarıdaki her satır eski uygulamayı
+> anlatıyor ve hiçbiri bugün geçerli değil:
+>
+> - Eski uygulamanın bağlandığı Supabase projesi (`udrzjlvjkolzqtjtpkgi`)
+>   2026 Ağustos'unda **silindi**; ölçüldü, DNS bile çözülmüyor. Yani
+>   uygulama açılıyor ama hiç kimse giremiyordu.
+> - Kök `index.html` bu yüzden **`/yeni/`'ye yönlendiren küçük bir sayfaya**
+>   dönüştü (3,6 KB, dışarıya sıfır istek). md5 `6571fd91…` **artık
+>   geçerli değil**.
+> - Eski uygulamanın kendisi git geçmişinde duruyor:
+>   `git show c2e11dd:index.html`
+>
+> **md5'i elle kontrol etme alışkanlığının yerini otomatik denetim aldı:**
+> `npm run kok-denetim` (`app/scripts/kok-denetimi.mjs`). Ayrıntı için
+> `docs/mimari.md` → "Kök adres".
 
 ## Supabase
 
