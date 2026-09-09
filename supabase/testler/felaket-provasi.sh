@@ -59,11 +59,14 @@ psql_ -q -d "$CANLI" <<'SQL'
 do $$
 declare jt text; v_s uuid; v_a uuid; v_b uuid; v_o uuid; jo text;
 begin
-  update public.ayarlar set ogretmen_pin_hash =
-    extensions.crypt('Prova!2026', extensions.gen_salt('bf', 10)) where id = 1;
+  update public.ogretmenler set pin_hash =
+    extensions.crypt('Prova!2026', extensions.gen_salt('bf', 10)) where yonetici;
   jt := (public.giris('Prova!2026'))->>'token';
   insert into public.siniflar (seviye, sube) values (7, 'P')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   -- Kesme işareti ve Türkçe karakter: JSON kaçışını da sınıyor
   v_a := (public.ogrenci_ekle(jt, 'Ayşe O''Brien Çağlar', 'okul', v_s))->>'id';
   v_b := (public.ogrenci_ekle(jt, 'Öğünç Şıklıoğlu', 'ozel', null))->>'id';

@@ -42,21 +42,33 @@ declare
   eski_tarih date; eski_gec boolean; eski_yayin boolean;
   p integer;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Kardes!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Kardes!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Kardes!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (10, 'U')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_u;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_u from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   insert into public.siniflar (seviye, sube) values (10, 'V')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_v;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_v from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   insert into public.siniflar (seviye, sube) values (10, 'W')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_w;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_w from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   -- 10Y ÖNCE AKTİF: `odevler_coklu_olustur` arşivdeki sınıfı reddediyor
   -- (0016), yani kardeşi ancak aktifken kurup sonra arşivleyebiliriz.
   insert into public.siniflar (seviye, sube) values (10, 'Y')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_y;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_y from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   -- ===========================================================================
   raise notice '--- 1. Dört şubeye tek ödev, sonra 10Y arşivleniyor ---';

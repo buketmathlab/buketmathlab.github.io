@@ -27,9 +27,9 @@ begin
   t_ogretmen := r ->> 'token';
   assert t_ogretmen is not null and length(t_ogretmen) = 64, 'Jeton üretilmeli';
 
-  assert (select ogretmen_pin_hash from public.ayarlar where id = 1) <> 'gizli123',
+  assert (select pin_hash from public.ogretmenler where yonetici) <> 'gizli123',
          'HATA: PIN düz metin saklanıyor!';
-  assert (select ogretmen_pin_hash from public.ayarlar where id = 1) like '$2%',
+  assert (select pin_hash from public.ogretmenler where yonetici) like '$2%',
          'PIN bcrypt ile hash''lenmeli';
   raise notice '    PIN bcrypt hash: OK';
 

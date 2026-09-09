@@ -27,7 +27,7 @@ declare
   yol_ayse   text;
 begin
   raise notice '--- Kurulum ---';
-  update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+  update public.ogretmenler set pin_hash = null where yonetici;
   t_ogretmen := (public.pin_ayarla('yukleme-PIN.7')) ->> 'token';
   r := public.sinif_ekle(t_ogretmen, 10::smallint, 'Y'); v_sinif   := (r ->> 'id')::uuid;
   r := public.sinif_ekle(t_ogretmen, 10::smallint, 'Z'); v_sinif_b := (r ->> 'id')::uuid;

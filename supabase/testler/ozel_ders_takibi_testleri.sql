@@ -20,13 +20,16 @@ declare
   d_id uuid; p1 uuid; p2 uuid;
   n integer;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Ozel!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Ozel!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Ozel!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (5, 'Z')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_ozel := (public.ogrenci_ekle(jt, 'Zeynep Özelli', 'ozel', null))->>'id';
   v_okul := (public.ogrenci_ekle(jt, 'Okan Okullu', 'okul', v_s))->>'id';
@@ -296,7 +299,11 @@ begin
    where ns.nspname = 'public' and p.prokind = 'f'
      and has_function_privilege('anon', p.oid, 'EXECUTE')
      and pg_get_functiondef(p.oid) ~* '\m(odemeler|tutar|odendi)\M'
-     and pg_get_functiondef(p.oid) !~* '(_ogretmen\(|rol *= *''veli'')';
+     -- 0033: özel ders uçları artık `_yonetici(` istiyor. `_yonetici`
+     -- kendi içinde `_ogretmen`i çağırıyor, yani şart GEVŞEMEDİ, SERTLEŞTİ:
+     -- öğretmen olmak yetmiyor, sahip olmak gerekiyor. Muafiyet deseni bu
+     -- yüzden `_yonetici(`i de tanıyor.
+     and pg_get_functiondef(p.oid) !~* '(_ogretmen\(|_yonetici\(|rol *= *''veli'')';
   if n > 0 then
     raise exception '9f: paraya dokunan ama rol şartı taşımayan % uç var', n;
   end if;
@@ -322,7 +329,11 @@ begin
    where ns.nspname = 'public' and p.prokind = 'f'
      and has_function_privilege('anon', p.oid, 'EXECUTE')
      and pg_get_functiondef(p.oid) ~* '\m(odemeler|tutar|odendi)\M'
-     and pg_get_functiondef(p.oid) !~* '(_ogretmen\(|rol *= *''veli'')';
+     -- 0033: özel ders uçları artık `_yonetici(` istiyor. `_yonetici`
+     -- kendi içinde `_ogretmen`i çağırıyor, yani şart GEVŞEMEDİ, SERTLEŞTİ:
+     -- öğretmen olmak yetmiyor, sahip olmak gerekiyor. Muafiyet deseni bu
+     -- yüzden `_yonetici(`i de tanıyor.
+     and pg_get_functiondef(p.oid) !~* '(_ogretmen\(|_yonetici\(|rol *= *''veli'')';
 
   execute 'drop function public._sahte_para_ucu(text)';
 

@@ -24,7 +24,7 @@ declare
   n          integer;
 begin
   raise notice '--- Kurulum ---';
-  update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+  update public.ogretmenler set pin_hash = null where yonetici;
   t_ogretmen := (public.pin_ayarla('duzenleme-PIN.9')) ->> 'token';
   r := public.sinif_ekle(t_ogretmen, 11::smallint, 'D'); v_sinif := (r ->> 'id')::uuid;
 

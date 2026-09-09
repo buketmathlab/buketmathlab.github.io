@@ -27,7 +27,7 @@ declare
   n          integer;
 begin
   raise notice '--- Kurulum ---';
-  update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+  update public.ogretmenler set pin_hash = null where yonetici;
   t_ogretmen := (public.pin_ayarla('pdf-test-PIN.1')) ->> 'token';
 
   r := public.sinif_ekle(t_ogretmen, 9::smallint, 'A');  v_sinif_a := (r ->> 'id')::uuid;
@@ -177,7 +177,7 @@ declare
   liste      jsonb;
 begin
   raise notice '--- 9. odevler_listesi ---';
-  update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+  update public.ogretmenler set pin_hash = null where yonetici;
   t_ogretmen := (public.pin_ayarla('liste-test-PIN.2')) ->> 'token';
   r := public.sinif_ekle(t_ogretmen, 11::smallint, 'Z'); v_sinif := (r ->> 'id')::uuid;
 
@@ -233,7 +233,7 @@ declare
   t_ogretmen text; t_ogrenci text; v_sinif uuid; v_odev uuid; r jsonb;
 begin
   raise notice '--- 10. odev_dosya_yolu ---';
-  update public.ayarlar set ogretmen_pin_hash = null where id = 1;
+  update public.ogretmenler set pin_hash = null where yonetici;
   t_ogretmen := (public.pin_ayarla('yol-test-PIN.3')) ->> 'token';
   r := public.sinif_ekle(t_ogretmen, 12::smallint, 'Y'); v_sinif := (r ->> 'id')::uuid;
   r := public.odev_olustur(t_ogretmen, 'YOL Testi', null, v_sinif, 'test',
@@ -291,7 +291,7 @@ begin
 
   -- Gereğinden fazlası verilmemeli: service_role çok yetkili bir rol, ona
   -- toptan EXECUTE vermek Edge Function'ın erişimini gereksiz genişletir.
-  if has_function_privilege('service_role', 'public._oturum_ac(text, uuid, interval)', 'execute') then
+  if has_function_privilege('service_role', 'public._oturum_ac(text, uuid, uuid, interval, uuid)', 'execute') then
     raise exception 'HATA: service_role dahili _oturum_ac''ı da çağırabiliyor — fazla yetki!';
   end if;
   raise notice '    dahili fonksiyonlar service_role''e de kapalı: OK';

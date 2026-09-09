@@ -32,14 +32,17 @@ begin
   -- ---------------------------------------------------------------------------
   -- Hazırlık
   -- ---------------------------------------------------------------------------
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Kod!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Kod!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Kod!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (8, 'K')
     on conflict (seviye, sube) do update set arsiv = false
     returning id into v_sinif;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_sinif from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_a := (public.ogrenci_ekle(jt, 'Ali Yılmaz', 'okul', v_sinif))->>'id';
   v_b := (public.ogrenci_ekle(jt, 'Beste Aydın', 'okul', v_sinif))->>'id';
@@ -188,16 +191,25 @@ begin
   raise notice '5 OK — liste uçları kod taşımıyor, denetimin kendisi çalışıyor';
 
   -- ---------------------------------------------------------------------------
-  -- 6 — Olmayan öğrenci sessizce boş dönüyor, hata değil
+  -- 6 — Olmayan öğrenci anlaşılır biçimde reddediliyor
   --
-  -- Ekran silinmiş bir öğrenciye dokunursa çökmemeli.
+  -- 0033 ÖNCESİ bu çağrı boş bir nesne döndürüyordu. Kapsam turundan sonra
+  -- `ogrenci_kodlari` öğrencinin çağırana ait olduğunu doğruluyor ve
+  -- olmayan öğrenci de bu denetimden geçemiyor.
+  --
+  -- İDDİA GEVŞEMEDİ, GÜÇLENDİ: uç artık "yok" ile "başkasının" durumunu
+  -- AYIRT ETMİYOR — ikisine de aynı Türkçe reddi veriyor. Yani bir öğretmen,
+  -- rastgele kimlik deneyerek başka bir öğrencinin VAR OLDUĞUNU bile
+  -- öğrenemiyor. Ölçülen tek şart: çökme değil, anlaşılır bir red.
   -- ---------------------------------------------------------------------------
-  v := public.ogrenci_kodlari(jt, '00000000-0000-0000-0000-000000000000'::uuid);
-  if v <> '{}'::jsonb then
+  begin
+    v := public.ogrenci_kodlari(jt, '00000000-0000-0000-0000-000000000000'::uuid);
     raise exception '6a: olmayan öğrenci için kod döndü: %', v;
-  end if;
+  exception when insufficient_privilege then
+    null;
+  end;
 
-  raise notice '6 OK — olmayan öğrencide boş yanıt, çökme yok';
+  raise notice '6 OK — olmayan öğrenci reddediliyor, "yok" ile "başkasının" ayırt edilmiyor';
 
   raise notice '';
   raise notice 'KODLAR TESTLERİ: 6 GRUP GEÇTİ';

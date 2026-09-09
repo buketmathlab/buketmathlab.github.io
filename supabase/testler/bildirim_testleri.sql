@@ -35,13 +35,16 @@ declare
   v_s uuid; v_o uuid; v_odev uuid; v_g uuid;
   n integer; n0 integer; p0 integer;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Rozet!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Rozet!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Rozet!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (6, 'R')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_o := (public.ogrenci_ekle(jt, 'Rozet Öğrenci', 'okul', v_s))->>'id';
   jv := (public.giris((select kod from public.giris_kodlari
@@ -172,6 +175,9 @@ begin
 
   insert into public.siniflar (seviye, sube) values (7, 'R')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   v_o := (public.ogrenci_ekle(jt, 'Arşivlik Öğrenci', 'okul', v_s))->>'id';
   jv := (public.giris((select kod from public.giris_kodlari
                         where ogrenci_id = v_o and rol = 'veli')))->>'token';

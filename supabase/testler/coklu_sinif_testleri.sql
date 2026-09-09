@@ -34,20 +34,32 @@ declare
   n       integer;
   c_yol   text := 'odev/paylasilan-0030/anahtar.pdf';
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Coklu!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Coklu!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Coklu!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (9, 'P')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_p;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_p from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   insert into public.siniflar (seviye, sube) values (9, 'R')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_r;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_r from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   insert into public.siniflar (seviye, sube) values (9, 'S')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   -- 9T bilerek ARŞİVDE: 3. grup onu reddetmeyi ölçüyor.
   insert into public.siniflar (seviye, sube) values (9, 'T')
     on conflict (seviye, sube) do update set arsiv = true returning id into v_t;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_t from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   update public.siniflar set arsiv = true where id = v_t;
 
   -- ===========================================================================
@@ -163,6 +175,12 @@ begin
   insert into public.siniflar (seviye, sube)
   select 9, 'Z' || chr(64 + i) from generate_series(1, 21) i
     on conflict (seviye, sube) do update set arsiv = false;
+
+  -- 0033: sınıflar öğretmene bağlanmadan ödev verilemiyor.
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+  select g.id, s.id from public.ogretmenler g, public.siniflar s
+   where g.yonetici and s.seviye = 9 and s.sube like 'Z%'
+    on conflict do nothing;
 
   begin
     perform public.odevler_coklu_olustur(

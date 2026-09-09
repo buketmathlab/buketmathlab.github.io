@@ -49,14 +49,17 @@ begin
   -- ---------------------------------------------------------------------------
   -- Hazırlık
   -- ---------------------------------------------------------------------------
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Kanal!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Kanal!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Kanal!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (5, 'Y')
     on conflict (seviye, sube) do update set arsiv = false
     returning id into v_sinif;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_sinif from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_a := (public.ogrenci_ekle(jt, 'Ada Kanalcı', 'okul', v_sinif))->>'id';
   v_b := (public.ogrenci_ekle(jt, 'Bora Kanalcı', 'okul', v_sinif))->>'id';
@@ -467,13 +470,20 @@ end $$;
 do $$
 declare n integer;
 begin
-  -- `okundu` birincil anahtarı üç sütunlu olmalı
+  -- `okundu` birincil anahtarı DÖRT sütunlu olmalı.
+  --
+  -- 0025'te üç sütundu (ogrenci_id, rol, kanal). 0033 dördüncüyü ekledi:
+  -- ogretmen_id. Sebep ölçülerek bulundu — dört öğretmenli bir sistemde A
+  -- öğretmeni bir yazışmayı açtığında, AYNI öğrencinin B öğretmeniyle olan
+  -- yazışması da okunmuş sayılırdı ve çocuğun B'ye yazdığı mesaj B'nin
+  -- rozetinden sessizce düşerdi. İDDİA GEVŞEMEDİ: anahtar bir sütun daha
+  -- ayırıyor, yani okuma işareti daha dar bir kapsama ait.
   select count(*) into n
     from pg_constraint c
    where c.conrelid = 'public.okundu'::regclass and c.contype = 'p'
-     and (select count(*) from unnest(c.conkey)) = 3;
+     and (select count(*) from unnest(c.conkey)) = 4;
   if n <> 1 then
-    raise exception '12a: okundu birincil anahtarı üç sütunlu değil';
+    raise exception '12a: okundu birincil anahtarı dört sütunlu değil';
   end if;
 
   -- `kanal` kısıtı iki değerle sınırlı
@@ -486,8 +496,9 @@ begin
   -- Doğrudan yazma denemesi: geçersiz kanal şema tarafından reddedilmeli.
   -- Fonksiyon denetimi kalksa bile bu duvar duruyor mu, ölçülen bu.
   begin
-    insert into public.mesajlar (ogrenci_id, kimden, metin, kanal)
-    select id, 'ogretmen', 'sema denemesi', 'mudur'
+    insert into public.mesajlar (ogrenci_id, kimden, metin, kanal, ogretmen_id)
+    select id, 'ogretmen', 'sema denemesi', 'mudur',
+           (select id from public.ogretmenler where yonetici)
       from public.ogrenciler limit 1;
     raise exception '12c: geçersiz kanal şemaya yazılabildi';
   exception when check_violation then null;
@@ -565,8 +576,8 @@ begin
 
   -- ŞEMANIN İZİN VERDİĞİ ama uçların üretmediği satır: veliden gelmiş
   -- görünen, ama ÖĞRENCİ yazışmasında duran bir mesaj.
-  insert into public.mesajlar (ogrenci_id, kimden, metin, kanal)
-  values (v_a, 'veli', 'Eslesmeyen satir denemesi.', 'ogrenci');
+  insert into public.mesajlar (ogrenci_id, kimden, metin, kanal, ogretmen_id)
+  values (v_a, 'veli', 'Eslesmeyen satir denemesi.', 'ogrenci', (select id from public.ogretmenler where yonetici));
 
   n := (public.veliler_listesi(jt)->>'toplam_okunmamis')::int;
   if n <> n0 then
