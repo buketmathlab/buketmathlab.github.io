@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { Yedek } from './Yedek';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -57,6 +58,7 @@ function Sayi({
  * için değil karar aldırmak için var; grafik yığını dikkat dağıtır.
  */
 export function Pano() {
+  const { ben } = useBenKimim();
   const { oturum } = useOturum();
   const git = useNavigate();
   const { veri, durum, hata, yenile } = useVeri<PanoVerisi>('ogretmen_panosu', {
@@ -180,8 +182,24 @@ export function Pano() {
                 yedektir — bu yüzden ayrı bir sekmeye gömülmedi, öğretmenin
                 her gün açtığı ekranın sonunda duruyor. Eskidiğinde kart
                 sarıya dönüp kendini hatırlatıyor. */}
-            <h2 className="mb-3 mt-8 text-[18px] text-ink">Verinizin yedeği</h2>
-            <Yedek />
+            {/* YEDEK YALNIZ SAHİPTE (0033). `disa_aktar` bütün sistemi tek
+                dosyada indiriyor; dört öğretmenin her birinin
+                meslektaşlarının verisini indirmesi kabul edilemez. Sunucu
+                zaten reddediyor — ekran reddedilecek bir düğmeyi hiç
+                göstermiyor (`ucYok` deseni, Part VIII).
+
+                VARSAYILAN GÜVENLİ TARAFTA: kart yalnız "bu kişi sahip
+                DEĞİL" olduğunu BİLDİĞİMİZDE gizleniyor. 0033 panelde henüz
+                çalıştırılmadıysa `ben_kimim` ucu yoktur ve `ben` null
+                kalır — o durumda kart bugünkü gibi görünmeye devam eder.
+                Aksi hâlde arayüz yayınlanıp SQL çalıştırılmadığı aralıkta
+                öğretmen yedek alamaz hâle gelirdi. */}
+            {(ben === null || ben.sahip) && (
+              <>
+                <h2 className="mb-3 mt-8 text-[18px] text-ink">Verinizin yedeği</h2>
+                <Yedek />
+              </>
+            )}
 
             {/* Dar ekranda yan menü gizli; Ayarlar'a tek giriş burası.
                 `lg:hidden` — geniş ekranda yan menüde zaten var, iki kez

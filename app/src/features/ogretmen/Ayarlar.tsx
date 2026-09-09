@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { useToast } from '@/components/ui/toast-baglam';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { rpc } from '@/services/supabase';
 
@@ -12,11 +13,17 @@ import { rpc } from '@/services/supabase';
  * Ayarlar — bugünlük tek işi PIN değiştirmek.
  *
  * NEDEN VAR: `pin_degistir` 0003'te yazıldı, 0005'te yetkisi verildi ve
- * arayüzde HİÇ ÇAĞRILMADI. Yani öğretmen PIN'ini değiştiremiyordu. Tek yol
- * Supabase panelinde `ogretmen_pin_hash`'i NULL'a çekmekti — ama hash boşken
- * `giris()` HERKESE kurulum ekranı gösteriyor, yani o aralıkta siteye giren
- * biri PIN'i belirleyebilirdi. PIN'i sızmış bir öğretmen için gerçek bir
- * çıkmazdı.
+ * arayüzde HİÇ ÇAĞRILMADI. Yani öğretmen PIN'ini değiştiremiyordu.
+ *
+ * KURTARMA YOLU 0033'TE DEĞİŞTİ. Eskiden tek yol panelde
+ * `ayarlar.ogretmen_pin_hash`'i NULL'a çekmekti; o sütun artık yok, PIN'ler
+ * `ogretmenler.pin_hash`'te duruyor. Bir öğretmen PIN'ini unutursa PLATFORM
+ * SAHİBİ Öğretmenler ekranından sıfırlıyor — panelde SQL çalıştırmaya gerek
+ * kalmadı. Sahip kendi PIN'ini unutursa kurtarma yolu hâlâ panelde:
+ * `update public.ogretmenler set pin_hash = null where yonetici;` ve
+ * ardından kurulum ekranından yeniden belirlemek. O aralık AÇIK BİR
+ * PENCEREDİR (hash boşken siteye giren herkes kurulum ekranını görür);
+ * dakikalarla sınırlayın.
  *
  * YENİ SEKME AÇILMADI. Menü zaten altı sekme; yedincisi 360 px'de alt
  * çubuğa sığmıyor (ölçüldü). Buraya yan menünün altından ve Pano'dan
@@ -25,6 +32,7 @@ import { rpc } from '@/services/supabase';
  */
 export function Ayarlar() {
   const { oturum } = useOturum();
+  const { ben } = useBenKimim();
   const { bildir } = useToast();
   const git = useNavigate();
   const [eski, setEski] = useState('');
@@ -93,7 +101,17 @@ export function Ayarlar() {
 
   return (
     <>
-      <SayfaBasligi baslik="Ayarlar" aciklama="Öğretmen PIN’iniz." />
+      {/* KİM OLARAK GİRDİM — dört öğretmenli bir sistemde bu soru ekranda
+          cevaplanabilir olmalı. Vekâletteyken kabuktaki şerit zaten uyarıyor;
+          burası kendi hesabındayken de adı gösteriyor. */}
+      <SayfaBasligi
+        baslik="Ayarlar"
+        aciklama={
+          ben
+            ? `${ben.ad} olarak girdiniz${ben.sahip ? ' · platform sahibi' : ''}. Öğretmen PIN’iniz.`
+            : 'Öğretmen PIN’iniz.'
+        }
+      />
 
       <Card>
         <h2 className="mb-1 text-[18px] text-ink">PIN değiştir</h2>

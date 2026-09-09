@@ -571,3 +571,32 @@ export type OzelDersDetayi = {
     gelecek_ders: number;
   };
 };
+
+/* -----------------------------------------------------------------------------
+ * 0033 — ÖĞRETMEN KİMLİĞİ, SAHİPLİK VE VEKÂLET
+ * ---------------------------------------------------------------------------*/
+
+/** `ben_kimim` — giriş yapanın kimliği ve vekâlet durumu. */
+export type BenKimim = {
+  id: string;
+  ad: string;
+  /** Platformun sahibi mi. Yalnız sahip öğretmen ekler, yedek alır, vekâlet eder. */
+  sahip: boolean;
+  /** Başka bir öğretmenin hesabında mıyız. */
+  vekalet: boolean;
+  /** Vekâletteyse GERÇEKTE giren kişi (sahip). */
+  vekil: { id: string; ad: string } | null;
+};
+
+/** `ogretmenler_listesi` satırı — yalnız sahibe döner. */
+export type OgretmenSatiri = {
+  id: string;
+  ad: string;
+  sahip: boolean;
+  aktif: boolean;
+  /** PIN'i belirlenmiş mi (yedekten geri yüklemede boş olabilir). */
+  pin_var: boolean;
+  sinif_sayisi: number;
+  odev_sayisi: number;
+  son_gorulme: string | null;
+};
