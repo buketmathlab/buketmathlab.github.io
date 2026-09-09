@@ -105,6 +105,29 @@ const KONU_KARNESI={kapsam:{tur:'sinif',ad:'11B',sinif:'11B',mevcut:24},odev_say
            {odev:'Limit — açık uçlu',tarih:gun(-24),tur:'acik',deger:71,gonderen:19,mevcut:24},
            {odev:'Türev testi',tarih:gun(-9),tur:'test',deger:88.3,gonderen:24,mevcut:24},
            {odev:'Deneme 4',tarih:gun(-2),tur:'test',deger:null,gonderen:0,mevcut:24}]};
+// 0033: ÖĞRETMENLER EKRANI ÖLÇÜLÜYOR. Bu betik ekranları tek tek sayıyor;
+// listede olmayan ekran hiç ölçülmez. Yeni ekranın satırları en geniş
+// içerikli satırlar (ad + üç sayı + beş işlem düğmesi) ve 360 px'de taşma
+// riski en yüksek yeni yer orası. Dördü bilerek farklı: sahip (işlemsiz),
+// aktif öğretmen, PIN'i henüz belirlenmemiş öğretmen ve çıkarılmış olan —
+// dört rozetin dördü de aynı ekranda çiziliyor.
+const BEN_KIMIM={id:'s1',ad:'Buket Topuzoğlu',sahip:true,vekalet:false,vekil:null};
+// VEKÂLET ŞERİDİ AYRICA ÖLÇÜLÜYOR. Şerit yalnız `vekalet:true` iken
+// çiziliyor; varsayılan yanıtla hiçbir turda görülmezdi. Kabuğun üstünde
+// sabit duran, iki uzun adı ve bir düğmeyi aynı satıra koyan tek öğe o —
+// 360 px'de taşarsa gerçek kusur. Adlar uzun seçildi: kısa adla ölçmek
+// ölçmemekle aynı kapıya çıkardı.
+const BEN_KIMIM_VEKIL={id:'t3',ad:'Ayşe Kahramanoğlu',sahip:false,vekalet:true,
+  vekil:{id:'s1',ad:'Buket Topuzoğlu'}};
+const OGRETMENLER=[
+  {id:'s1',ad:'Buket Topuzoğlu',sahip:true,aktif:true,pin_var:true,
+   sinif_sayisi:6,odev_sayisi:41,son_gorulme:gun(0)+'T08:15:00Z'},
+  {id:'t2',ad:'Ahmet Yılmaz',sahip:false,aktif:true,pin_var:true,
+   sinif_sayisi:4,odev_sayisi:18,son_gorulme:gun(-1)+'T17:40:00Z'},
+  {id:'t3',ad:'Ayşe Kahramanoğlu',sahip:false,aktif:true,pin_var:false,
+   sinif_sayisi:0,odev_sayisi:0,son_gorulme:null},
+  {id:'t4',ad:'Mehmet Şahin',sahip:false,aktif:false,pin_var:true,
+   sinif_sayisi:2,odev_sayisi:9,son_gorulme:gun(-30)+'T12:00:00Z'}];
 const OGRENCI_YAZISMALARI={toplam_okunmamis:1,
   yanit_bekleyen:[{ogrenci_id:'o1',ad:'Ada Yıldırım',sinif:'9A',okunmamis:1,son_mesaj:gun(-1)+'T08:00:00Z'}]};
 const OGRENCI_MESAJLARI={mesajlar:[
@@ -116,11 +139,12 @@ const KENDI_KARNEM={kapsam:{ad:'Ada Yıldırım',sinif:'9A'},odev_sayisi:2,
            {konu:'Kesirler',toplam:2,dogru:2,yanlis:0,bos:0}],
   gelisim:[{odev:'Kesirler denemesi',tarih:gun(-3),tur:'test',deger:50},
            {odev:'Kesirler yazılı',tarih:gun(-2),tur:'acik',deger:70}]};
-const CEVAP={kendi_karnem:KENDI_KARNEM,ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,ewalu_mesajlari:EWALU_MESAJLARI,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+const CEVAP={ben_kimim:BEN_KIMIM,ogretmenler_listesi:OGRETMENLER,kendi_karnem:KENDI_KARNEM,ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,ewalu_mesajlari:EWALU_MESAJLARI,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 let tasmali=0;
-for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
+let seritKusuru=false;
+for (const [ad,yol,rol,vekaletli] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],
                             ['Ödevler','/ogretmen/odevler'],
                             ['Gönderimler','/ogretmen/odevler/a1/gonderimler'],
@@ -133,6 +157,7 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             // biri her turda ölçüm dışında kalmıştı.
                             ['Yeni ödev','/ogretmen/odevler/yeni'],
                             ['Ayarlar','/ogretmen/ayarlar'],
+                            ['Öğretmenler','/ogretmen/ogretmenler'],
                             // 0032: beş bant × (önizleme + metin kutusu + iki
                             // düğme) — 360 px'de taşma riski en yüksek yeni
                             // ekran, listeye giriyor.
@@ -157,10 +182,18 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
                             ['Öğrenci mesajlar','/ogrenci/mesajlar','ogrenci'],
                             ['Teslim','/ogrenci/odev/a1','ogrenci'],
                             ['Teslim sonucu','/ogrenci/odev/a3','ogrenci'],
-                            ['Kapalı sınıf','/ogrenci/odev/a4','ogrenci']]) {
+                            ['Kapalı sınıf','/ogrenci/odev/a4','ogrenci'],
+                            // Şeridin kabuğa eklendiği hâl: aynı Pano, bu kez
+                            // vekâletteyken. Şerit çizilmezse bu satır
+                            // ölçülmemiş olurdu — o yüzden aşağıda VARLIĞI da
+                            // ayrıca doğrulanıyor.
+                            ['Vekâlet şeridi','/ogretmen','ogretmen',true]]) {
   const p=await b.newPage({viewport:{width:360,height:780}});
-  await p.route('**/rest/v1/rpc/*',r=>r.fulfill({status:200,contentType:'application/json',
-    body:JSON.stringify(CEVAP[r.request().url().split('/').pop().split('?')[0]]??{})}));
+  await p.route('**/rest/v1/rpc/*',r=>{
+    const uc=r.request().url().split('/').pop().split('?')[0];
+    const govde = (uc==='ben_kimim'&&vekaletli) ? BEN_KIMIM_VEKIL : (CEVAP[uc]??{});
+    return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(govde)});
+  });
   if(yol!=='/') await p.addInitScript((r)=>localStorage.setItem('sekiz_oturum',JSON.stringify(
     r==='ogrenci' ? {rol:'ogrenci',token:'t'.repeat(64),ogrenci:{id:'o1',ad:'Elif Yıldırım',tur:'okul',sinif:'11B'}}
   : r==='veli'    ? {rol:'veli',token:'t'.repeat(64),ogrenci:{id:'o1',ad:'Ada Yıldırım',tur:'okul',sinif:'9A'}}
@@ -225,6 +258,19 @@ for (const [ad,yol,rol] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/
       `${suclu.clientWidth}→${suclu.scrollWidth}px "${(suclu.textContent||'').trim().slice(0,24)}"` : null};
   });
   if(tasma.fark>0) tasmali++;
+  // ÇİZİLMEYEN ŞERİDİN TAŞMASI DA OLMAZ. Bu satır olmasaydı, şerit bir gün
+  // sessizce kaybolduğunda denetim yine "taşma yok" derdi — yani en
+  // rahatlatıcı çıktıyı en kötü durumda verirdi.
+  if(vekaletli){
+    const s=await p.evaluate(()=>({
+      serit:[...document.querySelectorAll('[role="status"]')]
+        .some(e=>/olarak görüntülüyorsunuz/.test(e.textContent||'')),
+      donus:[...document.querySelectorAll('button')]
+        .some(e=>/Kendi hesabıma dön/.test(e.textContent||''))}));
+    if(!s.serit||!s.donus){ seritKusuru=true;
+      console.log(`  ✗ VEKÂLET ŞERİDİ EKSİK — şerit:${s.serit} dönüş düğmesi:${s.donus}`); }
+    else console.log('  ✓ vekâlet şeridi çizildi, "Kendi hesabıma dön" düğmesi yerinde');
+  }
   console.log(`${ad.padEnd(11)} odak ${halka}/${odak}${yerel?` (+${yerel} yerel video kontrolü, tarayıcı yönetiyor)`:''}  | 44px altı: ${kucuk.length} ${kucuk.length?JSON.stringify(kucuk):''} | etiketsiz alan: ${etiketsiz} | taşma: ${tasma.fark}px${tasma.suclu?' ← '+tasma.suclu:''}`);
   await p.close();
 }
@@ -232,3 +278,5 @@ await b.close();
 console.log(tasmali===0
   ? '\n→ 360 px yatay taşma: hiçbir ekranda yok ✓'
   : `\n→ ${tasmali} ekranda YATAY TAŞMA var`);
+// Denetim artık SESSİZ GEÇMİYOR: kusur varsa çıkış kodu düşüyor.
+if(tasmali>0||seritKusuru) process.exitCode=1;

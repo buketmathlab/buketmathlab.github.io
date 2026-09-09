@@ -1981,3 +1981,104 @@ uyanmış projede **sustuğu** gerçek koşuyla görüldü.
 - **Yedek yerine geçmez.** Uyanık kalmak, veri kaybına karşı koruma
   değil — bu depo bir veritabanını zaten bir kez kaybetti.
 - GitHub, 60 gün hareketsiz depolarda zamanlanmış işleri durdurur.
+
+## Çok öğretmenli SEKİZ — sahiplik, kapsam ve vekâlet (0033)
+
+Zümre başkanları toplantısından sonra matematik zümresindeki üç arkadaşı
+SEKİZ'i kullanmak istedi. Model "eşit öğretmenler" değil: **bir SAHİP ve
+onun altında çalışan öğretmenler.** Ürünün sahibi bunu kendi cümleleriyle
+tarif etti — fikir de tasarım da kendisine ait, kontrol her zaman onda
+kalmalı.
+
+### Veri neyin altında
+
+| Okul düzeyinde (ortak) | Öğretmen düzeyinde (kapsamlı) |
+|---|---|
+| `siniflar`, `ogrenciler`, `giris_kodlari` | `odevler`, `mesajlar`, `dersler`, `odemeler` |
+
+Bu ayrım bilinçli. **Öğrenci tek koda sahip**: bir çocuk dört öğretmenin
+ödevini tek girişle görüyor, dört ayrı şifre taşımıyor. Sınıf ve öğrenci
+ortak olduğu için, ileride diğer zümreler açıldığında canlı öğrenci
+verisi yeniden taşınmayacak — genişleme bir `ogretmen_siniflari` satırı.
+
+Kapsam mantığı **tek yerde**: `_ogretmenin_ogrencisi`,
+`_ogretmenin_sinifi`, `_odev_sahibi`, `_ogrenci_sahibi`. 41 uç bu
+yardımcıları çağırıyor; kural değişirse tek dosyada değişiyor.
+
+### Sahip — şemadan zorlanan üç kural
+
+- **Tam bir sahip olabilir.** Kısmi benzersiz indeks
+  (`on ogretmenler((true)) where yonetici`) ikinci sahibi yasaklıyor.
+- **Sahip pasifleştirilemez, sahipliği düşürülemez.** Aksi hâlde tek bir
+  hata sistemi sahipsiz bırakırdı.
+- **Sahibin PIN'i taşındı**, değişmedi: öğretmen aynı PIN'le girmeye
+  devam ediyor.
+
+### Özel ders TAMAMEN sahipte
+
+Öğretmenin açık kuralı. Yedi uç `_yonetici` istiyor: `ders_ekle`,
+`ders_sil`, `odeme_ekle`, `odeme_degistir`, `odeme_sil`,
+`ozel_ders_detay`, `ogrenci_ekle(p_tur='ozel')`.
+
+Bunun teknik bir sebebi de var: özel ders öğrencilerinin hepsi **tek bir
+paylaşılan sınıfta** yaşıyor (`siniflar_tek_ozel`). Sahiplik sınıf
+üzerinden kurulsaydı, o sınıfa erişen her öğretmen bütün özel ders
+ödemelerini görürdü. Denetim bunu **gerçek tutar değeri** arayarak
+ölçüyor, alan adına bakarak değil.
+
+### Vekâlet — sahip başka bir öğretmenin hesabına geçiyor
+
+`ogretmen_olarak_gir` yeni bir oturum açıyor; `oturumlar.vekil_id`
+gerçekte giren kişiyi tutuyor. `_ogretmen` hedef öğretmenin kimliğini
+döndürdüğü için **41 ucun hiçbiri değişmeden** doğru kapsamı görüyor.
+
+- **Yazmak yasak, okumak serbest.** `mesaj_gonder` vekâletli oturumda
+  reddediyor. Bir veli, o öğretmenin yazdığını sandığı bir mesajı
+  başkasından almış olmamalı.
+- **Denetim izi vekâleti taşıyor**: `_aktor` `Sahip <id> → Öğretmen <id>`
+  üretiyor (Part XLIII).
+- **Ekranda sessiz değil.** Kabukta kapatılamayan bir şerit duruyor. Bir
+  "×" düğmesi koysaydım en çok ihtiyaç duyulan anda kapatılmış olurdu.
+
+### Çıkarma = pasifleştirme
+
+`aktif = false` açık oturumları düşürüyor ve PIN'i çalışmaz kılıyor;
+**ödevler, notlar ve yazışmalar silinmiyor.** Sahip görmeye devam ediyor,
+geri alma tek dokunuş.
+
+### Yedek zinciri — taşıma provasında ölçülerek düzeltildi
+
+`supabase/testler/tasima-provasi.sh` (0032 → 0033) yazılırken **gerçek
+bir kusur çıktı**: `disa_aktar` satırlara `ogretmen_id`/`ekleyen_id`
+yazıyor ama **kadroyu yedeğe koymuyordu**. Yani 0033'ten sonra alınan bir
+yedek boş bir projeye geri yüklenemiyordu — yabancı anahtar kısıtından
+düşüyordu. Yedek zinciri tam da işe yarayacağı gün kopmuş olurdu.
+
+- `disa_aktar` artık `ogretmenler` ve `ogretmen_siniflari` yazıyor,
+  **`pin_hash` hariç**: yedek öğretmenin bilgisayarına inen düz bir
+  dosya, içinde dört öğretmenin PIN hash'i olmamalı.
+- `geri-yukle.sql` kadroyu en başta yüklüyor ve **şemada olmayan tabloyu
+  atlıyor**, böylece 0033 çalıştırılmamış bir projeye de yüklenebiliyor.
+- **Öğretmenin bugün elinde duran yedek** (0033 öncesi) 0033'lü bir
+  projeye yüklendiğinde artık reddedilmiyor: 0033'ün veri taşımasının
+  aynısı uygulanıp tek öğretmenli sisteme çevriliyor.
+
+Prova, dolu bir 0032 veritabanının üstünden 0033'ü geçiriyor ve
+öğretmenin **uçlardan gördüğü 25 satırlık parmak izinin** birebir aynı
+kaldığını ölçüyor — ham `count(*)` değil, çünkü asıl risk satırların
+kaybolması değil **kapsam dışında kalması**.
+
+### Bilerek yapılmayanlar ve kalan risk
+
+- **Diğer zümreler açılmadı.** Şema hazır, kapsam matematik zümresi.
+- **Sahip kendi panosunda herkesin verisini görmüyor.** Kendi kapsamını
+  görüyor, başkasınınkine vekâletle geçiyor; aksi hâlde panosu dört
+  öğretmenin gürültüsüne dönerdi.
+- **Öğretmenler birbirinin ödevini göremiyor** (ortak havuz ayrı tur).
+- **KALAN RİSK — öğrenci kodları hâlâ sınıf düzeyinde.** Kendi
+  sınıfındaki öğrencinin kodunu her öğretmen görebiliyor ve kod, öğrenci
+  gibi giriş yapmaya yarıyor. Dört tanıdık meslektaşta kabul edilebilir;
+  **20 öğretmende değil.** Zümreler açılmadan önce kapatılmalı.
+- **ÖLÇEK SINIRI.** Beş zümre × ~20 öğretmen × ~3.000 öğrenci olduğunda
+  her gönderimin bir fotoğraf taşıması depolamayı ücretsiz planın üstüne
+  çıkarır. Zümreler açılmadan önce plan ve maliyet ayrıca ölçülmeli.
