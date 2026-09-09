@@ -18,7 +18,11 @@ declare
   tablolar text[] := array['ogrenciler','odevler','gonderimler','giris_kodlari',
                            'ayarlar','oturumlar','denetim_izi','mesajlar',
                            'odemeler','dersler','siniflar','okundu',
-                           'giris_denemeleri'];
+                           'giris_denemeleri',
+                           -- 0032/0033'te eklenen tablolar. `ogretmenler`
+                           -- BCRYPT PIN HASH'İ tutuyor: listede olmasaydı
+                           -- anon yetkisi hiç ölçülmeden geçerdi.
+                           'ewalu_mesajlari','ogretmenler','ogretmen_siniflari'];
   dahili text[] := array[
     '_oturum_ac(''ogretmen'',null)',
     '_yeni_kod()',
@@ -26,7 +30,17 @@ declare
     '_puanla(''{}''::jsonb,''{}''::jsonb,1)',
     '_istemci_kimligi()',
     '_kilitli_mi(''x'')',
-    'oturum_temizle()'
+    'oturum_temizle()',
+    -- 0033 kimlik ve kapsam katmanı. Bunlar açık kalsaydı anon, bir
+    -- jetonun hangi öğretmene ait olduğunu ve hangi öğrencinin kimin
+    -- kapsamında olduğunu dışarıdan sorabilirdi.
+    '_ogretmen(''x'')',
+    '_yonetici(''x'')',
+    '_ogretmenin_ogrencisi(null,null)',
+    '_ogretmenin_sinifi(null,null)',
+    '_odev_sahibi(null,null)',
+    '_ogrenci_sahibi(null,null)',
+    '_ogrencinin_ogretmeni(null)'
   ];
 begin
   raise notice '--- Doğrudan tablo erişimi (hepsi reddedilmeli) ---';

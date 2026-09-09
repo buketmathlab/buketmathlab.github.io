@@ -1,59 +1,34 @@
--- =============================================================================
--- 0033 — ÖĞRETMEN KİMLİĞİ VE KAPSAM
+-- SEKİZ — 0033: Öğretmen kimliği, sahiplik ve kapsam
+-- Supabase panelinde SQL Editor'a yapıştırıp Run deyin.
+-- Beklenen sonuç: "Success. No rows returned."
+-- Açıklamalı tam sürüm: supabase/migrations/0033_ogretmen_kimligi.sql
 --
--- Matematik zümresindeki dört öğretmen SEKİZ'i birlikte kullanacak. Bugüne
--- kadar sistemde ÖĞRETMEN KİMLİĞİ DİYE BİR ŞEY YOKTU:
+-- NE YAPIYOR: sistem tek öğretmenlikten çok öğretmenliye geçiyor.
+--   * Mevcut PIN'iniz sizin satırınıza taşınıyor — AYNI PIN'le girmeye
+--     devam ediyorsunuz, hiçbir ekranınız değişmiyor.
+--   * Bütün sınıflarınız, ödevleriniz, mesajlarınız, dersleriniz ve
+--     ödemeleriniz size bağlanıyor.
+--   * Siz platformun SAHİBİSİNİZ: öğretmen ekler, çıkarır, PIN sıfırlar,
+--     istediğiniz öğretmenin hesabına geçebilirsiniz.
+--   * Özel ders (sınıfı, öğrencisi, dersleri, ödemeleri ve o velilerle
+--     yazışma) tamamen SİZDE kalıyor; başka öğretmen göremiyor.
 --
---   * `ayarlar` tek satır ve tek PIN taşıyordu (`check (id = 1)`),
---   * `_ogretmen(p_token)` yalnız ROLÜ doğruluyordu, "hangi öğretmen" diye
---     hiç sormuyordu,
---   * `denetim_izi.aktor` 20 çağrının 20'sinde de düz `'ogretmen'` yazıyordu.
+-- ÇALIŞTIRILMAZSA hiçbir şey bozulmaz: sistem bugünkü gibi tek öğretmenli
+-- çalışmaya devam eder. Öğretmenler ekranı ve vekâlet görünmez.
 --
--- Yani PIN'i paylaşmak bir çözüm değil bir sızıntı olurdu: PIN'i alan kişi
--- bütün öğrencileri, notları, veli yazışmalarını ve ÖZEL DERS ÖDEMELERİNİ
--- görür, notları değiştirir ve bunu kimin yaptığı kayıtlarda yazmazdı.
---
--- BU MIGRATION GÖZLE GÖRÜLEN HİÇBİR ŞEYİ DEĞİŞTİRMİYOR. Şema, kimlik ve
--- kapsam kuralları iniyor ama sistemde hâlâ TEK öğretmen var: mevcut PIN
--- yöneticinin kendi satırına taşınıyor ve bütün kayıtlar ona bağlanıyor.
--- İkinci öğretmen ayrı bir turda ekleniyor — kapı açıldığında kilitler
--- çoktan takılmış oluyor.
---
--- VERİ MODELİ KARARI — okul düzeyi / öğretmen düzeyi
---
---   siniflar, ogrenciler  → OKULA ait. 9A herkes için 9A'dır ve öğrenci TEK
---                           KOD taşır; tek girişte bütün öğretmenlerinin
---                           ödevlerini görür. Öğrenciyi öğretmene bağlamak,
---                           çocuğa beş ayrı kod dağıtmak demekti.
---   odevler, mesajlar,    → ÖĞRETMENE ait.
---   dersler, odemeler
---
--- Edebiyat/fizik zümreleri bu turda açılmıyor ama şema onlara göre kuruldu;
--- öğrenci öğretmene bağlansaydı, ikinci zümre katıldığında CANLI öğrenci
--- verisini yeniden taşımak gerekirdi.
--- =============================================================================
-
--- -----------------------------------------------------------------------------
--- 1. ÖĞRETMENLER
--- -----------------------------------------------------------------------------
+-- ÇALIŞTIRDIKTAN SONRA da tek öğretmenlisiniz — ikinci öğretmen ancak siz
+-- Öğretmenler ekranından eklediğinizde oluşur.
 
 create table if not exists public.ogretmenler (
   id          uuid primary key default gen_random_uuid(),
   ad          text not null check (length(btrim(ad)) between 1 and 120),
-  -- bcrypt. Düz metin hiçbir koşulda saklanmıyor (0003'teki kural).
-  -- `null` olabilir: yeni eklenen öğretmen PIN'ini ilk girişinde belirler,
-  -- ve bir yedekten geri yükleme sonrasında da hash'ler boş döner.
   pin_hash    text,
-  -- Yönetici öğrenci/sınıf ekler ve yedek alır. Dört öğretmenin her birinin
-  -- aynı çocuğu ayrı ayrı kaydetmesi mükerrer kayıt üretirdi.
   yonetici    boolean not null default false,
   aktif       boolean not null default true,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 
--- TAM BİR SAHİP OLABİLİR. İkinci bir sahip, "tüm yetki bende" kuralını
--- sessizce delerdi; kısmi benzersiz indeks bunu şemadan yasaklıyor.
 create unique index if not exists ogretmenler_tek_sahip
   on public.ogretmenler ((true)) where yonetici;
 
@@ -61,7 +36,6 @@ drop trigger if exists ogretmenler_updated_at on public.ogretmenler;
 create trigger ogretmenler_updated_at before update on public.ogretmenler
   for each row execute function public.tetik_updated_at();
 
--- Hangi öğretmen hangi sınıfa giriyor.
 create table if not exists public.ogretmen_siniflari (
   ogretmen_id uuid not null references public.ogretmenler(id) on delete cascade,
   sinif_id    uuid not null references public.siniflar(id)    on delete cascade,
@@ -72,36 +46,18 @@ create table if not exists public.ogretmen_siniflari (
 create index if not exists ogretmen_siniflari_sinif_idx
   on public.ogretmen_siniflari (sinif_id);
 
--- -----------------------------------------------------------------------------
--- 2. MEVCUT ÖĞRETMENİN SATIRI — veri taşımanın çıpası
---
--- Mevcut PIN aynen taşınıyor: öğretmen bu migration'dan sonra da AYNI PIN'le
--- giriyor. PIN hiç belirlenmemişse (boş bir veritabanı, test ortamı) satır
--- `pin_hash = null` ile açılıyor ve `pin_ayarla` bugünkü gibi kurulum
--- ekranını göstermeye devam ediyor.
--- -----------------------------------------------------------------------------
-
 insert into public.ogretmenler (ad, pin_hash, yonetici, aktif)
 select 'Buket Topuzoğlu', a.ogretmen_pin_hash, true, true
 from public.ayarlar a
 where a.id = 1
   and not exists (select 1 from public.ogretmenler);
 
--- Mevcut BÜTÜN sınıflar yöneticiye bağlanıyor — bugünkü davranış birebir
--- korunuyor (öğretmen bugün 12 sınıfın hepsini görüyor).
 insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
 select y.id, s.id
 from public.ogretmenler y
 cross join public.siniflar s
 where y.yonetici
 on conflict do nothing;
-
--- -----------------------------------------------------------------------------
--- 3. SAHİPLİK SÜTUNLARI — ödev, mesaj, ders, ödeme
---
--- Sıra bilinçli: sütun eklenir → mevcut satırlar yöneticiye yazılır →
--- `not null` konur. Tersi sırada mevcut satırlar kısıtı ihlal ederdi.
--- -----------------------------------------------------------------------------
 
 alter table public.odevler  add column if not exists ogretmen_id uuid references public.ogretmenler(id) on delete restrict;
 alter table public.mesajlar add column if not exists ogretmen_id uuid references public.ogretmenler(id) on delete cascade;
@@ -113,8 +69,6 @@ update public.mesajlar set ogretmen_id = (select id from public.ogretmenler wher
 update public.dersler  set ogretmen_id = (select id from public.ogretmenler where yonetici limit 1) where ogretmen_id is null;
 update public.odemeler set ogretmen_id = (select id from public.ogretmenler where yonetici limit 1) where ogretmen_id is null;
 
--- `not null` yalnız taşınacak satır kalmadıysa konur. Yönetici satırı hiç
--- oluşmadıysa (imkânsıza yakın ama sessiz kalmamalı) migration burada durur.
 do $$
 begin
   if exists (select 1 from public.odevler  where ogretmen_id is null)
@@ -134,20 +88,6 @@ create index if not exists odevler_ogretmen_idx  on public.odevler  (ogretmen_id
 create index if not exists mesajlar_ogretmen_idx on public.mesajlar (ogretmen_id, ogrenci_id);
 create index if not exists dersler_ogretmen_idx  on public.dersler  (ogretmen_id);
 create index if not exists odemeler_ogretmen_idx on public.odemeler (ogretmen_id);
-
--- -----------------------------------------------------------------------------
--- 4. `okundu` — PLANDA OLMAYAN, ÖLÇÜLEREK BULUNAN KUSUR
---
--- `okundu`nun birincil anahtarı 0025'ten beri `(ogrenci_id, rol, kanal)`.
--- Öğretmen kimliği YOK. Dört öğretmenli bir sistemde bu şu demek olurdu:
--- A öğretmeni bir öğrencinin yazışmasını açtığında, AYNI öğrencinin B
--- öğretmeniyle olan yazışması da okunmuş sayılırdı ve B'nin rozeti sessizce
--- düşerdi. Çocuğun B'ye yazdığı mesaj kaybolurdu.
---
--- Bu, 0025'in `kanal` sütununu eklerken çözdüğü kusurun birebir aynısı;
--- yalnız bu kez ayrışan şey kanal değil öğretmen. Anahtara `ogretmen_id`
--- giriyor.
--- -----------------------------------------------------------------------------
 
 alter table public.okundu add column if not exists ogretmen_id uuid references public.ogretmenler(id) on delete cascade;
 
@@ -174,22 +114,12 @@ end $$;
 
 alter table public.okundu add primary key (ogrenci_id, rol, kanal, ogretmen_id);
 
--- -----------------------------------------------------------------------------
--- 5. OTURUM — jeton artık hangi öğretmene ait olduğunu taşıyor
--- -----------------------------------------------------------------------------
-
 alter table public.oturumlar add column if not exists ogretmen_id uuid references public.ogretmenler(id) on delete cascade;
 
--- Mevcut açık öğretmen oturumları yöneticiye bağlanıyor; öğretmen bu
--- migration yüzünden sistemden ATILMIYOR.
 update public.oturumlar
    set ogretmen_id = (select id from public.ogretmenler where yonetici limit 1)
  where rol = 'ogretmen' and ogretmen_id is null;
 
--- VEKÂLET: sahip başka bir öğretmenin sistemine geçtiğinde, oturum HEDEF
--- öğretmenin kimliğiyle açılıyor (`ogretmen_id`) ama gerçekte kimin
--- girdiği burada duruyor. Böylece 41 ucun hiçbiri değişmeden doğru
--- kapsamı görüyor, denetim izi de gerçek kişiyi kaybetmiyor.
 alter table public.oturumlar add column if not exists vekil_id uuid references public.ogretmenler(id) on delete cascade;
 
 alter table public.oturumlar drop constraint if exists oturum_rol_tutarli;
@@ -198,33 +128,8 @@ alter table public.oturumlar add constraint oturum_rol_tutarli check (
   or (rol in ('ogrenci', 'veli') and ogrenci_id is not null and ogretmen_id is null)
 );
 
--- -----------------------------------------------------------------------------
--- 6. `ayarlar.ogretmen_pin_hash` DÜŞÜYOR
---
--- PIN artık `ogretmenler.pin_hash`'te. Bir kimlik bilgisinin iki ayrı yerde
--- durması, ikisinin bir gün ayrışması demektir; taşındıktan sonra eskisi
--- bırakılmıyor.
--- -----------------------------------------------------------------------------
-
 alter table public.ayarlar drop column if exists ogretmen_pin_hash;
 
--- =============================================================================
--- 7. KİMLİK KATMANI
---
--- Üç fonksiyonun DÖNÜŞ TİPİ değişiyor, dolayısıyla `create or replace`
--- yetmiyor; PostgreSQL dönüş tipini değiştirmeye izin vermez. Eskiler
--- AÇIKÇA düşürülüyor — 0007 tuzağı: düşürülmezse eski imza kendi
--- yetkisiyle ayakta kalır ve arayüz sessizce eski davranışa düşebilir.
--- =============================================================================
-
--- -----------------------------------------------------------------------------
--- _aktor — denetim izine yazılacak kimlik
---
--- Ad ANLIK OLARAK kopyalanıyor, sonradan çözülmüyor. Bu bilinçli: denetim
--- izi "o an kim yaptı" sorusunun cevabıdır. Öğretmen sonradan yeniden
--- adlandırılırsa geçmiş kayıtların değişmemesi gerekir. Kimlik de yanında
--- duruyor ki aynı adlı iki kişi karışmasın.
--- -----------------------------------------------------------------------------
 drop function if exists public._aktor(uuid);
 create or replace function public._aktor(p_ogretmen_id uuid, p_vekil_id uuid default null)
 returns text
@@ -245,9 +150,6 @@ as $$
          );
 $$;
 
--- -----------------------------------------------------------------------------
--- _oturum — artık öğretmen kimliğini de döndürüyor
--- -----------------------------------------------------------------------------
 drop function if exists public._oturum(text);
 create or replace function public._oturum(p_token text)
 returns table (rol text, ogrenci_id uuid, ogretmen_id uuid, vekil_id uuid)
@@ -274,8 +176,6 @@ begin
       using errcode = '28000';
   end if;
 
-  -- Pasifleştirilmiş öğretmenin jetonu da düşer. Aksi hâlde okuldan ayrılan
-  -- bir öğretmen, oturumu açık kaldığı sürece 30 gün daha veri görürdü.
   if kayit.rol = 'ogretmen'
      and not exists (select 1 from public.ogretmenler g where g.id = kayit.ogretmen_id and g.aktif) then
     raise exception 'Oturum geçersiz. Lütfen tekrar giriş yapın.'
@@ -292,11 +192,6 @@ begin
 end;
 $$;
 
--- -----------------------------------------------------------------------------
--- _ogretmen — `void` DEĞİL, artık ÇAĞIRAN ÖĞRETMENİN KİMLİĞİNİ döndürüyor.
--- Bu turun tamamı bu tek satırın üstüne kuruluyor: 41 uç bundan sonra
--- "hangi öğretmen" sorusunun cevabını elinde tutuyor.
--- -----------------------------------------------------------------------------
 drop function if exists public._ogretmen(text);
 create or replace function public._ogretmen(p_token text)
 returns uuid
@@ -313,19 +208,12 @@ begin
       using errcode = '42501';
   end if;
 
-  -- Vekâlet İŞLEM-YEREL bir ayara yazılıyor (`is_local = true`), böylece
-  -- `_aktor` onu 40 çağrı yerinin hiçbirini değiştirmeden okuyabiliyor.
-  -- PostgREST her isteği kendi işleminde çalıştırdığı için ayar bir
-  -- sonraki isteğe SIZAMAZ.
   perform set_config('sekiz.vekil', coalesce(o.vekil_id::text, ''), true);
 
   return o.ogretmen_id;
 end;
 $$;
 
--- -----------------------------------------------------------------------------
--- _yonetici — öğrenci/sınıf ekleme ve yedek alma yalnız yöneticide
--- -----------------------------------------------------------------------------
 create or replace function public._yonetici(p_token text)
 returns uuid
 language plpgsql
@@ -344,9 +232,6 @@ begin
 end;
 $$;
 
--- -----------------------------------------------------------------------------
--- _oturum_ac — öğretmen oturumu artık kimlik taşıyor (imza değişiyor)
--- -----------------------------------------------------------------------------
 drop function if exists public._oturum_ac(text, uuid, interval);
 create or replace function public._oturum_ac(
   p_rol text,
@@ -372,20 +257,6 @@ begin
 end;
 $$;
 
--- -----------------------------------------------------------------------------
--- giris — tek PIN yerine ÖĞRETMEN TARAMASI
---
--- GİRİŞ EKRANI DEĞİŞMİYOR: her öğretmen aynı kutuya KENDİ PIN'ini yazıyor.
--- Ayrı bir "öğretmen seç" adımı yok; bir kutu, bir kod.
---
--- Gövde 0028'den birebir kopyalandı; değişen tek şey 1. ve 2. adımlar
--- (kurulum kapısı ve PIN karşılaştırması). Kilitleme, kod kilidi, öğrenci/
--- veli yolu ve dönüş şekli aynen duruyor.
---
--- MALİYET NOTU: her hatalı öğretmen PIN'i denemesi, aktif öğretmen sayısı
--- kadar bcrypt karşılaştırması demek. Dört öğretmende ölçülüp raporlanacak;
--- tahmin edilmiyor.
--- -----------------------------------------------------------------------------
 create or replace function public.giris(p_kod text)
 returns jsonb
 language plpgsql
@@ -417,15 +288,10 @@ begin
       using errcode = '53400';
   end if;
 
-  -- 1) İlk kurulum: HİÇBİR öğretmenin PIN'i belirlenmemişse kurulum ekranı.
-  --    Eski koşul `ayarlar.ogretmen_pin_hash is null` idi; anlamı birebir
-  --    aynı kaldı, yalnız kaynağı değişti. Bir yedekten geri yükleme sonrası
-  --    (hash'ler yedeğe girmez) sistem yine kurulum ekranını gösterir.
   if not exists (select 1 from public.ogretmenler where pin_hash is not null and aktif) then
     return jsonb_build_object('rol', 'kurulum');
   end if;
 
-  -- 2) Öğretmen PIN'i mi? Aktif öğretmenler taranıyor.
   for g in select id, pin_hash from public.ogretmenler where pin_hash is not null and aktif loop
     if crypt(p_kod, g.pin_hash) = g.pin_hash then
       perform public._deneme_kaydet(kimlik, p_kod, true);
@@ -434,7 +300,6 @@ begin
     end if;
   end loop;
 
-  -- 3) Öğrenci ya da veli kodu mu?
   select gk.rol, gk.ogrenci_id into kayit
   from public.giris_kodlari gk
   join public.ogrenciler o on o.id = gk.ogrenci_id
@@ -463,13 +328,6 @@ begin
 end;
 $function$;
 
--- -----------------------------------------------------------------------------
--- pin_ayarla — ilk kurulum kapısı, anlamı korunarak taşındı
---
--- Eskiden kapı `ayarlar.ogretmen_pin_hash is not null` idi. Yenisi "hiçbir
--- öğretmenin PIN'i yok" — aynı şey. Kapı bir kez kapanır ve bir daha
--- açılmaz (Kural: `pin_ayarla` bir kez çalışır).
--- -----------------------------------------------------------------------------
 create or replace function public.pin_ayarla(p_yeni text)
 returns jsonb
 language plpgsql
@@ -508,14 +366,6 @@ begin
 end;
 $$;
 
--- -----------------------------------------------------------------------------
--- pin_degistir — KENDİ satırını değiştiriyor
---
--- ÖLÇÜLEN İKİNCİ KUSUR: eski gövde `where rol = 'ogretmen'` diyerek BÜTÜN
--- öğretmen oturumlarını düşürüyordu. Dört öğretmenli bir sistemde A'nın
--- PIN değiştirmesi B, C ve D'yi de sistemden atardı. Artık yalnız çağıranın
--- kendi diğer cihazları düşüyor — güvence korunuyor, kapsamı daralıyor.
--- -----------------------------------------------------------------------------
 create or replace function public.pin_degistir(p_token text, p_eski text, p_yeni text)
 returns jsonb
 language plpgsql
@@ -553,7 +403,6 @@ begin
 end;
 $$;
 
--- Yetkiler: dahili yardımcılar dışarıya kapalı, açık uçlar 0005 desenine göre.
 revoke all on function public._aktor(uuid, uuid)        from public, anon, authenticated;
 revoke all on function public._oturum(text)             from public, anon, authenticated;
 revoke all on function public._ogretmen(text)           from public, anon, authenticated;
@@ -566,25 +415,6 @@ revoke all on function public.pin_degistir(text, text, text)    from public, ano
 grant execute on function public.giris(text)                    to anon;
 grant execute on function public.pin_ayarla(text)               to anon;
 grant execute on function public.pin_degistir(text, text, text) to anon;
-
--- =============================================================================
--- 8. ÖĞRENCİ SAHİPLİĞİ — ÖLÇÜLEREK BULUNAN ÜÇÜNCÜ TASARIM SORUNU
---
--- Öğrenci OKULA ait (yukarıdaki karar) ve okul öğrencisine erişim, öğretmenin
--- SINIFI üzerinden kuruluyor. Ama ÖZEL DERS öğrencileri için bu çalışmıyor:
--- 0012, özel ders grubunu TEK bir sınıf olarak kurdu (`siniflar_tek_ozel`
--- benzersiz indeksi ikincisini yasaklıyor) ve bütün özel ders öğrencileri
--- o tek sınıfta duruyor.
---
--- Yani sahipliği yalnız sınıfa bağlasaydım, dört öğretmenin HEPSİ birbirinin
--- özel ders öğrencisini — ve dolayısıyla ödemesini — görürdü. Turun en hassas
--- güvencesi tam burada kırılırdı.
---
--- Çözüm: öğrenciyi KİMİN eklediği kayda giriyor.
---   * okul öğrencisi → öğretmenin sınıfı üzerinden görünür (birden çok
---     öğretmen aynı çocuğa ders verebilir; zümreler için de doğru olan bu)
---   * özel ders öğrencisi → YALNIZ ekleyen öğretmene görünür
--- -----------------------------------------------------------------------------
 
 alter table public.ogrenciler add column if not exists ekleyen_id uuid references public.ogretmenler(id) on delete restrict;
 
@@ -600,13 +430,6 @@ end $$;
 alter table public.ogrenciler alter column ekleyen_id set not null;
 create index if not exists ogrenciler_ekleyen_idx on public.ogrenciler (ekleyen_id);
 
--- -----------------------------------------------------------------------------
--- 9. KAPSAM YARDIMCILARI — 41 ucun tamamı bunları kullanıyor
---
--- Kuralın TEK bir yerde durması bilinçli: kapsam mantığı 41 uca kopyalansaydı,
--- biri bir gün ötekinden ayrışırdı ve ayrışan uç sessizce sızdırırdı.
--- -----------------------------------------------------------------------------
-
 create or replace function public._ogretmenin_ogrencisi(p_ogretmen_id uuid, p_ogrenci_id uuid)
 returns boolean
 language sql
@@ -616,12 +439,6 @@ set search_path = public, extensions, pg_temp
 as $$
   select coalesce((
     select case
-      -- ÖZEL DERS TAMAMEN SAHİPTE — öğretmenin açık kuralı:
-      -- "özel ders sınıfı ve özel ders öğrencisinin veli özellikleri
-      -- sadece bende olmalı. Diğer öğretmenlerde asla olmamalı."
-      -- Sınıf üzerinden bakmak burada yanlış olurdu: 0012 özel ders
-      -- grubunu TEK sınıf olarak kurdu, o sınıfa bağlı her öğretmen
-      -- bütün özel ders öğrencilerini görürdü.
       when o.tur = 'ozel' then exists (
         select 1 from public.ogretmenler g
         where g.id = p_ogretmen_id and g.yonetici
@@ -648,9 +465,6 @@ as $$
   );
 $$;
 
--- Ödevin sahibi mi? Değilse 42501 — ve HİÇBİR SATIR YAZILMADAN.
--- Bu, turun "kimlikle çağrılan uçlar" yarısının tek kapısı: B öğretmeni
--- A'nın ödev kimliğini eline geçirse bile buradan geçemiyor.
 create or replace function public._odev_sahibi(p_ogretmen_id uuid, p_odev_id uuid)
 returns void
 language plpgsql
@@ -682,13 +496,6 @@ begin
 end;
 $$;
 
--- Öğrenci/veli mesaj yazdığında hangi öğretmene gidiyor?
---
--- DÜRÜST SINIR: bu tur dört MATEMATİK öğretmeni için kuruluyor ve bir
--- sınıfın tek matematik öğretmeni var, yani cevap tek. Bir sınıfa iki
--- öğretmen bağlandığında (edebiyat zümresi katıldığında) bu belirsizleşir;
--- o gün `mesaj_gonder` öğrenciden hedef öğretmeni İSTEMEK zorunda kalacak.
--- Sessizce birini seçmek yerine açık bir Türkçe hata veriyoruz.
 create or replace function public._ogrencinin_ogretmeni(p_ogrenci_id uuid)
 returns uuid
 language plpgsql
@@ -723,15 +530,6 @@ revoke all on function public._odev_sahibi(uuid, uuid)          from public, ano
 revoke all on function public._ogrenci_sahibi(uuid, uuid)       from public, anon, authenticated;
 revoke all on function public._ogrencinin_ogretmeni(uuid)       from public, anon, authenticated;
 
--- =============================================================================
--- 10. ÖZEL DERS UÇLARI — TAMAMEN SAHİPTE
---
--- Öğretmenin açık kuralı: "özel ders sınıfı ve özel ders öğrencisinin
--- veli özellikleri sadece bende olmalı. Diğer öğretmenlerde asla
--- olmamalı." Beş ucun beşi de `_yonetici` istiyor; meslektaş ne ders
--- programını, ne ödemeyi, ne de tutarı hiçbir uçtan göremiyor.
--- =============================================================================
-
 create or replace function public.ders_ekle(
   p_token text, p_ogrenci uuid, p_zaman timestamptz,
   p_mod text default 'yuzyuze', p_link text default null
@@ -761,7 +559,6 @@ as $$
 declare v_id uuid;
 begin
   v_id := public._yonetici(p_token);
-  -- Sahiplik `where`'e giriyor: başkasının dersi bulunamıyor, silinemiyor.
   if not exists (select 1 from public.dersler where id = p_id and ogretmen_id = v_id) then
     raise exception 'Bu ders size ait değil.' using errcode = '42501';
   end if;
@@ -826,19 +623,6 @@ begin
 end;
 $$;
 
--- =============================================================================
--- 11. ÖĞRENCİ VE SINIF UÇLARI — yönetici sınırı
---
--- Sınıflar ve okul öğrencileri OKUL düzeyinde; dört öğretmenin her birinin
--- aynı çocuğu ayrı ayrı kaydetmesi mükerrer kayıt üretirdi. Bu yüzden okul
--- öğrencisi ve sınıf işlemleri YÖNETİCİDE.
---
--- ÖZEL DERS ÖĞRENCİSİ İSTİSNA — ve bu bilinçli: özel ders öğrencisi
--- okulun değil, o öğretmenin kendi öğrencisidir. Mükerrer kayıt riski yok,
--- yöneticiye sormak da anlamsız olurdu. Her öğretmen kendi özel ders
--- öğrencisini kendi ekler ve YALNIZ kendi görür.
--- =============================================================================
-
 create or replace function public.ogrenci_ekle(
   p_token text,
   p_ad text,
@@ -857,8 +641,6 @@ declare
   kod_ogrenci text;
   kod_veli text;
 begin
-  -- Özel ders de okul öğrencisi de sahibe ait: öğretmenin kuralı gereği
-  -- özel ders özelliği başka hiçbir öğretmende yok.
   v_id := public._yonetici(p_token);
 
   if v_sinif is null and p_tur = 'ozel' then
@@ -887,8 +669,6 @@ begin
 end;
 $$;
 
--- Kod bir KİMLİK BİLGİSİ: onunla öğrenci gibi giriş yapılabiliyor.
--- Başka öğretmenin öğrencisinin kodu istenemez.
 create or replace function public.ogrenci_kodlari(p_token text, p_id uuid)
 returns jsonb
 language plpgsql
@@ -917,10 +697,6 @@ declare
   v_tur text;
   v_id uuid;
 begin
-  -- ROL ÖNCE, VARLIK SONRA — Faz 11 denetiminin yakaladığı sıra hatası.
-  -- Tersi sırada öğrenci ya da veli, rastgele kimlik deneyerek bir
-  -- öğrencinin VAR OLDUĞUNU öğrenebilirdi: yetkisizlik hatası yerine
-  -- "bulunamadı" hatası alması, kaydın var olup olmadığını ele verirdi.
   v_id := public._yonetici(p_token);
 
   select tur into v_tur from public.ogrenciler where id = p_id;
@@ -937,8 +713,6 @@ begin
 end;
 $$;
 
--- Sınıf okulun; ekleyen yönetici. Yeni sınıf yöneticiye BAĞLANIYOR da —
--- aksi hâlde yönetici kendi eklediği sınıfı listesinde göremezdi.
 create or replace function public.sinif_ekle(p_token text, p_seviye smallint, p_sube text)
 returns jsonb
 language plpgsql
@@ -965,8 +739,6 @@ begin
 end;
 $$;
 
--- Arşivlemek sınıfı BÜTÜN öğretmenlerinin listesinden düşürür (0016 kuralı):
--- okul düzeyinde bir karar, dolayısıyla yöneticide.
 create or replace function public.sinif_arsivle(p_token text, p_id uuid, p_arsiv boolean)
 returns jsonb
 language plpgsql
@@ -998,13 +770,6 @@ begin
 end;
 $$;
 
--- =============================================================================
--- 12. ÖDEV UÇLARI
---
--- İki desen: OLUŞTURAN uç sahipliği YAZIYOR, kimlikle çağrılan uçlar
--- sahipliği KONTROL EDİYOR. İkinci yarısı daha tehlikeli: B öğretmeni
--- listede görmese bile A'nın ödev kimliğini yapıştırıp çağırabilir.
--- =============================================================================
 create or replace function public.odev_olustur(
   p_token text,
   p_baslik text,
@@ -1030,7 +795,6 @@ declare
   v_ogretmen uuid;
 begin
   v_ogretmen := public._ogretmen(p_token);
-  -- Öğretmen yalnız KENDİ sınıfına ödev verebilir.
   if not public._ogretmenin_sinifi(v_ogretmen, p_sinif_id) then
     raise exception 'Bu sınıf sizin sınıflarınız arasında değil.' using errcode = '42501';
   end if;
@@ -1068,7 +832,6 @@ begin
   v_ogretmen := public._ogretmen(p_token);
   perform public._odev_sahibi(v_ogretmen, p_id);
   select * into o from public.odevler where id = p_id;
-  -- Silinen ödevin içeriği denetim izine yazılır; sessizce kaybolmaz.
   perform public._denetim('odev_silindi', 'odevler', p_id, public._aktor(v_ogretmen), to_jsonb(o));
   delete from public.odevler where id = p_id;
   return jsonb_build_object('durum', 'tamam');
@@ -1156,7 +919,6 @@ declare
 begin
   v_ogretmen := public._ogretmen(p_token);
 
-  -- Çözüm fotoğrafı, gönderimin ait olduğu ÖDEVİN sahibine açık.
   select g.foto_yolu into v_yol
   from public.gonderimler g
   join public.odevler d on d.id = g.odev_id
@@ -1186,7 +948,6 @@ declare
 begin
   v_ogretmen := public._ogretmen(p_token);
 
-  -- Not vermek en ağır işlem: gönderim BAŞKASININ ödevine aitse bulunamıyor.
   select g.* into eski from public.gonderimler g
   join public.odevler d on d.id = g.odev_id
   where g.id = p_gonderim and d.ogretmen_id = v_ogretmen;
@@ -1213,13 +974,6 @@ begin
 end;
 $$;
 
--- =============================================================================
--- 13. LİSTELEME UÇLARI — süzgeç
---
--- Sınıf ve öğrenci listeleri artık ÖĞRETMENİN KENDİ kapsamını döndürüyor.
--- Süzgeçler `_ogretmenin_sinifi` / `_ogretmenin_ogrencisi` üzerinden
--- geçiyor; kapsam mantığı 41 uca kopyalanmıyor, tek yerde duruyor.
--- =============================================================================
 create or replace function public.siniflar_listesi(p_token text, p_arsiv boolean default false)
 returns jsonb
 language plpgsql
@@ -1259,8 +1013,6 @@ begin
       select v.value #>> '{}' as konu, count(*) as adet
       from public.odevler d
       cross join lateral jsonb_each(coalesce(d.konular, '{}'::jsonb)) v
-      -- Öneriler öğretmenin KENDİ ödevlerinden çıkıyor; meslektaşının
-      -- konu adları kendi listesinde görünmüyor.
       where d.ogretmen_id = v_ogretmen and btrim(v.value #>> '{}') <> ''
       group by v.value #>> '{}'
       limit 100
@@ -1320,21 +1072,6 @@ begin
   );
 end;
 $$;
--- NOT: `sinif_kodlari` BİLEREK YOK. 0018 onu kaldırdı çünkü bir sınıfın
--- BÜTÜN giriş kodlarını tek yanıtta indirmek, ekranı sınıfa çeviren
--- öğretmenin bütün öğrencilerinin kimliğini görünür kılıyordu. Kapsam
--- turunda onu 0017'den kopyalayıp yamalamıştım — yani kaldırılmış bir
--- ucu farkında olmadan geri diriltmiştim. `kodlar_testleri.sql` bunu
--- yakaladı; uç yeniden kaldırıldı.
-
-
--- =============================================================================
--- 14. MESAJLAŞMA UÇLARI
---
--- Yazışma öğretmen–öğrenci ÇİFTİNE ait. `okundu` anahtarı da öğretmen
--- taşıdığı için (bölüm 4) her `on conflict` hedefi güncelleniyor; aksi
--- hâlde bir öğretmenin okuması ötekinin rozetini düşürürdü.
--- =============================================================================
 
 create or replace function public.mesajlar_ogretmen(
   p_token text, p_ogrenci_id uuid, p_kanal text default 'veli'
@@ -1368,8 +1105,6 @@ begin
   return jsonb_build_object(
     'ogrenci', jsonb_build_object('id', ogr.id, 'ad', ogr.ad, 'sinif', ogr.sinif),
     'kanal', p_kanal,
-    -- Karşı tarafın giriş kodu var mı: yoksa yazdığı mesaj kimseye ulaşmaz
-    -- ve öğretmen bunu önceden bilmeli.
     'veli_kodu_var', exists (select 1 from public.giris_kodlari k
                               where k.ogrenci_id = ogr.id
                                 and k.rol = case when p_kanal = 'ogrenci'
@@ -1530,7 +1265,6 @@ begin
   )
   select jsonb_build_object(
     'toplam_okunmamis', (select coalesce(sum(okunmamis), 0)::integer from ozet),
-    -- En ESKİ bekleyen üstte: en uzun süredir cevapsız kalan öğrenci önce.
     'yanit_bekleyen', coalesce((
       select jsonb_agg(jsonb_build_object(
                'ogrenci_id', ogrenci_id, 'ad', ad, 'sinif', sinif,
@@ -1555,9 +1289,6 @@ begin
   v_ogretmen := public._ogretmen(p_token);
 
   return jsonb_build_object(
-    -- Okunmamış mesaj: HER İKİ yazışmadan. Karşılaştırma kanal başına
-    -- yapılıyor — öğretmen veli yazışmasını okuduğunda öğrencininki
-    -- okunmamış kalmalı.
     'okunmamis_mesaj', (
       select count(*)::integer
       from public.mesajlar m
@@ -1588,9 +1319,6 @@ begin
 end;
 $$;
 
--- =============================================================================
--- 15. PANO VE ÖDEV LİSTELERİ
--- =============================================================================
 create or replace function public.odevler_listesi(
   p_token text,
   p_sinif_id uuid default null,
@@ -1641,7 +1369,6 @@ begin
         select count(*) from public.ogrenciler o
         where o.sinif_id = d.sinif_id and o.aktif
       ),
-      -- Ortalamalar YALNIZ süre dolduktan sonra.
       'ortalama_yapan', case when d.son_tarih < bugun_tr then (
         select round(avg(coalesce(g.ogretmen_puan, g.puan)), 1)
         from public.gonderimler g
@@ -1731,14 +1458,6 @@ begin
 end;
 $$;
 
--- =============================================================================
--- 16. SAHİPLİK: ÖĞRETMEN YÖNETİMİ VE VEKÂLET
---
--- Öğretmenin kuralı: "Tüm yetki bende olmalı… istediğim zaman diğer
--- öğretmenlerin sistemine giriş yapabilmeliyim… istediğim öğretmeni
--- sistemden çıkarabilmeliyim."
--- =============================================================================
-
 create or replace function public.ogretmenler_listesi(p_token text)
 returns jsonb
 language plpgsql
@@ -1786,8 +1505,6 @@ begin
     raise exception 'PIN en az 6 haneli olmalı.' using errcode = '22023';
   end if;
 
-  -- Aynı PIN'in iki öğretmende olması, girişte ilk eşleşene düşmek demek
-  -- olurdu; yani bir öğretmen sessizce başkasının hesabını açardı.
   if exists (select 1 from public.ogretmenler g
               where g.pin_hash is not null and crypt(p_pin, g.pin_hash) = g.pin_hash) then
     raise exception 'Bu PIN başka bir öğretmende kullanılıyor. Farklı bir PIN seçin.'
@@ -1804,11 +1521,6 @@ begin
 end;
 $$;
 
--- Ad değişikliği ve SİSTEMDEN ÇIKARMA.
---
--- Çıkarma = pasifleştirme (öğretmenin kararı): girişi kapanır, açık
--- oturumu düşer, ama ÖDEVLERİ VE ÖĞRENCİLERİNİN NOTLARI SİLİNMEZ.
--- Silseydik, o öğretmenden not almış çocukların karnesi de giderdi.
 create or replace function public.ogretmen_guncelle(
   p_token text, p_id uuid, p_ad text default null, p_aktif boolean default null
 )
@@ -1828,8 +1540,6 @@ begin
     raise exception 'Öğretmen bulunamadı.' using errcode = 'P0002';
   end if;
 
-  -- SAHİP KORUMASI: sahip pasifleştirilemez. Bir yanlış dokunuş sistemi
-  -- sahipsiz bırakır ve geri dönüşü panelden SQL çalıştırmak olurdu.
   if eski.yonetici and p_aktif is distinct from true and p_aktif is not null then
     raise exception 'Platform sahibi sistemden çıkarılamaz.' using errcode = '42501';
   end if;
@@ -1839,7 +1549,6 @@ begin
          aktif = coalesce(p_aktif, aktif)
    where id = p_id;
 
-  -- Çıkarılan öğretmenin açık oturumları hemen düşüyor.
   if p_aktif is false then
     update public.oturumlar set iptal = true
      where ogretmen_id = p_id and not iptal;
@@ -1879,7 +1588,6 @@ begin
 
   update public.ogretmenler set pin_hash = crypt(p_yeni, gen_salt('bf', 10)) where id = p_id;
 
-  -- PIN değişince o öğretmenin bütün cihazları düşüyor.
   update public.oturumlar set iptal = true where ogretmen_id = p_id and not iptal;
 
   perform public._denetim('ogretmen_pin_sifirlandi', 'ogretmenler', p_id, public._aktor(v_sahip));
@@ -1906,7 +1614,6 @@ begin
     raise exception 'Öğretmen bulunamadı.' using errcode = 'P0002';
   end if;
 
-  -- ÖZEL DERS GRUBU ATANAMAZ: özel ders tamamen sahipte (öğretmenin kuralı).
   if exists (
     select 1 from jsonb_array_elements_text(p_sinif_idler) e
     join public.siniflar s on s.id = e::uuid
@@ -1929,13 +1636,6 @@ begin
 end;
 $$;
 
--- -----------------------------------------------------------------------------
--- VEKÂLET — sahip başka bir öğretmenin sistemine geçiyor
---
--- Oturum HEDEF öğretmenin kimliğiyle açılıyor; bu sayede 41 ucun hiçbiri
--- değişmeden onun kapsamını görüyor. Gerçekte kimin girdiği `vekil_id`'de
--- duruyor ve denetim izine "Sahip → Hedef" olarak yazılıyor.
--- -----------------------------------------------------------------------------
 create or replace function public.ogretmen_olarak_gir(p_token text, p_ogretmen_id uuid)
 returns jsonb
 language plpgsql
@@ -1957,8 +1657,6 @@ begin
     raise exception 'Zaten kendi hesabınızdasınız.' using errcode = '22023';
   end if;
 
-  -- Vekâlet oturumu KISA ÖMÜRLÜ: 8 saat. Kendi oturumu 30 gün, ama
-  -- başkasının hesabında unutulmuş bir oturum bırakmak doğru olmaz.
   token := public._oturum_ac('ogretmen', null, hedef.id, interval '8 hours', v_sahip);
 
   perform public._denetim('ogretmen_olarak_girildi', 'ogretmenler', hedef.id,
@@ -1971,7 +1669,6 @@ begin
 end;
 $$;
 
--- Giriş yapanın kim olduğu — kabuktaki vekâlet şeridi bunu okuyor.
 create or replace function public.ben_kimim(p_token text)
 returns jsonb
 language plpgsql
@@ -2017,9 +1714,6 @@ grant execute on function public.ogretmen_sinif_ata(text, uuid, jsonb)         t
 grant execute on function public.ogretmen_olarak_gir(text, uuid)               to anon;
 grant execute on function public.ben_kimim(text)                               to anon;
 
--- =============================================================================
--- 17. KALAN UÇLAR
--- =============================================================================
 create or replace function public.ozel_ders_detay(p_token text, p_ogrenci_id uuid)
 returns jsonb
 language plpgsql
@@ -2029,8 +1723,6 @@ as $$
 declare
   ogr record;
 begin
-  -- ÖZEL DERS TAMAMEN SAHİPTE: ders programı ve ödemeler
-  -- meslektaşa hiçbir uçtan görünmüyor.
   perform public._yonetici(p_token);
 
   select o.id, o.ad, o.tur, o.aktif, s.ad as sinif
@@ -2049,13 +1741,6 @@ begin
       'sinif', ogr.sinif, 'aktif', ogr.aktif
     ),
 
-    -- DERSLER: GEÇMİŞ VE GELECEK BİRLİKTE.
-    -- `ogrenci_odevleri` yalnız geleceği veriyor çünkü öğrencinin işine o
-    -- yarıyor. Öğretmen "kaç ders yaptık" sorusunu da soruyor; geçmişi
-    -- kesmek o soruyu cevapsız bırakırdı.
-    --
-    -- `id` DÖNÜYOR — bu ucun bütün varlık sebebi o. `ders_sil(p_id)`
-    -- id olmadan çağrılamıyordu.
     'dersler', coalesce((
       select jsonb_agg(jsonb_build_object(
                'id', l.id,
@@ -2079,8 +1764,6 @@ begin
       where p.ogrenci_id = ogr.id
     ), '[]'::jsonb),
 
-    -- ÖZET: öğretmenin asıl bakacağı sayı KALAN. Satırları toplamasını
-    -- istemiyoruz; toplama hatası para meselesinde sessiz ve can sıkıcıdır.
     'ozet', jsonb_build_object(
       'toplam', coalesce((select sum(p.tutar) from public.odemeler p
                            where p.ogrenci_id = ogr.id), 0),
@@ -2111,9 +1794,6 @@ declare
   eski  text;
   v_id  uuid;
 begin
-  -- Ewalu'nun cümleleri MARKANIN sesi; her öğretmenin öğrencisine aynı
-  -- cümle gidiyor. Bu yüzden yazma yetkisi sahipte, okuma
-  -- (`ewalu_mesajlari`) herkese açık kalıyor.
   v_id := public._yonetici(p_token);
 
   if p_bant is null or p_bant not in (0, 50, 70, 85, 100) then
@@ -2123,10 +1803,8 @@ begin
 
   select e.cumle into eski from public.ewalu_mesajlari e where e.bant = p_bant;
 
-  -- VARSAYILANA DÖNÜŞ.
   if p_cumle is null then
     if eski is null then
-      -- Zaten varsayılanda; sessizce "tamam" demek yerine durumu bildiriyoruz.
       return jsonb_build_object('bant', p_bant, 'cumle', null, 'degisti', false);
     end if;
     delete from public.ewalu_mesajlari where bant = p_bant;
@@ -2137,9 +1815,6 @@ begin
     return jsonb_build_object('bant', p_bant, 'cumle', null, 'degisti', true);
   end if;
 
-  -- `btrim` önce: baştaki/sondaki boşluk hem boşluk denetimini hem uzunluk
-  -- denetimini yanıltırdı. 0027'de aynı tuzak (sekme ve satır sonu boş
-  -- sayılmıyordu) ürünün başka bir yerinde yaşanmıştı.
   temiz := btrim(p_cumle);
 
   if temiz = '' then
@@ -2185,7 +1860,6 @@ begin
     raise exception 'Sınıf bulunamadı.' using errcode = 'P0002';
   end if;
 
-  -- Bu sınıfa verilmiş, yayınlanmış ve süresi dolmuş ödev sayısı.
   select count(*) into v_odev_sayisi
   from public.odevler d
   where d.sinif_id = p_sinif_id and d.yayinda and d.son_tarih < bugun_tr
@@ -2195,8 +1869,6 @@ begin
     'sinif', jsonb_build_object(
       'id', s.id, 'ad', s.ad, 'ozel', s.ozel, 'arsiv', s.arsiv
     ),
-    -- Öğretmen "kaç ödev üzerinden konuşuyoruz" sorusunu görmeden
-    -- ortalamayı yorumlayamaz.
     'degerlendirilen_odev', v_odev_sayisi,
     'ogrenciler', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -2257,8 +1929,6 @@ begin
                'ogrenci_id', o.id,
                'ad', o.ad,
                'tur', o.tur,
-               -- Veli kodu yoksa veli hiç giriş yapamaz; öğretmen bunu
-               -- mesaj yazmadan önce bilsin.
                'veli_kodu_var', exists (select 1 from public.giris_kodlari k
                                          where k.ogrenci_id = o.id and k.rol = 'veli'),
                'mesaj_sayisi', (select count(*)::integer from public.mesajlar m
@@ -2383,10 +2053,6 @@ begin
       'puan_bekleyen', (select count(*) from public.gonderimler g
                          where g.odev_id = d.id and g.durum = 'incelemede')
     ),
-    -- SINIF KONU ÖZETİ: "bu sınıf en çok hangi konuda takıldı?"
-    -- Öğretmenin bir sonraki dersini planlarken bakacağı sayı bu. Tek tek
-    -- öğrencilerin analizini toplamak yerine sunucuda toplanıyor; aksi hâlde
-    -- otuz öğrencinin cevapları tarayıcıya inerdi.
     'konu_ozeti', coalesce((
       select jsonb_agg(jsonb_build_object(
                'konu', t.konu, 'toplam', t.toplam,
@@ -2422,10 +2088,6 @@ begin
         'puan', g.puan,
         'ogretmen_puan', g.ogretmen_puan,
         'ogretmen_yorum', g.ogretmen_yorum,
-        -- HANGİ SORULAR YANLIŞ: sayı değil, numara. "5 yanlış" öğretmene
-        -- ne yapacağını söylemez; "3, 7 ve 9 yanlış" söyler. Yalnız test
-        -- ödevinde anlamlı — açık uçluda anahtar yok, her soru "boş"
-        -- görünür ve bu bilgi gürültüden ibaret olurdu.
         'yanlis_sorular', case when g.id is not null and d.tur = 'test'
           then public._soru_dokumu(d.cevap_anahtari, g.cevaplar, d.soru_sayisi) -> 'yanlis'
           else '[]'::jsonb end,
@@ -2453,18 +2115,8 @@ create or replace function public.odev_guncelle(
   p_cevap_anahtari jsonb default null,
   p_anahtar_yolu text default null,
   p_odev_yolu text default null,
-  -- DİKKAT — burada varsayılan `null`, `true` DEĞİL.
-  --
-  -- Oluşturmada varsayılan `true` doğru: yeni ödev açık başlar. Ama
-  -- güncellemede `true` olsaydı, parametreyi göndermeyen HERHANGİ bir çağrı
-  -- öğretmenin kapattığı bir ödevi sessizce yeniden açardı. Ayarı "ödev
-  -- verildikten sonra da değiştirebilmek" ancak değişikliğin kalıcı olmasıyla
-  -- bir anlam taşır. `null` = "dokunma", aşağıdaki coalesce mevcut değeri
-  -- koruyor — `p_sik_sayisi` ile aynı davranış.
   p_gec_teslim boolean default null,
   p_sik_sayisi smallint default null,
-  -- NULL = DEĞİŞTİRME (p_gec_teslim ile aynı tuzak). Konuları temizlemek
-  -- için boş nesne gönderilir: '{}'.
   p_konular jsonb default null
 )
 returns jsonb
@@ -2503,8 +2155,6 @@ begin
       raise exception 'Soru sayısı 1 ile 200 arasında olmalı.' using errcode = '22023';
     end if;
 
-    -- Soru sayısı küçüldüyse anahtarı kırp: aksi hâlde artık var olmayan
-    -- sorulara ait cevaplar kayıtta kalır ve puanlamayı bulandırır.
     yeni_anahtar := coalesce(p_cevap_anahtari, d.cevap_anahtari, '{}'::jsonb);
     select coalesce(jsonb_object_agg(k, yeni_anahtar -> k), '{}'::jsonb)
       into yeni_anahtar
@@ -2532,17 +2182,12 @@ begin
          sik_sayisi  = case when p_sik_sayisi = 4 then 4
                             when p_sik_sayisi = 5 then 5
                             else d.sik_sayisi end,
-         -- Konular da soru sayısına göre kırpılıyor: anahtarda uygulanan
-         -- kuralın aynısı, yoksa artık olmayan soruların konusu kayıtta kalır.
          konular     = public._konu_temizle(coalesce(p_konular, d.konular), yeni_sayi)
    where id = p_id;
 
   perform public._denetim('odev_guncellendi', 'odevler', p_id, public._aktor(v_ogretmen),
                           to_jsonb(d), (select to_jsonb(o) from public.odevler o where o.id = p_id));
 
-  -- ---------------------------------------------------------------------
-  -- YENİDEN PUANLAMA
-  -- ---------------------------------------------------------------------
   if anahtar_degisti then
     for g in
       select gn.id, gn.ogrenci_id, gn.cevaplar, gn.puan, gn.dogru, gn.yanlis, gn.bos,
@@ -2560,7 +2205,6 @@ begin
                bos = yeni.bos, puan = yeni.puan
          where id = g.id;
 
-        -- Not değişikliği HER ZAMAN iz bırakır (Part XLIII).
         perform public._denetim(
           'yeniden_puanlandi', 'gonderimler', g.id, public._aktor(v_ogretmen),
           jsonb_build_object('puan', g.puan, 'dogru', g.dogru,
@@ -2597,8 +2241,6 @@ declare
   v_ogretmen uuid;
 begin
   v_ogretmen := public._ogretmen(p_token);
-  -- Kardeşlere yayma NOT DEĞİŞTİRİYOR: kaynağın sahibi olmayan
-  -- kimse başlatamaz.
   perform public._odev_sahibi(v_ogretmen, p_id);
 
   select * into d from public.odevler where id = p_id;
@@ -2606,8 +2248,6 @@ begin
     raise exception 'Ödev bulunamadı.' using errcode = 'P0002';
   end if;
 
-  -- SESSİZ "TAMAM" YOK. Kardeşi olmayan bir ödevde hiçbir şey yapmayıp
-  -- başarı dönmek, öğretmene yayıldığını sandırırdı.
   if d.grup_id is null then
     raise exception 'Bu ödev tek sınıfa verilmiş; yayılacak kardeş ödev yok.'
       using errcode = '22023';
@@ -2620,10 +2260,6 @@ begin
      where d2.grup_id = d.grup_id and d2.id <> p_id
      order by s2.seviye, s2.sube
   loop
-    -- ARŞİVDEKİ SINIF ATLANIYOR (0016 kuralı).
-    -- Arşivdeki sınıf öğretmenin hiçbir listesinde görünmüyor; görünmeyen bir
-    -- sınıfın notunu sessizce değiştirmek o kuralı delerdi. Atlandığı raporda
-    -- yazıyor — sessiz atlama da yok.
     if public._sinif_arsivde(k.sinif_id) then
       rapor := rapor || jsonb_build_object(
         'sinif', k.sinif_ad, 'odev_id', k.id,
@@ -2633,14 +2269,10 @@ begin
 
     select * into eski from public.odevler where id = k.id;
 
-    -- Anahtar bu kardeş için gerçekten değişiyor mu? Yalnız test ödevinde
-    -- anlamlı; açık uçluda anahtar da soru sayısı da null.
     anahtar_degisti := eski.tur = 'test'
       and ((d.cevap_anahtari is distinct from eski.cevap_anahtari)
         or (d.soru_sayisi is distinct from eski.soru_sayisi));
 
-    -- TAŞINAN ALANLAR — öğretmenin kararı, birebir.
-    -- sinif_id, son_tarih, gec_teslim, yayinda ve grup_id BİLEREK YOK.
     update public.odevler
        set baslik         = d.baslik,
            aciklama       = d.aciklama,
@@ -2656,10 +2288,6 @@ begin
                             to_jsonb(eski),
                             (select to_jsonb(o) from public.odevler o where o.id = k.id));
 
-    -- -------------------------------------------------------------------
-    -- YENİDEN PUANLAMA — gövde odev_guncelle'den (0020) BİREBİR kopyalandı.
-    -- Ezberden yazmak 0016'da iki hataya yol açmıştı; o adım atlanmıyor.
-    -- -------------------------------------------------------------------
     puanlar := '[]'::jsonb;
     if anahtar_degisti then
       for g in
@@ -2680,7 +2308,6 @@ begin
                  bos = yeni.bos, puan = yeni.puan
            where id = g.id;
 
-          -- Not değişikliği HER ZAMAN iz bırakır (Part XLIII).
           perform public._denetim(
             'yeniden_puanlandi', 'gonderimler', g.id, public._aktor(v_ogretmen),
             jsonb_build_object('puan', g.puan, 'dogru', g.dogru,
@@ -2745,31 +2372,23 @@ begin
     raise exception 'En az bir sınıf seçin.' using errcode = '22023';
   end if;
 
-  -- 12 sınıf var; 20 rahat bir tavan ve tek işlemin büyüklüğünü sınırlıyor.
   if v_adet > 20 then
     raise exception 'Tek seferde en fazla 20 sınıfa ödev verilebilir.'
       using errcode = '22023';
   end if;
 
-  -- MÜKERRER SINIF REDDEDİLİYOR. Aynı sınıfa aynı anda iki ödev oluşturmak
-  -- sessiz bir çift kayıt olurdu; öğrenci ödevi listesinde iki kez görürdü.
   if (select count(distinct e) from jsonb_array_elements_text(p_sinif_idler) e)
      <> v_adet then
     raise exception 'Aynı sınıf listede birden çok kez var.' using errcode = '22023';
   end if;
 
-  -- ÖN DENETİM. Arşivdeki sınıf reddediliyor (0016 kuralı: arşivdeki sınıf
-  -- öğretmenin hiçbir listesinde görünmez, ona yeni ödev de verilmez).
   for v_ham in select value from jsonb_array_elements_text(p_sinif_idler) loop
     begin
       v_sinif := v_ham::uuid;
     exception when invalid_text_representation then
-      -- Ham hatayı öğretmene göstermek yerine hangi değerin bozuk olduğunu
-      -- söylüyoruz; bu blok hiçbir şey YAZMIYOR, yalnız dönüştürüyor.
       raise exception 'Geçersiz sınıf kimliği: %', v_ham using errcode = '22023';
     end;
 
-    -- Öğretmen yalnız KENDİ sınıflarına toplu ödev verebilir.
     if not public._ogretmenin_sinifi(v_ogretmen, v_sinif) then
       raise exception 'Seçilen sınıflardan biri sizin sınıflarınız arasında değil.'
         using errcode = '42501';
@@ -2782,16 +2401,11 @@ begin
     end if;
   end loop;
 
-  -- TEK SINIFTA GRUP YOK. Kardeşi olmayan ödeve grup kimliği vermek, ekranda
-  -- "birlikte verildi" uyarısının boş yere çıkması demek olurdu.
   v_grup := case when v_adet > 1 then gen_random_uuid() end;
 
   for v_ham in select value from jsonb_array_elements_text(p_sinif_idler) loop
     v_sinif := v_ham::uuid;
 
-    -- MEVCUT UÇ ÇAĞRILIYOR: taslak olarak açılması, konu temizliği, şık
-    -- sayısı kuralı ve denetim izi kaydı orada. Burada tekrarlanmıyor.
-    -- (`_ogretmen` her çağrıda yeniden bakıyor; ucuz ve zararsız.)
     v_yeni := public.odev_olustur(
       p_token, p_baslik, p_aciklama, v_sinif, p_tur, p_son_tarih,
       p_soru_sayisi, p_cevap_anahtari, p_anahtar_yolu, p_odev_yolu,
@@ -2832,7 +2446,6 @@ declare
   sonuc      jsonb := '[]'::jsonb;
   v_ogretmen uuid;
 begin
-  -- Okul öğrencisi toplu eklemek okul düzeyinde bir iş: sahipte.
   v_ogretmen := public._yonetici(p_token);
 
   if p_tur is null or p_tur not in ('okul', 'ozel') then
@@ -2840,9 +2453,6 @@ begin
       using errcode = '22023';
   end if;
 
-  -- `ogrenci_ekle`'deki kuralın aynısı (0004): okul öğrencisi sınıfsız olamaz.
-  -- Şema da bunu `ogrenci_sinif_tutarli` ile zorluyor; burada önden ve
-  -- anlaşılır bir Türkçe mesajla söylüyoruz.
   if p_tur = 'okul' and p_sinif_id is null then
     raise exception 'Okul öğrencisi için sınıf seçilmeli.' using errcode = '22023';
   end if;
@@ -2856,23 +2466,11 @@ begin
     raise exception 'Listede hiç ad yok.' using errcode = '22023';
   end if;
 
-  -- ÜST SINIR. Bir sınıf ~35 kişi; 200 hem fazlasıyla rahat hem de tek bir
-  -- isteğin veritabanında ne kadar iş yapabileceğini sınırlıyor.
   if adet > 200 then
     raise exception 'Tek seferde en fazla 200 öğrenci eklenebilir; % ad gönderildi.', adet
       using errcode = '22023';
   end if;
 
-  -- ---------------------------------------------------------------------------
-  -- ÖNCE HEPSİNİ DENETLE, SONRA YAZ
-  --
-  -- DÜRÜST OLMAK GEREKİRSE: atomikliği bu ayrı geçiş SAĞLAMIYOR. Fonksiyon
-  -- hata fırlattığında PostgreSQL zaten bütün ifadeyi geri alıyor — tek
-  -- geçişle yazsaydık da yarım kayıt kalmazdı. Ayrı geçişin kazandırdığı
-  -- şey BOŞA İŞ YAPMAMAK: 200 adlık bir listede 200. ad bozuksa, önce 199
-  -- öğrenci ve 398 kod üretip sonra hepsini çöpe atmıyoruz. `_yeni_kod`
-  -- her çağrıda çakışma sorgusu yapıyor; o iş de boşa gitmiyor.
-  -- ---------------------------------------------------------------------------
   for ham in select jsonb_array_elements_text(p_adlar) loop
     sira := sira + 1;
     ad := btrim(coalesce(ham, ''));
@@ -2886,15 +2484,9 @@ begin
     end if;
   end loop;
 
-  -- ---------------------------------------------------------------------------
-  -- YAZMA
-  -- ---------------------------------------------------------------------------
   for ham in select jsonb_array_elements_text(p_adlar) loop
     ad := btrim(ham);
 
-    -- `sinif_id` olduğu gibi geçiyor — `ogrenci_ekle` ile aynı davranış.
-    -- Özel ders öğrencisi de bir sınıfa bağlanabiliyor (0012 "Özel ders"
-    -- grubunu gerçek bir sınıf yaptı); burada karar arayüzün.
     insert into public.ogrenciler (ad, tur, sinif_id, ekleyen_id)
     values (ad, p_tur, p_sinif_id, v_ogretmen)
     returning id into yeni_id;
@@ -2905,9 +2497,6 @@ begin
     insert into public.giris_kodlari (kod, ogrenci_id, rol)
     values (kod_ogr, yeni_id, 'ogrenci'), (kod_veli, yeni_id, 'veli');
 
-    -- TOPLU İŞ DE İZ BIRAKIR. Öğrenci başına ayrı kayıt: "30 öğrenci
-    -- eklendi" tek satırı, sonradan tek bir öğrencinin nereden geldiğini
-    -- sormak gerektiğinde hiçbir şey söylemezdi (Part XLIII).
     perform public._denetim('ogrenci_eklendi', 'ogrenciler', yeni_id, public._aktor(v_ogretmen));
 
     sonuc := sonuc || jsonb_build_object(
@@ -2943,9 +2532,6 @@ declare
 begin
   v_ogretmen := public._ogretmen(p_token);
 
-  -- İKİSİNDEN TAM OLARAK BİRİ. Sessizce birini seçmek, öğretmenin baktığını
-  -- sandığı şeyle ekranda gösterileni ayırırdı; ikisini birden kabul etmek
-  -- de "hangisi kazandı" sorusunu doğururdu.
   if (p_sinif_id is null) = (p_ogrenci_id is null) then
     raise exception 'Sınıf ya da öğrenci: ikisinden tam olarak biri verilmeli.'
       using errcode = '22023';
@@ -2974,7 +2560,6 @@ begin
       from public.ogrenciler g where g.sinif_id = v_sinif_id and g.aktif;
   end if;
 
-  -- 0013 İLE BİREBİR AYNI ÖLÇÜT.
   select count(*)::integer into v_odev_sayisi
   from public.odevler d
   where d.sinif_id = v_sinif_id and d.yayinda and d.son_tarih < bugun_tr;
@@ -2984,19 +2569,8 @@ begin
       'tur', v_tur, 'ad', v_ad, 'sinif', v_sinif_ad, 'mevcut', v_mevcut
     ),
 
-    -- Öğretmen "kaç ödev üzerinden konuşuyoruz" sorusunu görmeden hiçbir
-    -- ortalamayı yorumlayamaz (0013'teki aynı gerekçe).
     'odev_sayisi', v_odev_sayisi,
 
-    -- -----------------------------------------------------------------
-    -- KONU DÖKÜMÜ — yalnız TEST ödevlerinden
-    --
-    -- Açık uçlu ödevin konu eşlemesi yok: anahtarı olmayan bir ödevde
-    -- `_konu_analizi` her soruyu "boş" sayardı ve döküm, öğretmenin hiç
-    -- sormadığı bir soruya uydurma bir cevap verirdi.
-    --
-    -- Sıralama `konu_ozeti` ile aynı: en çok eksik olan konu başta.
-    -- -----------------------------------------------------------------
     'konular', coalesce((
       select jsonb_agg(jsonb_build_object(
                'konu', t.konu, 'toplam', t.toplam,
@@ -3025,21 +2599,6 @@ begin
       ) t
     ), '[]'::jsonb),
 
-    -- -----------------------------------------------------------------
-    -- GELİŞİM — ödev ödev, kronolojik
-    --
-    -- AÇIK UÇLU ÖDEV BURADA VAR. Konu eşlemesi yok ama puanı var, ve
-    -- "bu öğrenci dönem boyunca nereye gidiyor" sorusunun cevabından
-    -- açık uçlu ödevleri çıkarmak resmin yarısını silerdi.
-    --
-    -- `coalesce(ogretmen_puan, puan)` — arayüzün ve 0013'ün hesabıyla
-    -- aynı: öğretmenin verdiği puan sistemin hesapladığını ezer.
-    --
-    -- GÖNDERİLMEYEN ÖDEV 0 DEĞİL, BOŞ (`deger: null`). Sıfır yazmak
-    -- "sıfır aldı" demektir; göndermemek başka bir şeydir ve ekranın
-    -- ikisini karıştırmaması gerekiyor. Kaç kişinin gönderdiği ayrı
-    -- alanda duruyor, yani bilgi kaybolmuyor.
-    -- -----------------------------------------------------------------
     'gelisim', coalesce((
       select jsonb_agg(jsonb_build_object(
                'odev', d.baslik,
@@ -3076,8 +2635,6 @@ as $$
 declare
   v_id uuid;
 begin
-  -- Yedek BÜTÜN sistemi indiriyor: bir öğretmenin meslektaşlarının
-  -- verisini tek dosyada indirmesi kabul edilemez. Sahipte.
   v_id := public._yonetici(p_token);
   perform public._denetim('disa_aktarildi', null, null, public._aktor(v_id));
 
@@ -3173,9 +2730,6 @@ begin
   elsif p_tur = 'gondermeyen' then
     v_baslik := 'Göndermeyen öğrenciler';
     v_aciklama := 'Süresi dolmuş ödevlerden en az birini göndermemiş öğrenciler.';
-    -- Öğrenci başına TEK satır, eksik ödev sayısıyla. Her eksik ödev için
-    -- ayrı satır yazsaydık aynı isim listede beş kez görünürdü ve öğretmen
-    -- kaç öğrenciyle konuşacağını sayamazdı.
     select coalesce(jsonb_agg(g order by g_seviye, g_sube), '[]'::jsonb), coalesce(sum(g_adet), 0)
       into v_gruplar, v_toplam
     from (
@@ -3234,13 +2788,6 @@ begin
 end;
 $$;
 
--- mesaj_gonder — gövde 0027'DEN kopyalandı.
---
--- KENDİ HATAMIN KAYDI: ilk denemede gövdeyi 0025'ten almıştım ve 0027'nin
--- boşluk kırpma düzeltmesini (sekme/satır sonu da kırpılıyor) sessizce
--- geri almıştım. `guvenlik_denetimi.sql` 3d bunu yakaladı: uç 22023 yerine
--- ham şema kısıtı 23514 fırlatıyordu. Ders: "kaynaktan kopyala" yetmiyor,
--- kaynağın EN SON hangi migration'da olduğu da ölçülmeli.
 create or replace function public.mesaj_gonder(
   p_token text,
   p_metin text,
@@ -3256,9 +2803,6 @@ declare
   o record;
   hedef uuid;
   kimden text;
-  -- DEĞİŞKEN ADI SÜTUN ADIYLA AYNI OLMAMALI. `kanal` desem, PL/pgSQL onu
-  -- `insert ... on conflict (…, kanal)` gibi yerlerde sütunla karıştırıp
-  -- "column reference is ambiguous" hatası veriyor (ölçüldü).
   v_kanal text;
   v_ogretmen uuid;
 begin
@@ -3271,30 +2815,23 @@ begin
     if coalesce(p_kanal, '') not in ('veli', 'ogrenci') then
       raise exception 'Yazışma ''veli'' ya da ''ogrenci'' olmalı.' using errcode = '22023';
     end if;
-    -- VEKÂLETTE MESAJ YASAK — öğretmenin kararı. Sahip başka bir
-    -- öğretmenin hesabındayken her şeyi görüp düzeltebiliyor, ama o kişi
-    -- ADINA mesaj yazamıyor: bir veli, öğretmeninin yazdığını sandığı bir
-    -- mesajı başkasından almış olmamalı.
     if o.vekil_id is not null then
       raise exception 'Başka bir öğretmenin hesabındayken onun adına mesaj gönderemezsiniz. '
                       'Kendi hesabınıza dönün.'
         using errcode = '42501';
     end if;
 
-    -- Öğretmen yalnız KENDİ öğrencisine yazabilir.
     perform public._ogrenci_sahibi(o.ogretmen_id, p_ogrenci_id);
     hedef      := p_ogrenci_id;
     kimden     := 'ogretmen';
     v_kanal    := p_kanal;
     v_ogretmen := o.ogretmen_id;
   elsif o.rol = 'veli' then
-    -- Veli yalnız kendi öğrencisi adına yazabilir; parametre yok sayılır.
     hedef      := o.ogrenci_id;
     kimden     := 'veli';
     v_kanal    := 'veli';
     v_ogretmen := public._ogrencinin_ogretmeni(o.ogrenci_id);
   elsif o.rol = 'ogrenci' then
-    -- ÖĞRENCİ ARTIK YAZABİLİYOR — ama yalnız kendi yazışmasına.
     hedef      := o.ogrenci_id;
     kimden     := 'ogrenci';
     v_kanal    := 'ogrenci';
@@ -3303,14 +2840,10 @@ begin
     raise exception 'Bu bölümde mesaj gönderemezsiniz.' using errcode = '42501';
   end if;
 
-  -- DEĞİŞEN SATIR (0027): ikinci argüman olmadan sekme ve satır sonu
-  -- kırpılmıyordu; yalnız boşluktan oluşan mesaj buradan geçiyordu.
   if length(btrim(coalesce(p_metin, ''), E' \t\r\n')) = 0 then
     raise exception 'Mesaj boş olamaz.' using errcode = '22023';
   end if;
 
-  -- DEĞİŞEN SATIR (0027): baştaki/sondaki satır sonları da kırpılıyor.
-  -- İÇERİDEKİ satır sonlarına dokunulmuyor — çok satırlı mesaj meşru.
   insert into public.mesajlar (ogrenci_id, kimden, metin, kanal, ogretmen_id)
   values (hedef, kimden, btrim(p_metin, E' \t\r\n'), v_kanal, v_ogretmen);
 

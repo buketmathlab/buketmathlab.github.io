@@ -80,10 +80,14 @@ begin
   perform public.odev_gonder(jo, v_o,
     'cozum/' || v_o::text || '/' || v_a::text || '.jpg', '{"1":"A","2":"D"}'::jsonb);
   perform public.mesaj_gonder(jt, 'Merhaba, Ayşe''nin ödevi güzeldi.', v_a);
-  insert into public.dersler (ogrenci_id, zaman, mod, link)
-    values (v_b, now() + interval '2 days', 'online', 'https://ornek/ders');
-  insert into public.odemeler (ogrenci_id, tutar, tarih, odendi)
-    values (v_b, 1500.50, current_date, true);
+  -- 0033: özel ders ve ödeme SAHİBE ait; doğrudan `insert`'ler
+  -- `ogretmen_id` taşımak zorunda (sütun `not null`).
+  insert into public.dersler (ogrenci_id, zaman, mod, link, ogretmen_id)
+    values (v_b, now() + interval '2 days', 'online', 'https://ornek/ders',
+            (select id from public.ogretmenler where yonetici));
+  insert into public.odemeler (ogrenci_id, tutar, tarih, odendi, ogretmen_id)
+    values (v_b, 1500.50, current_date, true,
+            (select id from public.ogretmenler where yonetici));
 
   -- 0032: öğretmenin KENDİ YAZDIĞI Ewalu cümlesi. Provanın konusu tam da
   -- bu: cümleler `ayarlar` tablosuna konsaydı yedeğe hiç girmez ve burada
