@@ -148,8 +148,6 @@ console.log('\n1 — ONAM BEKLEYEN VELİ: ekran çiziliyor, sekmeler çizilmiyor
 
   console.log('\n2 — METNİN ASIL MADDELERİ EKRANDA');
   olc('yurt dışı barındırma yazıyor', /İsviçre/.test(metin));
-  olc('yapay zekâ maddesi yazıyor', /yapay zekâ ile yapılmaz/i.test(metin));
-  olc('cevap anahtarı maddesi yazıyor', /Cevap anahtarı veliye hiçbir zaman/i.test(metin));
   olc('onaylamamanın sonucu yazıyor', /Veli paneline giremezsiniz/i.test(metin));
   olc('sürüm ekranda yazıyor', metin.includes(SURUM));
 
@@ -168,6 +166,27 @@ console.log('\n1 — ONAM BEKLEYEN VELİ: ekran çiziliyor, sekmeler çizilmiyor
   );
   // Metin düz metin olarak çiziliyor; ham markdown ekrana sızmamalı.
   olc('ekranda ham ** işareti yok', !metin.includes('**'));
+
+  // KAPSAM DOĞRU ANLATILIYOR MU (sürüm 3). Metin bir tur boyunca
+  // "matematik zümresindeki öğretmenler — dört kişi" dedi; bu YANLIŞTI.
+  olc('dersin öğretmeni ifadesi var', /dersine giren öğretmen/i.test(metin));
+  olc(
+    'öğretmenin yalnız kendi sınıfını gördüğü yazıyor',
+    /yalnız kendi sınıflarındaki öğrencileri/i.test(metin),
+  );
+  olc('yöneticinin tamamını gördüğü yazıyor', /Platformu yöneten öğretmen/i.test(metin));
+
+  // SİLİNENLER EKRANDA GERÇEKTEN YOK MU.
+  //
+  // Bu dört ölçüm turun asıl kanıtı: kaynakta sildiğimi biliyorum ama
+  // ölçülen şey DERLENMİŞ PAKET. Derleme sessizce düşse eski paket
+  // yerinde kalır ve yukarıdaki "var mı" ölçümleri bunu fark ETMEZDİ —
+  // ama bu "yok mu" ölçümleri fark eder.
+  console.log('\n2b — ÖĞRETMENİN KALDIRTTIKLARI EKRANDA YOK');
+  olc('yapay zekâ bölümü yok', !/yapay zekâ/i.test(metin));
+  olc('cevap anahtarı cümlesi yok', !/cevap anahtarı/i.test(metin));
+  olc('özel ders ödeme/ders planı satırı yok', !/(ödeme kaydı|ders planı)/i.test(metin));
+  olc('yanlış olan "dört kişi" ifadesi yok', !/(dört kişi|zümre)/i.test(metin));
 
   console.log('\n7 — ÇIKIŞ ONAM EKRANINDA DA DURUYOR');
   olc(
