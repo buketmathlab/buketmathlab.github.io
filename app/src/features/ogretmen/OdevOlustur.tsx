@@ -14,6 +14,7 @@ import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtariCikar, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { KonuAtama } from './KonuAtama';
+import { KunyePaneli } from './KunyePaneli';
 import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { SikSayisiSecimi } from './SikSayisiSecimi';
@@ -511,6 +512,34 @@ export function OdevOlustur() {
                     onDegis={setKonular}
                   />
                 </div>
+              )}
+
+              {/* KÜNYE — anahtarı ve SORU BAŞINA KONUYU birlikte doldurur.
+                  Konu, öğretmenin PDF'lerinden çıkarılamıyor (sorular
+                  görsel olarak gömülü, `odev-pdf-ozeti.ts`'teki ölçüm) ve
+                  bugün tek tek elle giriliyor; konu karnesi ise tamamen o
+                  alana dayanıyor.
+
+                  ANAHTAR IZGARASININ ALTINDA duruyor çünkü ızgara asıl
+                  yol; künye onu HIZLANDIRAN ikinci yol. Üste konsaydı
+                  künyesi olmayan öğretmen (üç arkadaşı) her ödevde
+                  kullanmadığı bir kutuyu geçmek zorunda kalırdı. */}
+              {n > 0 && (
+                <KunyePaneli
+                  soruSayisi={n}
+                  sonSecenek={sonSecenek}
+                  onUygula={(yeniAnahtar, yeniKonular) => {
+                    // ÜZERİNE YAZMA DEĞİL BİRLEŞTİRME: öğretmen ızgarada
+                    // elle bir şey girdiyse ve künyede o soru yoksa,
+                    // girdiği kaybolmamalı.
+                    setAnahtar((eski) => ({ ...eski, ...yeniAnahtar }));
+                    setKonular((eski) => ({ ...eski, ...yeniKonular }));
+                    bildir(
+                      `${Object.keys(yeniAnahtar).length} cevap, ` +
+                        `${Object.keys(yeniKonular).length} konu dolduruldu`,
+                    );
+                  }}
+                />
               )}
             </>
           ) : (

@@ -2097,3 +2097,78 @@ kaybolması değil **kapsam dışında kalması**.
 - **ÖLÇEK SINIRI.** Beş zümre × ~20 öğretmen × ~3.000 öğrenci olduğunda
   her gönderimin bir fotoğraf taşıması depolamayı ücretsiz planın üstüne
   çıkarır. Zümreler açılmadan önce plan ve maliyet ayrıca ölçülmeli.
+
+## Soru kâğıdı künyesi — Claude'da üretileni içeri almak (yeni SQL yok)
+
+Öğretmenin Claude Projects'te hazırladığı bir soru kâğıdı skill'i var;
+çıktısı PDF/Word. Bunu SEKİZ'e bağlarken iki yol vardı ve **ürüne yapay
+zekâ koymama** kararı verildi.
+
+### Neden ürüne yapay zekâ konmadı
+
+Maliyet konuşuldu ve engel o değildi: dört öğretmen ayda 20 kâğıt üretse
+API ücreti ayda ~$2–8. Engel üç başka şeydi:
+
+- **API anahtarı tarayıcıya konulamaz** (Bölüm XIV/XX) — sunucu tarafında
+  yeni bir parça, yeni bir saldırı yüzeyi ve harcama tavanı gerekirdi.
+- Claude aboneliği API'yi **karşılamıyor**; ayrı hesap, ayrı kart.
+- **5. kuralla gerilim:** *"notlandırmada asla yapay zekâ kullanma."*
+  Cevap anahtarını yapay zekâ üretirse notu fiilen o belirler.
+
+Kâğıt Claude'da üretilmeye devam ediyor; SEKİZ yalnız **çıktıyı içeri
+alıyor.** Üründe yapay zekâ, API anahtarı ve fatura yok.
+
+### Kapatılan asıl boşluk: soru başına KONU
+
+| Alan | Önce | Şimdi |
+|---|---|---|
+| Sorular PDF'i | yükleniyor | değişmedi |
+| Anahtar PDF'i | yükleniyor | değişmedi |
+| `cevap_anahtari` | anahtar PDF'inin metninden çıkarılmaya çalışılıyor | künyeden de dolabiliyor |
+| `konular` | **her ödevde elle giriliyor** | künyeden tek dokunuşla doluyor |
+
+Konu, öğretmenin PDF'lerinden **çıkarılamıyor**: sorular görsel olarak
+gömülü, metin katmanında yok (`odev-pdf-ozeti.ts`'teki ölçüm). Oysa konu
+karnesi (`konu_karnesi`) tamamen o alana dayanıyor. Kâğıdı üreten Claude
+bu bilgiyi zaten biliyor; künye onu yolda kaybetmemek için var.
+
+**Biçimi SEKİZ dayatıyor, skill ona uyuyor** — `docs/soru-kagidi-kunyesi.md`.
+Böylece skill'in kendisi hiç görülmeden iki taraf anlaşıyor. Biçim
+Word'deki cevap anahtarı tablosunun doğal hâli seçildi (`1  A  Türev`);
+JSON daha kesin olurdu ama tek kırık tırnak bütün yapıştırmayı düşürür ve
+öğretmen neyin bozuk olduğunu gözle göremezdi.
+
+`odev_olustur` bu iki alanı zaten parametre olarak alıyordu: **panelde
+çalıştırılacak yeni SQL yok.**
+
+### Öneri, otomatik doldurma değil (Bölüm XXVIII)
+
+Yapıştırmak hiçbir şeyi değiştirmiyor; önizleme ne okunduğunu söylüyor,
+uygulayan öğretmen. 5. kuralın korunma noktası burası: anahtarı yapay
+zekâ önerse de yayına öğretmen onayıyla gidiyor, ve `odev_yayinla` eksik
+anahtarlı ödevi zaten reddediyor.
+
+### Cevap anahtarının açılma anı değişmedi
+
+Öğretmenin şartı — *"öğrenciye gönderilirken anahtar olmayacak, teslimden
+sonra açılacak"* — künyeden bağımsız olarak zaten platformun kuralı:
+`ogrenci_odevleri` teslim yoksa `cevap_anahtari` ve `anahtar_yolu`
+alanlarını `null` döndürüyor (0025). Gerçek veritabanına karşı ölçülüyor:
+`guvenlik_testleri.sql` 8. ve 10. bölümler.
+
+### Ölçüm ve bir kör nokta
+
+`kunye-denetimi.mjs` 22 ölçüm yapıyor. En değerlisi, sunucuya giden
+istekte `p_konular`'ın **gerçekten dolu** olduğu — turun bütün sebebi o.
+
+Geri alma kanıtı iki kör nokta buldu:
+
+1. "Uygula'ya basılmadan bir şey değişmiyor" ölçümü `select` öğelerini
+   sayıyordu; ızgarada `select` yok, sayaç hep 0 dönüyordu ve ölçüm her
+   koşulda geçiyordu. Izgaranın kendi sayacı ("3/5 cevap girildi")
+   okunacak şekilde yeniden yazıldı.
+2. **Derleme sessizce düşerse denetim eski paketi ölçüyor.** `p_konular`
+   yaması bir import'u boşta bıraktı (`error TS6133`), `npm run build`
+   düştü, `yeni/` eski hâlinde kaldı ve denetim yamayı hiç görmeden
+   22/0 geçti. 0030'da migration için öğrenilen dersin arayüz hâli;
+   uyarı betiğin başına yazıldı.
