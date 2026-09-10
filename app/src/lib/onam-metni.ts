@@ -36,7 +36,7 @@
  *
  * Metni değiştirirken bunu da yükseltin — yoksa test kırmızı olur.
  */
-export const ONAM_SURUMU = '2026-09-1';
+export const ONAM_SURUMU = '2026-09-2';
 
 export type OnamBolumu = {
   readonly baslik: string;
@@ -47,20 +47,35 @@ export const ONAM_BASLIK = 'Veli onam metni';
 
 export const ONAM_GIRIS =
   'SEKİZ, çocuğunuzun ödevlerini ve gelişimini takip etmek için ' +
-  'kullanılan bir uygulamadır. Devam etmeden önce hangi bilgilerin ' +
-  'tutulduğunu, kimin görebildiğini ve nerede saklandığını okumanızı ' +
-  'istiyoruz.';
+  'kullanılan bir uygulamadır. Çocuğunuz kendi koduyla giriyor, ödevlerini ' +
+  'görüyor ve çözümünü gönderiyor; siz de kendi kodunuzla gidişatı ' +
+  'izliyorsunuz. Devam etmeden önce hangi bilgilerin tutulduğunu, kimin ' +
+  'görebildiğini ve nerede saklandığını okumanızı istiyoruz.';
 
 export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
   {
+    baslik: 'Neye izin veriyorsunuz',
+    maddeler: [
+      'Çocuğunuzun SEKİZ öğrenci uygulamasını kullanmasına: kendi ' +
+        'koduyla girip ödevlerini görmesine, çözümünü göndermesine ve ' +
+        'sonucunu okumasına.',
+      'Aşağıda sayılan bilgilerin — adı, soyadı, sınıfı, ödevleri ve ' +
+        'notları dâhil — bu uygulamada saklanmasına.',
+    ],
+  },
+  {
     baslik: 'Hangi bilgiler tutuluyor',
     maddeler: [
-      'Çocuğunuzun adı soyadı ve sınıfı.',
-      'Ödev cevapları, puanı ve öğretmen yorumu.',
+      'Çocuğunuzun adı ve soyadı.',
+      'Sınıfı — yalnız seviye ve şube olarak, örneğin 9A. ' +
+        'Okulun adı SEKİZ’de hiçbir yerde saklanmıyor.',
+      'Ödevleri: cevapları, notu (puanı) ve öğretmen yorumu.',
       'Ödev için yüklediği çözüm kâğıdı fotoğrafı.',
       'Sizinle öğretmen arasındaki mesajlar.',
       'Özel ders alıyorsa ders planı ve ödeme kaydı.',
       'Giriş kodları — kod bir şifredir, başkasıyla paylaşmayın.',
+      'Adres, telefon, kimlik numarası, doğum tarihi ve fotoğrafı ' +
+        'istenmiyor ve tutulmuyor.',
     ],
   },
   {
@@ -100,13 +115,28 @@ export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
   {
     baslik: 'Onayınızı vermezseniz',
     maddeler: [
-      'Veli paneline giremezsiniz. Çocuğunuzun kendi girişi bundan ' +
-        'etkilenmez; o kendi koduyla ödevlerini görmeye ve göndermeye ' +
-        'devam eder.',
-      'Fikrinizi değiştirirseniz öğretmeninize söylemeniz yeterli.',
+      'Veli paneline giremezsiniz: çocuğunuzun ödevlerini, notlarını ve ' +
+        'öğretmenle yazışmayı göremezsiniz.',
+      'Çocuğunuzun kendi girişi bundan kendiliğinden etkilenmez; o ' +
+        'kendi koduyla ödevlerini görmeye ve göndermeye devam eder. ' +
+        'Çocuğunuzun uygulamayı kullanmasını istemiyorsanız öğretmene ' +
+        'söyleyin, hesabı kapatılır.',
+      'Onayınızı sonradan geri almak isterseniz öğretmeninize söylemeniz ' +
+        'yeterli.',
     ],
   },
 ];
+
+/**
+ * Düğmenin hemen üstünde duran özet.
+ *
+ * Onam ekranı uzun; veli aşağı inip düğmeye bastığında NEYE bastığını
+ * tek cümlede görmeli. Metnin bir parçası olduğu için hash kilidine de
+ * dâhil — sessizce değiştirilemez.
+ */
+export const ONAM_OZET =
+  'Onaylayarak, çocuğumun SEKİZ öğrenci uygulamasını kullanmasına ve ' +
+  'yukarıda sayılan bilgilerin saklanmasına izin veriyorum.';
 
 /**
  * Metnin düz hâli — hash kilidi ve ölçümler bunu kullanıyor.
@@ -120,4 +150,5 @@ export const ONAM_METNI: string = [
   ...ONAM_BOLUMLERI.map(
     (b) => `${b.baslik}\n${b.maddeler.map((m) => `- ${m}`).join('\n')}`,
   ),
+  ONAM_OZET,
 ].join('\n\n');

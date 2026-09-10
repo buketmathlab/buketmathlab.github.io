@@ -6,6 +6,7 @@ import {
   ONAM_BOLUMLERI,
   ONAM_GIRIS,
   ONAM_METNI,
+  ONAM_OZET,
   ONAM_SURUMU,
 } from '@/lib/onam-metni';
 
@@ -28,7 +29,15 @@ const ozet = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex')
  * yapmaz: veliler eski sürümde onaylı görünmeye devam eder.
  */
 const SURUM_KAYDI: Record<string, string> = {
+  // İlk taslak. Öğretmen okuyunca iki eksik çıktı: metin, velinin
+  // ÇOCUĞUN UYGULAMAYI KULLANMASINA izin verdiğini söylemiyordu ve okul
+  // adına hiç değinmiyordu. Bu sürüm hiç yayına çıkmadı, hiç onay almadı;
+  // yine de kayıtta duruyor — silinmiş bir sürüm, olmamış sürüm demek
+  // değil.
   '2026-09-1': '4adeba337e0dabc854a8c5645cc767df1ec1070dc9dfe341009dd0524df86d39',
+  // Yayına girecek ilk sürüm: izin cümlesi, ad-soyad-ödev-not dökümü,
+  // "okul adı saklanmıyor" ve düğme üstündeki özet eklendi.
+  '2026-09-2': '045b5636f4ff7d25602d471e7104f8db096758140efa872dd33a10672f433f14',
 };
 
 describe('onam metni sürüm kilidi', () => {
@@ -109,7 +118,62 @@ describe('metin ürünün gerçeğini söylüyor', () => {
   it('onaylamamanın sonucunu saklamıyor', () => {
     expect(ONAM_METNI).toContain('Veli paneline giremezsiniz');
     // Öğrencinin girişinin etkilenmediği de yazmalı: kapı yalnız veliye.
-    expect(ONAM_METNI).toContain('kendi girişi bundan etkilenmez');
+    expect(ONAM_METNI).toContain('kendi girişi bundan kendiliğinden etkilenmez');
+    // ...ve velinin elinde gerçek bir yol olmalı. Bu cümle olmasaydı metin
+    // "çocuğunuzun kullanmasına izin veriyorsunuz" der, sonra izin
+    // vermeyene hiçbir şey sunmazdı.
+    expect(ONAM_METNI).toContain('hesabı kapatılır');
+  });
+
+  /**
+   * ÖĞRETMENİN İKİNCİ TURDAKİ İSTEĞİ.
+   *
+   * "Veli aynı zamanda öğrencisinin öğrenci uygulamasını kullanabileceğine
+   * dair de izin vermeli; adının, soyadının, ödevlerinin, notlarının
+   * depolanacağını kabul eden bir metin olmalı."
+   *
+   * Bu maddeler bir düzenlemede sessizce düşerse metin, öğretmenin
+   * istediği şeyi söylemeyi bırakır ve kimse fark etmez.
+   */
+  it('çocuğun uygulamayı kullanmasına izin verildiğini söylüyor', () => {
+    expect(ONAM_METNI).toContain('öğrenci uygulamasını kullanmasına');
+    expect(ONAM_METNI).toContain('izin veriyorum');
+  });
+
+  it('ad, soyad, ödev ve notun saklandığını tek tek sayıyor', () => {
+    expect(ONAM_METNI).toContain('adı ve soyadı');
+    expect(ONAM_METNI).toContain('notu (puanı)');
+    expect(ONAM_METNI).toContain('Ödevleri');
+  });
+
+  /**
+   * OKUL ADI GERÇEKTEN SAKLANMIYOR.
+   *
+   * Öğretmen "okul adının depolanacağını kabul eden" bir metin istedi;
+   * şemaya bakıldığında okul adı diye bir alan olmadığı görüldü —
+   * `siniflar` yalnız seviye ve şube tutuyor, `ad` ondan türetiliyor.
+   * Metin bu yüzden saklandığını DEĞİL, saklanmadığını söylüyor.
+   *
+   * Bu test ikisini birden tutuyor: ileride gerçekten bir okul adı alanı
+   * eklenirse şema testi değil BU test kırmızı olur ve metnin de
+   * güncellenmesi gerektiği ortaya çıkar.
+   */
+  it('okul adının saklanmadığını söylüyor ve şema bunu doğruluyor', () => {
+    expect(ONAM_METNI).toContain('Okulun adı SEKİZ’de hiçbir yerde saklanmıyor');
+    expect(ONAM_METNI).toContain('örneğin 9A');
+
+    const sema = readFileSync(
+      resolve(process.cwd(), '../supabase/migrations/0001_temel_sema.sql'),
+      'utf8',
+    );
+    const siniflar = /create table if not exists public\.siniflar[\s\S]*?\n\);/.exec(sema)?.[0];
+    expect(siniflar).toBeTruthy();
+    expect(siniflar).not.toMatch(/okul/i);
+  });
+
+  it('istenmeyen kişisel verileri de sayıyor', () => {
+    expect(ONAM_METNI).toContain('kimlik numarası');
+    expect(ONAM_METNI).toContain('tutulmuyor');
   });
 
   it('kodun bir şifre olduğunu söylüyor', () => {
@@ -118,8 +182,8 @@ describe('metin ürünün gerçeğini söylüyor', () => {
 });
 
 describe('metnin yapısı', () => {
-  it('beş bölüm var ve hiçbiri boş değil', () => {
-    expect(ONAM_BOLUMLERI).toHaveLength(5);
+  it('altı bölüm var ve hiçbiri boş değil', () => {
+    expect(ONAM_BOLUMLERI).toHaveLength(6);
     for (const b of ONAM_BOLUMLERI) {
       expect(b.baslik.trim()).not.toBe('');
       expect(b.maddeler.length).toBeGreaterThan(0);
@@ -133,5 +197,17 @@ describe('metnin yapısı', () => {
       expect(ONAM_METNI).toContain(b.baslik);
       for (const m of b.maddeler) expect(ONAM_METNI).toContain(m);
     }
+  });
+
+  // Düğmenin üstündeki özet de hash kilidinin İÇİNDE olmalı: dışarıda
+  // kalsaydı velinin "neye basıyorum" cümlesi sessizce değiştirilebilirdi.
+  it('düğme üstündeki özet de kilitli metnin parçası', () => {
+    expect(ONAM_METNI).toContain(ONAM_OZET);
+  });
+
+  it('metinde ham markdown işareti kalmamış', () => {
+    // `**kalın**` yazsaydım ekranda yıldızlar görünürdü; metin düz metin
+    // olarak çiziliyor.
+    expect(ONAM_METNI).not.toContain('**');
   });
 });

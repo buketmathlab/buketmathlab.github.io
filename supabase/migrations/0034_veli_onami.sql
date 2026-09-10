@@ -85,7 +85,7 @@ language sql
 immutable
 set search_path = public, extensions, pg_temp
 as $$
-  select '2026-09-1'::text;
+  select '2026-09-2'::text;
 $$;
 
 -- -----------------------------------------------------------------------------

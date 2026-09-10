@@ -153,6 +153,22 @@ console.log('\n1 — ONAM BEKLEYEN VELİ: ekran çiziliyor, sekmeler çizilmiyor
   olc('onaylamamanın sonucu yazıyor', /Veli paneline giremezsiniz/i.test(metin));
   olc('sürüm ekranda yazıyor', metin.includes(SURUM));
 
+  // ÖĞRETMENİN İKİNCİ TURDAKİ İSTEĞİ — ekranda gerçekten görünüyor mu.
+  olc(
+    'çocuğun uygulamayı kullanmasına izin cümlesi var',
+    /öğrenci uygulamasını kullanmasına/i.test(metin),
+  );
+  olc('ad-soyad sayılıyor', /adı ve soyadı/i.test(metin));
+  olc('not (puan) sayılıyor', /notu \(puanı\)/i.test(metin));
+  olc('okul adının saklanmadığı yazıyor', /Okulun adı .*saklanmıyor/i.test(metin));
+  olc('sınıf örneği yazıyor', /örneğin 9A/i.test(metin));
+  olc(
+    'düğmenin üstünde ne onaylandığı özetleniyor',
+    /Onaylayarak, çocuğumun .* izin veriyorum/i.test(metin),
+  );
+  // Metin düz metin olarak çiziliyor; ham markdown ekrana sızmamalı.
+  olc('ekranda ham ** işareti yok', !metin.includes('**'));
+
   console.log('\n7 — ÇIKIŞ ONAM EKRANINDA DA DURUYOR');
   olc(
     'çıkış düğmesi var (kimse ekranda kilitlenmiyor)',

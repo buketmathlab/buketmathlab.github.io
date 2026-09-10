@@ -2204,6 +2204,27 @@ okunmuyor** — `select ... into ogr` hiç çalışmıyor.
 kursaydık onam, **öğrencinin karnesini de kapatırdı**.
 `onam_testleri.sql` 7. grup bunu ayrı bir negatif kontrol olarak ölçüyor.
 
+### Metnin ikinci turu — öğretmen okuyunca iki eksik çıktı
+
+İlk taslak (`2026-09-1`) yayına hiç çıkmadı. Öğretmen okuyunca iki şey
+istedi: metin, velinin **çocuğun öğrenci uygulamasını kullanmasına** izin
+verdiğini de söylesin; ad, soyad, ödev ve **not** açıkça sayılsın.
+
+Üçüncü isteği — "okul adının depolanacağını kabul eden" — kontrol edilince
+**yanlış çıktı**: `siniflar` yalnız `seviye` ve `sube` tutuyor, `ad` onlardan
+türetiliyor ve şemada okul adı diye bir alan yok. Metne "okul adınız
+saklanır" yazmak veliye yanlış bilgi vermek olurdu; metin bunun yerine
+saklanmadığını söylüyor. `onam-metni.test.ts` ikisini birden tutuyor:
+ileride gerçekten bir okul adı alanı eklenirse o test kırmızı olup metnin
+de güncellenmesi gerektiğini söylüyor.
+
+**Öğrencinin girişine kapı KONMADI** (öğretmenin kararı). Metin izni
+kapsıyor ama çocuğun girişi teknik olarak durmuyor; bu boşluk metinde
+açıkça yazıyor ve veliye gerçek bir yol veriyor: *"Çocuğunuzun uygulamayı
+kullanmasını istemiyorsanız öğretmene söyleyin, hesabı kapatılır."*
+Alternatifi — onam gelene kadar çocuğu da kilitlemek — hiç giriş yapmayan
+tek bir veli yüzünden çocuğun ödev yapamaz hâle gelmesi demekti.
+
 ### Metin depoda, sürümü veritabanında
 
 Metin `app/src/lib/onam-metni.ts` (statik site, ek istek yok, geçmişi

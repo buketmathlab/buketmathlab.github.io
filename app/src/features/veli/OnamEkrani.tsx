@@ -7,6 +7,7 @@ import {
   ONAM_BASLIK,
   ONAM_BOLUMLERI,
   ONAM_GIRIS,
+  ONAM_OZET,
   ONAM_SURUMU,
 } from '@/lib/onam-metni';
 
@@ -82,6 +83,12 @@ export function OnamEkrani({ onaylandi }: { onaylandi: () => void }) {
       )}
 
       <div className="mt-6">
+        {/* NEYE BASIYOR. Metin uzun; veli aşağı indiğinde düğmenin ne
+            anlama geldiğini tekrar görmeli. Cümle `onam-metni.ts`'ten
+            geliyor, yani hash kilidinin içinde. */}
+        <p className="mb-3 text-[15px] font-semibold leading-relaxed text-ink">
+          {ONAM_OZET}
+        </p>
         <Button onClick={onayla} disabled={gonderiliyor} className="w-full">
           {gonderiliyor ? 'Kaydediliyor…' : 'Okudum, onaylıyorum'}
         </Button>

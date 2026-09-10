@@ -71,6 +71,15 @@ Veli, uygulamaya ilk girişinde bir onam metni okuyup onaylıyor.
 - Metin: `app/src/lib/onam-metni.ts`. İçeriği bu belgedeki envantere
   dayanıyor: hangi veri, kim görüyor, nerede saklanıyor, yapay zekâ
   kullanılıp kullanılmadığı, onaylamamanın sonucu.
+- Metin ayrıca velinin **çocuğun öğrenci uygulamasını kullanmasına** izin
+  verdiğini açıkça söylüyor; ad, soyad, sınıf, ödevler ve notlar tek tek
+  sayılıyor. **Okul adı saklanmadığı için** metin saklandığını değil,
+  saklanmadığını söylüyor — şemada karşılığı yok (`siniflar` yalnız
+  seviye + şube).
+- **Öğrencinin girişi onama bağlı değil.** Kapı yalnız veli rolünde;
+  onam gelmese de çocuk ödevlerini görüp gönderebiliyor. Metin bunu
+  saklamıyor ve veliye yol gösteriyor: çocuğun kullanmasını istemiyorsa
+  öğretmene söyler, hesap kapatılır.
 - Kayıt: `veli_onaylari` (öğrenci, **metin sürümü**, onay zamanı). Sürüm
   tutuluyor ki metin değiştiğinde eski onay yeni metni **kapsamasın**;
   `app/src/lib/onam-metni.test.ts` metnin hash'ini sürümle kilitliyor.
