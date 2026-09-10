@@ -396,6 +396,18 @@ export type SinifVelisi = {
   tur: 'okul' | 'ozel';
   /** Veli kodu yoksa veli hiç giriş yapamaz; öğretmen bunu önden bilsin. */
   veli_kodu_var: boolean;
+  /**
+   * 0034 — veli onam metnini onayladı mı. Onaylamayan veli panele
+   * giremiyor, yani yazılan mesajı da okuyamıyor; öğretmen kimin
+   * beklediğini bu alandan görüyor.
+   *
+   * SALT OKUNUR: öğretmen onamı ne verebilir ne geri alabilir. Onam
+   * velinin kendi iradesi, başkası adına tıklanamaz.
+   *
+   * 0034 çalıştırılmamış bir panelde uç bu alanı hiç döndürmüyor; o yüzden
+   * isteğe bağlı ve `undefined` hâlinde etiket çizilmiyor.
+   */
+  onam_var?: boolean;
   mesaj_sayisi: number;
   son_mesaj: string | null;
   okunmamis: number;

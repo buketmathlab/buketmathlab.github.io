@@ -191,6 +191,11 @@ export function SinifVelileriEkrani() {
                             giriş bile yapamaz. Öğretmen bunu yazmadan
                             ÖNCE görsün. */}
                         {!v.veli_kodu_var && <Tag tur="notr">Veli kodu yok</Tag>}
+                        {/* 0034: onam vermemiş veli panele giremiyor —
+                            yazdığınız mesajı da okuyamaz. Kod yokluğuyla
+                            aynı sebeple burada: yazmadan ÖNCE görülsün.
+                            Onamı siz veremezsiniz, veli kendi verir. */}
+                        {v.onam_var === false && <Tag tur="notr">Onam bekliyor</Tag>}
                         {v.okunmamis > 0 && (
                           <Tag tur="uyari">
                             <span className="sk-sayi">{v.okunmamis} yeni</span>

@@ -52,6 +52,9 @@ begin
                         where ogrenci_id = v_a and rol = 'ogrenci')))->>'token';
   jv := (public.giris((select kod from public.giris_kodlari
                         where ogrenci_id = v_a and rol = 'veli')))->>'token';
+  -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
+  -- giremiyor; test de aynı yoldan geçiyor.
+  perform public.onam_ver(jv, public._gecerli_onam_surumu());
 
   -- ---------------------------------------------------------------------------
   -- 1 — TOPLU KOD UCU ARTIK YOK

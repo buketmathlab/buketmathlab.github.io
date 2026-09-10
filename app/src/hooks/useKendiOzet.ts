@@ -24,9 +24,31 @@ export type KendiOzet = {
   /** Özel ders mi: veli kabuğunda Ödemeler sekmesi buna göre çıkıyor. */
   tur: 'okul' | 'ozel' | null;
   okunmamis_mesaj: number;
+  /**
+   * 0034 — veli henüz onam vermemiş. Sunucu bu durumda `veli_paneli`
+   * yanıtında ÇOCUĞA AİT HİÇBİR ALAN döndürmüyor; kabuk da sekmelerin
+   * yerine onam ekranını çiziyor.
+   *
+   * Öğrenci kabuğunda (`ogrenci_odevleri`) bu alan hiç gelmiyor ve `false`
+   * kalıyor: kapı yalnız veliye ait.
+   */
+  onam_gerekli: boolean;
+  /**
+   * İlk yanıt geldi mi.
+   *
+   * Bu olmadan kabuk, cevap gelene kadar `onam_gerekli: false` varsayar ve
+   * onam bekleyen veliye önce sekmeleri gösterip sonra onam ekranına
+   * atlardı. Veri sızmazdı (sunucu zaten vermiyor) ama ekran titrerdi.
+   */
+  hazir: boolean;
 };
 
-const BOS: KendiOzet = { tur: null, okunmamis_mesaj: 0 };
+const BOS: KendiOzet = {
+  tur: null,
+  okunmamis_mesaj: 0,
+  onam_gerekli: false,
+  hazir: false,
+};
 
 export function useKendiOzet(uc: 'ogrenci_odevleri' | 'veli_paneli'): KendiOzet {
   const { oturum } = useOturum();
@@ -40,13 +62,20 @@ export function useKendiOzet(uc: 'ogrenci_odevleri' | 'veli_paneli'): KendiOzet 
       const v = await rpc<{
         ogrenci?: { tur?: 'okul' | 'ozel' };
         okunmamis_mesaj?: number;
+        onam_gerekli?: boolean;
       }>(uc, { p_token: token }, { oturumDusurmesin: true });
       setOzet({
         tur: v?.ogrenci?.tur ?? null,
         okunmamis_mesaj: Number(v?.okunmamis_mesaj ?? 0),
+        onam_gerekli: v?.onam_gerekli === true,
+        hazir: true,
       });
     } catch {
       // Sessiz — sekme çubuğu yan bir bilgi, kimlik akışını yönetmemeli.
+      // `hazir` işaretleniyor ki kabuk sonsuza kadar beklemesin: 0034
+      // çalıştırılmamış bir panelde uç eskisi gibi cevap veriyor ve onam
+      // kapısı hiç görünmüyor.
+      setOzet((eski) => ({ ...eski, hazir: true }));
     }
   }, [token, uc]);
 

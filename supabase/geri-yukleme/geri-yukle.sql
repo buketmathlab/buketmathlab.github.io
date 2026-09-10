@@ -73,7 +73,11 @@ BURAYA-YAPISTIRIN
   tablolar text[] := array['ogretmenler','siniflar','ogretmen_siniflari',
                            'ogrenciler','giris_kodlari','odevler',
                            'gonderimler','mesajlar','dersler','odemeler',
-                           'ewalu_mesajlari'];
+                           'ewalu_mesajlari',
+                           -- 0034. `ogrenciler`den SONRA gelmek zorunda:
+                           -- `veli_onaylari.ogrenci_id` ona yabancı
+                           -- anahtarla bağlı.
+                           'veli_onaylari'];
 
   -- ESKİ YEDEKLER DE GERİ YÜKLENEBİLMELİ.
   --
@@ -88,7 +92,13 @@ BURAYA-YAPISTIRIN
   --
   -- Sekiz çekirdek tablo İSTEĞE BAĞLI DEĞİL: biri eksikse dosya bozuktur
   -- ve hiçbir şeye dokunmadan reddedilir.
-  istege_bagli text[] := array['ewalu_mesajlari','ogretmenler','ogretmen_siniflari'];
+  istege_bagli text[] := array['ewalu_mesajlari','ogretmenler','ogretmen_siniflari',
+                               -- 0034 öncesi yedeklerde onam tablosu yok;
+                               -- eksikliği hata değil, boş kabul ediliyor.
+                               -- (O dosyalar geri yüklendiğinde veliler
+                               -- onamı yeniden verir — kaydı olmayan bir
+                               -- rızayı VAR saymak yanlış olurdu.)
+                               'veli_onaylari'];
   t text;
   kolonlar text;
   n integer;
@@ -167,7 +177,7 @@ begin
       '  Bu script şu tabloların TAMAMINI siler ve yedekten yazar:\n'
       '  ogretmenler, siniflar, ogretmen_siniflari, ogrenciler,\n'
       '  giris_kodlari, odevler, gonderimler, mesajlar, dersler,\n'
-      '  odemeler, ewalu_mesajlari.\n'
+      '  odemeler, ewalu_mesajlari, veli_onaylari.\n'
       '  Devam etmek için 2. ADIM''daki `onayliyorum` satırını true yapın.\n'
       '  Yedekte bulunan: % sınıf, % öğrenci, % ödev, % gönderim.',
       jsonb_array_length(yedek->'siniflar'),

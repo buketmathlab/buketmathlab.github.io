@@ -22,7 +22,11 @@ declare
                            -- 0032/0033'te eklenen tablolar. `ogretmenler`
                            -- BCRYPT PIN HASH'İ tutuyor: listede olmasaydı
                            -- anon yetkisi hiç ölçülmeden geçerdi.
-                           'ewalu_mesajlari','ogretmenler','ogretmen_siniflari'];
+                           'ewalu_mesajlari','ogretmenler','ogretmen_siniflari',
+                           -- 0034: kimin onam verdiği de veri. Açık kalsaydı
+                           -- anon, hangi velinin onam verdiğini dışarıdan
+                           -- okuyabilirdi.
+                           'veli_onaylari'];
   dahili text[] := array[
     '_oturum_ac(''ogretmen'',null)',
     '_yeni_kod()',
@@ -40,7 +44,13 @@ declare
     '_ogretmenin_sinifi(null,null)',
     '_odev_sahibi(null,null)',
     '_ogrenci_sahibi(null,null)',
-    '_ogrencinin_ogretmeni(null)'
+    '_ogrencinin_ogretmeni(null)',
+    -- 0034 onam kapısı. İlk yazımda bu iki satır YOKTU ve fonksiyonlar
+    -- PUBLIC üzerinden anon'a açık kalmıştı; `guvenlik_denetimi.sql` 1a
+    -- grubu yakaladı. Açık kalsaydı, bir öğrencinin kimliğini bilen biri
+    -- onam durumunu dışarıdan yoklayabilirdi.
+    '_gecerli_onam_surumu()',
+    '_onam_kapisi(''veli'',null)'
   ];
 begin
   raise notice '--- Doğrudan tablo erişimi (hepsi reddedilmeli) ---';

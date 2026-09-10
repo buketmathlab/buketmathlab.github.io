@@ -80,6 +80,19 @@ begin
   perform public.odev_gonder(jo, v_o,
     'cozum/' || v_o::text || '/' || v_a::text || '.jpg', '{"1":"A","2":"D"}'::jsonb);
   perform public.mesaj_gonder(jt, 'Merhaba, Ayşe''nin ödevi güzeldi.', v_a);
+
+  -- 0034: VELİ ONAMI DA YEDEĞİN İÇİNDE OLMALI.
+  --
+  -- Tohuma bilerek konuyor: onam satırı olmasaydı yedek `veli_onaylari=0`
+  -- ile geçer ve zincir "ölçüldü" sanılırdı — oysa gerçek bir onam satırı
+  -- yedekten hiç geçmemiş olurdu. İki velinin ikisi de onaylıyor ki 7.
+  -- adımdaki iki veli kontrolü de geri yükleme sonrası çalışabilsin.
+  perform public.onam_ver((public.giris((select kod from public.giris_kodlari
+                            where ogrenci_id = v_a and rol = 'veli')))->>'token',
+                          public._gecerli_onam_surumu());
+  perform public.onam_ver((public.giris((select kod from public.giris_kodlari
+                            where ogrenci_id = v_b and rol = 'veli')))->>'token',
+                          public._gecerli_onam_surumu());
   -- 0033: özel ders ve ödeme SAHİBE ait; doğrudan `insert`'ler
   -- `ogretmen_id` taşımak zorunda (sütun `not null`).
   insert into public.dersler (ogrenci_id, zaman, mod, link, ogretmen_id)
@@ -201,6 +214,13 @@ begin
   jv := (public.giris((select k.kod from public.giris_kodlari k
          join public.ogrenciler o on o.id = k.ogrenci_id
          where o.ad like 'Ayşe%' and k.rol = 'veli')))->>'token';
+  -- ONAM GERİ GELDİ Mİ? Bu satır olmadan aşağıdaki kontrol SESSİZCE
+  -- geçerdi: onam yoksa `veli_paneli` `mesajlar` alanını hiç döndürmüyor,
+  -- `jsonb_array_length(null) <> 1` de NULL oluyor ve `if` ateşlemiyor.
+  -- Yani ölçüm, ölçtüğünü sandığı şeyi ölçmemiş olurdu (ölçüldü).
+  if (public.veli_paneli(jv))->>'onam_gerekli' is not null then
+    raise exception 'onam yedekten geri gelmedi — veli yeniden onam istiyor';
+  end if;
   if jsonb_array_length((public.veli_paneli(jv))->'mesajlar') <> 1 then
     raise exception 'veli mesajı geri gelmedi';
   end if;

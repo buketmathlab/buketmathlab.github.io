@@ -52,6 +52,9 @@ begin
                         where ogrenci_id = v_a and rol = 'ogrenci')))->>'token';
   jv := (public.giris((select kod from public.giris_kodlari
                         where ogrenci_id = v_a and rol = 'veli')))->>'token';
+  -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
+  -- giremiyor; test de aynı yoldan geçiyor.
+  perform public.onam_ver(jv, public._gecerli_onam_surumu());
 
   -- ---------------------------------------------------------------------------
   -- Her öğretmen ucu, iki rolle de çağrılıyor.
@@ -88,6 +91,13 @@ begin
                'dosya_erisim_izni', 'kendi_karnem', 'mesaj_gonder',
                'odev_gonder', 'ogrenci_mesajlari', 'ogrenci_odevleri',
                'okundu_isaretle', 'veli_paneli',
+               -- 0034: `onam_ver` VELİNİN kendi ucu — onamı veli verir,
+               -- başkası onun adına veremez. Öğrenci jetonunu 42501 ile
+               -- reddediyor (bu listenin ölçtüğü şey), veli jetonunda ise
+               -- sürüm eşleşmezse 22023 dönüyor; ikisi de doğru davranış.
+               -- Rol ayrımı bu listede değil, `onam_testleri.sql` 6. grupta
+               -- ayrıca ölçülüyor.
+               'onam_ver',
                -- 0032: `ewalu_mesajlari` ÖĞRENCİYE açık (sonuç kartındaki
                -- cümleyi o okuyor) ama VELİYE KAPALI. Bu liste rol ayrımı
                -- yapmadığı için buradaki muafiyet velinin reddedildiğini
@@ -268,6 +278,9 @@ begin
 
   jA  := (public.giris((select kod from public.giris_kodlari where ogrenci_id = a and rol = 'ogrenci')))->>'token';
   jvA := (public.giris((select kod from public.giris_kodlari where ogrenci_id = a and rol = 'veli')))->>'token';
+  -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
+  -- giremiyor; test de aynı yoldan geçiyor.
+  perform public.onam_ver(jvA, public._gecerli_onam_surumu());
   jB  := (public.giris((select kod from public.giris_kodlari where ogrenci_id = b and rol = 'ogrenci')))->>'token';
 
   -- B'nin sınıfına ödev: soru PDF'i ve cevap anahtarı yolu ile
@@ -455,6 +468,9 @@ begin
   a := (public.ogrenci_ekle(jt, 'Yük Denemesi', 'okul', s))->>'id';
   jo := (public.giris((select kod from public.giris_kodlari where ogrenci_id = a and rol = 'ogrenci')))->>'token';
   jv := (public.giris((select kod from public.giris_kodlari where ogrenci_id = a and rol = 'veli')))->>'token';
+  -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
+  -- giremiyor; test de aynı yoldan geçiyor.
+  perform public.onam_ver(jv, public._gecerli_onam_surumu());
 
   -- ---------------------------------------------------------------------------
   -- 3a — HER YÜK OLDUĞU GİBİ SAKLANIYOR VE GERİ GELİYOR.

@@ -503,6 +503,9 @@ begin
 
   jv := (public.giris((select kod from public.giris_kodlari
                         where ogrenci_id = v_ada and rol = 'veli')))->>'token';
+  -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
+  -- giremiyor; test de aynı yoldan geçiyor.
+  perform public.onam_ver(jv, public._gecerli_onam_surumu());
   begin
     perform public.konu_karnesi(jv, null, v_ada);
     raise exception '10b: VELİ konu karnesini çağırabildi';

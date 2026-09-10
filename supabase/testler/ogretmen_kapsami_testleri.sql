@@ -93,6 +93,8 @@ begin
 
   -- Veli mesajları (her öğretmene kendi velisinden)
   kod := (select k.kod from public.giris_kodlari k where k.ogrenci_id = ob and k.rol = 'veli');
+  -- ONAM (0034): veli, metni onaylamadan mesaj da yazamıyor.
+  perform public.onam_ver((public.giris(kod))->>'token', public._gecerli_onam_surumu());
   perform public.mesaj_gonder((public.giris(kod))->>'token',
             'BERNANIN GIZLI VELI MESAJI 4242');
 
