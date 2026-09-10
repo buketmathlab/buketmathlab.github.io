@@ -19,10 +19,22 @@
  *   - barındırma bölgesi `docs/kvkk-notlari.md`'de teyitli (Zürih)
  *   - çözüm fotoğraflarının imzalı URL'i 60 saniyelik
  *     (`supabase/functions/dosya-url/index.ts`, GECERLILIK_SN = 60)
- *   - test puanlaması deterministik, yapay zekâ yok (Kural 5;
- *     `supabase/testler/guvenlik_testleri.sql`)
- *   - veli cevap anahtarını hiç görmüyor (Kural 6; 0025 ve 8./10. gruplar)
  *   - öğrencinin öğretmeniyle yazışması veliye KAPALI (0025)
+ *   - okul adı hiçbir yerde tutulmuyor (`siniflar` yalnız seviye+şube)
+ *   - bir öğretmen yalnız KENDİ sınıflarındaki öğrenciyi görüyor,
+ *     sahip ise yönetim için hepsini (`_ogretmenin_ogrencisi`,
+ *     `_yonetici`; `supabase/testler/ogretmen_kapsami_testleri.sql`)
+ *
+ * SÜRÜM 3'TE ÖĞRETMENİN KALDIRTTIKLARI (metin artık bunları SÖYLEMİYOR):
+ * yapay zekâ bölümü, "cevap anahtarı veliye gösterilmez" cümlesi ve özel
+ * derse ait ders planı/ödeme satırı. Kural 5 ve Kural 6 ürüne ait,
+ * yerlerinde duruyor ve `guvenlik_testleri.sql` 8./10. gruplarında
+ * ölçülmeye devam ediyor — metinden çıkmaları onları değiştirmiyor.
+ *
+ * BİLİNEN BOŞLUK: özel ders öğrencilerinde `dersler` ve `odemeler`
+ * gerçekten tutuluyor ve veli ödemeleri kendi panelinde görüyor; metin
+ * artık bunu saymıyor. Öğretmene söylendi, kararı tekrarlandı; kayıt
+ * `docs/kvkk-notlari.md`'de.
  *
  * BU METİN HUKUKİ GÖRÜŞ DEĞİLDİR. Ürünün ne yaptığını dürüstçe anlatır;
  * mevzuata uygunluk değerlendirmesi okul yönetiminin ve gerekiyorsa bir
@@ -36,7 +48,7 @@
  *
  * Metni değiştirirken bunu da yükseltin — yoksa test kırmızı olur.
  */
-export const ONAM_SURUMU = '2026-09-2';
+export const ONAM_SURUMU = '2026-09-3';
 
 export type OnamBolumu = {
   readonly baslik: string;
@@ -72,7 +84,6 @@ export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
       'Ödevleri: cevapları, notu (puanı) ve öğretmen yorumu.',
       'Ödev için yüklediği çözüm kâğıdı fotoğrafı.',
       'Sizinle öğretmen arasındaki mesajlar.',
-      'Özel ders alıyorsa ders planı ve ödeme kaydı.',
       'Giriş kodları — kod bir şifredir, başkasıyla paylaşmayın.',
       'Adres, telefon, kimlik numarası, doğum tarihi ve fotoğrafı ' +
         'istenmiyor ve tutulmuyor.',
@@ -83,11 +94,14 @@ export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
     maddeler: [
       'Siz, kendi kodunuzla girdiğinizde.',
       'Çocuğunuz, kendi kodunda kendi bilgilerini.',
-      'Matematik zümresindeki öğretmenler — dört kişi.',
+      'Çocuğunuzun dersine giren öğretmen. Her öğretmen yalnız kendi ' +
+        'sınıflarındaki öğrencileri görüyor; başka bir sınıfın öğretmeni ' +
+        'çocuğunuzun bilgilerine erişemiyor.',
+      'Platformu yöneten öğretmen, yönetim için sistemin tamamını ' +
+        'görebiliyor.',
       'Başka hiçbir veli ve başka hiçbir öğrenci görmez.',
       'Çocuğunuzun öğretmeniyle yazıştığı ayrı bir bölüm vardır; orayı ' +
         'siz görmezsiniz. Sizin yazışmanızı da o görmez.',
-      'Cevap anahtarı veliye hiçbir zaman gösterilmez.',
     ],
   },
   {
@@ -99,17 +113,6 @@ export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
         'yetkili kişiye, 60 saniye geçerli tek kullanımlık bir bağlantıyla ' +
         'açılıyor.',
       'Şifreler açık hâlde saklanmıyor.',
-    ],
-  },
-  {
-    baslik: 'Yapay zekâ',
-    maddeler: [
-      'Test puanlaması yapay zekâ ile yapılmaz. Puan, cevap anahtarıyla ' +
-        'karşılaştırılarak hesaplanır; aynı kâğıt her zaman aynı sonucu ' +
-        'verir.',
-      'Çocuğunuzun çalışması bugün hiçbir yapay zekâ servisine ' +
-        'gönderilmiyor. İleride böyle bir şey planlanırsa ayrıca ' +
-        'bilgilendirilirsiniz.',
     ],
   },
   {

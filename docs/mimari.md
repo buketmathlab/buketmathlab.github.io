@@ -2263,3 +2263,57 @@ ekranda, doğru sürümle gönderiliyor, onaydan sonra panel açılıyor. İki
 negatif kontrol: onamlı veli ekranı **hiç** görmüyor ve **0034
 çalıştırılmamış** bir panelde arayüz kapıyı **uydurmuyor** (yoksa veliler
 sunucuda karşılığı olmayan bir ekranda kilitlenirdi).
+
+### Sürüm 3 — öğretmenin dört düzeltmesi
+
+Metin yayına girdikten sonra öğretmen okudu ve üç şeyi **kaldırttı**: özel
+derse ait *"ders planı ve ödeme kaydı"* satırı, *"cevap anahtarı veliye
+hiçbir zaman gösterilmez"* cümlesi ve **yapay zekâ bölümünün tamamı.**
+
+Dördüncüsü bir **hata düzeltmesi**: metin *"matematik zümresindeki
+öğretmenler — dört kişi"* diyordu. Bu **yanlıştı** — 0033'ün kapsam kuralı
+her öğretmeni kendi sınıflarıyla sınırlıyor (`_ogretmenin_ogrencisi`;
+özel ders öğrencisini yalnız `yonetici` görüyor). Veliye "dört kişi
+görüyor" demek ürünün yaptığından fazlasını söylemekti. Metin artık
+"çocuğunuzun dersine giren öğretmen … her öğretmen yalnız kendi
+sınıflarındaki öğrencileri görüyor" ve "platformu yöneten öğretmen,
+yönetim için sistemin tamamını görebiliyor" diyor. Yönetici **isimsiz**
+geçiyor (öğretmenin seçimi).
+
+**Bilinen boşluk, sessizce geçilmedi:** ödeme satırının kalkması gerçek
+bir eksiklik — `odemeler` özel ders öğrencilerinde tutuluyor ve veli
+ödemeleri kendi panelinde görüyor. Öğretmene bu sonuç söylendi, kararını
+tekrarladı; kayıt `docs/kvkk-notlari.md`'de.
+
+**Kaldırma iddiası ÖLÇÜLÜYOR.** "Sildim" ölçülmemiş bir iddia olurdu; hem
+vitest hem tarayıcı denetimi artık metinde/ekranda "yapay zekâ", "cevap
+anahtarı", "ödeme kaydı"/"ders planı" ve yanlış olan "dört kişi"
+ifadelerinin **geçmediğini** ayrıca ölçüyor. Tarayıcı tarafındaki ölçüm
+daha değerli: derleme sessizce düşse "var mı" ölçümleri eski paketle yine
+yeşil yanardı, "yok mu" ölçümleri yanmazdı.
+
+### 0035 neden ayrı bir dosya
+
+0034 **canlıda çalıştırılmıştı.** Çalışmış bir migration'ı düzenlemek,
+dosyayla veritabanı arasında sessiz bir ayrışma bırakırdı. Sürüm sabiti
+bu yüzden `0035_onam_metni_v3.sql` içinde `create or replace` ile
+değişiyor; yeni tablo, yeni yetki, yeni kapı yok.
+
+Sürüm testi de artık **0034'e çivili değil**: `_gecerli_onam_surumu`'nü
+tanımlayan en yüksek numaralı migration'ı bulup onu okuyor. Çivili
+kalsaydı 0035 sürümü yükselttiği anda test yanlış dosyaya bakardı.
+
+### Yayın sırası — iki pencerenin küçüğü seçildi
+
+Sürüm hem sitede hem sunucuda değişiyor; eşleşmedikleri sürece veli onay
+veremiyor (`22023`).
+
+| Sıra | Pencerede ne olur |
+|---|---|
+| **Önce site, sonra 0035** ← seçilen | Yalnız henüz onay vermemiş veli "metin güncellendi" uyarısı görür; onaylamış veliler çalışmaya devam eder (sunucu hâlâ v2). |
+| Önce 0035, sonra site | **Bütün** veliler kapının arkasında kalır. |
+
+0035'in çalıştığı an v2'yi onaylamış velilerin metni bir kez daha görmesi
+**tasarımın kendisi**, kusur değil — ve varsayılmadı: 0034'lü bir
+veritabanında onay verilip 0035 çalıştırıldı, veli yeniden soruldu, eski
+onay satırı **silinmedi**, yeni metni onaylayınca panel açıldı.

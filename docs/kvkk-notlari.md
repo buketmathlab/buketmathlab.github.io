@@ -69,13 +69,17 @@ Veli, uygulamaya ilk girişinde bir onam metni okuyup onaylıyor.
 **Onaylamayan veli panele giremiyor** — öğretmenin kararı bu yönde oldu.
 
 - Metin: `app/src/lib/onam-metni.ts`. İçeriği bu belgedeki envantere
-  dayanıyor: hangi veri, kim görüyor, nerede saklanıyor, yapay zekâ
-  kullanılıp kullanılmadığı, onaylamamanın sonucu.
+  dayanıyor: neye izin veriliyor, hangi veri tutuluyor, kim görüyor,
+  nerede saklanıyor, onaylamamanın sonucu.
 - Metin ayrıca velinin **çocuğun öğrenci uygulamasını kullanmasına** izin
   verdiğini açıkça söylüyor; ad, soyad, sınıf, ödevler ve notlar tek tek
   sayılıyor. **Okul adı saklanmadığı için** metin saklandığını değil,
   saklanmadığını söylüyor — şemada karşılığı yok (`siniflar` yalnız
   seviye + şube).
+- **Kapsam doğru anlatılıyor (sürüm 3).** Metin bir tur boyunca "matematik
+  zümresindeki öğretmenler — dört kişi" diyordu; bu **yanlıştı**. 0033'ün
+  kuralı: her öğretmen yalnız kendi sınıflarındaki öğrenciyi görüyor,
+  sahip ise yönetim için hepsini. Metin artık bunu söylüyor.
 - **Öğrencinin girişi onama bağlı değil.** Kapı yalnız veli rolünde;
   onam gelmese de çocuk ödevlerini görüp gönderebiliyor. Metin bunu
   saklamıyor ve veliye yol gösteriyor: çocuğun kullanmasını istemiyorsa
@@ -91,6 +95,23 @@ Veli, uygulamaya ilk girişinde bir onam metni okuyup onaylıyor.
 - **Öğrenci etkilenmiyor:** kapı yalnız veli rolünde çalışıyor.
 - Onay **yedeğe giriyor** (`disa_aktar` → `geri-yukle.sql`); felaket
   provasında gerçek bir satırla ölçülüyor.
+
+### Metnin SÖYLEMEDİKLERİ — bilinen boşluk
+
+Öğretmenin isteğiyle sürüm 3'te üç şey çıkarıldı. İkisi zararsız: "test
+puanlamasında yapay zekâ yok" ve "veli cevap anahtarını görmez" doğru olan
+ama söylenmesi zorunlu olmayan güvence cümleleriydi; Kural 5 ve Kural 6
+ürüne ait ve `guvenlik_testleri.sql` 8./10. gruplarında ölçülmeye devam
+ediyor.
+
+Üçüncüsü **gerçek bir boşluk**: *"Özel ders alıyorsa ders planı ve ödeme
+kaydı"* satırı kaldırıldı. Oysa `dersler` ve `odemeler` özel ders
+öğrencilerinde **gerçekten tutuluyor** ve veli ödemeleri kendi panelindeki
+Ödemeler sekmesinde **görüyor**. Metin "aşağıda sayılanların saklanmasına
+izin veriyorum" dediği için, saydıkları arasında olmayan bir veri
+saklanıyor. Öğretmene bu sonuç açıkça söylendi ve kararını tekrarladı;
+burada kayıt altına alınıyor. Özel ders veren tek kişi platformun sahibi
+olduğu için kapsam dar, ama boşluk boşluktur.
 
 **Bu bir hukuki uygunluk beyanı değildir.** Metin ürünün ne yaptığını
 dürüstçe anlatır; mevzuata uygunluk değerlendirmesi okul yönetiminin ve

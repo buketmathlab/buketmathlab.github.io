@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -35,9 +35,14 @@ const SURUM_KAYDI: Record<string, string> = {
   // yine de kayıtta duruyor — silinmiş bir sürüm, olmamış sürüm demek
   // değil.
   '2026-09-1': '4adeba337e0dabc854a8c5645cc767df1ec1070dc9dfe341009dd0524df86d39',
-  // Yayına girecek ilk sürüm: izin cümlesi, ad-soyad-ödev-not dökümü,
+  // Yayına giren ilk sürüm: izin cümlesi, ad-soyad-ödev-not dökümü,
   // "okul adı saklanmıyor" ve düğme üstündeki özet eklendi.
   '2026-09-2': '045b5636f4ff7d25602d471e7104f8db096758140efa872dd33a10672f433f14',
+  // Öğretmen metni okuyup üç şey kaldırttı (özel ders satırı, cevap
+  // anahtarı cümlesi, yapay zekâ bölümü) ve "kim görebiliyor" kısmını
+  // düzelttirdi: "dört öğretmen" yanlıştı, her öğretmen yalnız kendi
+  // sınıfını görüyor.
+  '2026-09-3': '83fa21b48ef4c1aa05406c0a70eb72344f4868632d922c16255acf9eaab6ae38',
 };
 
 describe('onam metni sürüm kilidi', () => {
@@ -66,27 +71,47 @@ describe('onam metni sürüm kilidi', () => {
  * migration dosyası GERÇEKTEN okunuyor, sabit kopyalanmıyor.
  */
 describe('sunucu ile istemci aynı sürümde', () => {
-  const migration = readFileSync(
-    resolve(process.cwd(), '../supabase/migrations/0034_veli_onami.sql'),
-    'utf8',
-  );
+  /**
+   * SON SÖZÜ SÖYLEYEN DOSYA ARANIYOR, sabit bir dosya adı DEĞİL.
+   *
+   * `create or replace` yüzünden geçerli tanım, `_gecerli_onam_surumu`'nü
+   * tanımlayan EN YÜKSEK numaralı migration'dır. Test 0034'e çivili
+   * kalsaydı, 0035 sürümü yükselttiği anda test eski dosyaya bakıp
+   * "eşleşmiyor" derdi — ya da daha kötüsü, biri 0034'ü düzenleyip testi
+   * yeşile döndürür ve gerçek sunucu sürümü başka kalırdı.
+   */
+  function sonSurum(klasor: string): { dosya: string; surum: string | undefined } {
+    const dizin = resolve(process.cwd(), '..', klasor);
+    const dosya = readdirSync(dizin)
+      .filter((d) => d.endsWith('.sql'))
+      .filter((d) =>
+        readFileSync(resolve(dizin, d), 'utf8').includes(
+          'function public._gecerli_onam_surumu',
+        ),
+      )
+      .sort()
+      .pop();
+    if (!dosya) return { dosya: '', surum: undefined };
+    const metin = readFileSync(resolve(dizin, dosya), 'utf8');
+    // Tanımın GÖVDESİ okunuyor; doğrulama bloğundaki karşılaştırma değil.
+    const govde = /function public\._gecerli_onam_surumu[\s\S]*?select\s+'([^']+)'::text;/.exec(
+      metin,
+    );
+    return { dosya, surum: govde?.[1] };
+  }
 
-  it('migration dosyasında sürüm sabiti var', () => {
-    expect(migration).toContain('_gecerli_onam_surumu');
+  it('migrationlar arasında sürüm sabitini tanımlayan bir dosya var', () => {
+    expect(sonSurum('supabase/migrations').dosya).not.toBe('');
   });
 
-  it('migrationdaki sürüm ONAM_SURUMU ile aynı', () => {
-    const m = /select\s+'([^']+)'::text;/.exec(migration);
-    expect(m?.[1]).toBe(ONAM_SURUMU);
+  it('en son migrationdaki sürüm ONAM_SURUMU ile aynı', () => {
+    const { dosya, surum } = sonSurum('supabase/migrations');
+    expect(`${dosya}: ${surum}`).toBe(`${dosya}: ${ONAM_SURUMU}`);
   });
 
   it('panele yapıştırılan kısa sürüm de aynı sürümü taşıyor', () => {
-    const kisa = readFileSync(
-      resolve(process.cwd(), '../supabase/panel-icin/0034_veli_onami_kisa.sql'),
-      'utf8',
-    );
-    const m = /select\s+'([^']+)'::text;/.exec(kisa);
-    expect(m?.[1]).toBe(ONAM_SURUMU);
+    const { dosya, surum } = sonSurum('supabase/panel-icin');
+    expect(`${dosya}: ${surum}`).toBe(`${dosya}: ${ONAM_SURUMU}`);
   });
 });
 
@@ -101,14 +126,6 @@ describe('metin ürünün gerçeğini söylüyor', () => {
   it('yurt dışı barındırmayı açıkça söylüyor', () => {
     expect(ONAM_METNI).toContain('İsviçre');
     expect(ONAM_METNI).toContain('Türkiye dışında');
-  });
-
-  it('test puanlamasında yapay zekâ olmadığını söylüyor (Kural 5)', () => {
-    expect(ONAM_METNI).toContain('yapay zekâ ile yapılmaz');
-  });
-
-  it('veliye cevap anahtarı gitmediğini söylüyor (Kural 6)', () => {
-    expect(ONAM_METNI).toContain('Cevap anahtarı veliye hiçbir zaman');
   });
 
   it('öğrencinin yazışmasının veliye kapalı olduğunu söylüyor (0025)', () => {
@@ -176,14 +193,55 @@ describe('metin ürünün gerçeğini söylüyor', () => {
     expect(ONAM_METNI).toContain('tutulmuyor');
   });
 
+  /**
+   * KAPSAM DOĞRU ANLATILIYOR MU (sürüm 3).
+   *
+   * Metin bir tur boyunca "matematik zümresindeki öğretmenler — dört
+   * kişi" dedi ve bu YANLIŞTI: 0033'ten sonra her öğretmen yalnız KENDİ
+   * sınıflarındaki öğrenciyi görüyor (`_ogretmenin_ogrencisi`), sahip ise
+   * yönetim için hepsini (`_yonetici`). Veliye "dört kişi görüyor" demek,
+   * ürünün yaptığından fazlasını söylemekti.
+   */
+  it('öğretmenin yalnız kendi sınıfını gördüğünü söylüyor', () => {
+    expect(ONAM_METNI).toContain('dersine giren öğretmen');
+    expect(ONAM_METNI).toContain('yalnız kendi sınıflarındaki öğrencileri');
+    expect(ONAM_METNI).toContain('başka bir sınıfın öğretmeni');
+  });
+
+  it('yöneticinin tamamını gördüğünü saklamıyor', () => {
+    expect(ONAM_METNI).toContain('Platformu yöneten öğretmen');
+    expect(ONAM_METNI).toContain('sistemin tamamını');
+  });
+
+  /**
+   * SİLİNENLER GERÇEKTEN SİLİNDİ Mİ.
+   *
+   * "Kaldırdım" bir iddia; ölçülmemiş iddia kanıt değil. Bu üç kontrol
+   * olmadan bir düzenleme cümleleri geri getirebilir ve kimse fark etmez.
+   *
+   * DİKKAT — "dört kişi" ifadesi de burada: metin bir kez yanlış
+   * söylemişti, geri gelmemeli.
+   */
+  it('öğretmenin kaldırttığı üç şey metinde YOK', () => {
+    expect(ONAM_METNI).not.toMatch(/yapay zekâ/i);
+    expect(ONAM_METNI).not.toMatch(/cevap anahtarı/i);
+    expect(ONAM_METNI).not.toMatch(/ödeme kaydı/i);
+    expect(ONAM_METNI).not.toMatch(/ders planı/i);
+  });
+
+  it('yanlış olan "dört kişi" ifadesi geri gelmemiş', () => {
+    expect(ONAM_METNI).not.toMatch(/dört kişi/i);
+    expect(ONAM_METNI).not.toMatch(/zümre/i);
+  });
+
   it('kodun bir şifre olduğunu söylüyor', () => {
     expect(ONAM_METNI).toContain('kod bir şifredir');
   });
 });
 
 describe('metnin yapısı', () => {
-  it('altı bölüm var ve hiçbiri boş değil', () => {
-    expect(ONAM_BOLUMLERI).toHaveLength(6);
+  it('beş bölüm var ve hiçbiri boş değil', () => {
+    expect(ONAM_BOLUMLERI).toHaveLength(5);
     for (const b of ONAM_BOLUMLERI) {
       expect(b.baslik.trim()).not.toBe('');
       expect(b.maddeler.length).toBeGreaterThan(0);
