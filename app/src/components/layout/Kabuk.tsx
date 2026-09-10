@@ -82,7 +82,11 @@ export function Kabuk() {
               to="/ogretmen/ogretmenler"
               className={({ isActive }) =>
                 cn(
-                  'rounded-sk-sm px-3 py-2 text-[14px] text-muted hover:bg-line-soft',
+                  // 44 px: yan menü bağlantıları 38 px'di ve dokunma hedefi
+                  // sınırının altında kalıyordu. `lg` bir "fare ekranı"
+                  // demek değil — dokunmatik dizüstü ve yatay tablet de bu
+                  // genişlikte. Kabuk denetimi 6. grupta ölçüldü.
+                  'flex min-h-[44px] items-center rounded-sk-sm px-3 text-[14px] text-muted hover:bg-line-soft',
                   isActive && 'bg-line-soft font-semibold text-ink',
                 )
               }

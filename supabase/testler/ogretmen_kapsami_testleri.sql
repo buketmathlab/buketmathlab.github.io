@@ -28,6 +28,7 @@ declare
   b_id   uuid;   -- öğretmen B
   -- jetonlar
   js text; ja text; jb text;
+  s_kimliksiz text;   -- `s`'in UUID'leri çıkarılmış hâli (1e)
   -- sınıflar
   sa uuid; sb uuid; ss uuid;
   -- öğrenciler
@@ -155,7 +156,22 @@ begin
   if position('BERNANIN GIZLI VELI MESAJI 4242' in s) > 0 then
     raise exception '1d: A, B''nin veli mesajını görüyor';
   end if;
-  if position('7777.77' in s) > 0 or position('7777' in s) > 0 then
+  -- KİMLİKLER ÇIKARILARAK ARANIYOR — ölçülmüş bir KARARSIZLIK düzeltmesi.
+  --
+  -- Burası önce ham `s` içinde '7777' arıyordu. `s` onlarca UUID taşıyor
+  -- ve UUID onaltılık: içinde '7777' geçmesi mümkün. Ölçüldü —
+  -- 10.000 rastgele UUID'nin 2'si bu diziyi içeriyor. Yani test, kodda
+  -- hiçbir şey bozulmadan, üretilen kimliklerin şansına göre kırmızı
+  -- yanabiliyordu; bir kez de öyle yandı.
+  --
+  -- Çözüm iddiayı ZAYIFLATMIYOR: UUID biçimindeki diziler metinden
+  -- siliniyor, arama yine hem '7777.77' hem de yalın '7777' için
+  -- yapılıyor. Tutar biçimi değişse bile (7777, 7777.7700) yakalanır;
+  -- yalnız kimliklerle çakışma ihtimali kalkıyor.
+  s_kimliksiz := regexp_replace(
+    s, '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',
+    '', 'g');
+  if position('7777.77' in s_kimliksiz) > 0 or position('7777' in s_kimliksiz) > 0 then
     raise exception '1e: A, sahibin ödeme tutarını görüyor';
   end if;
 

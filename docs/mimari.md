@@ -2075,10 +2075,25 @@ kaybolması değil **kapsam dışında kalması**.
   görüyor, başkasınınkine vekâletle geçiyor; aksi hâlde panosu dört
   öğretmenin gürültüsüne dönerdi.
 - **Öğretmenler birbirinin ödevini göremiyor** (ortak havuz ayrı tur).
-- **KALAN RİSK — öğrenci kodları hâlâ sınıf düzeyinde.** Kendi
-  sınıfındaki öğrencinin kodunu her öğretmen görebiliyor ve kod, öğrenci
-  gibi giriş yapmaya yarıyor. Dört tanıdık meslektaşta kabul edilebilir;
-  **20 öğretmende değil.** Zümreler açılmadan önce kapatılmalı.
+- **KALAN RİSK — öğrenci kodları sınıf düzeyinde. BU BİR KARAR, GÖZDEN
+  KAÇMIŞ AÇIK DEĞİL.** Kendi sınıfındaki öğrencinin kodunu her öğretmen
+  görebiliyor ve kod, öğrenci gibi giriş yapmaya yarıyor. Somut sonucu:
+  o kodu alan meslektaş, çocuğun **başka öğretmenlerden** aldığı ödevleri
+  ve **sahiple yazışmasını** okuyabilir (`ogrenci_mesajlari` öğretmene
+  göre süzmüyor; ölçüldü).
+
+  Risk ürünün sahibine anlatıldı, kodları sahibe kilitleyen bir uç
+  (0034) yazıldı ve **sahibin kararıyla geri alındı** — depoya hiç
+  girmedi. Gerekçesi kendi cümlesiyle: *"her öğretmen kendi sınıfının
+  kodlarını kendi versin. Çok özel bir durum değil bu. Sonuçta tüm yetki
+  bende. Ben onların her şeyini görebiliyorum. Onların sistemlerine
+  girebiliyorum."* Dört tanıdık meslektaş, üstüne sahibin tam görünürlüğü
+  ve vekâlet yetkisi.
+
+  **Bu maddeyi "düzeltmeyin".** Kilit bilerek yok. Yeniden açılma koşulu
+  tek: **başka zümreler eklenirse** — 20 öğretmende tanımadığınız biri
+  bir öğrencinin kimliğine bürünebiliyor olmamalı. O gün kapatılacak yer
+  belli: `ogrenci_kodlari`, kapısı `_ogrenci_sahibi` yerine `_yonetici`.
 - **ÖLÇEK SINIRI.** Beş zümre × ~20 öğretmen × ~3.000 öğrenci olduğunda
   her gönderimin bir fotoğraf taşıması depolamayı ücretsiz planın üstüne
   çıkarır. Zümreler açılmadan önce plan ve maliyet ayrıca ölçülmeli.

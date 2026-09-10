@@ -213,6 +213,28 @@ export function Pano() {
               </Link>{' '}
               — PIN’inizi buradan değiştirebilirsiniz.
             </p>
+
+            {/* ÖĞRETMENLER EKRANINA DAR EKRANDAN GİRİŞ.
+                Ölçülerek bulunan kusur: bağlantıyı yalnız yan menüye
+                koymuştum ve yan menü `lg` altında gizli. Sonuç, sahibin
+                arkadaşlarını TELEFONDAN hiç ekleyememesiydi — ekran
+                vardı, ona giden yol yoktu. Sunucu tarafında bir kusur
+                değildi, o yüzden hiçbir sızıntı testi görmedi.
+
+                Ayarlar'la aynı desen: `lg:hidden`, çünkü geniş ekranda
+                yan menüde zaten duruyor. Alt sekme çubuğuna yedinci
+                sekme KONULMUYOR — 360 px'de sığmadığı ölçülmüştü. */}
+            {ben?.sahip && (
+              <p className="mt-2 text-[14px] text-muted lg:hidden">
+                <Link
+                  to="/ogretmen/ogretmenler"
+                  className="inline-flex min-h-[44px] items-center font-bold text-link underline"
+                >
+                  Öğretmenler
+                </Link>{' '}
+                — öğretmen ekleyebilir, sınıf atayabilirsiniz.
+              </p>
+            )}
           </>
         )}
       </AsyncBoundary>
