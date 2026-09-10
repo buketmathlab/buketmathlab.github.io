@@ -44,9 +44,20 @@ export function Veliler() {
 
   return (
     <>
+      {/* ESKİ CÜMLE YANLIŞTI: "veli kendi çocuğunun panelinde görür."
+          Öğretmen sordu ve haklıydı — veli çocuğunun ekranına bakmıyor,
+          KENDİ koduyla girip KENDİ panelinde okuyor (`/veli`, VeliKabuk).
+
+          Yanlışlık zararsız değildi: 0025'in bütün konusu iki yazışmayı
+          AYIRMAKTI ve o cümle, veliye yazılanın çocuğun ekranında
+          görülebileceğini ima ediyordu. Doğru olsaydı gizlilik ihlali
+          olurdu. Ürün doğruydu, yalnız cümle yanlıştı.
+
+          Son cümle bilerek var: ekranın SÖYLEDİĞİ ile `kabuk-denetimi`nin
+          ÖLÇTÜĞÜ güvence aynı olmalı. */}
       <SayfaBasligi
         baslik="Veliler"
-        aciklama="Mesajlar uygulama içinde gider; veli kendi çocuğunun panelinde görür."
+        aciklama="Mesajlar uygulama içinde gider; veli kendi koduyla girer, kendi panelinde okur. Öğrenci bu yazışmayı görmez."
       />
 
       <AsyncBoundary
