@@ -297,6 +297,51 @@ console.log('\n4 — İKİ YAZIŞMA BİRBİRİNE KARIŞMIYOR');
   await s.close();
 }
 
+// EKRANIN SÖYLEDİĞİ, ÖLÇÜLENLE AYNI OLMALI.
+//
+// Öğretmenin Veliler ekranı uzun süre şunu yazıyordu:
+//   "veli kendi çocuğunun panelinde görür."
+// Öğretmen sordu ve haklıydı — veli çocuğunun ekranına bakmıyor, kendi
+// koduyla girip kendi panelinde okuyor. Cümle yalnız kafa karıştırıcı
+// değildi: yukarıdaki dört ölçümün güvence altına aldığı ayrımın TERSİNİ
+// ima ediyordu. Doğru olsaydı gizlilik ihlali olurdu.
+//
+// Ürün doğruydu, cümle yanlıştı — ve cümleyi kilitleyen hiçbir ölçüm
+// yoktu, yani düzeltildikten sonra sessizce geri gelebilirdi.
+//
+// İKİNCİ ÖLÇÜM ASIL OLAN: yalnız yeni cümleyi aramak, eski cümle onun
+// YANINA eklendiğinde de yeşil verirdi.
+{
+  // KENDİ SAYFASINI KURUYOR: paylaşılan `sayfaAc` bilmediği uca `{}`
+  // dönüyor ve `veliler_listesi` boş nesneyle geldiğinde ekran hiç
+  // çizilmiyor (ölçüldü — gövde bomboş çıktı). Ölçüm o hâlde "cümle yok"
+  // derdi ve yanlış bir kusur bildirirdi.
+  const s = await tarayici.newPage({ viewport: { width: 360, height: 780 } });
+  await s.route('**/rest/v1/rpc/*', (r) => {
+    const uc = r.request().url().split('/').pop().split('?')[0];
+    const govde = uc === 'veliler_listesi'
+      ? { toplam_okunmamis: 0, yanit_bekleyen: [],
+          gruplar: [{ sinif_id: '9a', sinif: '9A', ozel: false,
+                      veli_sayisi: 12, okunmamis: 0 }] }
+      : {};
+    r.fulfill({ status: 200, contentType: 'application/json',
+                body: JSON.stringify(govde) });
+  });
+  await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)),
+    OTURUM.ogretmen());
+  await s.goto(KOK + '/ogretmen/veliler', { waitUntil: 'networkidle' });
+  await s.waitForTimeout(700);
+
+  const metin = await s.evaluate(() => document.body.innerText);
+  // Önce ekranın GERÇEKTEN çizildiğini doğrula; yoksa aşağıdaki iki ölçüm
+  // boş bir sayfada da "geçer" görünürdü.
+  olc('Veliler ekranı çizildi', metin.includes('Veliler'));
+  olc('Veliler ekranı "kendi panelinde" diyor', metin.includes('kendi panelinde'));
+  olc('"çocuğunun panelinde" ifadesi GERİ GELMEMİŞ',
+    !metin.includes('çocuğunun panelinde'));
+  await s.close();
+}
+
 // -----------------------------------------------------------------------------
 console.log('\n4b — AD VE MESAJ AYNI SATIRDA, ÖĞRENCİNİN GERÇEK ADIYLA');
 //
