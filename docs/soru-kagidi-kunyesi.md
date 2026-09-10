@@ -9,6 +9,28 @@ en kısası: **künye.**
 | Cevap anahtarı (PDF) | SEKİZ → Cevap anahtarı PDF'i. **Yalnız teslimden sonra açılır.** |
 | **Künye (metin)** | SEKİZ → 3. adım → *Künyeden doldur* |
 
+## Arkadaşlarınıza göndereceğiniz sürüm
+
+**`docs/meslektas-soru-kagidi.md`** — onlara yazılmış tek sayfa. İçinde
+depo yolu, iç ölçüm notu ve **sizin prompt'unuzdan tek cümle yok.**
+Kendi skill'lerini kendileri yazarlar, sizinkini hiç görmezler.
+
+O belge, ürettikleri kâğıdın altına küçük puntoyla şu satırı koymalarını
+söylüyor:
+
+```
+SEKİZ · Buket Topuzoğlu
+```
+
+**Bunun bir teşekkür satırı olduğunu, teknik bir koruma olmadığını
+bilin.** SEKİZ soru kâğıdı PDF'ini üretmiyor — PDF onların kendi Claude
+hesabında, kendi skill'leriyle oluşuyor. Yani o satır onların
+dosyasındaki bir yönerge; silerlerse SEKİZ bunu ne görür ne engeller.
+
+Zorlanabilir tek yol künyenin **uygulamanın içinde** durmasıydı (ürünün
+parçası olur, silinemez); onu şimdilik istemediniz. İstediğiniz gün
+eklenebilir.
+
 ## Künye kullanmak zorunda değilsiniz
 
 **Künyeniz yoksa SEKİZ bugünkü gibi çalışır.** Bu bir ek yol, yerine

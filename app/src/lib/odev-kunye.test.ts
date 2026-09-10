@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { kunyeyiOku } from '@/lib/odev-kunye';
 
@@ -123,5 +125,70 @@ describe('kunyeyiOku', () => {
     const r = kunyeyiOku('Soru 1 A Türev', { soruSayisi: 1 });
     expect(r.bulunan).toEqual([]);
     expect(r.okunamayan).toHaveLength(1);
+  });
+});
+
+/**
+ * BELGE İLE KOD ARASINDAKİ SÜRÜKLENME.
+ *
+ * `docs/meslektas-soru-kagidi.md` meslektaşlara GÖNDERİLEN dosya. En
+ * sinsi bozulma biçimi şu: ayrıştırıcı değişir, belge eski biçimi
+ * anlatmaya devam eder, meslektaş SEKİZ'in kabul etmediği bir künye
+ * üretir — ve hata onda çıkar, bizde değil. Elimizde de "belge yanlıştı"
+ * diyecek hiçbir ölçüm olmaz.
+ *
+ * Bu yüzden belgedeki örnek teste KOPYALANMIYOR; kopyalansaydı ikisi
+ * yine ayrı ayrı sürüklenebilirdi. Dosya gerçekten okunuyor.
+ */
+describe('meslektaş belgesi koddan sürüklenmiyor', () => {
+  // `import.meta.url` jsdom ortamında dosya URL'i olmuyor; vitest'in kökü
+  // `app/` olduğu için depo köküne oradan çıkılıyor.
+  const belge = readFileSync(
+    resolve(process.cwd(), '../docs/meslektas-soru-kagidi.md'),
+    'utf8',
+  );
+
+  /** Belgedeki ```-bloklarının içeriği, sırayla. */
+  const bloklar = [...belge.matchAll(/```\n([\s\S]*?)```/g)].map((m) => m[1] ?? '');
+
+  it('belgede örnek künye blokları var', () => {
+    expect(bloklar.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('boşluklu örnek gerçekten ayrıştırılıyor', () => {
+    const r = kunyeyiOku(bloklar[0] ?? '', { soruSayisi: 5 });
+    expect(r.bos).toBe(false);
+    expect(r.okunamayan).toEqual([]);
+    expect(r.eksik).toEqual([]);
+    expect(r.konusuz).toEqual([]);
+    expect(r.anahtar[1]).toBe('A');
+    expect(r.konular[5]).toBe('Üslü Sayılar');
+  });
+
+  it('sekmeli Word tablosu örneği gerçekten ayrıştırılıyor', () => {
+    const r = kunyeyiOku(bloklar[1] ?? '', { soruSayisi: 2 });
+    expect(r.bos).toBe(false);
+    // Başlık satırı ("Soru Cevap Konu") şikâyet üretmemeli.
+    expect(r.okunamayan).toEqual([]);
+    expect(r.anahtar).toEqual({ 1: 'A', 2: 'C' });
+  });
+
+  it('skill yönergesindeki örnek de ayrıştırılıyor', () => {
+    // Yönerge bloğu alıntı içinde; satır başlarındaki "> " temizleniyor.
+    const alinti = belge
+      .split('\n')
+      .filter((l) => l.startsWith('> '))
+      .map((l) => l.slice(2))
+      .join('\n');
+    const blok = /```\n([\s\S]*?)```/.exec(alinti)?.[1] ?? '';
+    const r = kunyeyiOku(blok, { soruSayisi: 2 });
+    expect(r.anahtar).toEqual({ 1: 'A', 2: 'C' });
+    expect(r.konular).toEqual({ 1: 'Türev', 2: 'Limit' });
+  });
+
+  // KÜNYE SATIRI BELGEDEN DÜŞMESİN. Öğretmenin bu turdaki asıl isteği
+  // buydu; bir düzenlemede sessizce silinirse kimse fark etmez.
+  it('kâğıda konacak künye satırı belgede duruyor', () => {
+    expect(belge).toContain('SEKİZ · Buket Topuzoğlu');
   });
 });
