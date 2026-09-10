@@ -76,8 +76,13 @@ function olc(ad, kosul, ayrinti = '') {
 
 const tarayici = await chromium.launch();
 
-/** Öğretmen olarak ödev oluşturma akışının 3. adımına kadar gelir. */
-async function ucuncuAdim(soruSayisi = 5) {
+/**
+ * Öğretmen olarak ödev oluşturma akışının 3. adımına kadar gelir.
+ *
+ * `tur` parametresi 8b için gerekiyor: açık uçlu ödevde cevap anahtarı
+ * kavramı yok, `ilerle()` 2. adımı ATLAYIP doğrudan 3'e geçiyor.
+ */
+async function ucuncuAdim(soruSayisi = 5, tur = 'test') {
   const s = await tarayici.newPage({ viewport: { width: 360, height: 780 } });
   const istekler = [];
   await s.route('**/rest/v1/rpc/*', (r) => {
@@ -109,14 +114,20 @@ async function ucuncuAdim(soruSayisi = 5) {
     await s.getByText('9A', { exact: true }).click();
   });
   await s.locator('input[type="date"]').fill(gun(5));
-  const sayi = s.getByLabel(/soru sayısı/i);
-  await sayi.fill(String(soruSayisi));
+  if (tur === 'acik') {
+    await s.getByLabel('Tür').selectOption('acik');
+    await s.waitForTimeout(200);
+  } else {
+    await s.getByLabel(/soru sayısı/i).fill(String(soruSayisi));
+  }
   await s.getByRole('button', { name: /devam|ilerle/i }).first().click();
   await s.waitForTimeout(400);
 
-  // 2. adım — PDF yüklemeden geç
-  await s.getByRole('button', { name: /elle gireceğim|devam/i }).first().click();
-  await s.waitForTimeout(400);
+  // 2. adım YALNIZ testte var; açık uçluda `ilerle()` doğrudan 3'e geçiyor.
+  if (tur === 'test') {
+    await s.getByRole('button', { name: /elle gireceğim|devam/i }).first().click();
+    await s.waitForTimeout(400);
+  }
 
   return { s, istekler };
 }
@@ -313,6 +324,114 @@ console.log('\n7 — 360 px: TAŞMA VE DOKUNMA HEDEFİ (künye paneli açıkken)
   });
   olc('yatay taşma yok', olcum.tasma === 0, `${olcum.tasma} px`);
   olc('44 px altı dokunma hedefi yok', olcum.kucuk.length === 0, JSON.stringify(olcum.kucuk));
+  await s.close();
+}
+
+// ---------------------------------------------------------------------------
+// 8 — KÜNYE KULLANILMAZSA ESKİ AKIŞ AYNEN ÇALIŞIYOR
+//
+// Öğretmenin şartı: *"Künye olmadığı zaman da şu anki gibi çalışsın."*
+//
+// İki somut sebebi var. Üç meslektaşının skill'i YOK — onlar ödevi
+// bugünkü yolla oluşturacak: iki PDF, ızgaradan anahtar, elle konu.
+// Öğretmenin kendisi de her ödevi Claude'da üretmeyecek.
+//
+// Kod bunu zaten sağlıyordu (panel `KonuAtama`'nın altında, kapalı
+// başlıyor, state'i yalnız `Uygula` değiştiriyor) — ama bu bir İDDİAYDI.
+// 1–7. gruplar 22 ölçümün hepsini künye YOLUNDA yapıyor; künyesiz akış
+// hiç ölçülmüyordu. Ölçülmeyen vaat, bir sonraki turda sessizce bozulur.
+// ---------------------------------------------------------------------------
+console.log('\n8 — KÜNYE KULLANILMAZSA ESKİ AKIŞ AYNEN ÇALIŞIYOR');
+{
+  const { s, istekler } = await ucuncuAdim();
+
+  // Panel KAPALI başlamalı: künyesi olmayan öğretmen her ödevde
+  // kullanmayacağı bir metin kutusunu geçmek zorunda kalmasın.
+  olc('künye kutusu kapalı başlıyor', (await s.getByLabel('Künye metni').count()) === 0);
+  olc('yalnız "Künyeden doldur" düğmesi duruyor',
+      await s.getByRole('button', { name: 'Künyeden doldur' }).isVisible());
+
+  // ESKİ YOL: cevaplar ızgaradan tek tek.
+  const cevaplar = { 1: 'A', 2: 'C', 3: 'B', 4: 'D', 5: 'E' };
+  for (const [no, sik] of Object.entries(cevaplar)) {
+    await s.getByRole('button', { name: `${no}. soru, ${sik} şıkkı` }).click();
+  }
+  await s.waitForTimeout(300);
+
+  const sayacMetni = await s.locator('body').innerText();
+  olc('ızgara elle doldu', /5\s*\/\s*5\s*cevap girildi/.test(sayacMetni));
+
+  // ESKİ YOL: konular aralıkla.
+  await s.locator('input[id$="-ilk"]').fill('1');
+  await s.locator('input[id$="-son"]').fill('5');
+  await s.locator('input[id$="-konu"]').fill('Üslü Sayılar');
+  await s.getByRole('button', { name: 'Ata', exact: true }).click();
+  await s.waitForTimeout(400);
+
+  // Künyeye HİÇ DOKUNULMADI — kutu hâlâ yok.
+  olc('künyeye dokunulmadı (kutu hâlâ kapalı)',
+      (await s.getByLabel('Künye metni').count()) === 0);
+
+  await s.getByRole('button', { name: /kaydet/i }).first().click();
+  await s.waitForTimeout(900);
+
+  const olustur = istekler.find(
+    (i) => i.uc === 'odevler_coklu_olustur' || i.uc === 'odev_olustur');
+  olc('künyesiz ödev kaydedilebiliyor', olustur !== undefined);
+  if (olustur) {
+    const p = JSON.parse(olustur.govde ?? '{}');
+    const a = p.p_cevap_anahtari ?? {};
+    const k = p.p_konular ?? {};
+    olc('anahtar elle girilenle birebir',
+        JSON.stringify(a) === JSON.stringify(cevaplar), JSON.stringify(a));
+    olc('konular elle girilenle birebir',
+        Object.keys(k).length === 5 && k['3'] === 'Üslü Sayılar', JSON.stringify(k));
+  }
+  await s.close();
+}
+
+console.log('\n8b — AÇIK UÇLU ÖDEVDE KÜNYE PANELİ HİÇ ÇIKMIYOR');
+{
+  // Açık uçluda cevap anahtarı kavramı yok; künye orada anlamsız bir
+  // kutu olurdu.
+  const { s } = await ucuncuAdim(5, 'acik');
+  olc('künye düğmesi yok',
+      (await s.getByRole('button', { name: 'Künyeden doldur' }).count()) === 0);
+  olc('künye kutusu yok', (await s.getByLabel('Künye metni').count()) === 0);
+  await s.close();
+}
+
+console.log('\n8c — İKİ YOL ÇAKIŞMIYOR: ELLE GİRİLEN KAYBOLMUYOR');
+{
+  // `OdevOlustur.tsx` yorumu bunu iddia ediyordu ama ölçen bir şey yoktu:
+  //   "ÜZERİNE YAZMA DEĞİL BİRLEŞTİRME: öğretmen ızgarada elle bir şey
+  //    girdiyse ve künyede o soru yoksa, girdiği kaybolmamalı."
+  // Öğretmenin şartının en ince hâli bu — eski yol ve yeni yol aynı
+  // ekranda birbirini bozmadan yaşayabilmeli.
+  const { s, istekler } = await ucuncuAdim();
+
+  await s.getByRole('button', { name: '1. soru, E şıkkı' }).click();
+  await s.waitForTimeout(200);
+
+  // Künye YALNIZ 2–5'i kapsıyor; 1. soru künyede YOK.
+  await s.getByRole('button', { name: 'Künyeden doldur' }).click();
+  await s.getByLabel('Künye metni').fill('2  C  Türev\n3  B  Limit\n4  D  Limit\n5  A  Türev');
+  await s.waitForTimeout(300);
+  await s.getByRole('button', { name: 'Uygula' }).click();
+  await s.waitForTimeout(500);
+
+  await s.getByRole('button', { name: /kaydet/i }).first().click();
+  await s.waitForTimeout(900);
+
+  const olustur = istekler.find(
+    (i) => i.uc === 'odevler_coklu_olustur' || i.uc === 'odev_olustur');
+  if (olustur) {
+    const a = JSON.parse(olustur.govde ?? '{}').p_cevap_anahtari ?? {};
+    olc('elle girilen 1. soru DURUYOR', a['1'] === 'E', `1 → ${a['1']}`);
+    olc('künyeden gelen 2–5 de var', a['2'] === 'C' && a['5'] === 'A', JSON.stringify(a));
+  } else {
+    olc('ödev kaydedildi', false, 'uç çağrılmadı');
+  }
   await s.close();
 }
 

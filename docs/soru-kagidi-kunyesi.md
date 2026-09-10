@@ -9,6 +9,26 @@ en kısası: **künye.**
 | Cevap anahtarı (PDF) | SEKİZ → Cevap anahtarı PDF'i. **Yalnız teslimden sonra açılır.** |
 | **Künye (metin)** | SEKİZ → 3. adım → *Künyeden doldur* |
 
+## Künye kullanmak zorunda değilsiniz
+
+**Künyeniz yoksa SEKİZ bugünkü gibi çalışır.** Bu bir ek yol, yerine
+geçen bir yol değil.
+
+Ödev oluştururken künye paneli **kapalı** duruyor: yalnız "Künyeden
+doldur" diye bir düğme var. Ona hiç dokunmazsanız akış hiç değişmez —
+iki PDF'i yüklersiniz, cevapları ızgaradan girersiniz, konuları aralıkla
+atarsınız, kaydedersiniz. Açık uçlu ödevde künye paneli zaten hiç
+çıkmıyor.
+
+Bu, zümredeki üç öğretmen için önemli: onların soru kâğıdı skill'i yok
+ve olmayacak da. Ödevlerini bugünkü yolla oluşturmaya devam edecekler.
+
+Ölçülüyor, varsayılmıyor (`app/scripts/kunye-denetimi.mjs`, 8. grup):
+künyeye hiç dokunmadan ödev oluşturuluyor ve sunucuya giden anahtar ile
+konular elle girilenle **birebir** aynı çıkıyor. Ayrıca iki yol
+birbirini bozmuyor: 1. sorunun cevabını elle girip sonra yalnız 2–5'i
+kapsayan bir künye uygularsanız, elle girdiğiniz **duruyor**.
+
 ## Künye neye benziyor
 
 Her satırda üç şey var: **soru numarası, cevap, konu.**
