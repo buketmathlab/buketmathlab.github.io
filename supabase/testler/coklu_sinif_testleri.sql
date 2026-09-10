@@ -317,6 +317,9 @@ begin
                             where ogrenci_id = efe and rol = 'ogrenci')))->>'token';
   jv_ada := (public.giris((select kod from public.giris_kodlari
                             where ogrenci_id = ada and rol = 'veli')))->>'token';
+  -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
+  -- giremiyor; test de aynı yoldan geçiyor.
+  perform public.onam_ver(jv_ada, public._gecerli_onam_surumu());
 
   -- 7a — TESLİM ETMEDEN ANAHTAR YOK. Bugüne kadarki kural; paylaşılan yol
   -- onu delmiş olsaydı buradan görülürdü.

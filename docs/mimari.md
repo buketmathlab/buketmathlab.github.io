@@ -2172,3 +2172,73 @@ Geri alma kanıtı iki kör nokta buldu:
    düştü, `yeni/` eski hâlinde kaldı ve denetim yamayı hiç görmeden
    22/0 geçti. 0030'da migration için öğrenilen dersin arayüz hâli;
    uyarı betiğin başına yazıldı.
+
+## Veli onamı — uygulama içi açık rıza (0034)
+
+Öğretmen sordu: *"Onam formu hazır mı?"* Değildi — hiç istenmemişti.
+Kararları: onam **kâğıt değil, uygulama içinde**; muhatabı **veli**;
+onaylamayan veli **giremesin**; geri çekme **şimdilik yok**.
+
+### Kapı nerede
+
+**Sunucuda.** Bir sınır `display:none` ile kurulmaz (Part XXI). Veli
+jetonu kabul eden RPC'ler `grant execute ... to anon` verilmiş 60
+fonksiyonun her birinin **en son tanımı okunarak** sayıldı — tahminle
+değil — ve beşi çıktı:
+
+| Uç | Karar |
+|---|---|
+| `kendi_karnem` · `okundu_isaretle` · `mesaj_gonder` · `dosya_erisim_izni` | `_onam_kapisi()` → `42501` |
+| `veli_paneli` | hata **değil**, erken dönüş: `{onam_gerekli, surum}` |
+| `cikis` | kapı **yok**, bilerek |
+
+`veli_paneli` neden istisna: o da hata verseydi veli kabuğu
+(`useKendiOzet('veli_paneli')`) çöker, veli onam metnini bile göremeden
+beyaz ekranda kalırdı. Onam yokken çocuğa ait **tek bir alan bile
+okunmuyor** — `select ... into ogr` hiç çalışmıyor.
+
+`cikis` neden muaf: onaylamak istemeyen veliyi ekranda kilitlemek olurdu.
+
+`_onam_kapisi` **yalnız veli rolünde** ısırıyor. `kendi_karnem` ve
+`okundu_isaretle` öğrenci tarafından da kullanılıyor; kapıyı role bakmadan
+kursaydık onam, **öğrencinin karnesini de kapatırdı**.
+`onam_testleri.sql` 7. grup bunu ayrı bir negatif kontrol olarak ölçüyor.
+
+### Metin depoda, sürümü veritabanında
+
+Metin `app/src/lib/onam-metni.ts` (statik site, ek istek yok, geçmişi
+git'te). Kayda giren şey **sürüm**. Metin değişip sürüm sabit kalsaydı
+eski onaylar yeni metni sessizce kapsardı — veli okumadığı bir şeyi
+onaylamış sayılırdı. `onam-metni.test.ts` metnin hash'ini sürümle
+kilitliyor ve migration dosyasını **gerçekten okuyarak** sunucu sürümüyle
+eşleştiğini ölçüyor: ikisi ayrışsa veli düğmeye basar, hata alır ve
+döngüde kalırdı.
+
+### Bu turda ölçümlerin yakaladıkları
+
+1. **`revoke` unutuldu.** PostgreSQL yeni fonksiyonun EXECUTE hakkını
+   varsayılan olarak PUBLIC'e verir; `anon` da PUBLIC'tedir. Yani "grant
+   yazmadım, demek ki kapalı" yanlıştır. `guvenlik_denetimi.sql` 1a
+   yakaladı: `_onam_kapisi → HATA VERMEDİ`. İki `revoke` satırı eklendi,
+   migration artık `has_function_privilege` ile kendini de denetliyor.
+2. **Felaket provasında sessiz bir yanlış geçiş.** Onamsız `veli_paneli`
+   `mesajlar` alanını hiç döndürmüyor; `jsonb_array_length(null) <> 1`
+   NULL olduğu için `if` ateşlemiyordu ve prova **ölçmeden** geçiyordu.
+   Tohuma gerçek bir onam satırı konuldu, `onam_gerekli` kontrolü eklendi;
+   tohum geçici olarak kaldırılınca prova kırmızı oluyor (kanıtlandı).
+3. **26 yerde eski testler onamsız veli kullanıyordu.** Elle sayım
+   `bildirim_testleri.sql`'deki dört girişten üçünü kaçırmıştı; yama
+   "giriş yapan ve veli kodu kullanan her atama" desenine çevrildi.
+
+### Ölçüm
+
+`onam_testleri.sql` 9 grup — 9. grubu varsayılan-ret: `anon`'a açık **her**
+uç, beyaz liste (`giris`, `cikis`, `onam_ver`, `veli_paneli`, `pin_ayarla`)
+dışındaysa onamsız veli jetonunu reddetmek zorunda. Yarın kapısız yeni bir
+veli ucu eklenirse test kendiliğinden kırmızı oluyor.
+
+`onam-denetimi.mjs` 32 ölçüm — sekmeler çizilmiyor, metnin asıl maddeleri
+ekranda, doğru sürümle gönderiliyor, onaydan sonra panel açılıyor. İki
+negatif kontrol: onamlı veli ekranı **hiç** görmüyor ve **0034
+çalıştırılmamış** bir panelde arayüz kapıyı **uydurmuyor** (yoksa veliler
+sunucuda karşılığı olmayan bir ekranda kilitlenirdi).

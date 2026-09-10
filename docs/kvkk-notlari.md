@@ -4,6 +4,12 @@
 listesidir. Doğrulanmamış hiçbir hukuki iddia yazılmamıştır. Uyum
 değerlendirmesi için okul yönetimi ve gerekiyorsa hukuk desteği gerekir.
 
+> **Son güncelleme: 0034 (veli onamı).** Bundan önceki hâli 11 Ağustos'tan
+> kalmaydı ve **bayatlamıştı**: "çözüm fotoğrafları bugün korumasız"
+> diyordu, oysa o açık kapatılalı çok oldu. Bir onam metni yazarken bu
+> belgeye bakılacağı için önce belge gerçeğe getirildi — bayat belgeden
+> yazılan onam metni veliye **yanlış** bilgi verirdi.
+
 ## Neden önemli
 
 Sistemde **reşit olmayan öğrencilerin** kişisel verisi işleniyor. Bu, KVKK
@@ -12,20 +18,32 @@ ile okulun onayı büyük olasılıkla gerekir.
 
 ## İşlenen veri envanteri
 
+**"Öğretmen" artık tek kişi değil.** 0033'ten sonra sistemde dört öğretmen
+var. Kapsam kuralı: bir öğretmen yalnız **kendi** sınıflarını ve
+öğrencilerini görüyor (`_ogretmenin_ogrencisi`, `_ogretmenin_sinifi`);
+sahip hepsini görüyor. Özel ders (dersleri, ödemeleri ve o velilerle
+yazışma) yalnız sahipte. Ölçümü:
+`supabase/testler/ogretmen_kapsami_testleri.sql`.
+
 | Veri | Nerede | Kim görebiliyor |
 |---|---|---|
-| Öğrenci adı soyadı | `ogrenciler.ad` | Öğretmen, ilgili öğrenci, ilgili veli |
+| Öğrenci adı soyadı | `ogrenciler.ad` | Kapsamındaki öğretmen, ilgili öğrenci, ilgili veli |
 | Sınıf | `ogrenciler.sinif` | aynı |
-| Öğrenci / veli giriş kodu | `ogrenciler.ogrenci_kodu`, `veli_kodu` | Öğretmen üretir ve paylaşır |
-| Ödev çözümü fotoğrafı | Storage `odevler` bucket | **şu an URL'i bilen herkes** |
+| Öğrenci / veli giriş kodu | `giris_kodlari.kod` | Öğretmen üretir ve paylaşır |
+| Ödev çözümü fotoğrafı | Storage `odev-dosyalari` (private) | Yalnız sahibi, velisi ve kapsamındaki öğretmen — 60 sn imzalı URL |
 | Cevaplar, puan, öğretmen yorumu | `gonderimler` | Öğretmen, öğrenci, veli |
-| Öğretmen–veli mesajları | `mesajlar` | Öğretmen ve ilgili veli |
+| Öğretmen–veli mesajları | `mesajlar` (`kanal='veli'`) | Öğretmen ve ilgili veli — **öğrenci görmez** |
+| Öğretmen–öğrenci mesajları | `mesajlar` (`kanal='ogrenci'`) | Öğretmen ve öğrenci — **veli görmez** |
 | Ders planı | `dersler` | Özel ders öğrencisi ve velisi |
-| Ödeme kaydı | `odemeler` | Özel ders öğrencisi velisi |
+| Ödeme kaydı | `odemeler` | Özel ders **velisi** (öğrenci görmez) |
+| Öğretmen PIN'i | `ogretmenler.pin_hash` | Hiç kimse — bcrypt, yedeğe de girmiyor |
+| Veli onamı | `veli_onaylari` | Öğretmen (yalnız "verdi / vermedi") |
 
-**Açık uyarı:** Çözüm fotoğrafları bugün korumasız. Öğrencinin el yazısı,
-bazen adı, bazen çevresi bu fotoğraflarda görünür. Bu, envanterdeki en
-hassas kalem ve Faz 1'in ilk işi.
+**Fotoğraf açığı KAPANDI.** Belgenin eski hâlindeki "URL'i bilen herkes"
+uyarısı artık geçerli değil: bucket private, imzalı URL 60 saniyelik ve
+yetki kararını Edge Function değil **veritabanı** veriyor
+(`dosya_erisim_izni`; `supabase/functions/dosya-url/index.ts`). Ölçümü
+`supabase/testler/guvenlik_denetimi.sql` 2a–2c.
 
 ## Barındırma ve yurt dışı aktarım
 
@@ -44,6 +62,34 @@ gereken noktalar:
 
 **Yapılması gereken:** Okul yönetimine barındırma bölgesinin İsviçre olduğu
 bildirilmeli ve uygun dayanağın belirlenmesi istenmelidir.
+
+## Veli onamı (0034)
+
+Veli, uygulamaya ilk girişinde bir onam metni okuyup onaylıyor.
+**Onaylamayan veli panele giremiyor** — öğretmenin kararı bu yönde oldu.
+
+- Metin: `app/src/lib/onam-metni.ts`. İçeriği bu belgedeki envantere
+  dayanıyor: hangi veri, kim görüyor, nerede saklanıyor, yapay zekâ
+  kullanılıp kullanılmadığı, onaylamamanın sonucu.
+- Kayıt: `veli_onaylari` (öğrenci, **metin sürümü**, onay zamanı). Sürüm
+  tutuluyor ki metin değiştiğinde eski onay yeni metni **kapsamasın**;
+  `app/src/lib/onam-metni.test.ts` metnin hash'ini sürümle kilitliyor.
+- Kapı **sunucuda**: veli jetonu kabul eden her RPC `_onam_kapisi()`
+  çağırıyor. `veli_paneli` istisna — hata vermek yerine yalnız
+  `onam_gerekli` döndürüyor ki veli metni görebilsin. Ölçümü
+  `supabase/testler/onam_testleri.sql` (9 grup; 9. grup beyaz liste dışı
+  her ucu tarıyor).
+- **Öğrenci etkilenmiyor:** kapı yalnız veli rolünde çalışıyor.
+- Onay **yedeğe giriyor** (`disa_aktar` → `geri-yukle.sql`); felaket
+  provasında gerçek bir satırla ölçülüyor.
+
+**Bu bir hukuki uygunluk beyanı değildir.** Metin ürünün ne yaptığını
+dürüstçe anlatır; mevzuata uygunluk değerlendirmesi okul yönetiminin ve
+gerekiyorsa bir hukukçunun işidir.
+
+**Henüz yok:** onayın veli tarafından geri çekilmesi (öğretmenin kararıyla
+ertelendi — bugün veli öğretmene söylüyor), okul yönetimi bilgilendirme
+metni, zümre öğretmenleri için kullanım taahhüdü.
 
 ## Yapay zekâ işlemesi
 
@@ -93,8 +139,15 @@ azaltıyor.
 ## Öğretmen için dikkat listesi
 
 1. Okul yönetimine sistemin varlığını ve barındırma bölgesini bildirin.
-2. Velileri hangi verinin işlendiği konusunda bilgilendirin.
+   **Bunun metni hâlâ yok.**
+2. ~~Velileri hangi verinin işlendiği konusunda bilgilendirin.~~ 0034 ile
+   yapıldı: veli, uygulamaya girerken metni okuyup onaylıyor.
 3. Öğrenci ve veli kodlarını güvenli kanaldan paylaşın; kod bir şifredir.
-4. Faz 6'dan önce yapay zekâ değerlendirmesi konusunda karar alın.
-5. Faz 1 tamamlanana kadar çözüm fotoğrafı bağlantılarını kimseyle
-   paylaşmayın — bugün korumasızlar.
+4. Faz 6'dan önce yapay zekâ değerlendirmesi konusunda karar alın. Onam
+   metni bugünkü durumu ("test puanlamasında yapay zekâ yok") söylüyor;
+   bu değişirse metnin **sürümü yükseltilmeli** ve veliler yeniden
+   onaylamalı.
+5. ~~Çözüm fotoğrafı bağlantılarını paylaşmayın — korumasızlar.~~ Açık
+   kapandı: bucket private, imzalı URL 60 saniyelik.
+6. Zümredeki üç öğretmen kendi kapsamlarındaki öğrenci verisini görüyor.
+   Onlar için bir kullanım taahhüdü metni **henüz yok**.

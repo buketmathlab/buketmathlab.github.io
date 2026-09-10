@@ -21,6 +21,7 @@
     "coklu-denetim": "node scripts/coklu-sinif-denetimi.mjs",
     "yayma-denetim": "node scripts/kardes-yayma-denetimi.mjs",
     "ewalu-denetim": "node scripts/ewalu-mesaj-denetimi.mjs",
+    "onam-denetim": "node scripts/onam-denetimi.mjs",
     "tanitim-gorseller": "node scripts/tanitim-gorselleri.mjs",
     "tanitim-denetim": "node scripts/tanitim-denetimi.mjs",
     "tanitim-geri-alma": "node scripts/geri-alma-tanitim.mjs",

@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { Button } from '@/components/ui/Button';
 import { SekmeCubugu, type SekmeTanim } from '@/components/layout/SekmeCubugu';
 import { SEKME_IKON } from '@/components/layout/sekme-ikonlari';
+import { OnamEkrani } from '@/features/veli/OnamEkrani';
 import { useKendiOzet } from '@/hooks/useKendiOzet';
 import { useOturum } from '@/hooks/oturum-baglam';
 
@@ -24,6 +26,14 @@ export function VeliKabuk() {
   const { oturum, cikisYap } = useOturum();
   const ogrenci = oturum?.ogrenci;
   const ozet = useKendiOzet('veli_paneli');
+
+  // 0034 — ONAM KAPISI.
+  //
+  // `ozet.onam_gerekli` sunucudan geliyor; burada yeniden karar
+  // verilmiyor. Onaylandığı anda bu yerel bayrak açılıyor ki veli, kabuk
+  // özeti bir sonraki rota değişiminde tazelenene kadar beklemesin.
+  const [yeniOnaylandi, setYeniOnaylandi] = useState(false);
+  const onamBekliyor = ozet.onam_gerekli && !yeniOnaylandi;
 
   const sekmeler: SekmeTanim[] = [
     { yol: '/veli', etiket: 'Pano', ikon: SEKME_IKON.pano, sonu: true },
@@ -68,15 +78,29 @@ export function VeliKabuk() {
         </div>
       </header>
 
-      <div className="mx-auto hidden w-full max-w-[880px] px-4 lg:block">
-        <SekmeCubugu sekmeler={sekmeler} bicim="yatay" />
-      </div>
+      {/* ONAM BEKLERKEN SEKME YOK. Kapının kararı sunucuda; burada sadece
+          kapalı bir kapının önünde sekme çubuğu göstermemek var — dokunulsa
+          da her uç 42501 verirdi. */}
+      {!onamBekliyor && (
+        <div className="mx-auto hidden w-full max-w-[880px] px-4 lg:block">
+          <SekmeCubugu sekmeler={sekmeler} bicim="yatay" />
+        </div>
+      )}
 
       <main className="sk-alt-guvenli mx-auto w-full max-w-[880px] px-4 pb-28 pt-6 lg:pb-10">
-        <Outlet />
+        {/* İlk yanıt gelene kadar hiçbir şey çizilmiyor: onam bekleyen
+            veliye önce sekmeleri gösterip sonra onam ekranına atlamak
+            ekranı titretirdi. */}
+        {!ozet.hazir ? null : onamBekliyor ? (
+          <OnamEkrani onaylandi={() => setYeniOnaylandi(true)} />
+        ) : (
+          <Outlet />
+        )}
       </main>
 
-      <SekmeCubugu sekmeler={sekmeler} bicim="alt" className="lg:hidden" />
+      {!onamBekliyor && (
+        <SekmeCubugu sekmeler={sekmeler} bicim="alt" className="lg:hidden" />
+      )}
     </div>
   );
 }
