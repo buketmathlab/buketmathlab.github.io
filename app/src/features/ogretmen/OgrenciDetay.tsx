@@ -204,15 +204,25 @@ export function OgrenciDetay() {
               </p>
             </div>
 
-            {!ozelMi ? (
-              /* Okul öğrencisinde ders ve ödeme kavramı yok. Boş bölüm
-                 göstermek yerine neden olmadığı yazılıyor. */
-              <Card>
-                <p className="text-[14px] text-muted">
-                  Ders programı ve ödeme takibi yalnız özel ders öğrencileri için tutulur.
-                </p>
-              </Card>
-            ) : (
+            {/* OKUL ÖĞRENCİSİNDE HİÇBİR ŞEY ÇİZİLMİYOR.
+                Burada bir kart vardı: "Ders programı ve ödeme takibi yalnız
+                özel ders öğrencileri için tutulur." Gerekçesi, sayfanın
+                okul öğrencisinde BOŞ kalmamasıydı — aşağıdaki konu karnesi
+                yorumunun anlattığı gibi, ekran bir zamanlar o tek cümleden
+                ibaretti.
+
+                0023 konu karnesini her öğrenciye ekleyince o boşluk kapandı
+                ve cümlenin gerekçesi kalmadı; kaldırılması unutuldu.
+                Öğretmen sordu: "Cantaş zaten özel öğrencim değil, bu mesajı
+                görmeye gerek yok." Haklıydı — okul öğrencileri öğrencilerin
+                neredeyse tamamı, yani kart hemen her sayfada çıkan ve
+                hiçbir şey söylemeyen bir gürültüydü.
+
+                0033 gerekçeyi büsbütün bitirdi: özel ders artık yalnız
+                sahipte, dolayısıyla diğer üç öğretmende bu kart HER
+                öğrenci sayfasında çıkar ve HİÇBİR zaman işlerine yaramaz.
+                Bir kere işe yarayan açıklama, binlerce kez gösterilmez. */}
+            {ozelMi && (
               <>
                 {/* ÖZET — öğretmenin asıl bakacağı sayı KALAN. Satırları
                     toplamasını istemiyoruz; para meselesinde toplama hatası

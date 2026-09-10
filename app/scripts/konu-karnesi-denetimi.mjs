@@ -163,7 +163,23 @@ console.log('5 — ÖĞRENCİ SAYFASINDA DA VAR (okul öğrencisi)');
   });
   const t = await gorunenMetin(p);
   de(t.includes('Konu karnesi'), 'bölüm okul öğrencisinde de çiziliyor');
-  de(t.includes('Ders programı ve ödeme takibi yalnız özel'), 'ders/ödeme kuralı yerinde');
+
+  // İDDİA TERSİNE ÇEVRİLDİ — ve bu bir gevşetme değil, kararın kaydı.
+  //
+  // Burada eskiden şu vardı: `de(t.includes('… yalnız özel'), 'kural
+  // yerinde')`. O cümle okul öğrencisinin sayfasında bir kart olarak
+  // duruyordu ve gerekçesi, sayfanın BOŞ kalmamasıydı. 0023 konu
+  // karnesini her öğrenciye ekleyince boşluk kapandı; cümle kaldırılmayı
+  // unuttu. 0033'ten sonra ise özel ders yalnız sahipte, yani diğer üç
+  // öğretmende o kart HER sayfada çıkıp HİÇ işe yaramayacaktı.
+  //
+  // Öğretmen sordu, kaldırıldı. Artık ekranda OLMAMASI ölçülüyor.
+  de(!t.includes('Ders programı ve ödeme takibi yalnız özel'),
+     'okul öğrencisinde gereksiz ders/ödeme cümlesi YOK');
+
+  // "Cümle yok" tek başına yeterli değil: sayfa tamamen çökmüş olsaydı da
+  // geçerdi. Sayfanın hâlâ ANLAMLI olduğu ayrıca ölçülüyor.
+  de(t.includes('Deniz Okul'), 'öğrencinin adı ekranda (sayfa çökmemiş)');
   de(!t.includes('gönderdi'), 'öğrencide "x/y gönderdi" yazmıyor (sınıfa özel bilgi)');
   de(!/₺|tutar|Ödeme ekle/i.test(t), 'okul öğrencisinde para bilgisi yok');
   await s.close();
