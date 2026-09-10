@@ -20,12 +20,15 @@ declare
   n integer; s text;
 begin
   -- Kurulum: bilinen bir PIN ve bir öğrenci/veli
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('PinEski!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('PinEski!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
 
   insert into public.siniflar (seviye, sube) values (6, 'N')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   jt := (public.giris('PinEski!2026'))->>'token';
   v_a := (public.ogrenci_ekle(jt, 'Nur Pinli', 'okul', v_s))->>'id';
   jo := (public.giris((select kod from public.giris_kodlari
@@ -147,7 +150,7 @@ begin
   -- ---------------------------------------------------------------------------
   -- 8 — PIN DÜZ METİN OLARAK HİÇBİR YERDE DURMUYOR
   -- ---------------------------------------------------------------------------
-  select ogretmen_pin_hash into s from public.ayarlar where id = 1;
+  select pin_hash into s from public.ogretmenler where yonetici;
   if s like '%PinYeni!2026%' then
     raise exception '8a: PIN düz metin saklanıyor';
   end if;

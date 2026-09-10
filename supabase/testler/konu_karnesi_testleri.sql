@@ -36,13 +36,16 @@ declare
   v_s uuid; v_ada uuid; v_ege uuid; v_o1 uuid;
   v jsonb; k jsonb; oz jsonb;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Karne!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Karne!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Karne!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (6, 'Z')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_ada := (public.ogrenci_ekle(jt, 'Ada Karne', 'okul', v_s))->>'id';
   v_ege := (public.ogrenci_ekle(jt, 'Ege Karne', 'okul', v_s))->>'id';
@@ -440,6 +443,9 @@ begin
   -- değil, ÖNCE/SONRA farkı ölçüyor; bir gün 8Z de paylaşılsa kırılmasın.
   insert into public.siniflar (seviye, sube) values (8, 'Z')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_baska;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_baska from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   declare
     v_o uuid; v_b uuid;
   begin

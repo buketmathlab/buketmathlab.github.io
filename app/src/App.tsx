@@ -21,6 +21,7 @@ import { OgrenciMesajlar } from '@/features/ogrenci/OgrenciMesajlar';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Ayarlar } from '@/features/ogretmen/Ayarlar';
+import { Ogretmenler } from '@/features/ogretmen/Ogretmenler';
 import { EwaluMesajlari } from '@/features/ogretmen/EwaluMesajlari';
 import { OgrenciDetay } from '@/features/ogretmen/OgrenciDetay';
 import { PanoDetay } from '@/features/ogretmen/PanoDetay';
@@ -149,6 +150,10 @@ function Yonlendirme() {
             gidilebiliyor; acil olan sınıfın altına gömülmesin. */}
         <Route path="veliler" element={<Veliler />} />
         <Route path="ayarlar" element={<Ayarlar />} />
+        {/* 0033: öğretmen yönetimi ve vekâlet — YALNIZ SAHİP. Rota herkese
+            tanımlı ama uçlar sahibe özel: adresi elle yazan bir öğretmen
+            beyaz ekran değil, sakin bir Türkçe red görüyor (Part VIII). */}
+        <Route path="ogretmenler" element={<Ogretmenler />} />
         {/* 0032: Ewalu'nun puan cümleleri. Ayarlar'ın ALTINDA ayrı bir
             ekran — beş bant, beş önizleme ve beş metin kutusu Ayarlar'ı
             PIN formunun görünmediği kadar uzatırdı. */}

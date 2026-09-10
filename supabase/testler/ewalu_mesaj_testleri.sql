@@ -43,9 +43,9 @@ begin
   -- ---------------------------------------------------------------------------
   -- Hazırlık
   -- ---------------------------------------------------------------------------
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Ewalu!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Ewalu!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Ewalu!2026'))->>'token';
 
   -- TEKRAR ÇALIŞTIRILABİLİRLİK: önceki koşudan satır kalmasın.
@@ -54,6 +54,9 @@ begin
   insert into public.siniflar (seviye, sube) values (6, 'W')
     on conflict (seviye, sube) do update set arsiv = false
     returning id into v_sinif;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_sinif from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   delete from public.ogrenciler where ad = 'Ewa Mesajlı';
   v_o := (public.ogrenci_ekle(jt, 'Ewa Mesajlı', 'okul', v_sinif))->>'id';
@@ -296,7 +299,7 @@ begin
 
   -- MEVCUT GÜVENCE BOZULMADI: PIN yedeğe girmiyor (docs/yedekleme.md).
   -- Yeni bir tablo eklerken eski bir sözü çiğnemediğimizin kanıtı.
-  if position('ogretmen_pin_hash' in v::text) > 0
+  if position('pin_hash' in v::text) > 0
      or position('$2a$' in v::text) > 0 or position('$2b$' in v::text) > 0 then
     raise exception '7d: PIN HASH''İ YEDEĞE SIZDI';
   end if;

@@ -25,7 +25,8 @@
     "tanitim-denetim": "node scripts/tanitim-denetimi.mjs",
     "tanitim-geri-alma": "node scripts/geri-alma-tanitim.mjs",
     "kok-denetim": "node scripts/kok-denetimi.mjs",
-    "kok-geri-alma": "node scripts/geri-alma-kok.mjs"
+    "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
+    "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.5",

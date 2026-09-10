@@ -35,14 +35,17 @@ declare
   sayac integer := 0;
   jeton text;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Denetim!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Denetim!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Denetim!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (11, 'D')
     on conflict (seviye, sube) do update set arsiv = false
     returning id into v_sinif;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_sinif from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_a := (public.ogrenci_ekle(jt, 'Denetim Öğrencisi', 'okul', v_sinif))->>'id';
   jo := (public.giris((select kod from public.giris_kodlari
@@ -195,7 +198,10 @@ begin
   )
   select count(*) into sayac
     from hedef h
-   where pg_get_functiondef(h.oid) !~ '_ogretmen\(|_oturum\(';
+     -- 0033: `_yonetici(` de bir rol şartı — üstelik daha SERTİ. Kendi
+     -- içinde `_ogretmen`i çağırıyor, yani öğretmen olmak yetmiyor, sahip
+     -- olmak gerekiyor. Desen genişledi ama iddia gevşemedi.
+   where pg_get_functiondef(h.oid) !~ '_ogretmen\(|_oturum\(|_yonetici\(';
 
   if sayac <> 3 then
     raise exception '1c BAŞARISIZ — rol şartı taşımayan uç sayısı 3 değil, %. Yeni bir uç şartsız kalmış olabilir.', sayac;
@@ -234,15 +240,21 @@ declare
   ok boolean;
   v_kod text;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Capraz!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Capraz!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Capraz!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (11, 'X')
     on conflict (seviye, sube) do update set arsiv = false returning id into s1;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, s1 from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   insert into public.siniflar (seviye, sube) values (11, 'Y')
     on conflict (seviye, sube) do update set arsiv = false returning id into s2;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, s2 from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   -- Tekrar çalıştırılabilirlik: bu iki sınıfın izlerini sil.
   delete from public.gonderimler
@@ -427,13 +439,16 @@ declare
   v_mesaj text;
   n integer;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Yuk!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Yuk!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Yuk!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (11, 'Z')
     on conflict (seviye, sube) do update set arsiv = false returning id into s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
   delete from public.mesajlar
    where ogrenci_id in (select id from public.ogrenciler where sinif_id = s);
 
@@ -540,8 +555,8 @@ begin
   -- BAĞIMSIZ olarak, doğrudan insert ile ölçülüyor.
   -- ---------------------------------------------------------------------------
   begin
-    insert into public.mesajlar (ogrenci_id, kimden, metin, kanal)
-    values (a, 'ogrenci', E'\t\n  ', 'ogrenci');
+    insert into public.mesajlar (ogrenci_id, kimden, metin, kanal, ogretmen_id)
+    values (a, 'ogrenci', E'\t\n  ', 'ogrenci', (select id from public.ogretmenler where yonetici));
     raise exception '3f BAŞARISIZ — şema kısıtı boşluk mesajını kabul etti';
   exception when others then
     get stacked diagnostics v_kod = returned_sqlstate;
@@ -565,13 +580,16 @@ declare
   v_kod text; v_mesaj text;
   kilitlendi boolean;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Kilit!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Kilit!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Kilit!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (10, 'K')
     on conflict (seviye, sube) do update set arsiv = false returning id into s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   a := (public.ogrenci_ekle(jt, 'Kilit A', 'okul', s))->>'id';
   b := (public.ogrenci_ekle(jt, 'Kilit B', 'okul', s))->>'id';

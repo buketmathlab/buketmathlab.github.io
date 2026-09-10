@@ -66,7 +66,12 @@ BURAYA-YAPISTIRIN
   --
   -- `ewalu_mesajlari` (0032) SONDA ve YABANCI ANAHTARI YOK — sırası
   -- serbest, kalabalık etmesin diye sona konuldu.
-  tablolar text[] := array['siniflar','ogrenciler','giris_kodlari','odevler',
+  --
+  -- `ogretmenler` EN BAŞTA: `ogrenciler.ekleyen_id` ve dört tablodaki
+  -- `ogretmen_id` ona bağlı (0033). `ogretmen_siniflari` ise hem ona hem
+  -- `siniflar`a bağlı, o yüzden ikisinin arkasında.
+  tablolar text[] := array['ogretmenler','siniflar','ogretmen_siniflari',
+                           'ogrenciler','giris_kodlari','odevler',
                            'gonderimler','mesajlar','dersler','odemeler',
                            'ewalu_mesajlari'];
 
@@ -83,11 +88,13 @@ BURAYA-YAPISTIRIN
   --
   -- Sekiz çekirdek tablo İSTEĞE BAĞLI DEĞİL: biri eksikse dosya bozuktur
   -- ve hiçbir şeye dokunmadan reddedilir.
-  istege_bagli text[] := array['ewalu_mesajlari'];
+  istege_bagli text[] := array['ewalu_mesajlari','ogretmenler','ogretmen_siniflari'];
   t text;
   kolonlar text;
   n integer;
   toplam text := '';
+  -- 0033'lü bir projeye ESKİ bir yedek yüklenirken kurulacak sahip.
+  sahip_id uuid;
 begin
   -- Yapı denetimi ÖNCE. Bozuk ya da yarım bir dosyayla tabloları silmek,
   -- elde kalan tek kopyayı da yok etmek olurdu.
@@ -114,11 +121,53 @@ begin
     end if;
   end loop;
 
+  -- ---------------------------------------------------------------------------
+  -- ELDEKİ ESKİ YEDEK, 0033'LÜ BİR PROJEYE.
+  --
+  -- Öğretmenin bilgisayarında BUGÜN duran yedek 0033 öncesi: kadro yok ve
+  -- satırlarda `ogretmen_id`/`ekleyen_id` yok. Bu sütunlar 0033'te
+  -- `not null`; dosya olduğu gibi yüklenmeye kalkışılırsa kısıt hatası
+  -- verip düşüyor (taşıma provasında ölçüldü). Yani 0033 çalıştırıldığı
+  -- anda öğretmenin ELİNDEKİ TEK GÜVENCE işe yaramaz hâle gelirdi.
+  --
+  -- Çözüm, 0033'ün veri taşımasının aynısı: tek bir sahip kurulur, bütün
+  -- sınıflar ona bağlanır ve bütün satırlar onun adına damgalanır. Sonuç,
+  -- yedeğin alındığı gündeki tek öğretmenli sisteme birebir denk.
+  --
+  -- Kadro TAŞIYAN bir dosyada bu blok hiç çalışmıyor.
+  if jsonb_array_length(yedek->'ogretmenler') = 0
+     and exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'ogrenciler'
+                    and column_name = 'ekleyen_id') then
+    sahip_id := gen_random_uuid();
+    -- `created_at`/`updated_at` AÇIKÇA yazılıyor: `jsonb_populate_recordset`
+    -- eksik anahtarı NULL yapar, sütunun DEFAULT'unu uygulamaz.
+    yedek := jsonb_set(yedek, '{ogretmenler}', jsonb_build_array(jsonb_build_object(
+      'id', sahip_id, 'ad', 'Öğretmen', 'pin_hash', null,
+      'yonetici', true, 'aktif', true,
+      'created_at', now(), 'updated_at', now())));
+    yedek := jsonb_set(yedek, '{ogretmen_siniflari}', coalesce((
+      select jsonb_agg(jsonb_build_object('ogretmen_id', sahip_id, 'sinif_id', s->>'id',
+                                          'created_at', now()))
+        from jsonb_array_elements(yedek->'siniflar') s), '[]'::jsonb));
+    yedek := jsonb_set(yedek, '{ogrenciler}', coalesce((
+      select jsonb_agg(x || jsonb_build_object('ekleyen_id', sahip_id))
+        from jsonb_array_elements(yedek->'ogrenciler') x), '[]'::jsonb));
+    foreach t in array array['odevler','mesajlar','dersler','odemeler'] loop
+      yedek := jsonb_set(yedek, array[t], coalesce((
+        select jsonb_agg(x || jsonb_build_object('ogretmen_id', sahip_id))
+          from jsonb_array_elements(yedek->t) x), '[]'::jsonb));
+    end loop;
+    raise notice 'Not: yedek 0033 öncesi. Tek öğretmenli sisteme geri yükleniyor; '
+                 'PIN''i ve öğretmen adını siteye girip yeniden belirleyin.';
+  end if;
+
   if not onayliyorum then
     raise exception E'ONAY GEREKİYOR.\n'
       '  Bu script şu tabloların TAMAMINI siler ve yedekten yazar:\n'
-      '  siniflar, ogrenciler, giris_kodlari, odevler, gonderimler,\n'
-      '  mesajlar, dersler, odemeler, ewalu_mesajlari.\n'
+      '  ogretmenler, siniflar, ogretmen_siniflari, ogrenciler,\n'
+      '  giris_kodlari, odevler, gonderimler, mesajlar, dersler,\n'
+      '  odemeler, ewalu_mesajlari.\n'
       '  Devam etmek için 2. ADIM''daki `onayliyorum` satırını true yapın.\n'
       '  Yedekte bulunan: % sınıf, % öğrenci, % ödev, % gönderim.',
       jsonb_array_length(yedek->'siniflar'),
@@ -132,6 +181,21 @@ begin
   -- `okundu` ve `oturumlar` yedekte YOK ama `ogrenciler`e bağlılar; önce
   -- boşaltılmazlarsa öğrencileri silmek yabancı anahtara takılır.
   -- ---------------------------------------------------------------------------
+  -- ŞEMADA OLMAYAN TABLO ATLANIYOR.
+  --
+  -- Bu dosya 0033 ÇALIŞTIRILMAMIŞ bir projeye de yüklenebilmeli — bugünkü
+  -- canlı tam olarak öyle. Orada `ogretmenler` ve `ogretmen_siniflari`
+  -- henüz yok; listede bırakılsalardı `delete` dosyayı tam ortasında
+  -- düşürürdü. Yapı denetimi YUKARIDA yapıldı: çekirdek tablolardan biri
+  -- dosyada eksikse zaten buraya gelinmiyor.
+  foreach t in array tablolar loop
+    if not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = t) then
+      tablolar := array_remove(tablolar, t);
+      raise notice 'Not: bu projede "%" tablosu yok; atlanıyor.', t;
+    end if;
+  end loop;
+
   delete from public.okundu;
   delete from public.oturumlar;
   for i in reverse array_length(tablolar, 1) .. 1 loop

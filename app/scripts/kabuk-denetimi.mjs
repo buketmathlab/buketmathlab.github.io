@@ -452,6 +452,77 @@ console.log('\n5 — MESAJLAR ROZETİ OKUNUNCA DÜŞÜYOR');
   await s.close();
 }
 
+// ---------------------------------------------------------------------------
+// 6 — ÖĞRETMENLER EKRANINA HER GENİŞLİKTEN ULAŞILABİLİYOR MU
+//
+// ÖLÇÜLEREK BULUNAN KUSURUN NÖBETÇİSİ. 0033'te Öğretmenler ekranını
+// yazdım ama bağlantısını yalnız yan menüye koydum; yan menü de `lg`
+// altında gizli. Sonuç: sahip, üç arkadaşını TELEFONDAN hiç
+// ekleyemiyordu — ekran vardı, ona giden yol yoktu.
+//
+// Sunucuda bir kusur değildi, o yüzden hiçbir sızıntı testi görmedi;
+// erişilebilirlik denetimi de ekranı ADRESİNE giderek ölçtüğü için
+// yakalayamadı. Ulaşılabilirlik ayrı bir şey ve ayrı ölçülmeli.
+//
+// `getBoundingClientRect().height > 0` ŞART: kusur tam olarak "DOM'da
+// var, görünmüyor" biçimindeydi. Düğümü saymak yeşil verirdi.
+//
+// İKİNCİ ÖLÇÜM EN AZ İLKİ KADAR ÖNEMLİ: sahip olmayan öğretmende
+// bağlantı hiçbir genişlikte çıkmamalı. Yoksa ilk ölçümü geçmenin en
+// kolay yolu bağlantıyı koşulsuz çizmek olurdu ve o, öğretmen yönetimini
+// bütün zümreye açardı.
+// ---------------------------------------------------------------------------
+console.log('\n6 — ÖĞRETMENLER EKRANINA ULAŞILABİLİYOR MU (360 / 768 / 1280)');
+
+const PANO_OZET = {
+  ogrenci_sayisi: 40, odev_verilen_ogrenci: 31, acik_odev: 2,
+  bekleyen_degerlendirme: 1, gecikmis_eksik: 3, son_gonderimler: [],
+};
+
+async function ogretmenlerYolu(genislik, sahip) {
+  const s = await tarayici.newPage({ viewport: { width: genislik, height: 800 } });
+  await s.route('**/rest/v1/rpc/*', (r) => {
+    const uc = r.request().url().split('/').pop().split('?')[0];
+    const govde =
+      uc === 'ben_kimim'
+        ? { id: 's1', ad: 'Buket Topuzoğlu', sahip, vekalet: false, vekil: null }
+      : uc === 'ogretmen_panosu' ? PANO_OZET
+      : {};
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
+  });
+  await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)),
+    OTURUM.ogretmen());
+  await s.goto(KOK + '/ogretmen', { waitUntil: 'networkidle' });
+  await s.waitForTimeout(800);
+  const olcum = await s.evaluate(() => {
+    const g = [...document.querySelectorAll('a[href*="/ogretmen/ogretmenler"]')]
+      .filter((e) => e.getBoundingClientRect().height > 0);
+    const kok = document.documentElement;
+    return {
+      gorunur: g.length,
+      // Dokunma hedefi: 44 px altı bir bağlantı telefonda ıskalanır.
+      encokKisa: g.length ? Math.min(...g.map((e) => Math.round(e.getBoundingClientRect().height))) : 0,
+      tasma: kok.scrollWidth - kok.clientWidth,
+    };
+  });
+  await s.close();
+  return olcum;
+}
+
+for (const w of [360, 768, 1280]) {
+  const o = await ogretmenlerYolu(w, true);
+  olc(`${w} px: sahip "Öğretmenler"e ulaşabiliyor`, o.gorunur > 0,
+      `${o.gorunur} görünür bağlantı`);
+  olc(`${w} px: bağlantı 44 px+`, o.encokKisa >= 44, `${o.encokKisa} px`);
+  olc(`${w} px: Pano'da yatay taşma yok`, o.tasma === 0, `${o.tasma} px`);
+}
+
+for (const w of [360, 768, 1280]) {
+  const o = await ogretmenlerYolu(w, false);
+  olc(`${w} px: SAHİP OLMAYAN öğretmende bağlantı YOK`, o.gorunur === 0,
+      `${o.gorunur} görünür bağlantı`);
+}
+
 await tarayici.close();
 console.log(`\n--- GEÇEN: ${gecen}   KALAN: ${kalan} ---`);
 process.exit(kalan === 0 ? 0 : 1);

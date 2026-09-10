@@ -35,14 +35,17 @@ begin
   -- ---------------------------------------------------------------------------
   -- Hazırlık
   -- ---------------------------------------------------------------------------
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Veli!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Veli!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Veli!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (7, 'V')
     on conflict (seviye, sube) do update set arsiv = false
     returning id into v_sinif;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_sinif from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_a := (public.ogrenci_ekle(jt, 'Ada Veliçocuğu', 'okul', v_sinif))->>'id';
   v_b := (public.ogrenci_ekle(jt, 'Bora Veliçocuğu', 'okul', v_sinif))->>'id';

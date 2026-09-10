@@ -88,11 +88,25 @@ e-posta", adresin kendisi değil.
 | Gönderimler ve puanlar | Oturumlar (zaten kimlik bilgisidir, yedeğe girmemesi doğrudur) |
 | Mesajlar, dersler, ödemeler | |
 | **Ewalu için yazdığınız cümleler** (0032) | |
+| **Öğretmen kadrosu ve hangi sınıflara girdikleri** (0033) | **Öğretmenlerin PIN'leri** — hiçbirininki dosyaya girmez |
 
 **0032 öncesi alınmış yedekler hâlâ geçerli.** Elinizdeki dosyada Ewalu
 cümleleri yok; geri yükleme onu reddetmiyor, o tabloyu boş bırakıyor ve
 Ewalu koddaki varsayılan cümleleri söylemeye devam ediyor. Provada
 ölçüldü.
+
+**0033 öncesi alınmış yedekler de geçerli** — 0033'ü çalıştırdıktan
+sonra bile. O dosyada öğretmen kadrosu yok; geri yükleme onu reddetmiyor,
+tek öğretmenli sisteme çeviriyor: bir sahip kuruluyor, bütün sınıflar ve
+kayıtlar ona bağlanıyor. Sonuç, yedeğin alındığı gündeki sistemin aynısı.
+Öğretmen adını ve PIN'i siteye girip yeniden belirlersiniz.
+`supabase/testler/tasima-provasi.sh` bunu her turda ölçüyor.
+
+**Kadro yedeğe 0033 ile girdi ve bu ölçülerek düzeltildi.** Kadro
+girmeseydi, 0033'ten sonra alınan yedek boş bir projeye geri
+YÜKLENEMEZDİ — kayıtlar hangi öğretmene ait olduğunu söylüyor ama o
+öğretmen dosyada olmadığı için geri yükleme yarıda düşerdi. Bunu
+farkedeceğiniz an felaket günü olurdu.
 
 **Fotoğraflar en önemli eksik.** Proje silinirse Storage'daki dosyalar da
 silinir ve JSON onları geri getirmez. Öğrencilerin çözüm fotoğrafları için

@@ -4,6 +4,8 @@ import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { Button } from '@/components/ui/Button';
 import { SekmeCubugu, type SekmeTanim } from '@/components/layout/SekmeCubugu';
 import { SEKME_IKON } from '@/components/layout/sekme-ikonlari';
+import { VekaletSeridi } from '@/components/layout/VekaletSeridi';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { useBildirimler } from '@/hooks/useBildirimler';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { cn } from '@/lib/cn';
@@ -21,6 +23,7 @@ import { cn } from '@/lib/cn';
 export function Kabuk() {
   const { cikisYap } = useOturum();
   const bildirim = useBildirimler();
+  const { ben } = useBenKimim();
 
   const sekmeler: SekmeTanim[] = [
     {
@@ -71,6 +74,26 @@ export function Kabuk() {
             gereken bir şey değil. Dar ekranda yan menü gizli olduğu için
             aynı yere Pano'nun altından da geliniyor. */}
         <div className="mt-auto flex flex-col gap-2 pt-4">
+          {/* ÖĞRETMENLER SEKME DEĞİL, alt bağlantı — ve yalnız sahipte.
+              Menü zaten altı sekme; yedincisi 360 px'de alt çubuğa
+              sığmıyor (ölçüldü). Öğretmen yönetimi de nadir bir iş. */}
+          {ben?.sahip && (
+            <NavLink
+              to="/ogretmen/ogretmenler"
+              className={({ isActive }) =>
+                cn(
+                  // 44 px: yan menü bağlantıları 38 px'di ve dokunma hedefi
+                  // sınırının altında kalıyordu. `lg` bir "fare ekranı"
+                  // demek değil — dokunmatik dizüstü ve yatay tablet de bu
+                  // genişlikte. Kabuk denetimi 6. grupta ölçüldü.
+                  'flex min-h-[44px] items-center rounded-sk-sm px-3 text-[14px] text-muted hover:bg-line-soft',
+                  isActive && 'bg-line-soft font-semibold text-ink',
+                )
+              }
+            >
+              Öğretmenler
+            </NavLink>
+          )}
           <NavLink
             to="/ogretmen/ayarlar"
             className={({ isActive }) =>
@@ -89,6 +112,11 @@ export function Kabuk() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        {/* VEKÂLET ŞERİDİ — her genişlikte, içeriğin en üstünde ve
+            kapatılamaz. Sahip hangi hesapta olduğunu unutursa yanlış
+            sınıfa ödev verir. */}
+        <VekaletSeridi ben={ben} />
+
         {/* Üst çubuk — yalnız dar ekran */}
         <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-3 lg:hidden">
           <SekizWordmark bicim="sade" boyut="sm" />

@@ -28,13 +28,16 @@ declare
   n0 integer; n integer; k0 integer; k integer;
   adlar jsonb;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Toplu!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Toplu!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Toplu!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (5, 'T')
     on conflict (seviye, sube) do update set arsiv = false returning id into v_s;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_s from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   -- ---------------------------------------------------------------------------
   -- 1 — 30 AD TEK ÇAĞRIDA: 30 öğrenci, 60 kod

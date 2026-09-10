@@ -29,14 +29,17 @@ begin
   -- ---------------------------------------------------------------------------
   -- Hazırlık
   -- ---------------------------------------------------------------------------
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Ars!v2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Ars!v2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Ars!v2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (7, 'Z')
     on conflict (seviye, sube) do update set arsiv = false
     returning id into v_sinif;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_sinif from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_ogr := (public.ogrenci_ekle(jt, 'Arşiv Testi Öğrencisi', 'okul', v_sinif))->>'id';
   jo := (public.giris((select kod from public.giris_kodlari
@@ -226,8 +229,9 @@ begin
   declare
     v_sinifsiz uuid;
   begin
-    insert into public.ogrenciler (ad, tur, sinif_id, aktif)
-    values ('Sınıfsız Özel Öğrenci', 'ozel', null, true)
+    insert into public.ogrenciler (ad, tur, sinif_id, aktif, ekleyen_id)
+    values ('Sınıfsız Özel Öğrenci', 'ozel', null, true,
+            (select id from public.ogretmenler where yonetici))
     returning id into v_sinifsiz;
 
     select count(*) into n

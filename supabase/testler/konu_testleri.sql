@@ -20,14 +20,17 @@ declare
   g_dogru integer; g_yanlis integer; g_bos integer;
   t_dogru integer; t_yanlis integer; t_bos integer;
 begin
-  update public.ayarlar
-     set ogretmen_pin_hash = extensions.crypt('Konu!2026', extensions.gen_salt('bf', 10))
-   where id = 1;
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Konu!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
   jt := (public.giris('Konu!2026'))->>'token';
 
   insert into public.siniflar (seviye, sube) values (6, 'K')
     on conflict (seviye, sube) do update set arsiv = false
     returning id into v_sinif;
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id)
+    select g.id, v_sinif from public.ogretmenler g where g.yonetici
+    on conflict do nothing;
 
   v_a := (public.ogrenci_ekle(jt, 'Kaan Konulu', 'okul', v_sinif))->>'id';
   v_b := (public.ogrenci_ekle(jt, 'Lale Konulu', 'okul', v_sinif))->>'id';

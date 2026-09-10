@@ -1981,3 +1981,194 @@ uyanmış projede **sustuğu** gerçek koşuyla görüldü.
 - **Yedek yerine geçmez.** Uyanık kalmak, veri kaybına karşı koruma
   değil — bu depo bir veritabanını zaten bir kez kaybetti.
 - GitHub, 60 gün hareketsiz depolarda zamanlanmış işleri durdurur.
+
+## Çok öğretmenli SEKİZ — sahiplik, kapsam ve vekâlet (0033)
+
+Zümre başkanları toplantısından sonra matematik zümresindeki üç arkadaşı
+SEKİZ'i kullanmak istedi. Model "eşit öğretmenler" değil: **bir SAHİP ve
+onun altında çalışan öğretmenler.** Ürünün sahibi bunu kendi cümleleriyle
+tarif etti — fikir de tasarım da kendisine ait, kontrol her zaman onda
+kalmalı.
+
+### Veri neyin altında
+
+| Okul düzeyinde (ortak) | Öğretmen düzeyinde (kapsamlı) |
+|---|---|
+| `siniflar`, `ogrenciler`, `giris_kodlari` | `odevler`, `mesajlar`, `dersler`, `odemeler` |
+
+Bu ayrım bilinçli. **Öğrenci tek koda sahip**: bir çocuk dört öğretmenin
+ödevini tek girişle görüyor, dört ayrı şifre taşımıyor. Sınıf ve öğrenci
+ortak olduğu için, ileride diğer zümreler açıldığında canlı öğrenci
+verisi yeniden taşınmayacak — genişleme bir `ogretmen_siniflari` satırı.
+
+Kapsam mantığı **tek yerde**: `_ogretmenin_ogrencisi`,
+`_ogretmenin_sinifi`, `_odev_sahibi`, `_ogrenci_sahibi`. 41 uç bu
+yardımcıları çağırıyor; kural değişirse tek dosyada değişiyor.
+
+### Sahip — şemadan zorlanan üç kural
+
+- **Tam bir sahip olabilir.** Kısmi benzersiz indeks
+  (`on ogretmenler((true)) where yonetici`) ikinci sahibi yasaklıyor.
+- **Sahip pasifleştirilemez, sahipliği düşürülemez.** Aksi hâlde tek bir
+  hata sistemi sahipsiz bırakırdı.
+- **Sahibin PIN'i taşındı**, değişmedi: öğretmen aynı PIN'le girmeye
+  devam ediyor.
+
+### Özel ders TAMAMEN sahipte
+
+Öğretmenin açık kuralı. Yedi uç `_yonetici` istiyor: `ders_ekle`,
+`ders_sil`, `odeme_ekle`, `odeme_degistir`, `odeme_sil`,
+`ozel_ders_detay`, `ogrenci_ekle(p_tur='ozel')`.
+
+Bunun teknik bir sebebi de var: özel ders öğrencilerinin hepsi **tek bir
+paylaşılan sınıfta** yaşıyor (`siniflar_tek_ozel`). Sahiplik sınıf
+üzerinden kurulsaydı, o sınıfa erişen her öğretmen bütün özel ders
+ödemelerini görürdü. Denetim bunu **gerçek tutar değeri** arayarak
+ölçüyor, alan adına bakarak değil.
+
+### Vekâlet — sahip başka bir öğretmenin hesabına geçiyor
+
+`ogretmen_olarak_gir` yeni bir oturum açıyor; `oturumlar.vekil_id`
+gerçekte giren kişiyi tutuyor. `_ogretmen` hedef öğretmenin kimliğini
+döndürdüğü için **41 ucun hiçbiri değişmeden** doğru kapsamı görüyor.
+
+- **Yazmak yasak, okumak serbest.** `mesaj_gonder` vekâletli oturumda
+  reddediyor. Bir veli, o öğretmenin yazdığını sandığı bir mesajı
+  başkasından almış olmamalı.
+- **Denetim izi vekâleti taşıyor**: `_aktor` `Sahip <id> → Öğretmen <id>`
+  üretiyor (Part XLIII).
+- **Ekranda sessiz değil.** Kabukta kapatılamayan bir şerit duruyor. Bir
+  "×" düğmesi koysaydım en çok ihtiyaç duyulan anda kapatılmış olurdu.
+
+### Çıkarma = pasifleştirme
+
+`aktif = false` açık oturumları düşürüyor ve PIN'i çalışmaz kılıyor;
+**ödevler, notlar ve yazışmalar silinmiyor.** Sahip görmeye devam ediyor,
+geri alma tek dokunuş.
+
+### Yedek zinciri — taşıma provasında ölçülerek düzeltildi
+
+`supabase/testler/tasima-provasi.sh` (0032 → 0033) yazılırken **gerçek
+bir kusur çıktı**: `disa_aktar` satırlara `ogretmen_id`/`ekleyen_id`
+yazıyor ama **kadroyu yedeğe koymuyordu**. Yani 0033'ten sonra alınan bir
+yedek boş bir projeye geri yüklenemiyordu — yabancı anahtar kısıtından
+düşüyordu. Yedek zinciri tam da işe yarayacağı gün kopmuş olurdu.
+
+- `disa_aktar` artık `ogretmenler` ve `ogretmen_siniflari` yazıyor,
+  **`pin_hash` hariç**: yedek öğretmenin bilgisayarına inen düz bir
+  dosya, içinde dört öğretmenin PIN hash'i olmamalı.
+- `geri-yukle.sql` kadroyu en başta yüklüyor ve **şemada olmayan tabloyu
+  atlıyor**, böylece 0033 çalıştırılmamış bir projeye de yüklenebiliyor.
+- **Öğretmenin bugün elinde duran yedek** (0033 öncesi) 0033'lü bir
+  projeye yüklendiğinde artık reddedilmiyor: 0033'ün veri taşımasının
+  aynısı uygulanıp tek öğretmenli sisteme çevriliyor.
+
+Prova, dolu bir 0032 veritabanının üstünden 0033'ü geçiriyor ve
+öğretmenin **uçlardan gördüğü 25 satırlık parmak izinin** birebir aynı
+kaldığını ölçüyor — ham `count(*)` değil, çünkü asıl risk satırların
+kaybolması değil **kapsam dışında kalması**.
+
+### Bilerek yapılmayanlar ve kalan risk
+
+- **Diğer zümreler açılmadı.** Şema hazır, kapsam matematik zümresi.
+- **Sahip kendi panosunda herkesin verisini görmüyor.** Kendi kapsamını
+  görüyor, başkasınınkine vekâletle geçiyor; aksi hâlde panosu dört
+  öğretmenin gürültüsüne dönerdi.
+- **Öğretmenler birbirinin ödevini göremiyor** (ortak havuz ayrı tur).
+- **KALAN RİSK — öğrenci kodları sınıf düzeyinde. BU BİR KARAR, GÖZDEN
+  KAÇMIŞ AÇIK DEĞİL.** Kendi sınıfındaki öğrencinin kodunu her öğretmen
+  görebiliyor ve kod, öğrenci gibi giriş yapmaya yarıyor. Somut sonucu:
+  o kodu alan meslektaş, çocuğun **başka öğretmenlerden** aldığı ödevleri
+  ve **sahiple yazışmasını** okuyabilir (`ogrenci_mesajlari` öğretmene
+  göre süzmüyor; ölçüldü).
+
+  Risk ürünün sahibine anlatıldı, kodları sahibe kilitleyen bir uç
+  (0034) yazıldı ve **sahibin kararıyla geri alındı** — depoya hiç
+  girmedi. Gerekçesi kendi cümlesiyle: *"her öğretmen kendi sınıfının
+  kodlarını kendi versin. Çok özel bir durum değil bu. Sonuçta tüm yetki
+  bende. Ben onların her şeyini görebiliyorum. Onların sistemlerine
+  girebiliyorum."* Dört tanıdık meslektaş, üstüne sahibin tam görünürlüğü
+  ve vekâlet yetkisi.
+
+  **Bu maddeyi "düzeltmeyin".** Kilit bilerek yok. Yeniden açılma koşulu
+  tek: **başka zümreler eklenirse** — 20 öğretmende tanımadığınız biri
+  bir öğrencinin kimliğine bürünebiliyor olmamalı. O gün kapatılacak yer
+  belli: `ogrenci_kodlari`, kapısı `_ogrenci_sahibi` yerine `_yonetici`.
+- **ÖLÇEK SINIRI.** Beş zümre × ~20 öğretmen × ~3.000 öğrenci olduğunda
+  her gönderimin bir fotoğraf taşıması depolamayı ücretsiz planın üstüne
+  çıkarır. Zümreler açılmadan önce plan ve maliyet ayrıca ölçülmeli.
+
+## Soru kâğıdı künyesi — Claude'da üretileni içeri almak (yeni SQL yok)
+
+Öğretmenin Claude Projects'te hazırladığı bir soru kâğıdı skill'i var;
+çıktısı PDF/Word. Bunu SEKİZ'e bağlarken iki yol vardı ve **ürüne yapay
+zekâ koymama** kararı verildi.
+
+### Neden ürüne yapay zekâ konmadı
+
+Maliyet konuşuldu ve engel o değildi: dört öğretmen ayda 20 kâğıt üretse
+API ücreti ayda ~$2–8. Engel üç başka şeydi:
+
+- **API anahtarı tarayıcıya konulamaz** (Bölüm XIV/XX) — sunucu tarafında
+  yeni bir parça, yeni bir saldırı yüzeyi ve harcama tavanı gerekirdi.
+- Claude aboneliği API'yi **karşılamıyor**; ayrı hesap, ayrı kart.
+- **5. kuralla gerilim:** *"notlandırmada asla yapay zekâ kullanma."*
+  Cevap anahtarını yapay zekâ üretirse notu fiilen o belirler.
+
+Kâğıt Claude'da üretilmeye devam ediyor; SEKİZ yalnız **çıktıyı içeri
+alıyor.** Üründe yapay zekâ, API anahtarı ve fatura yok.
+
+### Kapatılan asıl boşluk: soru başına KONU
+
+| Alan | Önce | Şimdi |
+|---|---|---|
+| Sorular PDF'i | yükleniyor | değişmedi |
+| Anahtar PDF'i | yükleniyor | değişmedi |
+| `cevap_anahtari` | anahtar PDF'inin metninden çıkarılmaya çalışılıyor | künyeden de dolabiliyor |
+| `konular` | **her ödevde elle giriliyor** | künyeden tek dokunuşla doluyor |
+
+Konu, öğretmenin PDF'lerinden **çıkarılamıyor**: sorular görsel olarak
+gömülü, metin katmanında yok (`odev-pdf-ozeti.ts`'teki ölçüm). Oysa konu
+karnesi (`konu_karnesi`) tamamen o alana dayanıyor. Kâğıdı üreten Claude
+bu bilgiyi zaten biliyor; künye onu yolda kaybetmemek için var.
+
+**Biçimi SEKİZ dayatıyor, skill ona uyuyor** — `docs/soru-kagidi-kunyesi.md`.
+Böylece skill'in kendisi hiç görülmeden iki taraf anlaşıyor. Biçim
+Word'deki cevap anahtarı tablosunun doğal hâli seçildi (`1  A  Türev`);
+JSON daha kesin olurdu ama tek kırık tırnak bütün yapıştırmayı düşürür ve
+öğretmen neyin bozuk olduğunu gözle göremezdi.
+
+`odev_olustur` bu iki alanı zaten parametre olarak alıyordu: **panelde
+çalıştırılacak yeni SQL yok.**
+
+### Öneri, otomatik doldurma değil (Bölüm XXVIII)
+
+Yapıştırmak hiçbir şeyi değiştirmiyor; önizleme ne okunduğunu söylüyor,
+uygulayan öğretmen. 5. kuralın korunma noktası burası: anahtarı yapay
+zekâ önerse de yayına öğretmen onayıyla gidiyor, ve `odev_yayinla` eksik
+anahtarlı ödevi zaten reddediyor.
+
+### Cevap anahtarının açılma anı değişmedi
+
+Öğretmenin şartı — *"öğrenciye gönderilirken anahtar olmayacak, teslimden
+sonra açılacak"* — künyeden bağımsız olarak zaten platformun kuralı:
+`ogrenci_odevleri` teslim yoksa `cevap_anahtari` ve `anahtar_yolu`
+alanlarını `null` döndürüyor (0025). Gerçek veritabanına karşı ölçülüyor:
+`guvenlik_testleri.sql` 8. ve 10. bölümler.
+
+### Ölçüm ve bir kör nokta
+
+`kunye-denetimi.mjs` 22 ölçüm yapıyor. En değerlisi, sunucuya giden
+istekte `p_konular`'ın **gerçekten dolu** olduğu — turun bütün sebebi o.
+
+Geri alma kanıtı iki kör nokta buldu:
+
+1. "Uygula'ya basılmadan bir şey değişmiyor" ölçümü `select` öğelerini
+   sayıyordu; ızgarada `select` yok, sayaç hep 0 dönüyordu ve ölçüm her
+   koşulda geçiyordu. Izgaranın kendi sayacı ("3/5 cevap girildi")
+   okunacak şekilde yeniden yazıldı.
+2. **Derleme sessizce düşerse denetim eski paketi ölçüyor.** `p_konular`
+   yaması bir import'u boşta bıraktı (`error TS6133`), `npm run build`
+   düştü, `yeni/` eski hâlinde kaldı ve denetim yamayı hiç görmeden
+   22/0 geçti. 0030'da migration için öğrenilen dersin arayüz hâli;
+   uyarı betiğin başına yazıldı.

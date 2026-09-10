@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { Yedek } from './Yedek';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -57,6 +58,7 @@ function Sayi({
  * için değil karar aldırmak için var; grafik yığını dikkat dağıtır.
  */
 export function Pano() {
+  const { ben } = useBenKimim();
   const { oturum } = useOturum();
   const git = useNavigate();
   const { veri, durum, hata, yenile } = useVeri<PanoVerisi>('ogretmen_panosu', {
@@ -180,8 +182,24 @@ export function Pano() {
                 yedektir — bu yüzden ayrı bir sekmeye gömülmedi, öğretmenin
                 her gün açtığı ekranın sonunda duruyor. Eskidiğinde kart
                 sarıya dönüp kendini hatırlatıyor. */}
-            <h2 className="mb-3 mt-8 text-[18px] text-ink">Verinizin yedeği</h2>
-            <Yedek />
+            {/* YEDEK YALNIZ SAHİPTE (0033). `disa_aktar` bütün sistemi tek
+                dosyada indiriyor; dört öğretmenin her birinin
+                meslektaşlarının verisini indirmesi kabul edilemez. Sunucu
+                zaten reddediyor — ekran reddedilecek bir düğmeyi hiç
+                göstermiyor (`ucYok` deseni, Part VIII).
+
+                VARSAYILAN GÜVENLİ TARAFTA: kart yalnız "bu kişi sahip
+                DEĞİL" olduğunu BİLDİĞİMİZDE gizleniyor. 0033 panelde henüz
+                çalıştırılmadıysa `ben_kimim` ucu yoktur ve `ben` null
+                kalır — o durumda kart bugünkü gibi görünmeye devam eder.
+                Aksi hâlde arayüz yayınlanıp SQL çalıştırılmadığı aralıkta
+                öğretmen yedek alamaz hâle gelirdi. */}
+            {(ben === null || ben.sahip) && (
+              <>
+                <h2 className="mb-3 mt-8 text-[18px] text-ink">Verinizin yedeği</h2>
+                <Yedek />
+              </>
+            )}
 
             {/* Dar ekranda yan menü gizli; Ayarlar'a tek giriş burası.
                 `lg:hidden` — geniş ekranda yan menüde zaten var, iki kez
@@ -195,6 +213,28 @@ export function Pano() {
               </Link>{' '}
               — PIN’inizi buradan değiştirebilirsiniz.
             </p>
+
+            {/* ÖĞRETMENLER EKRANINA DAR EKRANDAN GİRİŞ.
+                Ölçülerek bulunan kusur: bağlantıyı yalnız yan menüye
+                koymuştum ve yan menü `lg` altında gizli. Sonuç, sahibin
+                arkadaşlarını TELEFONDAN hiç ekleyememesiydi — ekran
+                vardı, ona giden yol yoktu. Sunucu tarafında bir kusur
+                değildi, o yüzden hiçbir sızıntı testi görmedi.
+
+                Ayarlar'la aynı desen: `lg:hidden`, çünkü geniş ekranda
+                yan menüde zaten duruyor. Alt sekme çubuğuna yedinci
+                sekme KONULMUYOR — 360 px'de sığmadığı ölçülmüştü. */}
+            {ben?.sahip && (
+              <p className="mt-2 text-[14px] text-muted lg:hidden">
+                <Link
+                  to="/ogretmen/ogretmenler"
+                  className="inline-flex min-h-[44px] items-center font-bold text-link underline"
+                >
+                  Öğretmenler
+                </Link>{' '}
+                — öğretmen ekleyebilir, sınıf atayabilirsiniz.
+              </p>
+            )}
           </>
         )}
       </AsyncBoundary>
