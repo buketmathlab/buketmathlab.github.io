@@ -2555,3 +2555,120 @@ kâğıt okul yönetimine gidiyor, öğrenci listesi değil.
 Belgenin asıl değeri burada: sonunda okul yönetiminin dolduracağı boş bir
 bölüm var (ad, unvan, tarih, imza). Elde, okulun bilgilendirildiğine dair
 imzalı bir kâğıt kalıyor.
+
+## Haftalık, aylık ve dönemlik sınıf analizi (0040)
+
+Öğretmenin isteği: *"Her öğretmenin verdiği ödevinden haftalık analiz
+oluşsun… o hafta ödevlerinden haftalık analiz, ödevlerin ortalaması,
+haftalık olarak iyi olan konular, çalışılması gereken konular gibi
+haftalık ve aylık analizler otomatik olarak gelsin. Ve dönem sonunda da o
+dönemin analizi yapılsın."*
+
+Bu **sıfırdan bir hesap değil**. Konu analizi 0020/0023'ten beri var
+(`_konu_analizi`, `konu_karnesi`); eksik olan tek şey **zaman
+kırılımıydı**. `sinif_analizi` hafta, ay ve aralık özetini tek uçta
+döndürüyor — üç ayrı uç olsaydı ekran üç istek atar ve üçü arasında
+zamanlama farkı oluşabilirdi.
+
+### Ölçüt ürünün geri kalanıyla aynı
+
+Analize giren ödev: **yayında + son teslim tarihi geçmiş.** `konu_karnesi`,
+`kendi_karnem` ve `veli_paneli` hep bu pencereyi kullanıyor. Başka bir
+ölçüt seçseydik aynı ödev iki ekranda iki farklı sonuç verir, öğretmen
+hangisine inanacağını bilemezdi.
+
+Ödev **son teslim tarihine göre** haftaya sayılıyor (öğretmenin kararı).
+Oluşturma tarihine göre saysaydık, cuma verilip iki hafta sonrasına süre
+tanınan bir ödev kimse teslim etmeden "o haftanın analizinde" görünür ve
+hafta boş çıkardı.
+
+Dönem = **seçilen tarih aralığı** (öğretmenin kararı). MEB takvimi her yıl
+değişiyor ve ara tatiller kayıyor; "Eylül–Ocak" diye sabitlemek belgeyi
+bir yıl sonra yanlış yapardı. Varsayılan son 12 hafta, çünkü "otomatik
+gelsin" denmişti: ekran açılır açılmaz bir şey göstermeli.
+
+### Çizgi bir kez yazılıyor — ve bu ölçülüyor
+
+İlk yazımda eşikler **iki yerdeydi**: `_konu_durumu` içinde (0.70/0.50/5)
+ve yanıtın `esikler` alanında ayrı bir sabit olarak (`70, 50, 5`). İkisi
+de doğruydu, o yüzden hiçbir test kırmızı yanmıyordu. Ama biri değişip
+öteki kalsaydı ekran *"iyi: %70 ve üstü"* yazarken sunucu %65'ten
+damgalardı — **öğretmen ekranda yazana bakıp yanlış olduğunu
+anlayamazdı.**
+
+Artık tek kaynak var: `_konu_esikleri()`. Hem damga hem yanıttaki
+`esikler` alanı ondan okuyor. Migration'ın kendi doğrulaması bunu
+**sınır değerlerini eşiklerden türeterek** sınıyor — sınırları doğrulamaya
+elle yazsaydık ölçüm de aynı sabiti tekrarlar ve ayrışmayı göremezdi:
+
+```
+if public._konu_durumu(100, e_iyi) <> 'iyi' then …
+if public._konu_durumu(100, e_iyi - 1) =  'iyi' then …
+```
+
+**Geri alma kanıtı alındı:** yardımcı %65 derken damgaya eski sabit (%70)
+bırakılınca doğrulama *"0040 EKSİK KALDI: %65 doğru 'iyi' sayılmıyor"*
+diye düştü.
+
+Ayrıca damga, **ekranda yazan yüzdeyle aynı sayıdan** çıkıyor. Ekran oranı
+yuvarlıyor; damga yuvarlanmamış orandan çıksaydı 69,6'lık bir konu tabloda
+"%70" yazıp yanında "Orta" damgası taşırdı — hemen üstünde "iyi: %70 ve
+üstü" yazarken. Öğretmen ekranda kendi kendini yalanlayan bir satır
+görürdü.
+
+### Az veri gizlenmiyor, damgalanıyor
+
+Beş sorunun altındaki konu listede **duruyor** ama `az_veri` etiketiyle;
+iyi/çalışılmalı listelerine girmiyor. İki soruluk bir konuya "çalışılması
+gerekiyor" demek, öğretmene olmayan bir bilgi vermek olurdu. Gizlemek de
+olmazdı — dil kuralı: *gerçeği gizleme.*
+
+### Konu damgası, öğrenci damgası değil
+
+Bu ekranda **tek bir öğrenci adı geçmiyor**: sınıfın konu durumu var.
+Öğrenci düzeyi zaten konu karnesinde, ve orada gelişim gösteriliyor.
+Kapsam `_ogretmenin_sinifi` ile kapalı — her öğretmen yalnız kendi
+sınıfının analizini alıyor.
+
+### Tarayıcı denetimi neden İKİ VERİ KÜMESİYLE ölçüyor
+
+`analiz-denetimi.mjs` ilk yazıldığında tek kümeyle 29 ölçümün hepsi geçti.
+Bakınca üçü **asla kalamazdı**:
+
+- `metin.includes('—')` — başlıktaki *"9A — ödev analizi"* tireyi zaten
+  sağlıyordu. Boş haftanın "0" yazması bu ölçümü bozmazdı.
+- `/\b5\b/` ödev sayısı diye ölçülüyordu; sayfadaki *"5 sorudan az"*
+  ifadesi bunu her hâlükârda geçiriyordu.
+- `!/Çalışılmalı\s*Köklü/` — konu listeye virgülle girseydi kalıp yine
+  tutmaz, kusur geçip giderdi.
+
+**Geçen bir ölçüm, kalabildiğini göstermedikçe bir şey kanıtlamaz.** Bu,
+sürüm 5'te yanlış bir cümleyi kilitleyen testle aynı kusur ailesi.
+
+Ekran artık **iki farklı yanıtla** iki kez ölçülüyor ve her sayı sunulan
+gövdeden okunup birebir karşılaştırılıyor; sabit yazılmış ya da arayüzde
+hesaplanmış bir değer ikisini birden tutturamaz. B kümesi bilerek A'nın uç
+durumlarını taşıyor: ortalaması olmayan dönem, boş "iyi" listesi, hiç
+aylık kırılım yok, konusuz hafta, %0 oran ve **A'dan farklı eşikler**.
+
+Bunun kıymeti ölçüldü: ekrana `%50` sabiti gömülünce **A kümesi bunu
+göremedi** (A'nın eşiği zaten 50), yalnız B yakaladı. Üç kusur
+yerleştirildi, üçü de yakalandı (10 ölçüm kırmızı yandı).
+
+Bir ara kusurlu derleme **düşünce** (`TS6133`) denetim eski paketi ölçtü ve
+başka bir şey rapor etti — `✓ built` görülmeden tarayıcı denetimine
+güvenilmeyecek kuralı bu turda bir kez daha işledi.
+
+### Ondalık ayracı
+
+Ortalama ilk yazımda `String(71.4)` ile basılıyordu: ekranda **71.4**.
+Uygulamanın geri kalanı (`Gelisim.tsx`) `Intl.NumberFormat('tr-TR')`
+kullanıyor: **71,4**. Aynı sayıyı iki ekranda iki türlü görmek öğretmene
+iki ayrı sayı gibi gelir; analiz ekranı da tr-TR'ye çevrildi.
+
+### Panel dosyası gerçekten aynı veritabanını kuruyor mu
+
+`0040_donem_analizi_kisa.sql` ayrı bir veritabanına (0001–0039 + panel
+dosyası) uygulandı; `analiz_testleri.sql` 9 grubu orada da geçti ve üç
+fonksiyonun `pg_get_functiondef` özetleri iki veritabanında **birebir
+aynı** çıktı.

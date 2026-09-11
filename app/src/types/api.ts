@@ -435,6 +435,51 @@ export type OnamDokumuSatiri = {
 };
 
 /**
+ * `sinif_analizi` (0040) — haftalık / aylık / dönemlik sınıf analizi.
+ *
+ * ÖLÇÜT ürünün geri kalanıyla aynı: "yayında + son teslim tarihi geçmiş".
+ * Ödev SON TESLİM TARİHİNE göre kovalanıyor (öğretmenin kararı).
+ */
+export type AnalizKonu = {
+  konu: string;
+  toplam: number;
+  dogru: number;
+  /** Yüzde, tam sayıya yuvarlanmış. */
+  oran: number;
+  /** Eşikler sunucuda, tek yerde (`_konu_durumu`). */
+  durum: 'iyi' | 'orta' | 'calisilmali' | 'az_veri';
+};
+
+export type AnalizKova = {
+  odev_sayisi: number;
+  /** Konu dökümü yalnız test ödevlerinden gelir; fark buradan görülür. */
+  test_sayisi: number;
+  gonderim: number;
+  /** Gönderim yoksa null — sıfır yazmak "sıfır aldılar" demek olurdu. */
+  ortalama: number | null;
+  konular: AnalizKonu[];
+};
+
+export type AnalizHafta = AnalizKova & { baslangic: string; bitis: string };
+export type AnalizAy = AnalizKova & { ay: string };
+
+export type SinifAnalizi = {
+  sinif: { id: string; ad: string };
+  aralik: { baslangic: string; bitis: string; varsayilan: boolean };
+  /** Ekran "iyi" derken hangi çizgiyi kastettiğini yazabilsin diye. */
+  esikler: { iyi: number; calisilmali: number; en_az_soru: number };
+  mevcut: number;
+  haftalar: AnalizHafta[];
+  aylar: AnalizAy[];
+  ozet: AnalizKova & {
+    iyi: string[];
+    calisilmali: string[];
+    /** Sıralamaya dayanır; `calisilmali` çizgiye. İkisi ayrı sorular. */
+    en_eksik_uc: string[];
+  };
+};
+
+/**
  * `okul_bilgilendirme` (0039) — okul yönetimine verilen belgenin CANLI
  * sayıları. Belgenin metninde hiç sayı yok; hepsi buradan geliyor ki
  * kâğıt bayatlayamasın.
