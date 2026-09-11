@@ -5,7 +5,12 @@
 --
 -- ÖNCE YEDEK ALIN. (Öğretmen ekranı → Yedek)
 -- ÖNCE SİTE YAYINA ALINMIŞ OLMALI.
--- ÖNCE 0039 ÇALIŞTIRILMIŞ OLMALI.
+--
+-- 0039'A BAĞLI DEĞİL. 0039'u (okul yönetimi bilgilendirmesi) henüz
+-- çalıştırmadıysanız bu dosya yine de çalışır — ikisi birbirinden
+-- bağımsız. Ölçüldü: 0039 atlanarak kurulmuş ayrı bir veritabanında
+-- analiz testlerinin 9 grubu da geçti. Sırayla gitmek yine de daha
+-- düzenli olur.
 --
 -- NE YAPIYOR: Sınıf ekranına "Analiz" ekliyor. Bir sınıfın ödevlerinden
 -- HAFTALIK, AYLIK ve seçtiğiniz TARİH ARALIĞI için ortalama, iyi giden
