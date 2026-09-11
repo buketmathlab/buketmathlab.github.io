@@ -30,7 +30,7 @@ yazışma) yalnız sahipte. Ölçümü:
 | Öğrenci adı soyadı | `ogrenciler.ad` | Kapsamındaki öğretmen, ilgili öğrenci, ilgili veli |
 | Sınıf | `ogrenciler.sinif` | aynı |
 | Öğrenci / veli giriş kodu | `giris_kodlari.kod` | Öğretmen üretir ve paylaşır |
-| Ödev çözümü fotoğrafı | Storage `odev-dosyalari` (private) | Yalnız sahibi, velisi ve kapsamındaki öğretmen — 60 sn imzalı URL |
+| Ödev çözümü fotoğrafı | Storage `odev-dosyalari` (private) | Yalnız sahibi, velisi ve kapsamındaki öğretmen — her açışta yeni, 60 sn ömürlü imzalı URL |
 | Cevaplar, puan, öğretmen yorumu | `gonderimler` | Öğretmen, öğrenci, veli |
 | Öğretmen–veli mesajları | `mesajlar` (`kanal='veli'`) | Öğretmen ve ilgili veli — **öğrenci görmez** |
 | Öğretmen–öğrenci mesajları | `mesajlar` (`kanal='ogrenci'`) | Öğretmen ve öğrenci — **veli görmez** |
@@ -44,6 +44,18 @@ uyarısı artık geçerli değil: bucket private, imzalı URL 60 saniyelik ve
 yetki kararını Edge Function değil **veritabanı** veriyor
 (`dosya_erisim_izni`; `supabase/functions/dosya-url/index.ts`). Ölçümü
 `supabase/testler/guvenlik_denetimi.sql` 2a–2c.
+
+**60 SANİYE BAKMA SÜRESİ DEĞİL, BAĞLANTININ ÖMRÜ.** Öğretmen onam metnini
+okuyup haklı olarak sordu: "yani öğretmen ödev kâğıdına sadece altmış
+saniye mi bakabilecek?" Hayır — ekranlar fotoğrafı **her açışta** yeniden
+adresliyor (`dosyaAdresi()`; `OdevGonderimleri.tsx`, `Odevler.tsx`,
+`OdevTeslim.tsx`), adres hiçbir yerde saklanmıyor. Öğretmen dilediği
+zaman, dilediği kadar bakabiliyor. Kısa ömür, bağlantı kopyalanır ya da
+bir kayda düşerse bir dakika içinde ölsün diye.
+
+Onam metninden bu rakam **çıkarıldı** (sürüm 4): veliye bir şey
+anlatmıyordu, yalnız yanlış anlaşılıyordu. Metin artık ne olduğunu ve ne
+olmadığını birlikte söylüyor.
 
 ## Barındırma ve yurt dışı aktarım
 

@@ -187,6 +187,12 @@ console.log('\n1 — ONAM BEKLEYEN VELİ: ekran çiziliyor, sekmeler çizilmiyor
   olc('cevap anahtarı cümlesi yok', !/cevap anahtarı/i.test(metin));
   olc('özel ders ödeme/ders planı satırı yok', !/(ödeme kaydı|ders planı)/i.test(metin));
   olc('yanlış olan "dört kişi" ifadesi yok', !/(dört kişi|zümre)/i.test(metin));
+  // Öğretmeni yanıltan rakam: "60 saniye" bakma süresi sanılıyordu.
+  olc('yanıltan "60 saniye" rakamı yok', !/(60\s*saniye|altmış saniye)/i.test(metin));
+  olc(
+    'fotoğrafın bakma süresi olmadığı yazıyor',
+    /ne kadar bakabildiğiyle ilgisi yok/i.test(metin),
+  );
 
   console.log('\n7 — ÇIKIŞ ONAM EKRANINDA DA DURUYOR');
   olc(

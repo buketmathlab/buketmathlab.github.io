@@ -43,6 +43,15 @@ const SURUM_KAYDI: Record<string, string> = {
   // düzelttirdi: "dört öğretmen" yanlıştı, her öğretmen yalnız kendi
   // sınıfını görüyor.
   '2026-09-3': '83fa21b48ef4c1aa05406c0a70eb72344f4868632d922c16255acf9eaab6ae38',
+  // Bu sürüm siteye çıktı ama HİÇ ONAYLANAMADI: sunucu sürümü o sırada
+  // hâlâ 2026-09-2'ydi (0035 çalıştırılmamıştı), yani `onam_ver` her
+  // denemeyi reddediyordu. Yine de kayıtta duruyor — veli o metni OKUDU.
+  //
+  // Sürüm 4: fotoğraf cümlesi yeniden yazıldı. Öğretmen "yani öğretmen
+  // ödev kâğıdına sadece altmış saniye mi bakabilecek?" diye sordu; o süre
+  // bağlantının ömrü, bakma süresi değil. Ürünün sahibini yanıltan cümle
+  // veliyi de yanıltır.
+  '2026-09-4': '04e492b900484ca77770ae49108ecaa04b54ce5052895b16697be0dbe8598065',
 };
 
 describe('onam metni sürüm kilidi', () => {
@@ -232,6 +241,29 @@ describe('metin ürünün gerçeğini söylüyor', () => {
   it('yanlış olan "dört kişi" ifadesi geri gelmemiş', () => {
     expect(ONAM_METNI).not.toMatch(/dört kişi/i);
     expect(ONAM_METNI).not.toMatch(/zümre/i);
+  });
+
+  /**
+   * FOTOĞRAF CÜMLESİ YANILTMIYOR MU (sürüm 4).
+   *
+   * Metin bir tur boyunca "60 saniye geçerli tek kullanımlık bir
+   * bağlantıyla açılıyor" diyordu. Öğretmen bunu okuyup sordu: "yani
+   * öğretmen ödev kâğıdına sadece altmış saniye mi bakabilecek?"
+   *
+   * Cevap hayır — o süre BAĞLANTININ ÖMRÜ. Ama ürünün sahibi yanıldıysa
+   * veli de yanılır. Bu yüzden metin artık ne olduğunu ve ne OLMADIĞINI
+   * birlikte söylüyor; rakam da çıkarıldı, çünkü veliye bir şey
+   * anlatmıyor, yalnız yanlış anlaşılıyordu.
+   */
+  it('fotoğraf bağlantısının bakma süresi olmadığını söylüyor', () => {
+    expect(ONAM_METNI).toContain('ne kadar bakabildiğiyle ilgisi yok');
+    expect(ONAM_METNI).toContain('dilediği kadar açabiliyor');
+    expect(ONAM_METNI).toContain('başkasının eline geçerse çalışmasın');
+  });
+
+  it('yanıltan "60 saniye" rakamı metinde YOK', () => {
+    expect(ONAM_METNI).not.toMatch(/60\s*saniye/i);
+    expect(ONAM_METNI).not.toMatch(/altmış saniye/i);
   });
 
   it('kodun bir şifre olduğunu söylüyor', () => {

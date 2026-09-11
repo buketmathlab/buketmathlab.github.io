@@ -17,8 +17,16 @@
  * BURADAKİ HER CÜMLE ÜRÜNÜN GERÇEKTE YAPTIĞI ŞEY.
  * Uydurma yok, iyimser yuvarlama yok:
  *   - barındırma bölgesi `docs/kvkk-notlari.md`'de teyitli (Zürih)
- *   - çözüm fotoğraflarının imzalı URL'i 60 saniyelik
+ *   - çözüm fotoğraflarının imzalı URL'i kısa ömürlü
  *     (`supabase/functions/dosya-url/index.ts`, GECERLILIK_SN = 60)
+ *
+ * "60 SANİYE" RAKAMI METİNDEN ÇIKARILDI (sürüm 4). Öğretmen metni okuyup
+ * sordu: "yani öğretmen ödev kâğıdına sadece altmış saniye mi
+ * bakabilecek?" Hayır — o süre BAĞLANTININ ÖMRÜ, bakma süresi değil;
+ * ekranlar fotoğrafı her açışta yeniden adresliyor (`dosyaAdresi()`).
+ * Ama cümle ÜRÜNÜN SAHİBİNİ yanılttıysa veliyi de yanıltır. Rakam
+ * veliye bir şey anlatmıyordu, yalnız yanlış anlaşılıyordu; metin artık
+ * ne olduğunu ve ne OLMADIĞINI birlikte söylüyor.
  *   - öğrencinin öğretmeniyle yazışması veliye KAPALI (0025)
  *   - okul adı hiçbir yerde tutulmuyor (`siniflar` yalnız seviye+şube)
  *   - bir öğretmen yalnız KENDİ sınıflarındaki öğrenciyi görüyor,
@@ -48,7 +56,7 @@
  *
  * Metni değiştirirken bunu da yükseltin — yoksa test kırmızı olur.
  */
-export const ONAM_SURUMU = '2026-09-3';
+export const ONAM_SURUMU = '2026-09-4';
 
 export type OnamBolumu = {
   readonly baslik: string;
@@ -109,9 +117,12 @@ export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
     maddeler: [
       'Bilgiler Supabase üzerinde, İsviçre’nin Zürih bölgesindeki ' +
         'sunucularda tutuluyor. Yani veriler Türkiye dışında saklanıyor.',
-      'Çözüm fotoğrafları herkese açık bir adreste durmuyor; yalnız ' +
-        'yetkili kişiye, 60 saniye geçerli tek kullanımlık bir bağlantıyla ' +
-        'açılıyor.',
+      'Çözüm fotoğrafları internette açık bir adreste durmuyor.',
+      'Fotoğraf her açılışta, yalnız onu açan kişiye özel ve kısa ömürlü ' +
+        'bir bağlantıyla getiriliyor. Bağlantı kısa sürede geçersiz ' +
+        'oluyor; bu, bağlantı başkasının eline geçerse çalışmasın diye. ' +
+        'Öğretmenin fotoğrafa ne kadar bakabildiğiyle ilgisi yok — ' +
+        'dilediği zaman, dilediği kadar açabiliyor.',
       'Şifreler açık hâlde saklanmıyor.',
     ],
   },
