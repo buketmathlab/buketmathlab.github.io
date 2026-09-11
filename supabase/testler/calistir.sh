@@ -159,6 +159,10 @@ echo "==> Öğretmen kapsamı testleri (0033)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/ogretmen_kapsami_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Analiz testleri (0040)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/analiz_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Veli onamı testleri (0034)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/onam_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

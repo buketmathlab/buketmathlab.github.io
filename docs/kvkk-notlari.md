@@ -224,3 +224,25 @@ azaltıyor.
    kapandı: bucket private, imzalı URL 60 saniyelik.
 6. Zümredeki üç öğretmen kendi kapsamlarındaki öğrenci verisini görüyor.
    Onlar için bir kullanım taahhüdü metni **henüz yok**.
+
+## Sınıf analizi (0040) — yeni bir veri değil, yeni bir görünüm
+
+`sinif_analizi` ucu **yeni hiçbir kişisel veri toplamıyor ve saklamıyor**:
+zaten var olan ödev, gönderim ve puanlardan anlık bir özet hesaplıyor.
+Yeni tablo ve yeni sütun yok.
+
+Sonuç **kişisel veri düzeyinde değil, sınıf düzeyinde**: yanıtın içinde
+öğrenci kimliği de adı da geçmiyor, yalnız konu başına doğru/toplam ve
+sınıf ortalaması var. Ekranda da tek bir öğrenci adı yok. Bunu
+`analiz_testleri.sql` (kapsam grubu) ve `analiz-denetimi.mjs` ölçüyor.
+
+Kapsam ürünün geri kalanıyla aynı: `_ogretmenin_sinifi`. Bir öğretmen
+başka bir öğretmenin sınıfının analizini **alamıyor**; sahip hepsini
+alabiliyor. Öğrenciye ve veliye bu uç **hiç açık değil** — zaten onların
+göreceği kırılım konu karnesinde ve orada kendi çocuklarına ait.
+
+Yazdırılan analiz kâğıdı okul dışına çıkabilir; içinde öğrenci adı
+olmadığı için tek başına bir öğrenciyi tanımlamıyor. Yine de küçük
+sınıflarda "az veri" damgalı bir konu dolaylı ipucu verebilir — bu yüzden
+analiz kâğıdı **veliyle paylaşılmak için değil**, öğretmenin kendi ders
+planlaması için.

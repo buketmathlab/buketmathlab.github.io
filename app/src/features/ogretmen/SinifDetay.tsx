@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { KonuKarnesiBolumu } from '@/features/ogretmen/KonuKarnesiBolumu';
+import { SinifAnaliziDugmesi } from '@/features/ogretmen/SinifAnalizi';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import type { SinifDetayi, SinifOgrencisi } from '@/types/api';
@@ -111,6 +112,15 @@ export function SinifDetay() {
                 AYRI YÜKLENİYOR: karne sorgusu ölçüldü, en kötü durumda
                 169 ms. Yukarıdaki liste onu beklemesin. */}
             <KonuKarnesiBolumu sinifId={id} />
+
+            {/* 0040: HAFTALIK/AYLIK/DÖNEMLİK ANALİZ.
+                Konu karnesi "hangi konu zayıf" diyor ama ZAMAN kırılımı
+                yok — "bu hafta ne oldu", "dönem nasıl geçti" sorularının
+                cevabı ayrı bir ekranda. Buraya kart olarak konuyor,
+                çünkü ekranın asıl işi sınıfın öğrenci listesi. */}
+            <div className="mt-4">
+              <SinifAnaliziDugmesi sinifId={id} />
+            </div>
           </>
         )}
       </AsyncBoundary>

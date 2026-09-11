@@ -34,6 +34,7 @@ import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
 import { KodFisleri } from '@/features/ogretmen/KodFisleri';
 import { OnamDokumu } from '@/features/ogretmen/OnamDokumu';
 import { OkulBilgilendirme } from '@/features/ogretmen/OkulBilgilendirme';
+import { SinifAnalizi } from '@/features/ogretmen/SinifAnalizi';
 import {
   Veliler,
   SinifVelileriEkrani,
@@ -128,6 +129,8 @@ function Yonlendirme() {
         <Route path="bugun/:tur/:sinif" element={<PanoDetay />} />
         <Route path="siniflar" element={<Siniflar />} />
         <Route path="siniflar/:id" element={<SinifDetay />} />
+        {/* Analiz SEKME DEĞİL: bir sınıfın belgesi, ara sıra bakılır. */}
+        <Route path="siniflar/:id/analiz" element={<SinifAnalizi />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
         {/* `:id`'DEN ÖNCE. Sonra gelseydi `/ogrenciler/toplu` isteği
             `:id = "toplu"` olarak eşleşir ve "öğrenci bulunamadı" ekranı
