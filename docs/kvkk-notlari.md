@@ -99,6 +99,10 @@ Veli, uygulamaya ilk girişinde bir onam metni okuyup onaylıyor.
   Yeni test metnin sözlerini değil, **ürünle çelişmediğini** ölçüyor:
   `SchoolCrest.tsx` okunuyor ve metin okul adının görünürlüğünü inkâr
   eden bir cümle taşıyamıyor.
+
+  Sürüm 6'da maddenin sonundaki *"çocuğunuza ait bir kayıt değil"* kuyruğu
+  da kaldırıldı (öğretmenin isteği): cümle zaten "kaydına yazılmıyor" diye
+  başlıyordu, kuyruk aynı şeyi tekrar ediyordu.
 - **Kapsam doğru anlatılıyor (sürüm 3).** Metin bir tur boyunca "matematik
   zümresindeki öğretmenler — dört kişi" diyordu; bu **yanlıştı**. 0033'ün
   kuralı: her öğretmen yalnız kendi sınıflarındaki öğrenciyi görüyor,

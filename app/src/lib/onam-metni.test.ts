@@ -57,6 +57,10 @@ const SURUM_KAYDI: Record<string, string> = {
   // Öğretmen fark etti. Metin artık "çocuğun kaydında yok" ile
   // "uygulamada hiçbir yerde yok"u ayırıyor.
   '2026-09-5': '8d3e7986cd23ff7edc5f7eab7ae034c4ab24fe1c398eda3f7834c42444ad5cd2',
+  // Sürüm 6: okul adı maddesindeki "çocuğunuza ait bir kayıt değil"
+  // kuyruğu kaldırıldı (öğretmenin isteği). Cümle zaten "kaydına
+  // yazılmıyor" diye başlıyordu; kuyruk aynı şeyi tekrar ediyordu.
+  '2026-09-6': '4a35fd76de0a066f2f9706874d0c81e01b27f6b22f24fd14937c7da0c3555038',
 };
 
 describe('onam metni sürüm kilidi', () => {
@@ -237,6 +241,11 @@ describe('metin ürünün gerçeğini söylüyor', () => {
 
     // ...ve nerede göründüğünü söylemeli.
     expect(ONAM_METNI).toContain('giriş ekranında zaten');
+  });
+
+  // Sürüm 6'da kaldırıldı; bir düzenlemede geri sızmasın.
+  it('"çocuğunuza ait bir kayıt değil" kuyruğu metinde YOK', () => {
+    expect(ONAM_METNI).not.toMatch(/çocuğunuza ait bir kayıt değil/i);
   });
 
   it('istenmeyen kişisel verileri de sayıyor', () => {
