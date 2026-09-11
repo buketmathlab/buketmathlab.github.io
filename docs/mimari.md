@@ -2402,3 +2402,30 @@ oluyor (hash kilidi + çelişki testi), geri alınınca 25/25 yeşil.
 düştü, denetim ESKİ paketi ölçtü ve 9 kusur bildirdi. Kusur kodda değil,
 derlemedeydi. `✓ built` görülmeden denetim sonucuna bakılmaz — ne yeşiline
 ne kırmızısına.
+
+### Sürüm 6 — kuyruk kalktı, ve "hangi migration çalıştı" belirsizliği
+
+Öğretmen okul adı maddesinin sonundaki *"çocuğunuza ait bir kayıt değil"*
+kuyruğunu kaldırttı. Cümle zaten "kaydına yazılmıyor" diye başlıyordu;
+kuyruk aynı şeyi ikinci kez söylüyordu.
+
+**Asıl not, migration tarafında.** Bu tur başladığında 0036'nın canlıda
+çalıştırılıp çalıştırılmadığı **bilinmiyordu** — sunucu sürümü dışarıdan
+okunamıyor, çünkü `_gecerli_onam_surumu` bilerek `anon`'a kapalı.
+
+Belirsizlikte doğru hamle, eskiye dokunmayıp **yeni dosya** yazmaktı:
+0037'nin tek yaptığı sürüm sabitini `create or replace` ile yazmak, yani
+sunucu 0034'te de olsa 0035'te de 0036'da da sonuç aynı. Öğretmen yine
+**tek** dosya çalıştırıyor.
+
+Bu varsayılmadı, **ölçüldü** — iki ayrı veritabanı kurulup ikisinde de
+yalnız 0037 çalıştırıldı:
+
+| Başlangıç | 0037 sonrası |
+|---|---|
+| 0035'te duran zincir (`2026-09-4`) | `2026-09-6` ✓ |
+| 0036 çalışmış zincir (`2026-09-5`) | `2026-09-6` ✓ |
+
+Kural netleşti: **"dosya yayınlandı mı" değil, "bir veritabanı onu
+uyguladı mı"** — ve uygulanıp uygulanmadığı bilinmiyorsa, uygulanmış
+kabul edilir.
