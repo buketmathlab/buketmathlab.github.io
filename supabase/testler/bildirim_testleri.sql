@@ -51,7 +51,7 @@ begin
                         where ogrenci_id = v_o and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
   jo := (public.giris((select kod from public.giris_kodlari
                         where ogrenci_id = v_o and rol = 'ogrenci')))->>'token';
 
@@ -125,7 +125,7 @@ begin
                         where ogrenci_id = v_o and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
   perform public.mesaj_gonder(jv, 'Bir şey daha soracaktım.');
 
   n := (public.bildirim_sayilari(jt)->>'okunmamis_mesaj')::int;
@@ -189,7 +189,7 @@ begin
                         where ogrenci_id = v_o and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
   perform public.mesaj_gonder(jv, 'Arşivden önce yazıyorum.');
 
   -- Öğretmenin hiçbir listesinde görünmeyen bir öğrenci için rozet
@@ -231,7 +231,7 @@ begin
                        where gk.rol = 'veli' and o.aktif limit 1)))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
   begin
     perform public.bildirim_sayilari(jv);
     raise exception '6b: VELİ bildirim sayılarını okuyabildi';

@@ -39,7 +39,7 @@ begin
   t_veli := (public.giris(r ->> 'veli_kodu')) ->> 'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(t_veli, public._gecerli_onam_surumu());
+  perform public.onam_ver(t_veli, public._gecerli_onam_surumu(), 'Test Velisi');
 
   r := public.ogrenci_ekle(t_ogretmen, 'Ayse Takip', 'okul', v_sinif);
   v_ayse := (r ->> 'id')::uuid;

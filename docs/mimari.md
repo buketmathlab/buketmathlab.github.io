@@ -2429,3 +2429,78 @@ yalnız 0037 çalıştırıldı:
 Kural netleşti: **"dosya yayınlandı mı" değil, "bir veritabanı onu
 uyguladı mı"** — ve uygulanıp uygulanmadığı bilinmiyorsa, uygulanmış
 kabul edilir.
+
+## Onam dökümü ve onayı verenin adı (0038)
+
+Öğretmen: *"Velilerin onay verdiklerini PDF olarak, her sınıfın velisinin
+onayını toplu bir şekilde alabilmeliyim"* ve *"veli onay verirken adını
+soyadını yazıp onaylayabilsin; ben de hem öğrencinin hem onay veren
+velisinin adını göreyim."*
+
+### PDF için kütüphane eklenmedi
+
+Ürün PDF'i zaten tarayıcıdan üretiyor: kod fişleri `window.print()` +
+`@media print` ile basılıyor, öğretmen yazdırma penceresinde "PDF olarak
+kaydet" seçiyor. Onam dökümü aynı yolu kullanıyor. Bir PDF kütüphanesi
+pakete yüzlerce KB bindirirdi ve karşılığında hiçbir şey kazandırmazdı.
+
+### İmza değişti — 0007 tuzağı
+
+`onam_ver` artık üç parametre alıyor. PostgreSQL'de imza değişikliği
+**yeni bir fonksiyon** demektir; eskisi kendiliğinden kalkmaz. İki
+parametreli sürüm bırakılsaydı **adı yazmadan onay vermenin yolu açık
+kalırdı** — üstelik arayüz değil, doğrudan uç üzerinden. Bu yüzden önce
+`drop function public.onam_ver(text, text)`, sonra yenisi ve yetkisi.
+
+Migration bunu kendi içinde de denetliyor ve `onam_testleri.sql` 10a
+grubu `pg_proc`a sorarak ölçüyor — çağırıp hata almak yeterli kanıt
+değildi: fonksiyon var ama başka sebeple reddediyor olabilirdi.
+
+### Belge kendi kendini anlatıyor
+
+Bir isim listesi tek başına kayıt değildir. Kâğıtta sınıf, **dökümü alan
+kişi**, alınma zamanı, metnin **sürümü** ve en sonda metnin **tamamı**
+var: "kim, ne zaman, neye onay verdi" üçü de aynı belgede. Metin yeni
+sayfadan başlıyor (`break-before: page`), tablo satırları sayfa ortasından
+bölünmüyor.
+
+**Dürüst sınır kâğıda yazılı:** velinin adı kendi beyanıdır, kimlik
+doğrulaması yapılmaz. Bunu belgeden gizlemek, belgeyi olduğundan güçlü
+göstermek olurdu.
+
+### Sürüm neden yükseldi (2026-09-6 → 2026-09-7)
+
+Metin değişmese de **velinin yaptığı şey** değişti: artık adını yazıyor.
+Sürüm sabit kalsaydı adsız verilmiş eski onaylar yeni akışta adlıymış
+gibi görünür, döküm boş isimlerle çıkardı. Yükselince herkes bir kez daha
+onaylıyor ve döküm baştan eksiksiz oluyor. Eski satırlar **silinmiyor**;
+`veli_adi` NULL olabiliyor ve dökümde "ad kaydedilmemiş" diye görünüyor.
+
+### Yedek kendiliğinden taşıdı
+
+`disa_aktar` tabloyu `to_jsonb(v)` ile alıyor, `geri-yukle.sql` sütunları
+**şemadan** okuyor. Yeni sütun için ikisi de değiştirilmedi — ve felaket
+provası bunu ölçtü: geri yüklenen veritabanında adlar yerinde
+(`Ayşe'nin Velisi`, `Öğünç'ün Velisi`). Sütun listesi elle yazılmış
+olsaydı bu tur onu da bozacaktı.
+
+### "Tek dosya yeter" iddiası ölçüldü
+
+Öğretmene "0035/0036/0037'yi çalıştırmış olun ya da olmayın, yalnız
+0038'i çalıştırın" deniyor. Varsayılmadı — dört ayrı veritabanı kurulup
+her birinde yalnız 0038 çalıştırıldı:
+
+| Zincirin durduğu yer | 0038 sonrası |
+|---|---|
+| 0034 (`2026-09-2`) | `2026-09-7` ✓ |
+| 0035 (`2026-09-4`) | `2026-09-7` ✓ |
+| 0036 (`2026-09-5`) | `2026-09-7` ✓ |
+| 0037 (`2026-09-6`) | `2026-09-7` ✓ |
+
+### Yazdırma kipi de ölçülüyor
+
+`onam-denetimi.mjs` Playwright'ın `emulateMedia({media:'print'})` kipine
+geçip **kâğıda ne çıktığına** bakıyor: kabuk yok, "Yazdır" düğmesi yok,
+belge duruyor. Bu ölçüm olmadan "yazdırılabilir" iddiası ekranda yeşil
+görünüp kâğıtta yan menüyle çıkabilirdi — kod fişlerinde tam olarak bu
+yaşanmıştı.

@@ -218,9 +218,35 @@ console.log('\n1 — ONAM BEKLEYEN VELİ: ekran çiziliyor, sekmeler çizilmiyor
   await s.close();
 }
 
+console.log('\n2c — VELİNİN ADI İSTENİYOR (0038)');
+{
+  const { s, istekler } = await veliSayfasi();
+  const alan = s.getByLabel('Adınız ve soyadınız');
+  olc('ad alanı var ve etiketli', await alan.isVisible());
+
+  const dugme = s.getByRole('button', { name: /onaylıyorum/i });
+  // AD BOŞKEN ONAYLANAMIYOR. Kararın kendisi sunucuda (0038, 22023);
+  // burada ölçülen, velinin boşuna tıklamaması.
+  olc('ad boşken düğme kapalı', await dugme.isDisabled());
+
+  await alan.fill('  Fatma Yıldırım  ');
+  await s.waitForTimeout(200);
+  olc('ad yazılınca düğme açılıyor', await dugme.isEnabled());
+
+  await dugme.click();
+  await s.waitForTimeout(900);
+  const cagri = istekler.find((i) => i.uc === 'onam_ver');
+  const g = JSON.parse(cagri?.govde ?? '{}');
+  olc('ad sunucuya gidiyor', typeof g.p_veli_adi === 'string', `p_veli_adi = ${g.p_veli_adi}`);
+  // Baştaki/sondaki boşluk sunucuya gitmeden kırpılıyor (sunucu da kırpıyor).
+  olc('ad kırpılmış gidiyor', g.p_veli_adi === 'Fatma Yıldırım');
+  await s.close();
+}
+
 console.log('\n3–4 — ONAYLA: sunucuya gidiyor ve panel açılıyor');
 {
   const { s, istekler } = await veliSayfasi();
+  await s.getByLabel('Adınız ve soyadınız').fill('Deneme Velisi');
   await s.getByRole('button', { name: /onaylıyorum/i }).click();
   await s.waitForTimeout(900);
 
@@ -312,6 +338,87 @@ console.log('\n8 — ÖĞRETMEN TARAFI: "Onam bekliyor" etiketi');
   const satir = s.locator('li, a').filter({ hasText: 'Onamlı Veli' }).first();
   const onamliMetin = (await satir.count()) ? await satir.innerText() : '';
   olc('onamlı velide etiket yok', !/Onam bekliyor/.test(onamliMetin));
+  await s.close();
+}
+
+console.log('\n10 — ONAM DÖKÜMÜ: belge kendini anlatıyor');
+{
+  const s = await tarayici.newPage({ viewport: { width: 1024, height: 900 } });
+  await s.route('**/rest/v1/rpc/*', (r) => {
+    const uc = r.request().url().split('/').pop().split('?')[0];
+    const govde =
+      uc === 'ben_kimim'
+        ? { id: 's1', ad: 'Buket', sahip: true, vekalet: false, vekil: null }
+        : uc === 'onam_dokumu'
+          ? {
+              sinif: { id: '9a', ad: '9A' },
+              surum: SURUM,
+              alindi: '2026-09-11T10:30:00Z',
+              alan: 'Buket Topuzoğlu',
+              toplam: 2,
+              onayli: 1,
+              satirlar: [
+                {
+                  ogrenci_id: 'o1', ogrenci: 'Deniz Yalın', onam_var: true,
+                  veli_adi: 'Fatma Yıldırım', onay_zamani: '2026-09-11T09:15:00Z',
+                },
+                {
+                  ogrenci_id: 'o2', ogrenci: 'Kerem Aksu', onam_var: false,
+                  veli_adi: null, onay_zamani: null,
+                },
+              ],
+            }
+          : {};
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
+  });
+  await s.addInitScript(() =>
+    localStorage.setItem(
+      'sekiz_oturum',
+      JSON.stringify({ rol: 'ogretmen', token: 't'.repeat(64) }),
+    ),
+  );
+  await s.goto(KOK + '/ogretmen/veliler/sinif/9a/onam', { waitUntil: 'networkidle' });
+  await s.waitForTimeout(700);
+
+  const metin = await s.locator('body').innerText();
+  olc('döküm çizildi', /Veli Onam Dökümü/i.test(metin));
+  olc('sınıf yazıyor', /9A/.test(metin));
+  olc('dökümü alan yazıyor', /Buket Topuzoğlu/.test(metin));
+  olc('sürüm yazıyor', metin.includes(SURUM));
+
+  // ÖĞRETMENİN ASIL İSTEDİĞİ: iki ad bir arada.
+  olc('öğrencinin adı var', /Deniz Yalın/.test(metin));
+  olc('onaylayan velinin adı var', /Fatma Yıldırım/.test(metin));
+  olc('özet sayıları var', /2\s*öğrencinin\s*1/.test(metin.replace(/\s+/g, ' ')));
+
+  // ONAYLAMAYAN SATIR AD UYDURMUYOR.
+  olc('onamsız öğrenci listede', /Kerem Aksu/.test(metin));
+  olc('onamsız satır "Onam bekliyor" diyor', /Onam bekliyor/.test(metin));
+
+  // Belge tek başına anlamlı mı: metnin tamamı kâğıtta mı?
+  olc('metnin tamamı belgede', /İsviçre/.test(metin) && /Veli paneline giremezsiniz/.test(metin));
+  olc('beyan uyarısı belgede', /kimlik doğrulaması yapılmaz/i.test(metin));
+
+  // YAZDIRMA KİPİ — kâğıda ne çıkıyor. Bu ölçüm olmadan "yazdırılabilir"
+  // iddiası ekranda yeşil görünüp kâğıtta yan menüyle çıkabilirdi
+  // (0027'de kod fişlerinde tam olarak bu yaşandı).
+  await s.emulateMedia({ media: 'print' });
+  await s.waitForTimeout(300);
+  const kagit = await s.evaluate(() => {
+    const gorunur = (sec) =>
+      [...document.querySelectorAll(sec)].some((e) => e.offsetParent !== null);
+    return {
+      kabuk: gorunur('aside') || gorunur('header') || gorunur('nav'),
+      yazdirDugmesi: [...document.querySelectorAll('button')].some(
+        (b) => /yazdır/i.test(b.textContent ?? '') && b.offsetParent !== null,
+      ),
+      belge: document.querySelector('.sk-onam-dokumu')?.offsetParent !== null,
+    };
+  });
+  olc('kâğıtta kabuk yok', !kagit.kabuk);
+  olc('kâğıtta "Yazdır" düğmesi yok', !kagit.yazdirDugmesi);
+  olc('kâğıtta belge duruyor', kagit.belge);
+  await s.emulateMedia({ media: 'screen' });
   await s.close();
 }
 

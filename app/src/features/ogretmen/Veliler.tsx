@@ -4,6 +4,7 @@ import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
+import { OnamDokumuDugmesi } from '@/features/ogretmen/OnamDokumu';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { Yazisma as YazismaKutusu } from '@/components/ui/Yazisma';
 import { useOturum } from '@/hooks/oturum-baglam';
@@ -208,6 +209,13 @@ export function SinifVelileriEkrani() {
                 ))}
               </ul>
             </Card>
+
+            {/* ONAM DÖKÜMÜ — listenin ALTINDA, ayrı bir kart. Üste koymak
+                ekranın asıl işini (yazışma) ikinci plana atardı; döküm ara
+                sıra alınan bir belge. */}
+            <div className="mt-4">
+              <OnamDokumuDugmesi sinifId={id} />
+            </div>
           </>
         )}
       </AsyncBoundary>

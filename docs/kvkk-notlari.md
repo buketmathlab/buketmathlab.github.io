@@ -122,6 +122,16 @@ Veli, uygulamaya ilk girişinde bir onam metni okuyup onaylıyor.
 - **Öğrenci etkilenmiyor:** kapı yalnız veli rolünde çalışıyor.
 - Onay **yedeğe giriyor** (`disa_aktar` → `geri-yukle.sql`); felaket
   provasında gerçek bir satırla ölçülüyor.
+- **Onayı kimin verdiği kayıtlı (0038).** Veli onaylarken adını soyadını
+  yazıyor; ad, onay tarihi ve metin sürümüyle birlikte saklanıyor.
+  **Dürüst sınır:** bu ad velinin kendi beyanıdır, kimlik doğrulaması
+  değildir — döküm kâğıdında da böyle yazıyor.
+- **Sınıf başına onam dökümü (0038).** Veliler → bir sınıf → *Onam
+  dökümü* → Yazdır → "PDF olarak kaydet". Belgede öğrenci adı, onaylayan
+  velinin adı, onay zamanı, özet sayılar ve **metnin tamamı** var; yani
+  "kim, ne zaman, neye" üçü de aynı kâğıtta. Kapsam kuralı burada da
+  geçerli: bir öğretmen yalnız kendi sınıfının dökümünü alabiliyor
+  (`onam_dokumu`, `_ogretmenin_sinifi`).
 
 ### Metnin SÖYLEMEDİKLERİ — bilinen boşluk
 

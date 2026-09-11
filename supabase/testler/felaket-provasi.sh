@@ -89,10 +89,10 @@ begin
   -- adımdaki iki veli kontrolü de geri yükleme sonrası çalışabilsin.
   perform public.onam_ver((public.giris((select kod from public.giris_kodlari
                             where ogrenci_id = v_a and rol = 'veli')))->>'token',
-                          public._gecerli_onam_surumu());
+                          public._gecerli_onam_surumu(), 'Ayşe''nin Velisi');
   perform public.onam_ver((public.giris((select kod from public.giris_kodlari
                             where ogrenci_id = v_b and rol = 'veli')))->>'token',
-                          public._gecerli_onam_surumu());
+                          public._gecerli_onam_surumu(), 'Öğünç''ün Velisi');
   -- 0033: özel ders ve ödeme SAHİBE ait; doğrudan `insert`'ler
   -- `ogretmen_id` taşımak zorunda (sütun `not null`).
   insert into public.dersler (ogrenci_id, zaman, mod, link, ogretmen_id)

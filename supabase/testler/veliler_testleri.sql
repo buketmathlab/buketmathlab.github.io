@@ -54,12 +54,12 @@ begin
                          where ogrenci_id = v_a and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
   jv2 := (public.giris((select kod from public.giris_kodlari
                          where ogrenci_id = v_b and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv2, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv2, public._gecerli_onam_surumu(), 'Test Velisi');
   jo  := (public.giris((select kod from public.giris_kodlari
                          where ogrenci_id = v_a and rol = 'ogrenci')))->>'token';
 

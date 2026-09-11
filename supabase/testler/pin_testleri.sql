@@ -37,7 +37,7 @@ begin
                         where ogrenci_id = v_a and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
 
   -- ---------------------------------------------------------------------------
   -- 1 — YANLIŞ ESKİ PIN reddediliyor VE PIN değişmiyor
