@@ -2362,3 +2362,43 @@ etkilenmiyordu.
 Ders: sürüm yükselten bir tur, **site + SQL birlikte tamamlanana kadar
 bitmiş sayılmaz.** Sıra doğruydu (önce site) ama arada beklemek pencereyi
 açık tutuyor.
+
+### Sürüm 5 — ölçüm yanlış bir cümleyi kilitlemişti
+
+Öğretmen sordu: *"Onam metninde okulun adı saklanmıyor diyor ama logoda
+var okulun adı."* **Haklıydı.**
+
+`SchoolCrest.tsx:13` mührün `alt` metninde okulun tam adını taşıyor;
+`GirisEkrani.tsx` giriş ekranında, mührün hemen altında adı **görünür
+metin** olarak yazıyor. Yani okulun adı her velinin **ilk gördüğü
+ekranda** duruyor.
+
+Doğru gözlem şuydu: şemada okul adı alanı yok, yani ad **çocuğun kaydına**
+yazılmıyor. Ben bunu metne *"hiçbir yerde saklanmıyor"* diye geçirdim.
+"Çocuğun kaydında yok" ile "uygulamada hiçbir yerde yok" aynı şey değil.
+
+**Asıl ders ölçümde.** Test şunu kilitliyordu:
+
+```ts
+expect(ONAM_METNI).toContain('Okulun adı SEKİZ'de hiçbir yerde saklanmıyor');
+```
+
+Yani ölçüm **yanlış iddiayı koruyordu**. Böyle bir test kusuru bulmaz,
+gizler: cümle düzeltilmeye çalışılsa test kırmızı yanar ve yanlış olan
+geri konur. Turun kalıcı çıktısı, testin şeklinin değişmesi:
+
+```ts
+// metnin SÖZLERİ değil, ÜRÜNLE ÇELİŞMEMESİ ölçülüyor
+const tamAd = /TAM_AD = '([^']+)'/.exec(readFileSync('SchoolCrest.tsx'))?.[1];
+expect(tamAd).toMatch(/Lisesi/);                       // ürünün gerçeği
+expect(ONAM_METNI).not.toMatch(/hiçbir yerde saklanmıyor/i);  // metin inkâr edemez
+expect(ONAM_METNI).toContain('giriş ekranında zaten');        // nerede olduğunu söylemeli
+```
+
+Geri alma kanıtı alındı: yanlış cümle geri konunca **iki** test kırmızı
+oluyor (hash kilidi + çelişki testi), geri alınınca 25/25 yeşil.
+
+**Ve bir kez daha o tuzak:** bu turda `cd app && npm run build` sessizce
+düştü, denetim ESKİ paketi ölçtü ve 9 kusur bildirdi. Kusur kodda değil,
+derlemedeydi. `✓ built` görülmeden denetim sonucuna bakılmaz — ne yeşiline
+ne kırmızısına.

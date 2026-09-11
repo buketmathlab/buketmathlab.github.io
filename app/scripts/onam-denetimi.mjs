@@ -158,7 +158,11 @@ console.log('\n1 — ONAM BEKLEYEN VELİ: ekran çiziliyor, sekmeler çizilmiyor
   );
   olc('ad-soyad sayılıyor', /adı ve soyadı/i.test(metin));
   olc('not (puan) sayılıyor', /notu \(puanı\)/i.test(metin));
-  olc('okul adının saklanmadığı yazıyor', /Okulun adı .*saklanmıyor/i.test(metin));
+  olc('okul adının kayda yazılmadığı yazıyor', /kaydına yazılmıyor/i.test(metin));
+  olc('okul adının giriş ekranında olduğu yazıyor', /giriş ekranında zaten/i.test(metin));
+  // YANLIŞ CÜMLE GERİ GELMESİN. "Hiçbir yerde saklanmıyor" yanlıştı:
+  // okulun adı giriş ekranında ve mührün alt metninde yazılı.
+  olc('yanlış "hiçbir yerde saklanmıyor" cümlesi yok', !/hiçbir yerde saklanmıyor/i.test(metin));
   olc('sınıf örneği yazıyor', /örneğin 9A/i.test(metin));
   olc(
     'düğmenin üstünde ne onaylandığı özetleniyor',

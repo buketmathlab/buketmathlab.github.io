@@ -85,9 +85,20 @@ Veli, uygulamaya ilk girişinde bir onam metni okuyup onaylıyor.
   nerede saklanıyor, onaylamamanın sonucu.
 - Metin ayrıca velinin **çocuğun öğrenci uygulamasını kullanmasına** izin
   verdiğini açıkça söylüyor; ad, soyad, sınıf, ödevler ve notlar tek tek
-  sayılıyor. **Okul adı saklanmadığı için** metin saklandığını değil,
-  saklanmadığını söylüyor — şemada karşılığı yok (`siniflar` yalnız
-  seviye + şube).
+  sayılıyor.
+- **Okul adı: iki ayrı şey karıştırılmıştı (sürüm 5'te düzeltildi).**
+  Şemada okul adı alanı **yok** (`siniflar` yalnız seviye + şube), yani
+  okul adı **çocuğun kaydına yazılmıyor**. Ama okulun adı **uygulamanın
+  kimliğinde var**: `SchoolCrest.tsx` mührün `alt` metninde tam adı
+  taşıyor ve `GirisEkrani.tsx` giriş ekranında görünür metin olarak
+  yazıyor — her velinin ilk gördüğü ekran. Metin bir tur boyunca "hiçbir
+  yerde saklanmıyor" diyordu; bu **yanlıştı** ve öğretmen fark etti.
+
+  **Asıl ders ölçümde:** test o yanlış cümleyi `toContain` ile
+  kilitliyordu. Yanlış bir iddiayı koruyan ölçüm kusuru bulmaz, gizler.
+  Yeni test metnin sözlerini değil, **ürünle çelişmediğini** ölçüyor:
+  `SchoolCrest.tsx` okunuyor ve metin okul adının görünürlüğünü inkâr
+  eden bir cümle taşıyamıyor.
 - **Kapsam doğru anlatılıyor (sürüm 3).** Metin bir tur boyunca "matematik
   zümresindeki öğretmenler — dört kişi" diyordu; bu **yanlıştı**. 0033'ün
   kuralı: her öğretmen yalnız kendi sınıflarındaki öğrenciyi görüyor,

@@ -28,7 +28,18 @@
  * veliye bir şey anlatmıyordu, yalnız yanlış anlaşılıyordu; metin artık
  * ne olduğunu ve ne OLMADIĞINI birlikte söylüyor.
  *   - öğrencinin öğretmeniyle yazışması veliye KAPALI (0025)
- *   - okul adı hiçbir yerde tutulmuyor (`siniflar` yalnız seviye+şube)
+ *   - okul adı ÇOCUĞUN KAYDINDA tutulmuyor (`siniflar` yalnız
+ *     seviye+şube; `ad` ondan türetiliyor) — ama uygulamanın kimliğinde
+ *     VAR: giriş ekranında görünür metin ve mührün `alt` metni
+ *     (`SchoolCrest.tsx`, `GirisEkrani.tsx`)
+ *
+ * BU AYRIM SÜRÜM 5'TE DÜZELTİLDİ. Metin önce "Okulun adı SEKİZ'de hiçbir
+ * yerde saklanmıyor" diyordu; öğretmen "ama logoda var" dedi ve HAKLIYDI.
+ * "Çocuğun kaydında yok" ile "uygulamada hiçbir yerde yok" aynı şey değil;
+ * ilki doğru, ikincisi yanlıştı. Daha kötüsü, testler o yanlış cümleyi
+ * KİLİTLİYORDU — ölçüm, yanlış bir iddiayı koruduğunda kusuru gizler.
+ * Artık `onam-metni.test.ts` `SchoolCrest.tsx`'i okuyup metnin bu
+ * görünürlüğü İNKÂR ETMEDİĞİNİ ölçüyor.
  *   - bir öğretmen yalnız KENDİ sınıflarındaki öğrenciyi görüyor,
  *     sahip ise yönetim için hepsini (`_ogretmenin_ogrencisi`,
  *     `_yonetici`; `supabase/testler/ogretmen_kapsami_testleri.sql`)
@@ -56,7 +67,7 @@
  *
  * Metni değiştirirken bunu da yükseltin — yoksa test kırmızı olur.
  */
-export const ONAM_SURUMU = '2026-09-4';
+export const ONAM_SURUMU = '2026-09-5';
 
 export type OnamBolumu = {
   readonly baslik: string;
@@ -87,8 +98,11 @@ export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
     baslik: 'Hangi bilgiler tutuluyor',
     maddeler: [
       'Çocuğunuzun adı ve soyadı.',
-      'Sınıfı — yalnız seviye ve şube olarak, örneğin 9A. ' +
-        'Okulun adı SEKİZ’de hiçbir yerde saklanmıyor.',
+      'Sınıfı — yalnız seviye ve şube olarak, örneğin 9A.',
+      'Okulun adı çocuğunuzun kaydına yazılmıyor; kayıtta yalnız sınıfı ' +
+        'var. Okulun adı ve arması uygulamanın giriş ekranında zaten ' +
+        'yazılı — bu herkesin gördüğü sabit bir bilgi, çocuğunuza ait bir ' +
+        'kayıt değil.',
       'Ödevleri: cevapları, notu (puanı) ve öğretmen yorumu.',
       'Ödev için yüklediği çözüm kâğıdı fotoğrafı.',
       'Sizinle öğretmen arasındaki mesajlar.',

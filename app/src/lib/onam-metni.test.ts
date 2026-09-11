@@ -52,6 +52,11 @@ const SURUM_KAYDI: Record<string, string> = {
   // bağlantının ömrü, bakma süresi değil. Ürünün sahibini yanıltan cümle
   // veliyi de yanıltır.
   '2026-09-4': '04e492b900484ca77770ae49108ecaa04b54ce5052895b16697be0dbe8598065',
+  // Sürüm 5: "Okulun adı SEKİZ'de hiçbir yerde saklanmıyor" cümlesi
+  // YANLIŞTI — okulun adı giriş ekranında ve mührün alt metninde yazılı.
+  // Öğretmen fark etti. Metin artık "çocuğun kaydında yok" ile
+  // "uygulamada hiçbir yerde yok"u ayırıyor.
+  '2026-09-5': '8d3e7986cd23ff7edc5f7eab7ae034c4ab24fe1c398eda3f7834c42444ad5cd2',
 };
 
 describe('onam metni sürüm kilidi', () => {
@@ -173,19 +178,24 @@ describe('metin ürünün gerçeğini söylüyor', () => {
   });
 
   /**
-   * OKUL ADI GERÇEKTEN SAKLANMIYOR.
+   * OKUL ADI — "ÇOCUĞUN KAYDINDA YOK" İLE "HİÇBİR YERDE YOK" AYNI ŞEY DEĞİL.
    *
-   * Öğretmen "okul adının depolanacağını kabul eden" bir metin istedi;
-   * şemaya bakıldığında okul adı diye bir alan olmadığı görüldü —
-   * `siniflar` yalnız seviye ve şube tutuyor, `ad` ondan türetiliyor.
-   * Metin bu yüzden saklandığını DEĞİL, saklanmadığını söylüyor.
+   * Bu testin ÖNCEKİ hâli şunu kilitliyordu:
    *
-   * Bu test ikisini birden tutuyor: ileride gerçekten bir okul adı alanı
-   * eklenirse şema testi değil BU test kırmızı olur ve metnin de
-   * güncellenmesi gerektiği ortaya çıkar.
+   *     expect(ONAM_METNI).toContain('Okulun adı SEKİZ’de hiçbir yerde
+   *                                   saklanmıyor');
+   *
+   * O cümle YANLIŞTI. Okulun adı `SchoolCrest.tsx` içinde mührün `alt`
+   * metni, `GirisEkrani.tsx` içinde de giriş ekranındaki görünür metin —
+   * yani her velinin ilk gördüğü ekranda yazılı. Öğretmen fark etti;
+   * ölçüm fark etmedi, çünkü ölçüm YANLIŞ İDDİAYI KORUYORDU.
+   *
+   * Ders: bir test, yanlış bir cümleyi `toContain` ile sabitlerse kusuru
+   * bulmaz, gizler. Onun için aşağıdaki testte iddia edilen şey metnin
+   * SÖZLERİ değil, metnin ÜRÜNLE ÇELİŞMEMESİ.
    */
-  it('okul adının saklanmadığını söylüyor ve şema bunu doğruluyor', () => {
-    expect(ONAM_METNI).toContain('Okulun adı SEKİZ’de hiçbir yerde saklanmıyor');
+  it('okul adının çocuğun kaydında olmadığını söylüyor, şema doğruluyor', () => {
+    expect(ONAM_METNI).toContain('çocuğunuzun kaydına yazılmıyor');
     expect(ONAM_METNI).toContain('örneğin 9A');
 
     const sema = readFileSync(
@@ -195,6 +205,38 @@ describe('metin ürünün gerçeğini söylüyor', () => {
     const siniflar = /create table if not exists public\.siniflar[\s\S]*?\n\);/.exec(sema)?.[0];
     expect(siniflar).toBeTruthy();
     expect(siniflar).not.toMatch(/okul/i);
+  });
+
+  /**
+   * METİN, OKUL ADININ EKRANDA GÖRÜNDÜĞÜNÜ İNKÂR EDEMEZ.
+   *
+   * Asıl kıymetli ölçüm bu. Okul adı ürünün kimliğinde: mühür bileşeni
+   * tam adı taşıyor (Kural 8 gereği mühre dokunulmuyor) ve giriş ekranı
+   * adı yazıyor. Metin bunu inkâr eden bir cümle taşırsa, veli ekranda
+   * gördüğüyle okuduğu arasında çelişki yaşar — tam da öğretmenin
+   * yakaladığı durum.
+   *
+   * `SchoolCrest.tsx` GERÇEKTEN okunuyor: okul adı üründen kalkarsa bu
+   * test de kendiliğinden anlamını yitirsin, kopyalanmış bir sabiti
+   * korumaya devam etmesin.
+   */
+  it('metin, okul adının uygulamada göründüğünü inkâr etmiyor', () => {
+    const mühür = readFileSync(
+      resolve(process.cwd(), 'src/components/brand/SchoolCrest.tsx'),
+      'utf8',
+    );
+    const tamAd = /TAM_AD = '([^']+)'/.exec(mühür)?.[1];
+
+    // Önce ÜRÜNÜN gerçeği: okul adı hâlâ uygulamada mı?
+    expect(tamAd).toBeTruthy();
+    expect(tamAd).toMatch(/Lisesi/);
+
+    // Öyleyse metin "hiçbir yerde yok" diyemez.
+    expect(ONAM_METNI).not.toMatch(/hiçbir yerde saklanmıyor/i);
+    expect(ONAM_METNI).not.toMatch(/okul(un)? ad[ıi].{0,40}(tutulmuyor|yok)/i);
+
+    // ...ve nerede göründüğünü söylemeli.
+    expect(ONAM_METNI).toContain('giriş ekranında zaten');
   });
 
   it('istenmeyen kişisel verileri de sayıyor', () => {
