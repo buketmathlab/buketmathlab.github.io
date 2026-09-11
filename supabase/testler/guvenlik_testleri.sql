@@ -55,7 +55,7 @@ begin
   t_veli    := (public.giris(r ->> 'veli_kodu')) ->> 'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(t_veli, public._gecerli_onam_surumu());
+  perform public.onam_ver(t_veli, public._gecerli_onam_surumu(), 'Test Velisi');
   assert t_ogrenci is not null and t_veli is not null, 'Kod ile giriş çalışmalı';
   raise notice '    öğrenci/veli girişi: OK';
 

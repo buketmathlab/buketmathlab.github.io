@@ -39,7 +39,7 @@ begin
   t_veli     := (public.giris(r ->> 'veli_kodu')) ->> 'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(t_veli, public._gecerli_onam_surumu());
+  perform public.onam_ver(t_veli, public._gecerli_onam_surumu(), 'Test Velisi');
 
   -- 9A'ya yayında bir test ödevi: hem soru hem anahtar PDF'i var.
   r := public.odev_olustur(t_ogretmen, 'PDFTEST Türev', null, v_sinif_a, 'test',

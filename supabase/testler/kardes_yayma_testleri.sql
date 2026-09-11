@@ -319,7 +319,7 @@ begin
                             where ogrenci_id = ada and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv_ada, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv_ada, public._gecerli_onam_surumu(), 'Test Velisi');
   begin
     perform public.odev_kardeslere_yay(jo_ada, d_u);
     raise exception '8a: ÖĞRENCİ yayma ucunu çağırabildi';

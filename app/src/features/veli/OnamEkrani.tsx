@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { rpc } from '@/services/supabase';
 import {
+  ONAM_AD_ACIKLAMA,
+  ONAM_AD_ETIKET,
   ONAM_BASLIK,
   ONAM_BOLUMLERI,
   ONAM_GIRIS,
@@ -32,13 +34,23 @@ export function OnamEkrani({ onaylandi }: { onaylandi: () => void }) {
   const { oturum } = useOturum();
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  const [ad, setAd] = useState('');
+
+  // Sunucudaki kuralın aynısı (`onam_ver`, 0038): kırpılmış ad en az iki
+  // karakter. Burada tekrarlanıyor ki veli düğmeye basıp hata almasın —
+  // ama KARAR SUNUCUDA: bu satır silinse de adsız onay kaydedilemez.
+  const adGecerli = ad.trim().length >= 2;
 
   async function onayla() {
-    if (!oturum?.token || gonderiliyor) return;
+    if (!oturum?.token || gonderiliyor || !adGecerli) return;
     setGonderiliyor(true);
     setHata(null);
     try {
-      await rpc('onam_ver', { p_token: oturum.token, p_surum: ONAM_SURUMU });
+      await rpc('onam_ver', {
+        p_token: oturum.token,
+        p_surum: ONAM_SURUMU,
+        p_veli_adi: ad.trim(),
+      });
       onaylandi();
     } catch (e) {
       setHata(e instanceof Error ? e.message : 'Onay kaydedilemedi.');
@@ -82,6 +94,32 @@ export function OnamEkrani({ onaylandi }: { onaylandi: () => void }) {
         </p>
       )}
 
+      {/* ADI KİM VERDİ. Öğretmenin sınıf başına aldığı onam dökümünde
+          hem çocuğun hem onaylayan velinin adı görünüyor; o ad buradan
+          geliyor. Etiketi ve açıklaması da `onam-metni.ts`'te, yani hash
+          kilidinin içinde: veliden ne istendiği sessizce değişemez. */}
+      <div className="mt-6">
+        <label
+          htmlFor="onam-ad"
+          className="block text-[15px] font-semibold text-ink"
+        >
+          {ONAM_AD_ETIKET}
+        </label>
+        <p id="onam-ad-not" className="mt-1 text-[13px] leading-relaxed text-muted">
+          {ONAM_AD_ACIKLAMA}
+        </p>
+        <input
+          id="onam-ad"
+          type="text"
+          value={ad}
+          onChange={(e) => setAd(e.target.value)}
+          maxLength={120}
+          autoComplete="name"
+          aria-describedby="onam-ad-not"
+          className="mt-2 h-12 w-full rounded-lg border border-line bg-surface px-3 text-[16px] text-ink"
+        />
+      </div>
+
       <div className="mt-6">
         {/* NEYE BASIYOR. Metin uzun; veli aşağı indiğinde düğmenin ne
             anlama geldiğini tekrar görmeli. Cümle `onam-metni.ts`'ten
@@ -89,7 +127,11 @@ export function OnamEkrani({ onaylandi }: { onaylandi: () => void }) {
         <p className="mb-3 text-[15px] font-semibold leading-relaxed text-ink">
           {ONAM_OZET}
         </p>
-        <Button onClick={onayla} disabled={gonderiliyor} className="w-full">
+        <Button
+          onClick={onayla}
+          disabled={gonderiliyor || !adGecerli}
+          className="w-full"
+        >
           {gonderiliyor ? 'Kaydediliyor…' : 'Okudum, onaylıyorum'}
         </Button>
         {/* Onayın kaydedildiğini söylemek, "bir yere yazıldı mı?" sorusunu

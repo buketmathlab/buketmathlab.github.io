@@ -3,6 +3,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  ONAM_AD_ACIKLAMA,
+  ONAM_AD_ETIKET,
   ONAM_BOLUMLERI,
   ONAM_GIRIS,
   ONAM_METNI,
@@ -61,6 +63,10 @@ const SURUM_KAYDI: Record<string, string> = {
   // kuyruğu kaldırıldı (öğretmenin isteği). Cümle zaten "kaydına
   // yazılmıyor" diye başlıyordu; kuyruk aynı şeyi tekrar ediyordu.
   '2026-09-6': '4a35fd76de0a066f2f9706874d0c81e01b27f6b22f24fd14937c7da0c3555038',
+  // Sürüm 7: veli artık ADINI YAZARAK onaylıyor (0038). Öğretmen sınıf
+  // başına onam dökümü istedi ve "onay veren velinin adını da göreyim"
+  // dedi. Sürüm yükseldi çünkü velinin YAPTIĞI şey değişti.
+  '2026-09-7': '3be08cde6ff4645f99e753285fc7fa7c6716f6168d851c803d281fed7589855a',
 };
 
 describe('onam metni sürüm kilidi', () => {
@@ -246,6 +252,33 @@ describe('metin ürünün gerçeğini söylüyor', () => {
   // Sürüm 6'da kaldırıldı; bir düzenlemede geri sızmasın.
   it('"çocuğunuza ait bir kayıt değil" kuyruğu metinde YOK', () => {
     expect(ONAM_METNI).not.toMatch(/çocuğunuza ait bir kayıt değil/i);
+  });
+
+  /**
+   * SÜRÜM 7 — VELİDEN ADI İSTENİYOR.
+   *
+   * Etiket ve açıklama metnin PARÇASI (yani hash kilidinin içinde):
+   * veliden ne istendiği ve neden istendiği sessizce değiştirilemez.
+   * Kilidin dışında kalsalardı, "adınızı yazın" bir gün "T.C. kimlik
+   * numaranızı yazın"a dönüşebilir ve hiçbir ölçüm bunu görmezdi.
+   */
+  it('adın neden istendiğini söylüyor ve metne dâhil', () => {
+    expect(ONAM_AD_ETIKET).toBe('Adınız ve soyadınız');
+    expect(ONAM_METNI).toContain(ONAM_AD_ETIKET);
+    expect(ONAM_METNI).toContain(ONAM_AD_ACIKLAMA);
+    expect(ONAM_AD_ACIKLAMA).toMatch(/onam listesinde görünür/);
+  });
+
+  it('özet cümlesi adın yazıldığını söylüyor', () => {
+    expect(ONAM_OZET).toContain('Adımı yazıp onaylayarak');
+  });
+
+  // İSTENMEYEN ALANLAR. Metin "kimlik numarası istenmiyor" diyor;
+  // ad alanı eklenirken bu söz bozulmamalı.
+  it('addan başka kişisel bilgi istemiyor', () => {
+    expect(ONAM_AD_ETIKET).not.toMatch(/kimlik|tc|telefon|adres|doğum/i);
+    expect(ONAM_METNI).toContain('kimlik numarası');
+    expect(ONAM_METNI).toContain('tutulmuyor');
   });
 
   it('istenmeyen kişisel verileri de sayıyor', () => {

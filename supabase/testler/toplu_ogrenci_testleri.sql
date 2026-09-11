@@ -277,7 +277,7 @@ begin
                        where gk.rol = 'veli' and o.aktif limit 1)))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
   begin
     perform public.ogrenciler_toplu_ekle(jv, 'okul', v_s, '["Sızma Denemesi"]'::jsonb);
     raise exception '9b: VELİ toplu öğrenci ekleyebildi';

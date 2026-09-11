@@ -198,6 +198,20 @@
     background: #fff;
   }
 
+  /* ONAM DÖKÜMÜ (0038).
+     Belge bir kayıt: kâğıtta okunaklı olsun diye tablo satırları
+     sayfa ortasından BÖLÜNMÜYOR ve metnin tamamı YENİ SAYFADAN
+     başlıyor — liste bir sayfa, metin öbür sayfa. */
+  .sk-onam-dokumu tr {
+    break-inside: avoid;
+  }
+
+  .sk-onam-metin {
+    break-before: page;
+    border-top: 0;
+    padding-top: 0;
+  }
+
   .sk-fis-sayfa {
     width: auto;
     margin: 0;

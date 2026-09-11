@@ -419,6 +419,33 @@ export type SinifVelileri = {
 };
 
 /**
+ * `onam_dokumu` (0038) — sınıf başına yazdırılıp PDF olarak saklanan
+ * onam belgesinin verisi.
+ *
+ * `onam_var` GEÇERLİ SÜRÜM için: eski bir sürüme verilmiş onay burada
+ * "bekliyor" sayılıyor, çünkü veli bugünkü metni onaylamış değil.
+ */
+export type OnamDokumuSatiri = {
+  ogrenci_id: string;
+  ogrenci: string;
+  onam_var: boolean;
+  /** Velinin kendi yazdığı ad. Eski (0038 öncesi) kayıtlarda null. */
+  veli_adi: string | null;
+  onay_zamani: string | null;
+};
+
+export type OnamDokumu = {
+  sinif: { id: string; ad: string };
+  surum: string;
+  alindi: string;
+  /** Dökümü alan öğretmenin adı — belge kendi kendini anlatsın. */
+  alan: string | null;
+  satirlar: OnamDokumuSatiri[];
+  toplam: number;
+  onayli: number;
+};
+
+/**
  * Hangi yazışma (migration 0025).
  *
  * İKİ AYRI YAZIŞMA VAR: öğrenci↔öğretmen ve veli↔öğretmen. Ayrım

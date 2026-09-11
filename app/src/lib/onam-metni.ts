@@ -58,6 +58,16 @@
  * 6 — "çocuğunuza ait bir kayıt değil" kuyruğu kalktı (öğretmenin
  *     isteği). Cümle zaten "kaydına yazılmıyor" diye başlıyor; kuyruk
  *     aynı şeyi ikinci kez söylüyordu.
+ *
+ * 7 — VELİ ARTIK ADINI YAZARAK ONAYLIYOR. Öğretmen sınıf başına bir onam
+ *     dökümü (PDF) istedi ve "hem öğrencinin hem onay veren velisinin
+ *     adını göreyim" dedi. Ad, onay tarihiyle birlikte kaydediliyor
+ *     (0038). Sürüm bu yüzden yükseldi: velinin YAPTIĞI şey değişti —
+ *     adsız verilmiş eski onaylar yeni akışta adlıymış gibi görünmesin.
+ *
+ *     DÜRÜST SINIR: bu ad velinin KENDİ BEYANI, kimlik doğrulaması
+ *     değil. Veli koduyla giren kişi oraya ne yazarsa o kaydediliyor.
+ *     Döküm ekranı da aynı cümleyi taşıyor.
  * ---------------------------------------------------------------------------
  *
  * BİLİNEN BOŞLUK: özel ders öğrencilerinde `dersler` ve `odemeler`
@@ -77,7 +87,7 @@
  *
  * Metni değiştirirken bunu da yükseltin — yoksa test kırmızı olur.
  */
-export const ONAM_SURUMU = '2026-09-6';
+export const ONAM_SURUMU = '2026-09-7';
 
 export type OnamBolumu = {
   readonly baslik: string;
@@ -172,8 +182,21 @@ export const ONAM_BOLUMLERI: readonly OnamBolumu[] = [
  * dâhil — sessizce değiştirilemez.
  */
 export const ONAM_OZET =
-  'Onaylayarak, çocuğumun SEKİZ öğrenci uygulamasını kullanmasına ve ' +
-  'yukarıda sayılan bilgilerin saklanmasına izin veriyorum.';
+  'Adımı yazıp onaylayarak, çocuğumun SEKİZ öğrenci uygulamasını ' +
+  'kullanmasına ve yukarıda sayılan bilgilerin saklanmasına izin ' +
+  'veriyorum.';
+
+/**
+ * Ad alanının etiketi ve altındaki açıklama.
+ *
+ * Metnin parçası oldukları için hash kilidinin içindeler: veliden ne
+ * istendiği ve neden istendiği sessizce değiştirilemez.
+ */
+export const ONAM_AD_ETIKET = 'Adınız ve soyadınız';
+
+export const ONAM_AD_ACIKLAMA =
+  'Onayı kimin verdiği kayda geçsin diye soruyoruz. Adınız, onay ' +
+  'tarihiyle birlikte öğretmeninizin tuttuğu onam listesinde görünür.';
 
 /**
  * Metnin düz hâli — hash kilidi ve ölçümler bunu kullanıyor.
@@ -187,5 +210,6 @@ export const ONAM_METNI: string = [
   ...ONAM_BOLUMLERI.map(
     (b) => `${b.baslik}\n${b.maddeler.map((m) => `- ${m}`).join('\n')}`,
   ),
+  `${ONAM_AD_ETIKET}\n${ONAM_AD_ACIKLAMA}`,
   ONAM_OZET,
 ].join('\n\n');

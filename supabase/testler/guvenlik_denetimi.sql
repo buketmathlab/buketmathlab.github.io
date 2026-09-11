@@ -54,7 +54,7 @@ begin
                         where ogrenci_id = v_a and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
 
   -- ---------------------------------------------------------------------------
   -- Her öğretmen ucu, iki rolle de çağrılıyor.
@@ -280,7 +280,7 @@ begin
   jvA := (public.giris((select kod from public.giris_kodlari where ogrenci_id = a and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jvA, public._gecerli_onam_surumu());
+  perform public.onam_ver(jvA, public._gecerli_onam_surumu(), 'Test Velisi');
   jB  := (public.giris((select kod from public.giris_kodlari where ogrenci_id = b and rol = 'ogrenci')))->>'token';
 
   -- B'nin sınıfına ödev: soru PDF'i ve cevap anahtarı yolu ile
@@ -470,7 +470,7 @@ begin
   jv := (public.giris((select kod from public.giris_kodlari where ogrenci_id = a and rol = 'veli')))->>'token';
   -- ONAM (0034): gerçek akışta veli metni onaylamadan hiçbir uca
   -- giremiyor; test de aynı yoldan geçiyor.
-  perform public.onam_ver(jv, public._gecerli_onam_surumu());
+  perform public.onam_ver(jv, public._gecerli_onam_surumu(), 'Test Velisi');
 
   -- ---------------------------------------------------------------------------
   -- 3a — HER YÜK OLDUĞU GİBİ SAKLANIYOR VE GERİ GELİYOR.

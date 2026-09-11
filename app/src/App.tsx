@@ -32,6 +32,7 @@ import { TopluOgrenci } from '@/features/ogretmen/TopluOgrenci';
 import { Odevler } from '@/features/ogretmen/Odevler';
 import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
 import { KodFisleri } from '@/features/ogretmen/KodFisleri';
+import { OnamDokumu } from '@/features/ogretmen/OnamDokumu';
 import {
   Veliler,
   SinifVelileriEkrani,
@@ -159,6 +160,9 @@ function Yonlendirme() {
             PIN formunun görünmediği kadar uzatırdı. */}
         <Route path="ayarlar/ewalu" element={<EwaluMesajlari />} />
         <Route path="veliler/sinif/:id" element={<SinifVelileriEkrani />} />
+        {/* Onam dökümü SEKME DEĞİL: bir sınıfın belgesi. Kod fişleri
+            gibi ayrı bir yazdırma ekranı. */}
+        <Route path="veliler/sinif/:id/onam" element={<OnamDokumu />} />
         <Route path="veliler/yazisma/:id" element={<VeliYazismasi />} />
       </Route>
       <Route
