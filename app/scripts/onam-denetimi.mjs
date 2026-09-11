@@ -422,6 +422,77 @@ console.log('\n10 — ONAM DÖKÜMÜ: belge kendini anlatıyor');
   await s.close();
 }
 
+console.log('\n11 — OKUL YÖNETİMİ BİLGİLENDİRMESİ (0039)');
+{
+  const s = await tarayici.newPage({ viewport: { width: 1024, height: 900 } });
+  await s.route('**/rest/v1/rpc/*', (r) => {
+    const uc = r.request().url().split('/').pop().split('?')[0];
+    const govde =
+      uc === 'ben_kimim'
+        ? { id: 's1', ad: 'Buket', sahip: true, vekalet: false, vekil: null }
+        : uc === 'okul_bilgilendirme'
+          ? {
+              alindi: '2026-09-11T10:30:00Z',
+              alan: 'Buket Topuzoğlu',
+              surum: SURUM,
+              ogretmen_sayisi: 4,
+              sinif_sayisi: 16,
+              ogrenci_sayisi: 128,
+              onam_veren: 97,
+              ilk_kayit: '2026-08-11T00:00:00Z',
+            }
+          : {};
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
+  });
+  await s.addInitScript(() =>
+    localStorage.setItem(
+      'sekiz_oturum',
+      JSON.stringify({ rol: 'ogretmen', token: 't'.repeat(64) }),
+    ),
+  );
+  await s.goto(KOK + '/ogretmen/ayarlar/okul', { waitUntil: 'networkidle' });
+  await s.waitForTimeout(700);
+
+  const metin = await s.locator('body').innerText();
+  olc('belge çizildi', /Okul Yönetimi Bilgilendirmesi/i.test(metin));
+
+  // BELGENİN VAR OLMA SEBEBİ — barındırma bölgesi.
+  olc('Zürih/İsviçre yazıyor', /Zürih/.test(metin) && /İsviçre/.test(metin));
+  olc('Türkiye dışında olduğunu söylüyor', /Türkiye dışında/.test(metin));
+  olc('kapsam kuralı doğru anlatılmış', /yalnız kendi sınıflarındaki/.test(metin));
+  olc('yapay zekâ maddesi var', /yapay zekâ KULLANILMIYOR/.test(metin));
+  olc('sorumlu adı ve sıfatı var', /Buket Topuzoğlu/.test(metin) && /Matematik öğretmeni/.test(metin));
+  olc('imza bölümü var', /Okul yönetimi bölümü/.test(metin) && /İmza/.test(metin));
+
+  // CANLI SAYILAR GERÇEKTEN SUNUCUDAN. Metinde sayı olmadığı için bu
+  // dördü ancak uçtan gelmiş olabilir.
+  olc('öğretmen sayısı basılmış', /\b4\b/.test(metin));
+  olc('sınıf sayısı basılmış', /\b16\b/.test(metin));
+  olc('öğrenci sayısı basılmış', /\b128\b/.test(metin));
+  olc('onam oranı basılmış', metin.includes('97'));
+  olc('sayıların o güne ait olduğu yazıyor', /yazdırıldığı andaki durumu/.test(metin));
+
+  await s.emulateMedia({ media: 'print' });
+  await s.waitForTimeout(300);
+  const kagit = await s.evaluate(() => {
+    const gorunur = (sec) =>
+      [...document.querySelectorAll(sec)].some((e) => e.offsetParent !== null);
+    return {
+      kabuk: gorunur('aside') || gorunur('header') || gorunur('nav'),
+      yazdirDugmesi: [...document.querySelectorAll('button')].some(
+        (b) => /yazdır/i.test(b.textContent ?? '') && b.offsetParent !== null,
+      ),
+      belge: document.querySelector('.sk-okul-belge')?.offsetParent !== null,
+      imza: document.querySelector('.sk-okul-onay')?.offsetParent !== null,
+    };
+  });
+  olc('kâğıtta kabuk yok', !kagit.kabuk);
+  olc('kâğıtta "Yazdır" düğmesi yok', !kagit.yazdirDugmesi);
+  olc('kâğıtta belge ve imza bölümü duruyor', kagit.belge && kagit.imza);
+  await s.emulateMedia({ media: 'screen' });
+  await s.close();
+}
+
 await tarayici.close();
 console.log(`\n--- GEÇEN: ${gecen}   KALAN: ${kalan} ---`);
 process.exit(kalan === 0 ? 0 : 1);

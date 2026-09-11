@@ -2504,3 +2504,54 @@ geçip **kâğıda ne çıktığına** bakıyor: kabuk yok, "Yazdır" düğmesi 
 belge duruyor. Bu ölçüm olmadan "yazdırılabilir" iddiası ekranda yeşil
 görünüp kâğıtta yan menüyle çıkabilirdi — kod fişlerinde tam olarak bu
 yaşanmıştı.
+
+## Okul yönetimi bilgilendirmesi (0039)
+
+`docs/kvkk-notlari.md`'nin dikkat listesindeki **ilk madde** buydu —
+"okul yönetimine sistemin varlığını ve barındırma bölgesini bildirin" —
+ve metni hiç yazılmamıştı. Öğretmen bu turda istedi.
+
+### Belgede hiç sayı yok, ve bu ölçülüyor
+
+Böyle bir kâğıdın en olası bozulma biçimi, yazıldığı gün doğru olup altı
+ay sonra yanlış olmasıdır. Bu depoda **iki kez** yaşandı:
+
+1. `docs/kvkk-notlari.md` bir ay boyunca "çözüm fotoğrafları korumasız"
+   dedi; oysa o açık kapanmıştı.
+2. Onam metni "matematik zümresindeki öğretmenler — dört kişi" dedi;
+   yanlıştı ve öğretmen yakaladı.
+
+Okula verilen bir belgede aynı şey olursa daha kötü. Kural bu yüzden
+sert: **metinde hiçbir sayı geçmiyor.** Kaç öğretmen, kaç sınıf, kaç
+öğrenci, kaç veli onam vermiş — hepsi `okul_bilgilendirme` ucundan canlı
+gelip ayrı bir "Bugünkü durum" bölümüne basılıyor.
+
+`okul-bilgilendirme.test.ts` bunu iki yönden tutuyor: metinde **rakam**
+yok, ve "dört öğretmen" gibi **yazıyla sayı** da yok. Sayı yazmak isteyen
+testi kırmak zorunda kalıyor — yani bilinçli bir karar veriyor.
+
+**"bir" bilerek dışarıda:** Türkçede sayı değil belgeç ("başka bir
+sınıfın öğretmeni"). Ve testte `\b` kullanılmıyor: JavaScript'te `ı`,
+`ö`, `ğ`, `ş` kelime karakteri sayılmadığı için `sınıf\b` "sınıfın"
+içinde de eşleşiyor — ilk yazımda tam olarak bu oldu ve test yanlış yere
+kırmızı yandı.
+
+### Yalnız sahip
+
+Uç `_yonetici` kapısının arkasında: bu belge bütün okulun sayılarını
+veriyor ve bir öğretmene açık olsaydı 0033'ün kapsam kuralı sessizce
+delinirdi — kendi sınıfını göremediği öğrencilerin sayısını öğrenirdi.
+
+Migration bunu kendi içinde denetliyor (`pg_get_functiondef` ile gövdede
+`_yonetici` arıyor) ve `ogretmen_kapsami_testleri.sql` 4f/4g grupları
+ölçüyor. **Geri alma kanıtı alındı:** kapı `_ogretmen`e çevrilince test
+*"4f: A, okul bilgilendirmesini alabildi"* diye kırmızı yanıyor.
+
+Ayrıca 4h: belgeye **tek bir öğrenci adı bile** sızmadığı ölçülüyor —
+kâğıt okul yönetimine gidiyor, öğrenci listesi değil.
+
+### İmza bölümü
+
+Belgenin asıl değeri burada: sonunda okul yönetiminin dolduracağı boş bir
+bölüm var (ad, unvan, tarih, imza). Elde, okulun bilgilendirildiğine dair
+imzalı bir kâğıt kalıyor.

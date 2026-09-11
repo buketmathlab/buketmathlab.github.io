@@ -203,6 +203,24 @@ export function Ayarlar() {
           Cümleleri düzenle
         </Button>
       </Card>
+
+      {/* 0039: OKUL YÖNETİMİ BİLGİLENDİRMESİ — YALNIZ SAHİP.
+          `docs/kvkk-notlari.md`'nin dikkat listesindeki ilk madde buydu
+          ve metni yoktu. Kart sahip değilse hiç çizilmiyor; asıl sınır
+          yine sunucuda (`okul_bilgilendirme` → `_yonetici`). */}
+      {ben?.sahip && (
+        <Card className="mt-4">
+          <h2 className="mb-1 text-[18px] text-ink">Okul yönetimi bilgilendirmesi</h2>
+          <p className="mb-4 text-[14px] text-muted">
+            Uygulamanın ne yaptığını, hangi bilgileri tuttuğunu ve verilerin
+            nerede saklandığını anlatan, yazdırılıp imzalatılabilen bir belge.
+            Sayılar her yazdırmada o günkü duruma göre hesaplanır.
+          </p>
+          <Button tur="ikincil" onClick={() => git('/ogretmen/ayarlar/okul')}>
+            Belgeyi hazırla
+          </Button>
+        </Card>
+      )}
     </>
   );
 }
