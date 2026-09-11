@@ -434,6 +434,22 @@ export type OnamDokumuSatiri = {
   onay_zamani: string | null;
 };
 
+/**
+ * `okul_bilgilendirme` (0039) — okul yönetimine verilen belgenin CANLI
+ * sayıları. Belgenin metninde hiç sayı yok; hepsi buradan geliyor ki
+ * kâğıt bayatlayamasın.
+ */
+export type OkulBilgilendirme = {
+  alindi: string;
+  alan: string | null;
+  surum: string;
+  ogretmen_sayisi: number;
+  sinif_sayisi: number;
+  ogrenci_sayisi: number;
+  onam_veren: number;
+  ilk_kayit: string | null;
+};
+
 export type OnamDokumu = {
   sinif: { id: string; ad: string };
   surum: string;

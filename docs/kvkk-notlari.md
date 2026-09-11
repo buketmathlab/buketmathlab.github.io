@@ -205,8 +205,14 @@ azaltıyor.
 
 ## Öğretmen için dikkat listesi
 
-1. Okul yönetimine sistemin varlığını ve barındırma bölgesini bildirin.
-   **Bunun metni hâlâ yok.**
+1. ~~Okul yönetimine sistemin varlığını ve barındırma bölgesini
+   bildirin.~~ 0039 ile yapıldı: **Ayarlar → Okul yönetimi
+   bilgilendirmesi** → Yazdır → PDF. Belge uygulamanın ne yaptığını,
+   hangi bilgileri tuttuğunu, Zürih/İsviçre barındırmasını ve kapsam
+   kuralını anlatıyor; altında okul yönetiminin dolduracağı imza bölümü
+   var. **Metinde hiç sayı yok** — kaç öğretmen, kaç sınıf, kaç öğrenci,
+   kaç veli onam vermiş, hepsi canlı okunuyor ki belge bayatlayamasın
+   (bu belgenin başına gelen buydu). Yalnız sahip alabiliyor.
 2. ~~Velileri hangi verinin işlendiği konusunda bilgilendirin.~~ 0034 ile
    yapıldı: veli, uygulamaya girerken metni okuyup onaylıyor.
 3. Öğrenci ve veli kodlarını güvenli kanaldan paylaşın; kod bir şifredir.

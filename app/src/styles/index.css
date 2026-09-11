@@ -206,6 +206,12 @@
     break-inside: avoid;
   }
 
+  /* OKUL BİLGİLENDİRMESİ (0039). İmza bölümü yeni sayfada başlamıyor —
+     belge kısa; ama bölümler sayfa ortasından bölünmesin. */
+  .sk-okul-belge section {
+    break-inside: avoid;
+  }
+
   .sk-onam-metin {
     break-before: page;
     border-top: 0;

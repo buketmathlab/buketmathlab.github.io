@@ -394,6 +394,35 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- 0039: OKUL YÖNETİMİ BİLGİLENDİRMESİ DE SAHİPTE.
+  --
+  -- Bu uç bütün okulun sayılarını (öğretmen, sınıf, öğrenci, onam)
+  -- veriyor. Bir öğretmene açık olsaydı 0033'ün kapsam kuralı sessizce
+  -- delinmiş olurdu: kendi sınıfını göremediği öğrencilerin sayısını
+  -- öğrenirdi.
+  begin
+    perform public.okul_bilgilendirme(ja);
+    raise exception '4f: A, okul bilgilendirmesini alabildi';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- POZİTİF KONTROL: sahip GERÇEKTEN alabiliyor. Bu olmadan yukarıdaki
+  -- ölçüm, uç hiç çalışmıyor olsa da yeşil kalırdı.
+  declare
+    ob jsonb := public.okul_bilgilendirme(js);
+  begin
+    if (ob->>'ogretmen_sayisi')::int < 1
+       or (ob->>'ogrenci_sayisi')::int < 1
+       or (ob->>'alan') is null then
+      raise exception '4g: sahip aldı ama belge boş: %', ob::text;
+    end if;
+    -- KİŞİSEL VERİ SIZMIYOR: belge okul yönetimine gidiyor, öğrenci
+    -- listesi değil. Tek bir öğrenci adı bile içinde olmamalı.
+    if ob::text like '%Bernanın%' or ob::text like '%Kacak%' then
+      raise exception '4h: okul belgesine öğrenci adı sızdı: %', ob::text;
+    end if;
+  end;
+
   begin
     perform public.ogrenci_ekle(ja, 'Kacak Okul', 'okul', sa);
     raise exception '4e: A, okul öğrencisi ekleyebildi';
