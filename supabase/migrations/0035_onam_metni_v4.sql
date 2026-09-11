@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0035 — ONAM METNİ SÜRÜM 3
+-- 0035 — ONAM METNİ SÜRÜM 4
 --
 -- NEDEN AYRI BİR MIGRATION
 -- 0034 CANLIDA ÇALIŞTIRILDI. Çalışmış bir migration'ı düzenlemek, o
@@ -8,7 +8,21 @@
 -- Sürüm sabiti bu yüzden yeni bir dosyada değişiyor.
 --
 -- NE DEĞİŞTİ
--- Öğretmen metni okuyup dört düzeltme istedi; üçü SİLME:
+--
+-- SÜRÜM 4 — FOTOĞRAF CÜMLESİ. Öğretmen metni okuyup sordu: "çözüm
+-- fotoğrafları 60 saniye geçerli bir bağlantıyla açılıyor — yani öğretmen
+-- ödev kâğıdına sadece altmış saniye mi bakabilecek?" Hayır: o süre
+-- BAĞLANTININ ÖMRÜ, bakma süresi değil. Ekranlar fotoğrafı her açışta
+-- yeniden adresliyor (`dosyaAdresi()`), öğretmen dilediği kadar bakıyor.
+-- Ama cümle ürünün SAHİBİNİ yanılttıysa veliyi de yanıltır; rakam
+-- metinden çıktı, cümle ne olduğunu ve ne OLMADIĞINI birlikte söylüyor.
+--
+-- Bu dosya önce sürüm 3 için yazılmıştı ve HİÇ ÇALIŞTIRILMADI — ne
+-- canlıda ne öğretmende. O yüzden yeni bir 0036 açmak yerine yerinde
+-- düzeltildi: öğretmen tek bir SQL çalıştırıyor. (0034 farklıydı, o
+-- canlıda çalışmıştı ve düzenlenemezdi.)
+--
+-- SÜRÜM 3 — öğretmen dört düzeltme istemişti; üçü SİLME:
 --   * "Özel ders alıyorsa ders planı ve ödeme kaydı." satırı
 --   * "Cevap anahtarı veliye hiçbir zaman gösterilmez." cümlesi
 --   * "Yapay zekâ" bölümünün tamamı
@@ -24,6 +38,12 @@
 -- gruplarında devam ediyor.
 --
 -- BU MIGRATION ÇALIŞTIĞI AN
+--
+-- AYNI ZAMANDA AÇIK BİR PENCEREYİ KAPATIYOR: site `2026-09-4` sürümünü
+-- gösterirken veritabanı hâlâ `2026-09-2` beklediği için onam vermemiş
+-- veliler onaylayamıyor ("Onam metni güncellenmiş"). Bu dosya çalıştığı
+-- an ikisi eşitleniyor.
+--
 -- `2026-09-2`'yi onaylamış veliler onam ekranını BİR KEZ DAHA görür ve
 -- yeni metni onaylar. İstenen davranış bu: metin değiştiğinde eski onayın
 -- yeni metni sessizce kapsamaması için sürüm var. Eski onay satırları
@@ -43,7 +63,7 @@ language sql
 immutable
 set search_path = public, extensions, pg_temp
 as $$
-  select '2026-09-3'::text;
+  select '2026-09-4'::text;
 $$;
 
 -- -----------------------------------------------------------------------------
@@ -56,7 +76,7 @@ do $$
 declare
   eksik text[] := '{}';
 begin
-  if public._gecerli_onam_surumu() <> '2026-09-3' then
+  if public._gecerli_onam_surumu() <> '2026-09-4' then
     eksik := eksik || ('sürüm hâlâ ' || public._gecerli_onam_surumu())::text;
   end if;
 

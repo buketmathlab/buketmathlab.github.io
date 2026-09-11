@@ -2317,3 +2317,48 @@ veremiyor (`22023`).
 **tasarımın kendisi**, kusur değil — ve varsayılmadı: 0034'lü bir
 veritabanında onay verilip 0035 çalıştırıldı, veli yeniden soruldu, eski
 onay satırı **silinmedi**, yeni metni onaylayınca panel açıldı.
+
+### Sürüm 4 — ürünün sahibini yanıltan cümle
+
+Öğretmen metni okuyup sordu: *"Çözüm fotoğrafları 60 saniye geçerli bir
+bağlantıyla açılıyor — yani öğretmen ödev kâğıdına sadece altmış saniye mi
+bakabilecek?"*
+
+Cevap hayır: o süre **bağlantının ömrü**, bakma süresi değil. Ekranlar
+fotoğrafı her açışta yeniden adresliyor (`dosyaAdresi()`), adres hiçbir
+yerde saklanmıyor, öğretmen dilediği kadar bakıyor.
+
+**Ama cümlenin kusuru gerçek.** Ürünü tasarlayan kişi yanıldıysa veli de
+yanılır — ve onam metninin tek işi doğru anlaşılmak. Rakam çıkarıldı
+(veliye bir şey anlatmıyordu) ve cümle ne olduğunu **ve ne olmadığını**
+birlikte söyler hâle getirildi: *"Öğretmenin fotoğrafa ne kadar
+bakabildiğiyle ilgisi yok — dilediği zaman, dilediği kadar açabiliyor."*
+
+İki ölçüm kilitliyor: metinde `60 saniye`/`altmış saniye` **geçmiyor** ve
+"ne kadar bakabildiğiyle ilgisi yok" cümlesi **duruyor** — hem vitest hem
+tarayıcı denetiminde.
+
+### 0035 bu kez YERİNDE düzeltildi
+
+0034'ü düzenlememiştim çünkü **canlıda çalışmıştı**. 0035 ise hiç
+çalıştırılmamıştı — ne canlıda ne öğretmende. Kural "dosya yayınlandı mı"
+değil, **"bir veritabanı onu uyguladı mı"**: uygulanmamış bir migration
+yerinde düzeltilebilir ve öğretmen tek SQL çalıştırır. Dosya
+`0035_onam_metni_v3.sql` → `0035_onam_metni_v4.sql` olarak yeniden
+adlandırıldı; eski ad depoda bırakılsaydı hangisinin yapıştırılacağı
+karışırdı.
+
+Sürüm testi dosya adına bağlı değil (sabiti tanımlayan en yüksek numaralı
+migration'ı buluyor), yeniden adlandırma onu bozmadı.
+
+### Yarım kalmış yayının bıraktığı pencere
+
+Bu turda canlıda şöyle bir ara durum oluştu ve **kapatılması bu turun
+aciliyeti oldu**: site `2026-09-3`'ü gösteriyor, veritabanı hâlâ
+`2026-09-2` bekliyordu (SQL çalıştırılmamıştı). İkisi eşleşmediği için
+onam **vermemiş** veliler onaylayamıyordu; onaylamış veliler
+etkilenmiyordu.
+
+Ders: sürüm yükselten bir tur, **site + SQL birlikte tamamlanana kadar
+bitmiş sayılmaz.** Sıra doğruydu (önce site) ama arada beklemek pencereyi
+açık tutuyor.
