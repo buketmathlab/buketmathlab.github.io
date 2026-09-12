@@ -246,3 +246,24 @@ olmadığı için tek başına bir öğrenciyi tanımlamıyor. Yine de küçük
 sınıflarda "az veri" damgalı bir konu dolaylı ipucu verebilir — bu yüzden
 analiz kâğıdı **veliyle paylaşılmak için değil**, öğretmenin kendi ders
 planlaması için.
+
+## Sürüm defteri (0041) — kişisel veri yok
+
+`uygulanan_migrationlar` tablosu yalnız **kurulum dosyası adı ve zamanı**
+tutuyor. İçinde hiçbir öğrenci, veli ya da öğretmen verisi yok; kişisel
+veri işlemiyor.
+
+Yine de **yedeğe girmiyor** ve uç **yalnız sahibe** açık. İkisi de gizlilik
+değil doğruluk gerekçesiyle: yedek boş bir projeye yüklenebiliyor ve orada
+şema kurulum dosyalarından gelir — defter yedekle taşınsaydı, hiçbir
+dosyayı çalıştırmamış bir proje "hepsi kurulu" derdi.
+
+## anon izolasyon süpürmesi artık eksiksiz
+
+Bu turda bulundu ve düzeltildi: izolasyon testi dahili fonksiyonları elle
+yazılmış bir listeden sınıyordu ve liste geride kalmıştı — 29 fonksiyonun
+**14'ü** hiç süpürülmüyordu. **Hiçbiri açık değildi** (ayrıca ölçüldü,
+canlıda da doğrulandı: 401/42501), ama yeniden açılsalar hiçbir test
+yakalamayacaktı. Süpürme artık katalogdan sayıyor: yeni bir dahili
+fonksiyon ya da tablo eklemek onu kendiliğinden nöbete sokuyor. Kapsam
+15 → 31 fonksiyon, 17 → 18 tablo.

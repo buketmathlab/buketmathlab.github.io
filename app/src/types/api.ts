@@ -700,3 +700,23 @@ export type OgretmenSatiri = {
   odev_sayisi: number;
   son_gorulme: string | null;
 };
+
+/** `surum_defteri` satırı — hangi SQL dosyasının çalıştığı (0041). */
+export type SurumSatiri = {
+  /** Dört haneli migration numarası: `0041`. */
+  dosya: string;
+  uygulandi: string;
+  /**
+   * `migration`    — dosya çalışırken kendi satırını yazdı. KESİN.
+   * `geriye_donuk` — 0041 kurulurken çıpa nesnelerinden çıkarıldı.
+   */
+  kaynak: 'migration' | 'geriye_donuk';
+};
+
+/** `surum_defteri` — yalnız sahibe döner. */
+export type SurumDefteri = {
+  alindi: string;
+  dosyalar: SurumSatiri[];
+  /** Defterdeki en büyük numara; defter boşsa null. */
+  son: string | null;
+};
