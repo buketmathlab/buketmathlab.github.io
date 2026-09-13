@@ -35,6 +35,7 @@ import { KodFisleri } from '@/features/ogretmen/KodFisleri';
 import { OnamDokumu } from '@/features/ogretmen/OnamDokumu';
 import { OkulBilgilendirme } from '@/features/ogretmen/OkulBilgilendirme';
 import { SinifAnalizi } from '@/features/ogretmen/SinifAnalizi';
+import { SurumDefteri } from '@/features/ogretmen/SurumDefteri';
 import {
   Veliler,
   SinifVelileriEkrani,
@@ -170,6 +171,8 @@ function Yonlendirme() {
         {/* Okul yönetimi bilgilendirmesi: Ayarlar'dan giriliyor,
             yalnız sahip görüyor. Asıl sınır sunucuda (`_yonetici`). */}
         <Route path="ayarlar/okul" element={<OkulBilgilendirme />} />
+        {/* 0041: kurulum defteri. Sahiplik kapısı sunucuda. */}
+        <Route path="ayarlar/surumler" element={<SurumDefteri />} />
         <Route path="veliler/yazisma/:id" element={<VeliYazismasi />} />
       </Route>
       <Route

@@ -2672,3 +2672,120 @@ iki ayrı sayı gibi gelir; analiz ekranı da tr-TR'ye çevrildi.
 dosyası) uygulandı; `analiz_testleri.sql` 9 grubu orada da geçti ve üç
 fonksiyonun `pg_get_functiondef` özetleri iki veritabanında **birebir
 aynı** çıktı.
+
+## Sürüm defteri — hangi kurulum dosyası çalıştı (0041)
+
+Öğretmenin isteği: *"Hangi SQL dosyasının canlıda çalıştığını tutan bir
+kayıt yok; her seferinde benim hatırlamama kalıyor."*
+
+**Bu belirsizlik zaten bir turluk fazladan iş olarak faturalandı.** Onam
+metni sürüm 5 turunda 0035'in çalışıp çalışmadığı bilinmiyordu; emin
+olunamadığı için "çalışmış da olsa çalışmamış da olsa doğru sonucu
+versin" diye **fazladan** bir dosya (0036) yazıldı.
+
+### Önce yanlış çözüm seçildi, ölçüm düzeltti
+
+İlk seçenek "uçları dışarıdan yoklayıp rapor veren bir betik"ti — panelde
+hiçbir şey çalıştırmadan sonuç verdiği için cazipti. Yazmadan önce
+kapsamı ölçüldü:
+
+```
+YENİ FONKSİYON GETİREN (yoklanabilir)  : 29/40
+YALNIZ GÖVDE/VERİ DEĞİŞTİREN (görünmez): 11/40
+```
+
+Görünmeyen 11'in içinde **0035, 0036, 0037** vardı: yani tam da soruyu
+doğuran dosyalar. Onlar yeni bir uç eklemiyor, var olan bir fonksiyonun
+gövdesini değiştiriyor; dışarıdan bakınca hiçbir iz bırakmıyorlar.
+
+**Bir ölçüm, asıl sorulan soruyu cevaplayamıyorsa çözüm değildir.** Bu
+öğretmene anlatıldı ve tablo seçildi. Tasarımı yazmadan önce yapılan bu
+sayım, boşa bir tur harcamayı önledi.
+
+### Geçmiş uydurulmuyor: çıpalar
+
+0001–0040 çalıştı ama kimse yazmadı. Deftere körlemesine "hepsi uygulandı"
+yazmak, defteri ilk gününde yalancı yapardı: **eksik kurulmuş bir
+veritabanında da aynı şeyi yazardı** ve öğretmen ekrana bakıp her şeyin
+yerinde olduğunu sanırdı.
+
+Onun yerine `_defter_doldur()` çıpa nesneleri arıyor — her çıpa bir dosya
+aralığını temsil ediyor, yalnız çıpası **tutan** aralık yazılıyor. Ölçüldü:
+0039 ve 0040 kaldırılmış bir veritabanında defter 38 satır yazıyor ve
+eksikleri adıyla bildiriyor, ekran da "çalıştırılmamış" diyor. **Eksik
+kurulum kendini ihbar ediyor.**
+
+`kaynak` alanı bir satırın NASIL bilindiğini söylüyor: `migration` →
+dosyanın kendi yazdığı kesin kayıt; `geriye_donuk` → çıkarım. Ekranda da
+ayrı duruyorlar. İkisini karıştırıp hepsine "uygulandı" demek, bilmediğimiz
+bir şeyi biliyormuş gibi göstermek olurdu.
+
+### Doldurma neden fonksiyon, `do $$` bloğu değil
+
+Test, doldurmayı **çağırabilmeli**. Anonim blok olsaydı test aynı mantığın
+bir KOPYASINI çalıştırmak zorunda kalır, yani asıl çalışan kodu değil
+taşrasını ölçerdi. `defter_testleri.sql` 4. grubu bunu kilitliyor.
+
+### Defter yedeğe girmiyor
+
+`disa_aktar` değişmedi ve bu bilinçli: yedek boş bir projeye
+yüklenebiliyor, orada şema yedekten değil kurulum dosyalarından gelir.
+Defter yedekle taşınsaydı, migration'ları hiç çalıştırmamış bir proje
+"hepsi uygulandı" derdi — ve bu, **yedeğin işe yarayacağı gün** ortaya
+çıkardı. Hem migration'ın kendi doğrulaması hem testin 5. grubu bunu
+sınıyor (pozitif kontrolüyle: yedek gerçekten dolu mu).
+
+### Defterin kendisi de kayabilir — sözleşme testi
+
+Yeni bir migration kendini deftere yazmayı unutursa defter sessizce eksik
+kalır ve ekran "veritabanınız güncel" der. `migration-listesi.test.ts`
+bunu engelliyor: 0041 ve sonrasındaki **her** dosya kendi adını yazan
+satırı taşımalı; taşımıyorsa test, eklenecek satırı yazarak kırmızı yanıyor.
+
+Bu test **dizinden** okuyor, üretilmiş listeden değil. İlk yazımda
+üretilmiş listeden okuyordu ve ölçüldü: sahte bir `0042` eklendiğinde
+**sessiz kalıyordu** — yani kuralın en çok gerektiği an, yeni dosyanın
+yazıldığı an, kapsam dışındaydı.
+
+### Tarayıcı denetimi yine iki veri kümesiyle
+
+En tehlikeli kusur çökmek değil, **"güncel" derken yanılmak**. Ekrana
+"her zaman güncel" kusuru yerleştirildi: **A kümesi (defter tam) tamamen
+yeşil kaldı**, yalnız B (defter eksik) yakaladı — 5 ölçüm kırmızı yandı.
+0040'ta öğrenilen ders burada da işledi.
+
+---
+
+## anon izolasyon testi artık sayıyor
+
+Bu tur okunurken bulundu: `anon_izolasyon.sql` dahili fonksiyonları **elle
+yazılmış** bir diziden sınıyordu ve dizi geride kalmıştı — depodaki 29
+dahili fonksiyonun **14'ü** hiç süpürülmüyordu (`_denetim`, `_oturum`,
+`_konu_analizi`, `_soru_dokumu`, `_aktor`, 0040'ta eklenen
+`_konu_esikleri`/`_konu_durumu`, …).
+
+Hiçbiri açık değildi — ayrıca ölçüldü, canlıda da doğrulandı (401/42501).
+**Kusur açık olmaları değil, yeniden açılsalar hiçbir testin
+yakalamayacak olmasıydı.** Nöbetçi kapının yarısını hiç görmüyordu.
+
+Defter turuyla aynı hastalık: elle tutulan kayıt kayar. Liste kaldırıldı,
+yerine katalogdan sayım kondu (`has_function_privilege` /
+`has_table_privilege` — yetkinin kendisini soruyor, çağırmayı denemiyor;
+çağırarak sınamak her fonksiyonun argüman tipini bilmeyi gerektirirdi ve
+listenin en baştaki sebebi buydu). Kapsam **15 → 31 fonksiyon**, tablolar
+**17 → 18**.
+
+`like '_%'` KULLANILMADI: LIKE'da `_` tek karakter jokeri, yani her
+fonksiyonu eşler ve süpürme sessizce genişlerdi. `left(proname,1) = '_'`
+hem doğru hem tartışmasız.
+
+Alt sınır kontrolü var (`sayi < 29` → hata): sayım bir gün bozulursa test
+sessizce "hepsi kapalı" demesin.
+
+Çağrılı sınama **temsilciler üzerinde duruyor**: katalog "kapalı" diyor,
+gerçekten de çağrılamıyor mu — iki yol ayrışırsa görülsün.
+
+**Geri alma kanıtı:** eski elle listenin hiç görmediği `_soru_dokumu`
+anon'a açıldığında test *"KRİTİK: anon şu dahili fonksiyonları
+çağırabiliyor: _soru_dokumu(...)"* diye kırmızı yandı. Eski testte bu
+sessizce geçerdi.

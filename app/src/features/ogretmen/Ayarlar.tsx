@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { SurumDefteriDugmesi } from '@/features/ogretmen/SurumDefteri';
 import { Field, Input } from '@/components/ui/Field';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useBenKimim } from '@/hooks/useBenKimim';
@@ -221,6 +222,11 @@ export function Ayarlar() {
           </Button>
         </Card>
       )}
+
+      {/* 0041: SÜRÜM DEFTERİ — YALNIZ SAHİP. Kurulum bilgisi, ders bilgisi
+          değil; kadronun görmesine gerek yok. Asıl sınır yine sunucuda
+          (`surum_defteri` → `_yonetici`). */}
+      {ben?.sahip && <SurumDefteriDugmesi />}
     </>
   );
 }
