@@ -26,36 +26,82 @@ import { withResolversKur } from '@/lib/promise-polyfill';
 /** Aynı satır sayılmak için y koordinatları arasındaki en büyük fark (punto). */
 const SATIR_TOLERANSI = 3;
 
-type MetinParcasi = { str: string; transform: number[] };
+/**
+ * Boşluk sayılmak için iki parça arasındaki en küçük yatay açıklık —
+ * punto cinsinden değil, YAZI BOYUNUN ORANI olarak.
+ *
+ * Sabit bir punto eşiği, 8 puntoluk bir listede boşlukları kaçırır,
+ * 20 puntoluk bir başlıkta olmayan boşluk uydururdu.
+ */
+const BOSLUK_ORANI = 0.2;
+
+type MetinParcasi = { str: string; transform: number[]; width?: number };
+
+/**
+ * İki parça arasına boşluk girmeli mi.
+ *
+ * ## Bu fonksiyonun varlık sebebi ÖLÇÜLMÜŞ bir kusur
+ *
+ * Parçalar eskiden koşulsuz `' '` ile birleşiyordu. Gerçek bir e-Okul sınıf
+ * listesinde ölçüldü: o PDF'te `ş`, `ğ`, `İ` gibi harfler AYRI parça olarak
+ * geliyor ve koşulsuz boşluk şunları üretiyordu:
+ *
+ *     "K ı z"                    ← "Kız"
+ *     "Beş ikta ş / Arnavutköy"  ← "Beşiktaş / Arnavutköy"
+ *     "1 601 A Lİ YILMAZ"        ← öğrencinin adı ortadan ikiye bölünmüş
+ *                                  (örnek ad uydurma: bu depo herkese açık)
+ *
+ * Yani öğrenci adları bozuk kaydedilecekti. Artık boşluk, parçanın nerede
+ * BİTTİĞİNE bakılarak konuyor: bitişik gelen harf yapışık kalıyor.
+ *
+ * `width` yoksa (pdf.js her zaman verir, ama tip isteğe bağlı) eski
+ * davranış sürüyor — bilgi olmadan tahmin etmektense boşluk koymak daha
+ * güvenli: kelimeleri yanlışlıkla birbirine yapıştırmaz.
+ */
+function boslukGerekli(
+  onceki: { x: number; str: string; genislik?: number; punto: number },
+  sonraki: { x: number },
+): boolean {
+  if (onceki.genislik === undefined) return true;
+  // Parça kendi boşluğunu taşıyorsa ikincisini eklemeye gerek yok.
+  if (/\s$/.test(onceki.str)) return false;
+  const bitis = onceki.x + onceki.genislik;
+  return sonraki.x - bitis > Math.max(onceki.punto, 1) * BOSLUK_ORANI;
+}
 
 /** Parçaları y koordinatına göre satırlara böler, her satırı x'e göre sıralar. */
 export function parcalariSatirlaraBol(parcalar: readonly MetinParcasi[]): string[] {
-  const satirlar: Array<{ y: number; parcalar: Array<{ x: number; str: string }> }> = [];
+  type Parca = { x: number; str: string; genislik?: number; punto: number };
+  const satirlar: Array<{ y: number; parcalar: Parca[] }> = [];
 
   for (const p of parcalar) {
     if (p.str.trim() === '') continue;
     const x = p.transform[4] ?? 0;
     const y = p.transform[5] ?? 0;
+    // transform[0] yatay ölçek — pratikte yazı boyu.
+    const punto = Math.abs(p.transform[0] ?? 0) || 10;
+    const parca: Parca = { x, str: p.str, punto, ...(p.width === undefined ? {} : { genislik: p.width }) };
 
     const mevcut = satirlar.find((s) => Math.abs(s.y - y) <= SATIR_TOLERANSI);
     if (mevcut) {
-      mevcut.parcalar.push({ x, str: p.str });
+      mevcut.parcalar.push(parca);
     } else {
-      satirlar.push({ y, parcalar: [{ x, str: p.str }] });
+      satirlar.push({ y, parcalar: [parca] });
     }
   }
 
   // PDF'te y yukarı doğru büyür: en üstteki satır en büyük y'ye sahiptir.
   satirlar.sort((a, b) => b.y - a.y);
 
-  return satirlar.map((s) =>
-    s.parcalar
-      .sort((a, b) => a.x - b.x)
-      .map((p) => p.str)
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim(),
-  );
+  return satirlar.map((s) => {
+    const sirali = [...s.parcalar].sort((a, b) => a.x - b.x);
+    let metin = '';
+    sirali.forEach((p, i) => {
+      if (i > 0 && boslukGerekli(sirali[i - 1]!, p)) metin += ' ';
+      metin += p.str;
+    });
+    return metin.replace(/\s+/g, ' ').trim();
+  });
 }
 
 /**
@@ -109,7 +155,14 @@ export async function pdfSatirlariniOku(dosya: File): Promise<string[]> {
       const parcalar: MetinParcasi[] = [];
       for (const x of icerik.items) {
         if ('str' in x && 'transform' in x) {
-          parcalar.push({ str: x.str, transform: x.transform });
+          // `width` ŞART: boşlukların nereye gireceği buna bakılarak
+          // kararlaştırılıyor. Geçirilmediği sürece okuyucu "K ı z" üretir
+          // (gerçek bir sınıf listesinde ölçüldü).
+          parcalar.push({
+            str: x.str,
+            transform: x.transform,
+            ...(typeof x.width === 'number' ? { width: x.width } : {}),
+          });
         }
       }
       tumSatirlar.push(...parcalariSatirlaraBol(parcalar));

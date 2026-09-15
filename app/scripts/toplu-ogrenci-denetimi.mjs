@@ -250,7 +250,133 @@ console.log('6 — SONUÇ: KOD TABLOSU, GİZLEME, İNDİRME');
   de(ayrisan.length === 0, `indirilen dosya ekrandakiyle birebir aynı (${ayrisan.length} fark)`);
 }
 
+console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
+{
+  /**
+   * SAHTE AMA GERÇEK YAPILI bir e-Okul listesi üretir.
+   *
+   * Depo herkese açık; buraya gerçek öğrenci adı konmaz. Yapı gerçek bir
+   * 9. sınıf listesinden ölçülerek çıkarıldı: başlık, kurum, sınıf
+   * öğretmeni satırı, tablo başlığı, öğrenci satırları, altbilgi.
+   *
+   * Harfler Latin-1'de bulunanlardan seçildi (Helvetica/WinAnsi): ş ve ğ
+   * yok. O harflerin bitişik parça olarak gelmesi ayrı bir kusur ve yeri
+   * `pdf-metin.test.ts` — orada ölçülüyor.
+   */
+  function eokulPdfi() {
+    // TÜRKÇE HARFLER FONTA TANITILIYOR.
+    //
+    // Helvetica/WinAnsi'de ş, ğ, İ, ı YOK. İlk yazımda satırlar ASCII'ye
+    // düşürülmüştü ("VALILIGI") ve denetim yanlış kırmızı yandı: kalıplar
+    // haklı olarak tutmadı, ama kusur üründe değil ÖLÇÜMDEYDİ. Türkçesiz
+    // bir liste, e-Okul listesi değildir.
+    //
+    // `/Differences` ile bu glifler kod noktalarına bağlanıyor; pdf.js
+    // glif adlarını Unicode'a çeviriyor.
+    const G = { 'ğ': '\\310', 'Ğ': '\\311', 'ş': '\\312', 'Ş': '\\313', 'ı': '\\314', 'İ': '\\315' };
+    const kacir = (s) => s.replace(/[ğĞşŞıİ]/g, (c) => G[c]).replace(/[ç]/g, '\\347')
+      .replace(/[Ç]/g, '\\307').replace(/[ö]/g, '\\366').replace(/[Ö]/g, '\\326')
+      .replace(/[ü]/g, '\\374').replace(/[Ü]/g, '\\334');
+
+    const satirlar = [
+      'T.C.',
+      'İSTANBUL VALİLİĞİ',
+      'Örnek Anadolu Lisesi Müdürlüğü',
+      'Sınıf Öğretmeni: NURAY ÖRNEK Sınıf Başkanı:',
+      'S.No Öğrenci No Adı Soyadı Cinsiyeti',
+      '1 601 ALİ YILMAZ Erkek',
+      '2 602 AYŞE ÖZTÜRK Kız',
+      '3 603 MEHMET ÇOBAN Erkek',
+      'Kız Öğrenci Sayısı : 1 Erkek Öğrenci Sayısı : 2',
+    ];
+    const icerik = satirlar
+      .map((s, i) => `BT /F1 10 Tf 40 ${780 - i * 20} Td (${kacir(s)}) Tj ET`)
+      .join('\n');
+    const fark =
+      '<</Type/Encoding/BaseEncoding/WinAnsiEncoding/Differences[' +
+      '200/gbreve 201/Gbreve 202/scedilla 203/Scedilla 204/dotlessi 205/Idotaccent]>>';
+    const nesneler = [
+      '<</Type/Catalog/Pages 2 0 R>>',
+      '<</Type/Pages/Kids[3 0 R]/Count 1>>',
+      '<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 5 0 R>>>>/Contents 4 0 R>>',
+      `<</Length ${icerik.length}>>\nstream\n${icerik}\nendstream`,
+      `<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding ${fark}>>`,
+    ];
+    let pdf = '%PDF-1.4\n';
+    const yerler = [];
+    nesneler.forEach((n, i) => {
+      yerler.push(pdf.length);
+      pdf += `${i + 1} 0 obj\n${n}\nendobj\n`;
+    });
+    const xref = pdf.length;
+    pdf += `xref\n0 ${nesneler.length + 1}\n0000000000 65535 f \n`;
+    for (const y of yerler) pdf += `${String(y).padStart(10, '0')} 00000 n \n`;
+    pdf += `trailer\n<</Size ${nesneler.length + 1}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`;
+    return Buffer.from(pdf, 'latin1');
+  }
+
+  await p.goto(KOK + '#/ogretmen/ogrenciler/toplu', { waitUntil: 'networkidle' });
+  await p.reload({ waitUntil: 'networkidle' });
+  await p.waitForTimeout(600);
+
+  // PDF ALANI İSTEĞE BAĞLI: yapıştırma yolu bozulmamalı.
+  const pdfAlani = p.locator('input[type="file"]');
+  de(await pdfAlani.count() === 1, 'PDF alanı ekranda var');
+  de(
+    (await pdfAlani.getAttribute('accept'))?.includes('pdf') === true,
+    'yalnız PDF kabul ediyor',
+  );
+  de(
+    await p.locator('textarea').isVisible(),
+    'yapıştırma kutusu duruyor — PDF yolu onu değiştirmiyor',
+  );
+
+  await pdfAlani.setInputFiles({
+    name: '9A.pdf',
+    mimeType: 'application/pdf',
+    buffer: eokulPdfi(),
+  });
+  await p.waitForTimeout(1500);
+
+  const kutu = await p.locator('textarea').inputValue();
+  de(kutu.includes('ALİ YILMAZ'), 'PDF okundu ve metin kutusuna döküldü');
+  de(kutu.includes('T.C.'), 'ham satırlar kutuda — öğretmen ne geldiğini görüyor');
+
+  // ASIL ÖLÇÜM: KAYDEDİLECEK ADLAR.
+  //
+  // Yalnız önizlemedeki ad satırları okunuyor. İlk yazımda sayfadaki bütün
+  // `li`'ler taranıyordu ve ölçüm yanlış kırmızı yandı: elenen satırlar da,
+  // her adın ham hâli de ekranda BİLEREK gösteriliyor ("T.C." elenenler
+  // listesinde durmalı). Ölçülmesi gereken şey ekranda ne yazdığı değil,
+  // SUNUCUYA NE GİDECEĞİ.
+  const adlar = await p.evaluate(() =>
+    [...document.querySelectorAll('ul.divide-y > li > div > p.font-semibold')].map(
+      (e) => e.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    ),
+  );
+  de(adlar.length === 3, `3 öğrenci önizlemede (${adlar.length})`);
+  de(!adlar.some((a) => /nuray/i.test(a)), 'ÖĞRETMEN ADI öğrenci sayılmamış');
+  de(adlar.some((a) => /ali y\u0131lmaz/i.test(a)), 'öğrenci adı önizlemede');
+
+  const hepsi = adlar.join(' | ');
+  de(!/T\.C\./.test(hepsi), '"T.C." öğrenci sayılmamış');
+  de(!/valili/i.test(hepsi), 'kurum adı öğrenci sayılmamış');
+  de(!/lisesi/i.test(hepsi), 'okul adı öğrenci sayılmamış');
+  de(!/s\.no|cinsiyet/i.test(hepsi), 'tablo başlığı öğrenci sayılmamış');
+  de(!/say\u0131s\u0131/i.test(hepsi), 'altbilgi öğrenci sayılmamış');
+  de(!/\d/.test(hepsi), 'okul numarası adın içinde kalmamış');
+  de(!/\b(erkek|k\u0131z)\b/i.test(hepsi), 'cinsiyet adın içinde kalmamış');
+
+  // ELENENLER GÖRÜNÜYOR: sessizce yok olmamalı, öğretmen ne atıldığını
+  // görüp itiraz edebilmeli.
+  const elenen = await p.evaluate(
+    () => document.body.innerText.includes('satır okunamadı'),
+  );
+  de(elenen, 'elenen satırlar sebebiyle ekranda gösteriliyor');
+}
+
 console.log('7 — 360 px’te taşma yok');
+
 {
   const fark = await p.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

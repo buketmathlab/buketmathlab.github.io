@@ -17,6 +17,57 @@ const SINIF_KODU = /^\d{1,2}\s*[A-ZÇĞİÖŞÜ]$/;
 /** Satır başındaki sıra numarası: "1", "1.", "12)", "3 -" */
 const BAS_NUMARA = /^\d{1,3}\s*[.)\-–]\s*|^\d{1,3}\s+/;
 
+/**
+ * e-Okul sınıf listesi satırı: SIRA NO · OKUL NO · AD SOYAD · CİNSİYET
+ *
+ * Gerçek bir listede ölçüldü. Bu kalıp tanınmadığında ad alanı
+ * `601 Ali Yılmaz Erkek` diye kaydediliyordu — okul numarası ve cinsiyet
+ * adın İÇİNDE.
+ *
+ * Cinsiyet isteğe bağlı: her listede o sütun olmayabilir.
+ */
+const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+\d{2,6}\s+(.+?)(?:\s+(?:Kız|Erkek))?\s*$/u;
+
+/** Tek başına cinsiyet — öğretmenin fark ettiği kusur buydu. */
+const CINSIYET = /^(?:Kız|Erkek)$/u;
+
+/** Satır sonundaki cinsiyet sütunu. */
+const SON_CINSIYET = /\s+(?:Kız|Erkek)\s*$/u;
+
+/**
+ * e-Okul listesinin ÖĞRENCİ OLMAYAN satırları.
+ *
+ * Bunlar elenmeseydi listeye "T.C.", okulun adı, tablo başlığı ve —
+ * en kötüsü — **sınıf öğretmeninin ve müdür yardımcısının adı** birer
+ * öğrenci olarak girerdi. Ölçüldü: 27 öğrencilik bir listeden 44 "öğrenci"
+ * çıkıyordu.
+ *
+ * Her kalıbın yanında SEBEP var: elenen satır sessizce yok olmuyor,
+ * önizlemede sebebiyle birlikte görünüyor ve kararı öğretmen veriyor.
+ *
+ * KALIPLAR TÜRKÇE KÜÇÜK HARFE GÖRE yazılı; satır da öyle çevrilip
+ * karşılaştırılıyor. `/i` bayrağı YETMEZ ve bu ölçüldü: "İSTANBUL
+ * VALİLİĞİ" satırı `/Valiliği/i` ile EŞLEŞMEDİ ve bir "öğrenci" olarak
+ * listeye girdi. JavaScript'in ölçüt-duyarsız eşlemesi Türkçe'nin İ/ı
+ * çiftini bilmiyor; `toLocaleLowerCase('tr')` biliyor.
+ */
+const MOBILYA: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^t\.?\s?c\.?$/u, 'Liste başlığı'],
+  [/(?:valiliği|kaymakamlığı|bakanlığı|müdürlüğü)\s*$/u, 'Kurum adı'],
+  [/sınıf\s+listesi/u, 'Liste başlığı'],
+  // "Sınıf Öğretmeni: …", "Sınıf Müdür Yrd: …", "Sınıf Başkanı:"
+  // Bu satırlarda GERÇEK KİŞİ ADLARI var; öğrenci sanılmamalı.
+  [/sınıf\s+(?:öğretmeni|müdür|başkan)/u, 'Öğretmen/başkan satırı'],
+  [/müdür\s+yrd/u, 'Öğretmen/başkan satırı'],
+  [/^s\.?\s?no\b/u, 'Tablo başlığı'],
+  [/cinsiyet/u, 'Tablo başlığı'],
+  [/pansiyon/u, 'Tablo başlığı'],
+  [/öğrenci\s+sayısı/u, 'Altbilgi'],
+];
+
+/** Rakam: bir öğrenci adında bulunmaz. Tarih, sayfa no, belge kodu elenir. */
+const RAKAM = /\d/u;
+
 /** En az bir harf içeriyor mu (Türkçe harfler dahil). */
 const HARF_VAR = /[A-Za-zÇĞİıÖŞÜçğöşü]/;
 
@@ -95,7 +146,17 @@ function adAlaniniSec(ham: string): string | null {
   const alanlar = ham
     .split('\t')
     .map((a) => a.trim())
-    .filter((a) => a !== '' && !/^\d+$/.test(a) && !SINIF_KODU.test(a) && HARF_VAR.test(a));
+    .filter(
+      (a) =>
+        a !== '' &&
+        !/^\d+$/.test(a) &&
+        !SINIF_KODU.test(a) &&
+        // CİNSİYET SÜTUNU ELENMELİ. Elenmeseydi tek adlı bir öğrencide
+        // ("Ali", 3 harf) en uzun alan "Erkek" (5 harf) olur ve öğrencinin
+        // adı "Erkek" diye kaydedilirdi.
+        !CINSIYET.test(a) &&
+        HARF_VAR.test(a),
+    );
   if (alanlar.length === 0) return null;
   return alanlar.reduce((en, a) => (a.length > en.length ? a : en));
 }
@@ -120,14 +181,38 @@ export function listeyiCoz(
     const kirpik = hamSatir.trim();
     if (kirpik === '') return; // Boş satır bir hata değil, sadece boşluk.
 
+    // TEK BAŞINA CİNSİYET. Öğretmenin fark ettiği kusur: sütun ayrı satıra
+    // düştüğünde "Kız"/"Erkek" birer öğrenci sanılıyordu.
+    if (CINSIYET.test(kirpik)) {
+      atlanan.push({ satir: sira, ham: kirpik, sebep: 'Cinsiyet sütunu' });
+      return;
+    }
+
+    // LİSTE MOBİLYASI: başlık, kurum adı, tablo başlığı, altbilgi ve
+    // öğretmen/başkan satırları. Sonuncusu en tehlikelisiydi — içindeki
+    // gerçek kişi adı öğrenci olarak kaydedilirdi.
+    const kucuk = kirpik.toLocaleLowerCase('tr');
+    const mobilya = MOBILYA.find(([kalip]) => kalip.test(kucuk));
+    if (mobilya) {
+      atlanan.push({ satir: sira, ham: kirpik, sebep: mobilya[1] });
+      return;
+    }
+
     const secilen = adAlaniniSec(kirpik);
     if (secilen === null) {
       atlanan.push({ satir: sira, ham: kirpik, sebep: 'Harf içermiyor' });
       return;
     }
 
-    // Sıra numarası at, iç boşlukları teke indir.
-    const temiz = secilen.replace(BAS_NUMARA, '').replace(/\s+/g, ' ').trim();
+    // e-Okul satırıysa adı doğrudan al: sıra no ve okul no atılır,
+    // sondaki cinsiyet sütunu da. Kalıp tutmazsa eski yol işler.
+    const eokul = EOKUL_SATIRI.exec(secilen)?.[1];
+
+    // Sıra numarası at, sondaki cinsiyeti at, iç boşlukları teke indir.
+    const temiz = (eokul ?? secilen.replace(BAS_NUMARA, ''))
+      .replace(SON_CINSIYET, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
     if (!HARF_VAR.test(temiz)) {
       atlanan.push({ satir: sira, ham: kirpik, sebep: 'Harf içermiyor' });
@@ -135,6 +220,13 @@ export function listeyiCoz(
     }
     if (temiz.length < 2) {
       atlanan.push({ satir: sira, ham: kirpik, sebep: 'Çok kısa' });
+      return;
+    }
+    // ADLARDA RAKAM OLMAZ. Tarih, sayfa numarası, belge kodu ve okul
+    // numarası ayıklanmamış satırlar buradan eleniyor — ad alanına
+    // sızmasınlar. Elenen satır önizlemede sebebiyle görünüyor.
+    if (RAKAM.test(temiz)) {
+      atlanan.push({ satir: sira, ham: kirpik, sebep: 'Rakam içeriyor' });
       return;
     }
     // Sunucudaki sınırın aynısı (0024). Burada söylemek, 40 satırı

@@ -2789,3 +2789,95 @@ gerçekten de çağrılamıyor mu — iki yol ayrışırsa görülsün.
 anon'a açıldığında test *"KRİTİK: anon şu dahili fonksiyonları
 çağırabiliyor: _soru_dokumu(...)"* diye kırmızı yandı. Eski testte bu
 sessizce geçerdi.
+
+## e-Okul sınıf listesi PDF'i (0042 — yalnız arayüz)
+
+Öğretmen sınıflarını eklemek isterken bildirdi: *"Kız erkek cinsiyet
+belirten kısımları da ayrı birer öğrenciymiş gibi alıyor."*
+
+**Haklıydı, ama sorun bildirdiğinden büyüktü.** Gerçek bir 9. sınıf listesi
+ayrıştırıcıya verildi ve sayıldı:
+
+```
+27 gerçek öğrenci → 44 "öğrenci"
+```
+
+Listeye girecek olanlar arasında şunlar vardı:
+
+- `Sınıf Öğretmeni: <ad>` ve `Sınıf Müdür Yrd: <ad>` — **iki meslektaşın
+  adı öğrenci olarak kaydedilecekti.** Cinsiyetten çok daha ciddi olan
+  buydu ve kimse fark etmemişti.
+- `T.C.`, `İSTANBUL VALİLİĞİ`, okulun adı, `Pansiyon Durum`, tablo
+  başlığı, `… Öğrenci Sayısı : 27` altbilgisi, belge kodu.
+- Ve gerçek öğrencilerin **adı da bozuktu**: ad alanı
+  `601 Ali Yılmaz Erkek` diye gidiyordu — okul numarası ve cinsiyet adın
+  içinde.
+
+### Üç ayrı kusur çıktı
+
+**1. Okuyucu boşlukları uyduruyordu.** `parcalariSatirlaraBol` parçaları
+koşulsuz `' '` ile birleştiriyordu. O PDF'te `ş`, `ğ`, `İ` AYRI parça
+olarak geliyor; sonuç:
+
+```
+"K ı z"                     ← "Kız"
+"Beş ikta ş / Arnavutköy"   ← "Beşiktaş / Arnavutköy"
+```
+
+Yani öğrenci adları ortadan bölünüyordu. Artık boşluk, parçanın nerede
+BİTTİĞİNE bakılarak konuyor (`x + width`), eşik de yazı boyunun oranı —
+sabit bir punto eşiği küçük listede boşluk kaçırır, büyük başlıkta olmayan
+boşluk uydururdu. `width` yoksa eski davranış sürüyor: bilgi olmadan
+tahmin etmektense boşluk koymak güvenli, çünkü iki kelimeyi yapıştırmak
+fazladan boşluktan kötüdür.
+
+**Bu değişiklik ödev PDF yolunu da etkiliyor** — `kunye-denetimi` (33
+ölçüm) ve `pdf-uyumluluk-denetimi` ile doğrulandı, gerileme yok.
+
+**2. Ayrıştırıcı e-Okul listesini tanımıyordu.** Artık satır kalıbı
+tanınıyor (`sıra no · okul no · ad soyad · cinsiyet`), mobilya satırları
+sebebiyle eleniyor ve **adlarda rakam olamayacağı** kuralı tarih, sayfa
+numarası ve belge kodunu süpürüyor.
+
+**Elenen hiçbir satır sessizce yok olmuyor:** hepsi sebebiyle önizlemede
+duruyor, kararı öğretmen veriyor.
+
+**3. `/i` bayrağı Türkçe'yi bilmiyor.** İlk düzeltmeden sonra sayım 28'e
+düştü — 27 olması gerekiyordu. Kalan tek hata `İSTANBUL VALİLİĞİ` idi:
+`/Valiliği/i` bu satırla **eşleşmiyor**, çünkü JavaScript'in
+ölçüt-duyarsız eşlemesi İ/ı çiftini tanımıyor. Kalıplar Türkçe küçük harfe
+çevrilip karşılaştırılınca sayım **27 = 27** oldu.
+
+### PDF artık doğrudan yükleniyor
+
+`ogrenci-listesi.ts`'in başındaki not yıllardır şunu söylüyordu: *"PDF yolu
+da buraya bağlanacak… ikinci bir ayrıştırıcı yazılmayacak."* Aynen öyle
+yapıldı: PDF okunur, satırlar `\n` ile birleşir ve **yapıştırmayla aynı
+yoldan** geçer.
+
+Kopyala-yapıştır yolu duruyor ama artık tavsiye edilen yol değil: hangi
+harfin nereye düşeceği okuyucudan okuyucuya değişiyor. Dosyayı biz
+okuyunca o belirsizlik kalkıyor. PDF hiçbir yere gönderilmiyor — okuma
+tamamen tarayıcıda.
+
+### Denetimdeki sahte PDF neden Türkçe harf taşıyor
+
+`toplu-ogrenci-denetimi` 8. grubu kendi e-Okul PDF'ini üretiyor —
+**uydurma adlarla**, çünkü depo herkese açık ve buraya gerçek öğrenci adı
+yazılmaz.
+
+İlk yazımda satırlar ASCII'ye düşürülmüştü (`VALILIGI`) ve denetim yanlış
+kırmızı yandı: kalıplar haklı olarak tutmadı, ama kusur üründe değil
+ÖLÇÜMDEYDİ. **Türkçesiz bir liste, e-Okul listesi değildir.** Fonta
+`/Differences` ile `gbreve`, `scedilla`, `dotlessi`, `Idotaccent`
+tanıtıldı; artık fixture gerçeğe sadık.
+
+Bir ölçüm hatası daha yapıldı ve kaydı burada duruyor: ilk sürüm sayfadaki
+**bütün** listeleri tarıyordu ve "T.C. öğrenci sayılmamış" ölçümü kırmızı
+yandı. Oysa elenen satırlar ekranda **bilerek** gösteriliyor. Ölçülmesi
+gereken şey ekranda ne yazdığı değil, **sunucuya ne gideceği** — ölçüm
+önizlemedeki ad satırlarına daraltıldı.
+
+**Geri alma kanıtı alındı:** mobilya elemesi kapatılınca 8. grup 6 ölçümle
+kırmızı yanıyor (3 yerine 8 "öğrenci"); okuyucu eski hâline döndürülünce
+`pdf-metin.test.ts`'te 3 test düşüyor.
