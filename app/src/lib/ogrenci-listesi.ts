@@ -6,9 +6,9 @@
  * öğretmen önizlemeyi onaylamadan sunucuya tek bir ad gitmiyor
  * (Part XXVIII: çıkarım bir öneridir).
  *
- * PDF YOLU DA BURAYA BAĞLANACAK. Metin katmanlı e-Okul PDF'i geldiğinde
- * `pdfSatirlariniOku`'nun döndürdüğü satırlar `\n` ile birleştirilip aynı
- * fonksiyona verilecek; ikinci bir ayrıştırıcı yazılmayacak.
+ * PDF YOLU BURAYA BAĞLANDI (0042 turu). `pdfSatirlariniOku`'nun
+ * döndürdüğü satırlar `\n` ile birleştirilip bu fonksiyona veriliyor;
+ * söz verildiği gibi ikinci bir ayrıştırıcı yazılmadı.
  */
 
 /** Sınıf kodu gibi görünen alan: 9A, 10C, 12B… */
@@ -26,7 +26,7 @@ const BAS_NUMARA = /^\d{1,3}\s*[.)\-–]\s*|^\d{1,3}\s+/;
  *
  * Cinsiyet isteğe bağlı: her listede o sütun olmayabilir.
  */
-const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+\d{2,6}\s+(.+?)(?:\s+(?:Kız|Erkek))?\s*$/u;
+const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+(\d{2,6})\s+(.+?)(?:\s+(?:Kız|Erkek))?\s*$/u;
 
 /** Tek başına cinsiyet — öğretmenin fark ettiği kusur buydu. */
 const CINSIYET = /^(?:Kız|Erkek)$/u;
@@ -76,6 +76,21 @@ export type AdSatiri = {
   ham: string;
   /** Kaydedilecek hâl. */
   ad: string;
+  /**
+   * Okul numarası — yoksa `null`.
+   *
+   * 0042'den önce numara atılıyordu (şemada yeri yoktu) ve adın içinde
+   * kalması kusurdu. Artık ayrı alanda. Özel ders öğrencisinde ve elle
+   * yazılmış listelerde numara olmaması NORMAL.
+   */
+  no: string | null;
+  /**
+   * Numara tekrarı — ad tekrarından AYRI tutuluyor, çünkü ayrı şeyler:
+   * aynı adda iki öğrenci olabilir, aynı numarada olmaması beklenir.
+   * Yine de ikisi de yalnız UYARI (öğretmenin kararı): tek bir yanlış
+   * okunan numara yüzünden bütün sınıf reddedilmemeli.
+   */
+  noTekrar: 'liste' | 'kayitli' | null;
   /**
    * `liste`   → aynı yapıştırmada bu ad zaten var
    * `kayitli` → o sınıfta bu adda bir öğrenci zaten kayıtlı
@@ -163,13 +178,17 @@ function adAlaniniSec(ham: string): string | null {
 
 export function listeyiCoz(
   metin: string,
-  secenek: { duzelt: boolean; kayitliAdlar?: string[] } = { duzelt: false },
+  secenek: { duzelt: boolean; kayitliAdlar?: string[]; kayitliNolar?: string[] } = {
+    duzelt: false,
+  },
 ): ListeOzeti {
   const satirlar: AdSatiri[] = [];
   const atlanan: AtlananSatir[] = [];
 
   const kayitli = new Set((secenek.kayitliAdlar ?? []).map(karsilastirmaAnahtari));
   const gorulen = new Set<string>();
+  const kayitliNo = new Set((secenek.kayitliNolar ?? []).filter(Boolean));
+  const gorulenNo = new Set<string>();
 
   let buyukSayisi = 0;
   let harfliSayisi = 0;
@@ -204,9 +223,12 @@ export function listeyiCoz(
       return;
     }
 
-    // e-Okul satırıysa adı doğrudan al: sıra no ve okul no atılır,
-    // sondaki cinsiyet sütunu da. Kalıp tutmazsa eski yol işler.
-    const eokul = EOKUL_SATIRI.exec(secilen)?.[1];
+    // e-Okul satırıysa adı ve NUMARAYI ayrı ayrı al: sıra no atılır, okul
+    // no kendi alanına gider, sondaki cinsiyet sütunu da atılır. Kalıp
+    // tutmazsa eski yol işler ve numara null kalır.
+    const eslesme = EOKUL_SATIRI.exec(secilen);
+    const okulNo = eslesme?.[1] ?? null;
+    const eokul = eslesme?.[2];
 
     // Sıra numarası at, sondaki cinsiyeti at, iç boşlukları teke indir.
     const temiz = (eokul ?? secilen.replace(BAS_NUMARA, ''))
@@ -247,7 +269,14 @@ export function listeyiCoz(
     else if (kayitli.has(anahtar)) mukerrer = 'kayitli';
     gorulen.add(anahtar);
 
-    satirlar.push({ ham: kirpik, ad, mukerrer });
+    let noTekrar: AdSatiri['noTekrar'] = null;
+    if (okulNo !== null) {
+      if (gorulenNo.has(okulNo)) noTekrar = 'liste';
+      else if (kayitliNo.has(okulNo)) noTekrar = 'kayitli';
+      gorulenNo.add(okulNo);
+    }
+
+    satirlar.push({ ham: kirpik, ad, no: okulNo, mukerrer, noTekrar });
   });
 
   return {

@@ -2881,3 +2881,107 @@ gereken şey ekranda ne yazdığı değil, **sunucuya ne gideceği** — ölçü
 **Geri alma kanıtı alındı:** mobilya elemesi kapatılınca 8. grup 6 ölçümle
 kırmızı yanıyor (3 yerine 8 "öğrenci"); okuyucu eski hâline döndürülünce
 `pdf-metin.test.ts`'te 3 test düşüyor.
+
+## Öğrenci numarası (0042)
+
+Öğretmen, PDF'ten sınıf aktarırken sordu: *"PDF'den öğrencilerin
+numaralarını almıyor… Onu ekletebilir miyiz?"*
+
+Bir önceki tur numarayı **bilerek atıyordu** — şemada duracağı alan yoktu
+ve adın içinde kalması kusurdu (`601 Ali Yılmaz Erkek`). Artık kendi alanı
+var.
+
+**Öğretmenin iki kararı:** numara yalnız öğrenci listelerinde görünsün;
+aynı numara tekrar ederse uyarılsın ama **engellenmesin**.
+
+### Neden null olabilir, neden metin, neden unique değil
+
+**Null olabilir**, çünkü özel ders öğrencisinin okul numarası yoktur;
+zorunlu yapmak onları kayıt dışı bırakırdı. Ekranda numarası olmayanda
+"—" bile yazılmıyor: numarasızlık bir eksiklik değil, olağan durum.
+
+**Metin, sayı değil**: okul numaraları başında sıfır taşıyabiliyor
+("0601") ve sayıya çevirmek onu sessizce "601" yapardı. Numara bir
+kimlik, bir miktar değil — üzerinde aritmetik yapmıyoruz.
+
+**İndeks var, UNIQUE yok**: öğretmenin kararı gereği. Unique olsaydı,
+PDF'ten yanlış okunan tek bir numara 30 kişilik sınıfın tamamının
+reddedilmesine yol açardı ve hangi satır yüzünden olduğu ekrandan
+anlaşılmazdı.
+
+### 0007 tuzağı: birinde kaçınıldı, ötekinde göze alındı
+
+`ogrenciler_toplu_ekle`'de **imza hiç değişmedi.** `p_adlar` zaten `jsonb`
+olduğu için hem eski biçimi (dizgi dizisi) hem yeni biçimi (`{ad, no}`)
+kabul ediyor; ayrım `_toplu_ad`/`_toplu_no` yardımcılarında **tek yerde**
+yapılıyor (denetleme ve yazma geçişleri ayrışmasın diye). Ortada
+düşürülecek bir imza kalmadı, eski çağrı biçimi de çalışmayı sürdürüyor —
+ve bu test ediliyor.
+
+`ogrenci_ekle`'de tuzak **gerçek**: varsayılanlı bir parametre eklemek yeni
+bir fonksiyon yaratıyor, eskisi ortada kalıyor ve PostgREST çağrıyı ona
+yönlendirebiliyor — o da numarayı hiç yazmıyor, yani sessiz veri kaybı.
+Eski 4 parametreli imza açıkça düşürüldü; hem migration'ın kendi
+doğrulaması hem 12. test grubu `ogrenci_ekle`'nin **tek imza** olduğunu
+sınıyor.
+
+### Gövdeyi hatırdan yazmak kural değiştirir
+
+`ogrenci_ekle`'nin gövdesi ilk yazımda baştan yazılmıştı ve **üç davranış
+sessizce kayboluyordu**: sahiplik kapısı `_yonetici`den `_ogretmen`e
+düşmüştü (yani her öğretmen öğrenci ekleyebilecekti), özel ders
+öğrencisinin sınıfını kendiliğinden seçen blok gitmişti, dönüş alanları
+değişmişti. Gerçek tanımla karşılaştırılınca görüldü; gövde kopyalandı,
+eklenen tek şey numara oldu.
+
+Aynı sebeple `sinif_ogrencileri` ve `ogrenciler_listesi` gövdeleri **elle
+değil betikle** kopyalandı ve içlerine tek satır eklendi.
+
+### Defterin ilk sınavı
+
+0041'de konan kural bu turda işledi: `migration-listesi.test.ts`, 0042
+kendini deftere yazmadan geçmiyor. Kanıtlandı — kayıt satırı silinince
+test *"0042_ogrenci_numarasi.sql deftere kendini kaydetmiyor — sonuna
+`select public._migration_kaydet('0042');` ekleyin"* diye kırmızı yandı.
+
+Defter testinin kendisi de bu turda düzeldi: *"41 satır"* diye
+sabitlenmişti ve 0042 eklenir eklenmez kırmızı yandı — oysa defter doğru
+çalışıyordu, **kırılgan olan ölçümdü**. Her yeni migration'da elle
+düzeltilmesi gereken bir test gürültü üretir ve bir gün gerçek bir kusuru
+da gürültü sanarsınız. Artık sayı türetiliyor: geriye dönük kısım hep
+0001–0040, ondan sonrası tek tek kesin.
+
+### Bu turda üç ölçüm hatası yapıldı
+
+Hepsi kayıtlı, çünkü hepsi aynı aileden — **ölçüm, ölçtüğü şey değişince
+kendisi de değişmek zorunda**:
+
+1. SQL testleri yanlış `do` bloğuna eklendi (`v is not a known variable`);
+   kendi bloğuna alındı.
+2. Tarayıcı denetiminde ad `<p>`'si artık numara rozetini de içeriyordu,
+   bu yüzden "adda rakam yok" ölçümü kırmızı yandı. Rozet çıkarılarak
+   okunuyor — ölçülmek istenen şey **kaydedilecek ad**.
+3. Sunucuya giden gövde `p.route` ile yakalanmaya çalışıldı, oysa bu
+   denetim `fetch`i sayfanın içinde taklit ediyor ve istek ağa hiç
+   çıkmıyor; kayıt sayfanın kendisinden okunuyor. Ayrıca sınıf seçimi
+   atlanmıştı ve `ekle()` erken dönüyordu.
+
+Sahte sunucunun kendisi de düzeltildi: `ad` alanını aynen yansıtıyordu ve
+nesne gelince sonuç tablosu boş çıkıyordu. **Taklit gerçeğe sadık
+olmalı** — gerçek sunucu da tam bu ayrımı yapıyor.
+
+### Yedek
+
+`disa_aktar` `to_jsonb(o)` kullandığı için yeni sütun kendiliğinden
+taşınıyor. Kendiliğinden olması güvence değil: felaket provasının tohumuna
+numara eklendi (önceden numarasız kuruluyordu, yani prova numara düşse de
+yeşil kalırdı) ve yedek JSON'unda numaranın gerçekten durduğu ayrıca
+görüldü.
+
+### Bilerek kapsam dışı
+
+**Kaydedilmiş bir öğrencinin numarası — ya da adı — sonradan
+düzeltilemiyor.** Depoda düzenleme ucu hiç yok (`ogrenci_ekle`,
+`ogrenci_pasiflestir` var; `ogrenci_guncelle` yok). İçe aktarmada bu
+kapanıyor: öğretmen onaylamadan önce metin kutusunu elle düzenleyebiliyor.
+Kaydettikten sonrası için ayrı bir tur gerekiyor; öğretmene söylendi.

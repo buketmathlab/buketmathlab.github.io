@@ -104,9 +104,21 @@ export function TopluOgrenci() {
     [sinifId, mevcut.veri],
   );
 
+  // O sınıfta ZATEN KULLANILAN numaralar — numara tekrarı uyarısının
+  // ikinci kaynağı (birincisi aynı yapıştırmanın içi).
+  const kayitliNolar = useMemo(
+    () =>
+      sinifId
+        ? (mevcut.veri?.kayitlar ?? [])
+            .map((k) => k.ogrenci_no)
+            .filter((n): n is string => Boolean(n))
+        : [],
+    [sinifId, mevcut.veri],
+  );
+
   const ozet = useMemo(
-    () => listeyiCoz(metin, { duzelt, kayitliAdlar }),
-    [metin, duzelt, kayitliAdlar],
+    () => listeyiCoz(metin, { duzelt, kayitliAdlar, kayitliNolar }),
+    [metin, duzelt, kayitliAdlar, kayitliNolar],
   );
 
   const secilenler = ozet.satirlar.filter((_, i) => !cikarilan.has(i));
@@ -126,7 +138,9 @@ export function TopluOgrenci() {
         p_token: oturum?.token,
         p_tur: 'okul',
         p_sinif_id: sinifId,
-        p_adlar: secilenler.map((s) => s.ad),
+        // 0042: ad ve numara birlikte. Sunucu düz dizgi dizisini de kabul
+        // ediyor (geriye uyum), ama numarayı ancak nesne biçimi taşır.
+        p_adlar: secilenler.map((s) => ({ ad: s.ad, no: s.no })),
       });
       setSonuc(v);
       bildir(`${v.adet} öğrenci eklendi`, 'basari');
@@ -384,7 +398,16 @@ export function TopluOgrenci() {
                     className="flex flex-wrap items-center justify-between gap-2 py-2"
                   >
                     <div className="min-w-0">
-                      <p className="text-[15px] font-semibold text-ink">{s.ad}</p>
+                      <p className="text-[15px] font-semibold text-ink">
+                        {/* NUMARA ADIN İÇİNDE DEĞİL, AYRI. 0042'den önce ad
+                            alanı "601 Ali Yılmaz Erkek" diye gidiyordu. */}
+                        {s.no && (
+                          <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] text-muted">
+                            {s.no}
+                          </span>
+                        )}
+                        {s.ad}
+                      </p>
                       {s.ad !== s.ham && (
                         <p className="text-[12px] text-muted">yapıştırılan: {s.ham}</p>
                       )}
@@ -394,6 +417,11 @@ export function TopluOgrenci() {
                           iki öğrenci gerçekten olur; kararı öğretmen verir. */}
                       {s.mukerrer === 'liste' && <Tag tur="uyari">Listede tekrar</Tag>}
                       {s.mukerrer === 'kayitli' && <Tag tur="uyari">Sınıfta kayıtlı</Tag>}
+                      {/* NUMARA TEKRARI AYRI BİR UYARI: aynı adda iki
+                          öğrenci olabilir, aynı numarada olmaması beklenir.
+                          Yine de engel değil — öğretmenin kararı. */}
+                      {s.noTekrar === 'liste' && <Tag tur="uyari">Numara tekrarı</Tag>}
+                      {s.noTekrar === 'kayitli' && <Tag tur="uyari">Numara kayıtlı</Tag>}
                       <Button
                         tur="sade"
                         olcu="sm"

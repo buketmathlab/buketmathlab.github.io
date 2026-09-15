@@ -31,37 +31,58 @@ begin
    where yonetici;
   jt := (public.giris('Defter!2026'))->>'token';
 
+  -- Defterin bugünkü hâli bir kenara alınıyor; test sonunda aynen geri
+  -- konacak. Testin kendisi defteri bozup bırakmamalı.
+  create temp table defter_yedek on commit drop as
+    select * from public.uygulanan_migrationlar;
+
   -- ---------------------------------------------------------------------------
   -- 1. TEMİZ ZİNCİRDE DEFTER DOLU
   --
-  -- Zincirin tamamı çalıştıysa 0001–0040 geriye dönük, 0041 kesin olmalı.
+  -- SAYILAR SABİT YAZILMIYOR. İlk yazımda "41 satır" diye sabitlenmişti ve
+  -- 0042 eklenir eklenmez test kırmızı yandı — oysa defter DOĞRU
+  -- çalışıyordu, kırılgan olan ölçümdü. Her yeni migration'da düzeltilmesi
+  -- gereken bir test, kendi kendine gürültü üretir ve bir gün gerçek bir
+  -- kusuru da gürültü sanarsınız.
+  --
+  -- Değişmeyen kural şu: geriye dönük kısım HEP 0001–0040'tır (0041'de
+  -- kuruldu, orada donmuş), ondan sonrası tek tek kesindir.
   -- ---------------------------------------------------------------------------
   d := public.surum_defteri(jt);
-
-  select count(*) into n from jsonb_array_elements(d->'dosyalar');
-  if n <> 41 then
-    raise exception '1a: defterde 41 satır bekleniyordu, % var', n;
-  end if;
-
-  if d->>'son' <> '0041' then
-    raise exception '1b: son 0041 olmalıydı, "%"', d->>'son';
-  end if;
-
-  -- 0041 KESİN, ötekiler ÇIKARIM. Bu ayrım kaybolursa defter, bilmediği
-  -- bir şeyi biliyormuş gibi gösterir.
-  select count(*) into n from jsonb_array_elements(d->'dosyalar') e
-   where e->>'kaynak' = 'migration';
-  if n <> 1 then
-    raise exception '1c: tam 1 kesin satır bekleniyordu, % var', n;
-  end if;
 
   select count(*) into n from jsonb_array_elements(d->'dosyalar') e
    where e->>'kaynak' = 'geriye_donuk';
   if n <> 40 then
-    raise exception '1d: 40 geriye dönük satır bekleniyordu, % var', n;
+    raise exception '1a: 40 geriye dönük satır bekleniyordu, % var', n;
   end if;
 
-  raise notice '1 OK — temiz zincirde 41 satır; 0041 kesin, 40''ı çıkarım';
+  -- Kesin satırlar: 0041 ve sonrası. En az bir tane (0041) olmalı.
+  select count(*) into n from jsonb_array_elements(d->'dosyalar') e
+   where e->>'kaynak' = 'migration';
+  if n < 1 then
+    raise exception '1b: hiç kesin satır yok — migrationlar kendini yazmıyor';
+  end if;
+  m := n;
+
+  select count(*) into n from jsonb_array_elements(d->'dosyalar');
+  if n <> 40 + m then
+    raise exception '1c: toplam % satır, oysa 40 çıkarım + % kesin bekleniyordu', n, m;
+  end if;
+
+  -- `son` gerçekten en büyük numara mı.
+  if d->>'son' <> (select max(e->>'dosya') from jsonb_array_elements(d->'dosyalar') e) then
+    raise exception '1d: son ("%") defterdeki en büyük numara değil', d->>'son';
+  end if;
+
+  -- 0041 KESİN olmalı: defterin kurulduğu dosya kendini yazmış.
+  if not exists (
+    select 1 from jsonb_array_elements(d->'dosyalar') e
+    where e->>'dosya' = '0041' and e->>'kaynak' = 'migration'
+  ) then
+    raise exception '1e: 0041 kesin satır olarak yok';
+  end if;
+
+  raise notice '1 OK — 40 çıkarım + % kesin satır; son = %', m, d->>'son';
 
   -- ---------------------------------------------------------------------------
   -- 2. ÇIPASI OLMAYAN ARALIK YAZILMIYOR  ← BU DOSYANIN ASIL ÖLÇÜMÜ
@@ -187,16 +208,20 @@ begin
   raise notice '7 OK — defter tablosu anon''a kapalı';
 
   -- ---------------------------------------------------------------------------
-  -- TEMİZLİK: defteri zincirin bıraktığı hâle döndür.
+  -- TEMİZLİK: defteri testin BAŞINDAKİ hâline döndür.
+  --
+  -- Sabit bir sayıya değil, başta alınan kopyaya dönülüyor: bu dosya her
+  -- yeni migration'da güncellenmek zorunda kalmasın.
   -- ---------------------------------------------------------------------------
   delete from public.uygulanan_migrationlar;
-  perform public._defter_doldur();
-  perform public._migration_kaydet('0041');
+  insert into public.uygulanan_migrationlar (dosya, uygulandi, kaynak)
+  select dosya, uygulandi, kaynak from defter_yedek;
 
   select count(*) into m from public.uygulanan_migrationlar;
-  if m <> 41 then
-    raise exception 'temizlik: defter 41 satıra dönmedi, % var', m;
+  if m <> (select count(*) from defter_yedek) then
+    raise exception 'temizlik: defter eski hâline dönmedi (% satır)', m;
   end if;
+  drop table defter_yedek;
 
   raise notice '';
   raise notice 'DEFTER TESTLERİ: 7 GRUP GEÇTİ';

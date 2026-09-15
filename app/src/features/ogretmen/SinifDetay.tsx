@@ -155,6 +155,14 @@ function OgrenciSatiri({
         <div className="min-w-0">
           {/* Ad detaya götürüyor; özel ders öğrencisinde ders ve ödeme
               takibi orada. Öğrenciler listesiyle aynı desen. */}
+          {/* 0042: OKUL NUMARASI. Numarası olmayanda hiçbir şey çizilmiyor
+              — "—" bile değil: özel ders öğrencisinde numarasızlık bir
+              eksiklik değil, olağan durum. */}
+          {o.ogrenci_no && (
+            <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] font-semibold text-muted">
+              {o.ogrenci_no}
+            </span>
+          )}
           <Link
             to={`/ogretmen/ogrenciler/${o.id}`}
             className="inline-flex min-h-[44px] items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"

@@ -253,3 +253,52 @@ describe('listeyiCoz — e-Okul sınıf listesi', () => {
     expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz', 'Ayşe Işık']);
   });
 });
+
+describe('listeyiCoz — okul numarası (0042)', () => {
+  it('numarayı AYRI alana çıkarıyor, adın içinde bırakmıyor', () => {
+    const v = listeyiCoz('1 601 ALİ YILMAZ Erkek\n2 602 AYŞE IŞIK Kız', { duzelt: true });
+    expect(v.satirlar.map((s) => [s.ad, s.no])).toEqual([
+      ['Ali Yılmaz', '601'],
+      ['Ayşe Işık', '602'],
+    ]);
+  });
+
+  it('numarasız satırda null — eksiklik değil, olağan', () => {
+    // Elle yazılmış liste ve özel ders öğrencisi böyle geliyor.
+    const v = listeyiCoz('Ali Yılmaz\n2. Ayşe Işık', { duzelt: true });
+    expect(v.satirlar.map((s) => s.no)).toEqual([null, null]);
+  });
+
+  it('başında sıfır olan numarayı bozmuyor', () => {
+    // Metin olarak saklanmasının sebebi bu: sayıya çevirmek "0601"i
+    // sessizce "601" yapardı.
+    const v = listeyiCoz('1 0601 ALİ YILMAZ Erkek', { duzelt: true });
+    expect(v.satirlar[0]?.no).toBe('0601');
+  });
+
+  it('aynı yapıştırmadaki numara tekrarını işaretliyor ama SİLMİYOR', () => {
+    const v = listeyiCoz('1 601 ALİ YILMAZ Erkek\n2 601 AYŞE IŞIK Kız', { duzelt: true });
+    expect(v.satirlar).toHaveLength(2);
+    expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, 'liste']);
+    // Ad tekrarı YOK: iki uyarı birbirine karışmamalı.
+    expect(v.satirlar.map((s) => s.mukerrer)).toEqual([null, null]);
+  });
+
+  it('sınıfta zaten kullanılan numarayı ayrı işaretliyor', () => {
+    const v = listeyiCoz('1 601 ALİ YILMAZ Erkek', {
+      duzelt: true,
+      kayitliNolar: ['601'],
+    });
+    expect(v.satirlar[0]?.noTekrar).toBe('kayitli');
+    expect(v.satirlar[0]?.mukerrer).toBe(null);
+  });
+
+  it('ad tekrarı ile numara tekrarı BAĞIMSIZ', () => {
+    // Aynı adda iki öğrenci olabilir ve numaraları farklıdır.
+    const v = listeyiCoz('1 601 ALİ YILMAZ Erkek\n2 602 ALİ YILMAZ Erkek', {
+      duzelt: true,
+    });
+    expect(v.satirlar.map((s) => s.mukerrer)).toEqual([null, 'liste']);
+    expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, null]);
+  });
+});

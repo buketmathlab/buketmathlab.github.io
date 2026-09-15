@@ -42,6 +42,8 @@ export type Sinif = {
 export type OgrenciSatiri = {
   id: string;
   ad: string;
+  /** Okul numarası — yoksa `null` (0042). */
+  ogrenci_no: string | null;
   tur: 'okul' | 'ozel';
   sinif: string | null;
 };
@@ -281,6 +283,11 @@ export type OdevGonderimleri = {
 export type SinifOgrencisi = {
   id: string;
   ad: string;
+  /**
+   * Okul numarası — yoksa `null` (0042). Özel ders öğrencisinde numara
+   * olmaması normaldir; ekranda "—" bile yazılmıyor.
+   */
+  ogrenci_no: string | null;
   tur: 'okul' | 'ozel';
   yapti: number;
   yapmadi: number;
