@@ -166,3 +166,90 @@ describe('kodlariCsv', () => {
     expect(satirlar[0]).toContain('Öğrenci kodu');
   });
 });
+
+describe('listeyiCoz — e-Okul sınıf listesi', () => {
+  /**
+   * GERÇEK BİR LİSTENİN YAPISI, UYDURMA ADLARLA.
+   *
+   * Depo herkese açık; buraya gerçek öğrenci adı yazılmaz. Yapı gerçek bir
+   * 9. sınıf listesinden ölçülerek çıkarıldı: 27 öğrencilik o listeden
+   * ayrıştırıcı 44 "öğrenci" üretiyordu.
+   */
+  const LISTE = [
+    'T.C.',
+    'İSTANBUL VALİLİĞİ',
+    'Beşiktaş / Örnek Anadolu Lisesi Müdürlüğü',
+    '15 - 9. Sınıf / A Şubesi (Sayısal) Sınıf Listesi',
+    'Sınıf Öğretmeni: NURAY ÖRNEK Sınıf Başkanı:',
+    'Sınıf Müdür Yrd: KEMAL DENEME Sınıf Başkan Yrd:',
+    'S.No Öğrenci No Adı Soyadı Cinsiyeti Pansiyon Durum',
+    '1 601 ALİ YILMAZ Erkek',
+    '2 602 AYŞE IŞIK Kız',
+    '3 603 MEHMET ÇOBANOĞLU Erkek',
+    'Kız Öğrenci Sayısı : 1 Erkek Öğrenci Sayısı : 2 Toplam Öğrenci Sayısı : 3',
+    '15/09/2026 15:37:18 1',
+    'ABC01001R020',
+  ].join('\n');
+
+  it('yalnız öğrencileri alıyor — başlık, kurum ve altbilgi girmiyor', () => {
+    const v = listeyiCoz(LISTE, { duzelt: true });
+    expect(v.satirlar.map((s) => s.ad)).toEqual([
+      'Ali Yılmaz',
+      'Ayşe Işık',
+      'Mehmet Çobanoğlu',
+    ]);
+  });
+
+  it('ÖĞRETMEN ADINI öğrenci sanmıyor', () => {
+    // Bu turun en tehlikeli kusuru buydu: bir meslektaşın adı öğrenci
+    // olarak kaydediliyordu.
+    const v = listeyiCoz(LISTE, { duzelt: true });
+    const adlar = v.satirlar.map((s) => s.ad).join(' | ');
+    expect(adlar).not.toMatch(/Nuray|Kemal/);
+    expect(v.atlanan.map((a) => a.sebep)).toContain('Öğretmen/başkan satırı');
+  });
+
+  it('okul numarası ve cinsiyet ADIN İÇİNDE kalmıyor', () => {
+    const v = listeyiCoz(LISTE, { duzelt: true });
+    for (const s of v.satirlar) {
+      expect(s.ad).not.toMatch(/\d/);
+      expect(s.ad).not.toMatch(/(Kız|Erkek)$/);
+    }
+  });
+
+  it('Türkçe büyük harf tuzağı: İSTANBUL VALİLİĞİ eleniyor', () => {
+    // `/Valiliği/i` bunu YAKALAMIYORDU — ölçüldü, listeye "öğrenci" olarak
+    // girmişti. Küçük harfe Türkçe kurallarıyla çevirmek şart.
+    const v = listeyiCoz('İSTANBUL VALİLİĞİ\nALİ YILMAZ', { duzelt: true });
+    expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz']);
+  });
+
+  it('tek başına duran cinsiyet satırını öğrenci saymıyor', () => {
+    // Öğretmenin bildirdiği kusur: sütun ayrı satıra düştüğünde
+    // "Kız"/"Erkek" birer öğrenci oluyordu.
+    const v = listeyiCoz('ALİ YILMAZ\nErkek\nAYŞE IŞIK\nKız', { duzelt: true });
+    expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz', 'Ayşe Işık']);
+    expect(v.atlanan.map((a) => a.sebep)).toEqual(['Cinsiyet sütunu', 'Cinsiyet sütunu']);
+  });
+
+  it('sekmeli yapıştırmada TEK ADLI öğrencinin adı "Erkek" olmuyor', () => {
+    // "Ali" (3 harf) < "Erkek" (5 harf): cinsiyet elenmeseydi en uzun alan
+    // seçilir ve çocuğun adı "Erkek" diye kaydedilirdi.
+    const v = listeyiCoz('1\t601\tALİ\tErkek', { duzelt: true });
+    expect(v.satirlar[0]?.ad).toBe('Ali');
+  });
+
+  it('elenen satırlar SESSİZCE yok olmuyor, sebebiyle raporlanıyor', () => {
+    const v = listeyiCoz(LISTE, { duzelt: true });
+    expect(v.atlanan.length).toBe(10);
+    for (const a of v.atlanan) {
+      expect(a.sebep).not.toBe('');
+      expect(a.ham).not.toBe('');
+    }
+  });
+
+  it('cinsiyet sütunu OLMAYAN listeyi de okuyor', () => {
+    const v = listeyiCoz('1 601 ALİ YILMAZ\n2 602 AYŞE IŞIK', { duzelt: true });
+    expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz', 'Ayşe Işık']);
+  });
+});

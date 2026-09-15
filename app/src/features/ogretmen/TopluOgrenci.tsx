@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { kodlariCsv, listeyiCoz } from '@/lib/ogrenci-listesi';
+import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { rpc } from '@/services/supabase';
 import type { OgrenciListesi, Sinif } from '@/types/api';
 
@@ -43,6 +44,9 @@ export function TopluOgrenci() {
   const [hata, setHata] = useState<string | null>(null);
   const [sonuc, setSonuc] = useState<TopluSonuc | null>(null);
   const [kodlarGizli, setKodlarGizli] = useState(false);
+  const [pdfOkunuyor, setPdfOkunuyor] = useState(false);
+  const [pdfHata, setPdfHata] = useState<string | null>(null);
+  const [pdfAdi, setPdfAdi] = useState<string | null>(null);
 
   const siniflar = useVeri<Sinif[]>('siniflar_listesi', {
     p_token: oturum?.token,
@@ -60,6 +64,38 @@ export function TopluOgrenci() {
 
   // Önce düzeltmesiz çözüp girdinin büyük harfli olup olmadığını ÖLÇÜYORUZ;
   // kutunun varsayılanı tahmine değil o ölçüme dayanıyor.
+  /**
+   * e-Okul sınıf listesi PDF'ini okur ve metin kutusuna DÖKER.
+   *
+   * KUTUYA DÖKÜLÜYOR, DOĞRUDAN KAYDEDİLMİYOR. Öğretmen okunanı görüyor,
+   * gerekirse düzeltiyor, sonra onaylıyor — PDF'ten gelen de bir ÖNERİ
+   * (Part XXVIII). Ayrıca ikinci bir ayrıştırıcı yok: satırlar `\n` ile
+   * birleştirilip yapıştırmayla aynı yoldan geçiyor.
+   *
+   * PDF HİÇBİR YERE GİTMİYOR: okuma tamamen tarayıcıda.
+   */
+  async function pdfSecildi(dosya: File) {
+    setPdfHata(null);
+    setPdfOkunuyor(true);
+    try {
+      const satirlar = await pdfSatirlariniOku(dosya);
+      setMetin(satirlar.join('\n'));
+      setPdfAdi(dosya.name);
+      // Listeyi kendimiz okuduğumuzda büyük/küçük harf düzeltmesini
+      // ölçüme bırakıyoruz: e-Okul hep BÜYÜK HARF veriyor.
+      setDuzeltElle(null);
+    } catch (e) {
+      setPdfAdi(null);
+      setPdfHata(
+        e instanceof Error
+          ? e.message
+          : 'PDF okunamadı. Listeyi kopyalayıp aşağıdaki kutuya yapıştırabilirsiniz.',
+      );
+    } finally {
+      setPdfOkunuyor(false);
+    }
+  }
+
   const olcum = useMemo(() => listeyiCoz(metin, { duzelt: false }), [metin]);
   const duzelt = duzeltElle ?? olcum.cogunlukBuyuk;
 
@@ -229,6 +265,40 @@ export function TopluOgrenci() {
             </Select>
           )}
         </Field>
+
+        {/* PDF YOLU. Kopyala-yapıştır PDF okuyucusundan okuyucusuna
+            değişiyor ve harfleri bölebiliyor (ölçüldü: "K ı z"). Dosyayı
+            biz okursak bu belirsizlik kalkıyor. */}
+        <Field
+          etiket="e-Okul sınıf listesi PDF'i"
+          ipucu="İsteğe bağlı. Seçerseniz liste aşağıdaki kutuya dökülür; başlıklar, öğretmen adı, okul numarası ve cinsiyet ayıklanır."
+        >
+          {(k) => (
+            <input
+              {...k}
+              type="file"
+              accept="application/pdf,.pdf"
+              className="block min-h-[44px] w-full text-[14px] text-ink file:mr-3 file:min-h-[44px] file:rounded-lg file:border file:border-line file:bg-surface file:px-4 file:text-[14px] file:text-ink"
+              onChange={(e) => {
+                const d = e.target.files?.[0];
+                if (d) void pdfSecildi(d);
+              }}
+            />
+          )}
+        </Field>
+        {pdfOkunuyor && (
+          <p className="text-[14px] text-muted">PDF okunuyor…</p>
+        )}
+        {pdfAdi && !pdfOkunuyor && (
+          <p className="text-[14px] text-muted">
+            <strong>{pdfAdi}</strong> okundu. Aşağıdaki önizlemeyi kontrol edin.
+          </p>
+        )}
+        {pdfHata && (
+          <p className="text-[14px] text-danger">
+            {pdfHata} Listeyi kopyalayıp aşağıdaki kutuya da yapıştırabilirsiniz.
+          </p>
+        )}
 
         <Field
           etiket="Ad listesi"
