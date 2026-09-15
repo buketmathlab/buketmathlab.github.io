@@ -302,3 +302,88 @@ describe('listeyiCoz — okul numarası (0042)', () => {
     expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, null]);
   });
 });
+
+describe('listeyiCoz — çok şubeli e-Okul dosyası', () => {
+  /**
+   * ÜÇ ŞUBELİK BİR DOSYANIN YAPISI, UYDURMA ADLARLA.
+   *
+   * Öğretmenin gönderdiği tek PDF üç şube taşıyordu (9A 27, 9B 30, 9C 30
+   * öğrenci — toplam 87). Şube başlıkları okunmasaydı 87'sinin hepsi
+   * seçilen tek sınıfa eklenirdi. Şubeler arasında numaralar da çakışıyordu.
+   */
+  const DOSYA = [
+    'T.C.',
+    'AL - 9. Sınıf / A Şubesi (Sayısal) Sınıf Listesi',
+    'S.No Öğrenci No Adı Soyadı Cinsiyeti',
+    '1 601 ALİ YILMAZ Erkek',
+    '2 617 AYŞE IŞIK Kız',
+    'AL - 9. Sınıf / B Şubesi (Sözel) Sınıf Listesi',
+    'S.No Öğrenci No Adı Soyadı Cinsiyeti',
+    '1 617 MEHMET ÇOBAN Erkek',
+    '2 618 ALİ YILMAZ Erkek',
+  ].join('\n');
+
+  it('şubeleri göründükleri sırada buluyor', () => {
+    expect(listeyiCoz(DOSYA, { duzelt: true }).siniflar).toEqual(['9A', '9B']);
+  });
+
+  it('her öğrenciyi kendi şubesine bağlıyor', () => {
+    const v = listeyiCoz(DOSYA, { duzelt: true });
+    expect(v.satirlar.map((s) => [s.sinif, s.no])).toEqual([
+      ['9A', '601'],
+      ['9A', '617'],
+      ['9B', '617'],
+      ['9B', '618'],
+    ]);
+  });
+
+  it('ŞUBELER ARASI numara çakışması UYARI DEĞİL', () => {
+    // 9A'daki 617 ile 9B'deki 617 iki ayrı öğrencinin numarası. Genel bir
+    // küme kullanılsaydı üç şubelik dosya baştan aşağı yanlış uyarı verir
+    // ve gerçek çakışmalar o gürültünün içinde kaybolurdu.
+    const v = listeyiCoz(DOSYA, { duzelt: true });
+    expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, null, null, null]);
+  });
+
+  it('ŞUBELER ARASI aynı ad da uyarı değil', () => {
+    const v = listeyiCoz(DOSYA, { duzelt: true });
+    expect(v.satirlar.map((s) => s.mukerrer)).toEqual([null, null, null, null]);
+  });
+
+  it('AYNI şubedeki çakışma hâlâ uyarı veriyor', () => {
+    // Kapsamı daraltmak, gerçek çakışmayı kaçırmak demek olmamalı.
+    const v = listeyiCoz(
+      [
+        'AL - 9. Sınıf / A Şubesi (Sayısal) Sınıf Listesi',
+        '1 601 ALİ YILMAZ Erkek',
+        '2 601 AYŞE IŞIK Kız',
+      ].join('\n'),
+      { duzelt: true },
+    );
+    expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, 'liste']);
+  });
+
+  it('şube başlığı elenenlerde ve şubeyi söylüyor', () => {
+    const v = listeyiCoz(DOSYA, { duzelt: true });
+    expect(v.atlanan.map((a) => a.sebep)).toContain('Şube başlığı (9A)');
+    expect(v.atlanan.map((a) => a.sebep)).toContain('Şube başlığı (9B)');
+  });
+
+  it('şube başına "zaten kayıtlı" ayrı bakılıyor', () => {
+    const v = listeyiCoz(DOSYA, {
+      duzelt: true,
+      kayitliSube: { '9B': { nolar: ['617'] } },
+    });
+    // 9A'daki 617 kayıtlı SAYILMAMALI — o başka bir şubenin numarası.
+    expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, null, 'kayitli', null]);
+  });
+
+  it('şubesiz dosyada eski davranış sürüyor', () => {
+    const v = listeyiCoz('1 601 ALİ YILMAZ Erkek\n2 601 AYŞE IŞIK Kız', {
+      duzelt: true,
+    });
+    expect(v.siniflar).toEqual([]);
+    expect(v.satirlar.map((s) => s.sinif)).toEqual([null, null]);
+    expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, 'liste']);
+  });
+});

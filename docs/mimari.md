@@ -2985,3 +2985,69 @@ düzeltilemiyor.** Depoda düzenleme ucu hiç yok (`ogrenci_ekle`,
 `ogrenci_pasiflestir` var; `ogrenci_guncelle` yok). İçe aktarmada bu
 kapanıyor: öğretmen onaylamadan önce metin kutusunu elle düzenleyebiliyor.
 Kaydettikten sonrası için ayrı bir tur gerekiyor; öğretmene söylendi.
+
+## Çok şubeli e-Okul dosyası (0042 turunun devamı — yalnız arayüz)
+
+Öğretmen numaraların gelip gelmediğini sorunca ölçüm yapıldı ve **başka
+bir şey ortaya çıktı**: gönderdiği tek PDF, üç şube taşıyordu.
+
+```
+sayfa 1: 27 öğrenci · 9. Sınıf / A Şubesi
+sayfa 2: 30 öğrenci · 9. Sınıf / B Şubesi
+sayfa 3: 30 öğrenci · 9. Sınıf / C Şubesi
+```
+
+Şubeler okunmasaydı **87 öğrencinin hepsi seçilen tek sınıfa** eklenirdi.
+Ekranda 87 satır görüleceği için fark edilebilirdi, ama fark edilmeden
+onaylanırsa üç sınıf tek sınıfta toplanırdı.
+
+**İlk ölçüm yanıltıcıydı ve bu da bir ders.** Önceki turda PDF'in yalnız
+BİRİNCİ sayfası okunmuştu; "27 öğrenci, hepsi doğru" sonucu tek sayfa için
+doğru, dosya için eksikti. Bir ölçümün kapsamı, ölçtüğü şeyin tamamını
+kapsamıyorsa yanlış güven verir.
+
+### Tekrar denetimi artık şube başına
+
+Şubeler arasında numaralar çakışıyor (9A'da da 9B'de de 617 var). Genel
+bir küme kullanılsaydı üç şubelik dosya baştan aşağı yanlış "numara
+tekrarı" uyarısı verir ve **gerçek çakışmalar o gürültünün içinde
+kaybolurdu**. Anahtarın başına şube kondu; gerçek PDF'te yanlış uyarı
+sayısı **sıfır**.
+
+"Sınıfta zaten kayıtlı" denetimi de şube başına: her şubenin kendi öğrenci
+listesi ayrı çekiliyor. Seçili tek sınıfın listesine bakmak, 9B'de kayıtlı
+bir numarayı 9A satırı için "kayıtlı" saymak olurdu.
+
+### Eksik sınıf: uyar, oluşturmayı teklif et, ama YAZMA
+
+Dosyadaki bir şube depoda yoksa ekleme **hiç yapılmıyor** — yarım bir
+aktarım (9A yazıldı, 9C yazılmadı) öğretmeni en kötü yerde bırakırdı.
+Eksik şube adıyla söyleniyor ve yanında "9C oluştur" düğmesi var
+(`sinif_ekle` idempotent ve sınıfı sahibe atıyor).
+
+### Üç çağrı atomik değil ve bu söyleniyor
+
+Sunucu tek çağrıda tek sınıfa yazıyor; üç şube üç çağrı demek. İkincisi
+düşerse birincisi yazılmış kalır. Hata mesajı **hangi şubelerin
+yazıldığını adıyla** söylüyor — "bir şeyler oldu" demek, öğretmeni
+veritabanını elle kurcalamaya iter.
+
+Bunu tek çağrıda atomik yapmak yeni bir migration gerektirirdi; öğretmenin
+elinde zaten çalıştırılmayı bekleyen bir SQL varken ikincisini eklemek
+yerine, sınırı açıkça söylemek seçildi.
+
+### Denetimdeki sahte PDF neden iki şubeli
+
+Tek şubelik bir fixture bu kusurların hiçbirini göremezdi. Sahte dosya
+artık 9A ve **depoda olmayan** 9C taşıyor; 601 numarası iki şubede birden
+geçiyor. Ölçülenler: şube sayısı bildiriliyor, eksik şube uyarılıyor ve
+oluşturulabiliyor, **eksik şube varken hiç yazma yapılmıyor**, oluşturma
+sonrası her şube KENDİ sınıfına ayrı çağrıyla gidiyor.
+
+**Geri alma kanıtı:** tekrar kapsamından şube çıkarılınca denetim
+*"numara tekrarı uyarısı yalnız aynı şubede (2)"* diye kırmızı yanıyor.
+
+Bir ölçüm hatası daha kayda geçti: önizlemedeki ad `<p>`'si artık şube
+rozetini de taşıyor ve o rozet rakam içeriyor; yalnız `sk-sayi` rozetleri
+çıkarıldığında "adda rakam yok" ölçümü haksız yere kırmızı yandı. Tüm
+rozetler çıkarılıyor — ölçülmek istenen şey **kaydedilecek ad**.

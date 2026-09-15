@@ -78,6 +78,28 @@ await s.addInitScript(
             status: 200,
             headers: { 'Content-Type': 'application/json' },
           });
+        // TAKLİT GERÇEĞE SADIK: `sinif_ekle` idempotent ve eklediği sınıfı
+        // listeye katıyor — gerçek sunucu da öyle yapıyor. Katmasaydı
+        // "oluştur"dan sonra şube hâlâ eksik görünür ve denetim ürünü
+        // haksız yere suçlardı.
+        if (m[1] === 'sinif_ekle') {
+          const ad = `${govde.p_seviye}${govde.p_sube}`;
+          if (!siniflar.some((s) => s.ad === ad)) {
+            siniflar.push({
+              id: 's' + ad.toLowerCase(),
+              ad,
+              seviye: govde.p_seviye,
+              sube: govde.p_sube,
+              ozel: false,
+              arsiv: false,
+              ogrenci_sayisi: 0,
+            });
+          }
+          return new Response(JSON.stringify({ ad }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
         if (m[1] === 'ogrenciler_listesi')
           return new Response(JSON.stringify(mevcut), {
             status: 200,
@@ -301,14 +323,26 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
       'T.C.',
       'İSTANBUL VALİLİĞİ',
       'Örnek Anadolu Lisesi Müdürlüğü',
+      'AL - 9. Sınıf / A Şubesi (Sayısal) Sınıf Listesi',
       'Sınıf Öğretmeni: NURAY ÖRNEK Sınıf Başkanı:',
       'S.No Öğrenci No Adı Soyadı Cinsiyeti',
       '1 601 ALİ YILMAZ Erkek',
       '2 602 AYŞE ÖZTÜRK Kız',
       '3 603 MEHMET ÇOBAN Erkek',
-      // AYNI NUMARA BİLEREK: uyarının çıktığı ve satırın DÜŞMEDİĞİ ölçülüyor.
+      // AYNI ŞUBEDE aynı numara: uyarı çıkmalı, satır DÜŞMEMELİ.
       '4 601 ZEYNEP ÖZ Kız',
       'Kız Öğrenci Sayısı : 2 Erkek Öğrenci Sayısı : 2',
+      // İKİNCİ ŞUBE. Öğretmenin gerçek dosyası üç şube taşıyordu; tek
+      // şubelik bir fixture o kusuru hiç göremezdi.
+      // 9C BİLEREK: sahte sınıf listesinde 9A ve 9B var, 9C YOK.
+      // Depoda olmayan şubenin uyarıldığı ve oluşturma yolu sunulduğu
+      // ölçülüyor.
+      'AL - 9. Sınıf / C Şubesi (Sözel) Sınıf Listesi',
+      'S.No Öğrenci No Adı Soyadı Cinsiyeti',
+      // 601 BURADA DA VAR: şubeler arası çakışma UYARI OLMAMALI.
+      '1 601 KEREM ÇELİK Erkek',
+      '2 604 SELİN DEMİR Kız',
+      'Kız Öğrenci Sayısı : 1 Erkek Öğrenci Sayısı : 1',
     ];
     const icerik = satirlar
       .map((s, i) => `BT /F1 10 Tf 40 ${780 - i * 20} Td (${kacir(s)}) Tj ET`)
@@ -382,11 +416,14 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
   const adlar = await p.evaluate(() =>
     [...document.querySelectorAll('ul.divide-y > li > div > p.font-semibold')].map((e) => {
       const kopya = e.cloneNode(true);
-      kopya.querySelectorAll('span.sk-sayi').forEach((s) => s.remove());
+      // TÜM rozetler çıkarılıyor: numara rozeti `sk-sayi` taşıyor ama ŞUBE
+      // rozeti ("9A") taşımıyor ve onda da rakam var. Yalnız `sk-sayi`
+      // çıkarılsaydı "adda rakam yok" ölçümü şube yüzünden kırmızı yanardı.
+      kopya.querySelectorAll('span').forEach((s) => s.remove());
       return kopya.textContent?.replace(/\s+/g, ' ').trim() ?? '';
     }),
   );
-  de(adlar.length === 4, `4 öğrenci önizlemede (${adlar.length})`);
+  de(adlar.length === 6, `6 öğrenci önizlemede (${adlar.length})`);
   de(!adlar.some((a) => /nuray/i.test(a)), 'ÖĞRETMEN ADI öğrenci sayılmamış');
   de(adlar.some((a) => /ali y\u0131lmaz/i.test(a)), 'öğrenci adı önizlemede');
 
@@ -412,12 +449,14 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
   // ölçümü zaten adda rakam olmadığını söylüyor; burada numaranın
   // GERÇEKTEN GÖRÜNDÜĞÜ ölçülüyor — yoksa "adda rakam yok" ölçümü,
   // numara tamamen kaybolsa da yeşil kalırdı.
+  // NUMARA ROZETİ `sk-sayi` taşıyor; ŞUBE rozeti taşımıyor. İkisi ayrı
+  // okunuyor ki biri ötekinin yerine geçmesin.
   const rozetler = await p.evaluate(() =>
     [...document.querySelectorAll('ul.divide-y > li > div > p.font-semibold > span.sk-sayi')]
       .map((e) => e.textContent?.trim() ?? ''),
   );
   de(
-    JSON.stringify(rozetler) === JSON.stringify(['601', '602', '603', '601']),
+    JSON.stringify(rozetler) === JSON.stringify(['601', '602', '603', '601', '601', '604']),
     `numaralar ayrı rozette: ${JSON.stringify(rozetler)}`,
   );
 
@@ -427,10 +466,20 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
       .map((li) => li.textContent ?? '')
       .filter((s) => s.includes('Numara tekrarı')).length,
   );
-  de(uyarilar === 1, `numara tekrarı uyarısı bir kez çıktı (${uyarilar})`);
+  // TAM BİR KEZ: 9A içindeki 601 çakışması. 9B'deki 601 BAŞKA bir şube,
+  // uyarı vermemeli — ilk yazımda kapsam genel olsaydı burada 2 çıkardı.
+  de(uyarilar === 1, `numara tekrarı uyarısı yalnız aynı şubede (${uyarilar})`);
 
   // ASIL ÖLÇÜM: uyarı ENGEL DEĞİL. Dört satırın dördü de duruyor.
-  de(adlar.length === 4, 'numara tekrarı satırı düşürmedi');
+  de(adlar.length === 6, 'numara tekrarı satırı düşürmedi');
+
+  // --- ŞUBE TANIMA ---
+  const subeMetni = await p.evaluate(() => document.body.innerText);
+  de(/2 şube var/.test(subeMetni), 'dosyadaki şube sayısı bildiriliyor');
+  de(/9A/.test(subeMetni) && /9C/.test(subeMetni), 'şube adları yazılıyor');
+  // Depoda 9A var (sahte sunucu veriyor), 9B YOK: ayrım görünmeli.
+  de(/Sınıf yok/.test(subeMetni), 'depoda olmayan şube uyarılıyor');
+  de(/9C oluştur/.test(subeMetni), 'eksik şube için oluşturma yolu var');
 
   // SUNUCUYA {ad, no} GİDİYOR: ekranda görünmesi yetmez, kaydedilecek
   // olan şey numarayı taşımalı.
@@ -438,24 +487,58 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
   // (`window.__cagrilar`). İlk yazımda `p.route` kullanılmıştı ve hiç
   // tetiklenmedi — ölçüm boş dizi görüp kırmızı yandı. Kayıt sayfanın
   // kendisinde; oradan okunuyor.
+  // EKSİK ŞUBE VARKEN EKLEME YAPILMAMALI. Yapılsaydı 9A yazılır, 9C
+  // yazılmaz ve öğretmen yarım bir aktarımla baş başa kalırdı.
   await p.evaluate(() => {
     window.__cagrilar.length = 0;
   });
   await p.getByRole('button', { name: /öğrenci ekle$/i }).first().click();
   await p.waitForTimeout(700);
-  const gonderilen = await p.evaluate(
-    () =>
-      window.__cagrilar.find((c) => c.ad === 'ogrenciler_toplu_ekle')?.govde?.p_adlar ?? [],
+  const eksikVarkenCagri = await p.evaluate(
+    () => window.__cagrilar.filter((c) => c.ad === 'ogrenciler_toplu_ekle').length,
   );
+  de(eksikVarkenCagri === 0, `eksik şube varken hiç yazma yapılmadı (${eksikVarkenCagri})`);
   de(
-    JSON.stringify(gonderilen) ===
+    /depoda yok/i.test(await p.evaluate(() => document.body.innerText)),
+    'eksik sınıf adıyla söyleniyor',
+  );
+
+  // ŞUBEYİ OLUŞTUR → sonra ekleme ŞUBE ŞUBE gitmeli.
+  await p.getByRole('button', { name: /9C oluştur/i }).click();
+  await p.waitForTimeout(700);
+  await p.evaluate(() => {
+    window.__cagrilar.length = 0;
+  });
+  await p.getByRole('button', { name: /öğrenci ekle$/i }).first().click();
+  await p.waitForTimeout(1200);
+
+  const cagrilar = await p.evaluate(() =>
+    window.__cagrilar
+      .filter((c) => c.ad === 'ogrenciler_toplu_ekle')
+      .map((c) => ({ sinif: c.govde.p_sinif_id, adlar: c.govde.p_adlar })),
+  );
+  de(cagrilar.length === 2, `her şube için ayrı çağrı (${cagrilar.length})`);
+  de(
+    JSON.stringify(cagrilar[0]?.adlar) ===
       JSON.stringify([
         { ad: 'Ali Yılmaz', no: '601' },
         { ad: 'Ayşe Öztürk', no: '602' },
         { ad: 'Mehmet Çoban', no: '603' },
         { ad: 'Zeynep Öz', no: '601' },
       ]),
-    `sunucuya ad ve numara birlikte gidiyor: ${JSON.stringify(gonderilen)}`,
+    `9A çağrısı ad+numara taşıyor: ${JSON.stringify(cagrilar[0]?.adlar)}`,
+  );
+  de(
+    JSON.stringify(cagrilar[1]?.adlar) ===
+      JSON.stringify([
+        { ad: 'Kerem Çelik', no: '601' },
+        { ad: 'Selin Demir', no: '604' },
+      ]),
+    `9C çağrısı ayrı gitti: ${JSON.stringify(cagrilar[1]?.adlar)}`,
+  );
+  de(
+    cagrilar[0]?.sinif !== cagrilar[1]?.sinif,
+    'iki çağrı FARKLI sınıflara gitti',
   );
 }
 
