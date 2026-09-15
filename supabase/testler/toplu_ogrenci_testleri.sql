@@ -289,6 +289,136 @@ begin
   end if;
 
   raise notice '9 OK — öğrenci ve veli çağıramıyor, reddedilen çağrıdan kayıt kalmıyor';
+
   raise notice '';
   raise notice 'TOPLU ÖĞRENCİ TESTLERİ: 9 GRUP GEÇTİ';
+end $$;
+
+-- =============================================================================
+-- 0042 — OKUL NUMARASI
+--
+-- Ayrı bir `do` bloğu: yukarıdaki blok yalnız kendi değişkenlerini tanıyor.
+-- İlk yazımda gruplar oraya eklenmişti ve "v is not a known variable" ile
+-- düştü.
+-- =============================================================================
+do $$
+declare
+  jt text;
+  v_s uuid;
+  v jsonb;
+  n integer; n0 integer;
+begin
+  update public.ogretmenler
+     set pin_hash = extensions.crypt('Numara!2026', extensions.gen_salt('bf', 10))
+   where yonetici;
+  jt := (public.giris('Numara!2026'))->>'token';
+
+  select id into v_s from public.siniflar where seviye = 5 and sube = 'T';
+
+  -- ---------------------------------------------------------------------------
+  -- 10. OKUL NUMARASI (0042)
+  -- ---------------------------------------------------------------------------
+  v := public.ogrenciler_toplu_ekle(jt, 'okul', v_s, jsonb_build_array(
+    jsonb_build_object('ad', 'Numaralı Bir', 'no', '601'),
+    jsonb_build_object('ad', 'Numaralı İki', 'no', '0602'),
+    jsonb_build_object('ad', 'Numarasız Üç', 'no', null),
+    jsonb_build_object('ad', 'Numarasız Dört', 'no', '   ')
+  ));
+
+  if (select ogrenci_no from public.ogrenciler where ad = 'Numaralı Bir') <> '601' then
+    raise exception '10a: numara kaydedilmedi';
+  end if;
+  -- BAŞTAKİ SIFIR KORUNMALI: metin sütunu tam bu yüzden seçildi.
+  if (select ogrenci_no from public.ogrenciler where ad = 'Numaralı İki') <> '0602' then
+    raise exception '10b: baştaki sıfır kayboldu';
+  end if;
+  -- Boş ve yalnız boşluktan ibaret numara NULL'a düşmeli: "numarası yok"
+  -- ile "numarası boş dizgi" iki ayrı şeymiş gibi durmasın.
+  if (select count(*) from public.ogrenciler
+       where ad in ('Numarasız Üç', 'Numarasız Dört') and ogrenci_no is not null) > 0 then
+    raise exception '10c: boş numara NULL''a düşmedi';
+  end if;
+
+  -- GERİYE UYUM: eski biçim (düz dizgi dizisi) hâlâ çalışmalı. Bir arayüz
+  -- sürümü geride kalırsa sessizce bozulmasın.
+  v := public.ogrenciler_toplu_ekle(jt, 'okul', v_s,
+       jsonb_build_array('Eski Biçim Bir', 'Eski Biçim İki'));
+  if (select count(*) from public.ogrenciler
+       where ad like 'Eski Biçim%' and ogrenci_no is null) <> 2 then
+    raise exception '10d: eski dizgi biçimi bozuldu';
+  end if;
+
+  -- AYNI NUMARA ENGELLENMİYOR — öğretmenin kararı "uyar, engelleme".
+  -- Kural bir gün değişirse bu test kırmızı yanar ve karar yeniden konuşulur.
+  v := public.ogrenciler_toplu_ekle(jt, 'okul', v_s, jsonb_build_array(
+    jsonb_build_object('ad', 'Çakışan Numara', 'no', '601')
+  ));
+  if (select count(*) from public.ogrenciler
+       where sinif_id = v_s and ogrenci_no = '601') <> 2 then
+    raise exception '10e: aynı numara engellendi — engellenmemeliydi';
+  end if;
+
+  -- 20 karakterden uzun numara reddediliyor ve HİÇBİR kayıt oluşmuyor.
+  select count(*) into n0 from public.ogrenciler where sinif_id = v_s;
+  begin
+    perform public.ogrenciler_toplu_ekle(jt, 'okul', v_s, jsonb_build_array(
+      jsonb_build_object('ad', 'Uzun Numara', 'no', repeat('9', 21))
+    ));
+    raise exception '10f: 21 karakterlik numara kabul edildi';
+  exception when sqlstate '22023' then null;
+  end;
+  select count(*) into n from public.ogrenciler where sinif_id = v_s;
+  if n <> n0 then
+    raise exception '10g: reddedilen çağrıdan kayıt kalmış';
+  end if;
+
+  raise notice '10 OK — numara kaydediliyor, sıfır korunuyor, eski biçim çalışıyor, çakışma serbest';
+
+  -- ---------------------------------------------------------------------------
+  -- 11. OKUMA UÇLARI NUMARAYI DÖNDÜRÜYOR
+  -- ---------------------------------------------------------------------------
+  if (select e->>'ogrenci_no'
+        from jsonb_array_elements((public.sinif_ogrencileri(jt, v_s))->'ogrenciler') e
+       where e->>'ad' = 'Numaralı Bir') <> '601' then
+    raise exception '11a: sinif_ogrencileri numarayı döndürmüyor';
+  end if;
+
+  if (select e->>'ogrenci_no'
+        from jsonb_array_elements(
+               (public.ogrenciler_listesi(jt, null, v_s, 1, 100))->'kayitlar') e
+       where e->>'ad' = 'Numaralı Bir') <> '601' then
+    raise exception '11b: ogrenciler_listesi numarayı döndürmüyor';
+  end if;
+
+  raise notice '11 OK — iki okuma ucu da numarayı döndürüyor';
+
+  -- ---------------------------------------------------------------------------
+  -- 12. 0007 TUZAĞI — ESKİ İMZA DÜŞTÜ MÜ
+  --
+  -- `ogrenci_ekle`ye varsayılanlı parametre eklemek YENİ bir fonksiyon
+  -- yaratıyor; eskisi kalsaydı PostgREST çağrıyı ona yönlendirebilir ve
+  -- numara sessizce yazılmazdı.
+  -- ---------------------------------------------------------------------------
+  if (select count(*) from pg_proc p join pg_namespace nn on nn.oid = p.pronamespace
+       where nn.nspname = 'public' and p.proname = 'ogrenci_ekle') <> 1 then
+    raise exception '12a: ogrenci_ekle tek imza değil — 0007 tuzağı';
+  end if;
+
+  -- Yeni imza numarayı GERÇEKTEN yazıyor (pozitif kontrol).
+  v := public.ogrenci_ekle(jt, 'Tek Numaralı', 'okul', v_s, '777');
+  if (select ogrenci_no from public.ogrenciler where ad = 'Tek Numaralı') <> '777' then
+    raise exception '12b: ogrenci_ekle numarayı yazmadı';
+  end if;
+
+  -- Numarasız çağrı da çalışmalı: varsayılan null.
+  v := public.ogrenci_ekle(jt, 'Tek Numarasız', 'okul', v_s);
+  if (select ogrenci_no from public.ogrenciler where ad = 'Tek Numarasız') is not null then
+    raise exception '12c: numarasız çağrıda numara uydurulmuş';
+  end if;
+
+  raise notice '12 OK — eski imza düştü, yeni imza numarayı yazıyor';
+
+  raise notice '';
+  raise notice '';
+  raise notice 'OKUL NUMARASI TESTLERİ: 3 GRUP GEÇTİ';
 end $$;

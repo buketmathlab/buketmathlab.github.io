@@ -78,6 +78,28 @@ await s.addInitScript(
             status: 200,
             headers: { 'Content-Type': 'application/json' },
           });
+        // TAKLİT GERÇEĞE SADIK: `sinif_ekle` idempotent ve eklediği sınıfı
+        // listeye katıyor — gerçek sunucu da öyle yapıyor. Katmasaydı
+        // "oluştur"dan sonra şube hâlâ eksik görünür ve denetim ürünü
+        // haksız yere suçlardı.
+        if (m[1] === 'sinif_ekle') {
+          const ad = `${govde.p_seviye}${govde.p_sube}`;
+          if (!siniflar.some((s) => s.ad === ad)) {
+            siniflar.push({
+              id: 's' + ad.toLowerCase(),
+              ad,
+              seviye: govde.p_seviye,
+              sube: govde.p_sube,
+              ozel: false,
+              arsiv: false,
+              ogrenci_sayisi: 0,
+            });
+          }
+          return new Response(JSON.stringify({ ad }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
         if (m[1] === 'ogrenciler_listesi')
           return new Response(JSON.stringify(mevcut), {
             status: 200,
@@ -91,9 +113,14 @@ await s.addInitScript(
           return new Response(
             JSON.stringify({
               adet: adlar.length,
-              eklenen: adlar.map((ad, i) => ({
+              // TAKLİT GERÇEĞE SADIK OLMALI. 0042'den sonra eleman ya
+              // dizgi ya `{ad, no}`; sahte sunucu `ad`ı aynen yansıtınca
+              // ekrana nesne basılıyordu ve sonuç tablosu boş çıkıyordu.
+              // Gerçek sunucu da tam bu ayrımı yapıyor (`_toplu_ad`).
+              eklenen: adlar.map((e, i) => ({
                 id: 'y' + i,
-                ad,
+                ad: typeof e === 'string' ? e : e.ad,
+                ogrenci_no: typeof e === 'string' ? null : (e.no ?? null),
                 ogrenci_kodu: kod(i + 1),
                 veli_kodu: kod(i + 41),
               })),
@@ -198,11 +225,25 @@ console.log('5 — EKLE → SUNUCUYA YALNIZ ONAYLANAN ADLAR GİDİYOR');
   de(govde !== null, 'ekleme çağrısı yapıldı');
   de(govde?.p_adlar?.length === 6, 'gövdede 6 ad var (çıkarılan gitmedi)');
   de(govde?.p_tur === 'okul' && govde?.p_sinif_id === 's9a', 'tür ve sınıf doğru');
+  // 0042'DEN SONRA GÖVDE NESNE TAŞIYOR: {ad, no}. Bu denetim eskiden
+  // dizgi bekliyordu ve değişikliği yakaladı — bir ölçümün işi tam da bu.
+  const gidenAdlar = (govde?.p_adlar ?? []).map((a) =>
+    typeof a === 'string' ? a : a.ad,
+  );
   de(
-    !govde?.p_adlar?.some((a) => a === a.toLocaleUpperCase('tr') && /[A-ZÇĞİÖŞÜ]/.test(a)),
+    gidenAdlar.every((a) => typeof a === 'string' && a.length > 0),
+    'her satırda bir ad var',
+  );
+  de(
+    !gidenAdlar.some((a) => a === a.toLocaleUpperCase('tr') && /[A-ZÇĞİÖŞÜ]/.test(a)),
     'sunucuya düzeltilmiş adlar gitti, BÜYÜK HARF hâli değil',
   );
-  de(govde?.p_adlar?.includes('Işık Öztürk'), 'Türkçe düzeltme sunucuya taşındı');
+  de(gidenAdlar.includes('Işık Öztürk'), 'Türkçe düzeltme sunucuya taşındı');
+  // Yapıştırma yolunda numara yok: alan var ama null. Uydurulmamalı.
+  de(
+    (govde?.p_adlar ?? []).every((a) => typeof a === 'object' && a.no === null),
+    'numarasız listede numara uydurulmuyor',
+  );
 }
 
 console.log('6 — SONUÇ: KOD TABLOSU, GİZLEME, İNDİRME');
@@ -282,12 +323,26 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
       'T.C.',
       'İSTANBUL VALİLİĞİ',
       'Örnek Anadolu Lisesi Müdürlüğü',
+      'AL - 9. Sınıf / A Şubesi (Sayısal) Sınıf Listesi',
       'Sınıf Öğretmeni: NURAY ÖRNEK Sınıf Başkanı:',
       'S.No Öğrenci No Adı Soyadı Cinsiyeti',
       '1 601 ALİ YILMAZ Erkek',
       '2 602 AYŞE ÖZTÜRK Kız',
       '3 603 MEHMET ÇOBAN Erkek',
-      'Kız Öğrenci Sayısı : 1 Erkek Öğrenci Sayısı : 2',
+      // AYNI ŞUBEDE aynı numara: uyarı çıkmalı, satır DÜŞMEMELİ.
+      '4 601 ZEYNEP ÖZ Kız',
+      'Kız Öğrenci Sayısı : 2 Erkek Öğrenci Sayısı : 2',
+      // İKİNCİ ŞUBE. Öğretmenin gerçek dosyası üç şube taşıyordu; tek
+      // şubelik bir fixture o kusuru hiç göremezdi.
+      // 9C BİLEREK: sahte sınıf listesinde 9A ve 9B var, 9C YOK.
+      // Depoda olmayan şubenin uyarıldığı ve oluşturma yolu sunulduğu
+      // ölçülüyor.
+      'AL - 9. Sınıf / C Şubesi (Sözel) Sınıf Listesi',
+      'S.No Öğrenci No Adı Soyadı Cinsiyeti',
+      // 601 BURADA DA VAR: şubeler arası çakışma UYARI OLMAMALI.
+      '1 601 KEREM ÇELİK Erkek',
+      '2 604 SELİN DEMİR Kız',
+      'Kız Öğrenci Sayısı : 1 Erkek Öğrenci Sayısı : 1',
     ];
     const icerik = satirlar
       .map((s, i) => `BT /F1 10 Tf 40 ${780 - i * 20} Td (${kacir(s)}) Tj ET`)
@@ -331,6 +386,12 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
     'yapıştırma kutusu duruyor — PDF yolu onu değiştirmiyor',
   );
 
+  // SINIF SEÇİLMELİ: yeniden yükleme seçimi sıfırlıyor ve `ekle()` sınıfsız
+  // erken dönüyor. İlk yazımda bu atlanmıştı ve "sunucuya gitti mi" ölçümü
+  // boş dizi görüp kırmızı yandı — kusur üründe değil ölçümdeydi.
+  await p.selectOption('select', 's9a');
+  await p.waitForTimeout(300);
+
   await pdfAlani.setInputFiles({
     name: '9A.pdf',
     mimeType: 'application/pdf',
@@ -349,12 +410,20 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
   // her adın ham hâli de ekranda BİLEREK gösteriliyor ("T.C." elenenler
   // listesinde durmalı). Ölçülmesi gereken şey ekranda ne yazdığı değil,
   // SUNUCUYA NE GİDECEĞİ.
+  // ADI ROZETİ ÇIKARARAK OKU. 0042'den sonra numara adın `<p>`'si içinde
+  // bir rozet; düz `textContent` alsaydık "adda rakam yok" ölçümü numara
+  // yüzünden kırmızı yanardı — ölçülmek istenen şey KAYDEDİLECEK AD.
   const adlar = await p.evaluate(() =>
-    [...document.querySelectorAll('ul.divide-y > li > div > p.font-semibold')].map(
-      (e) => e.textContent?.replace(/\s+/g, ' ').trim() ?? '',
-    ),
+    [...document.querySelectorAll('ul.divide-y > li > div > p.font-semibold')].map((e) => {
+      const kopya = e.cloneNode(true);
+      // TÜM rozetler çıkarılıyor: numara rozeti `sk-sayi` taşıyor ama ŞUBE
+      // rozeti ("9A") taşımıyor ve onda da rakam var. Yalnız `sk-sayi`
+      // çıkarılsaydı "adda rakam yok" ölçümü şube yüzünden kırmızı yanardı.
+      kopya.querySelectorAll('span').forEach((s) => s.remove());
+      return kopya.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    }),
   );
-  de(adlar.length === 3, `3 öğrenci önizlemede (${adlar.length})`);
+  de(adlar.length === 6, `6 öğrenci önizlemede (${adlar.length})`);
   de(!adlar.some((a) => /nuray/i.test(a)), 'ÖĞRETMEN ADI öğrenci sayılmamış');
   de(adlar.some((a) => /ali y\u0131lmaz/i.test(a)), 'öğrenci adı önizlemede');
 
@@ -373,6 +442,104 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
     () => document.body.innerText.includes('satır okunamadı'),
   );
   de(elenen, 'elenen satırlar sebebiyle ekranda gösteriliyor');
+
+  // --- 0042: OKUL NUMARASI ---
+  //
+  // Numara ADIN İÇİNDE DEĞİL, AYRI bir rozette. Yukarıdaki `hepsi`
+  // ölçümü zaten adda rakam olmadığını söylüyor; burada numaranın
+  // GERÇEKTEN GÖRÜNDÜĞÜ ölçülüyor — yoksa "adda rakam yok" ölçümü,
+  // numara tamamen kaybolsa da yeşil kalırdı.
+  // NUMARA ROZETİ `sk-sayi` taşıyor; ŞUBE rozeti taşımıyor. İkisi ayrı
+  // okunuyor ki biri ötekinin yerine geçmesin.
+  const rozetler = await p.evaluate(() =>
+    [...document.querySelectorAll('ul.divide-y > li > div > p.font-semibold > span.sk-sayi')]
+      .map((e) => e.textContent?.trim() ?? ''),
+  );
+  de(
+    JSON.stringify(rozetler) === JSON.stringify(['601', '602', '603', '601', '601', '604']),
+    `numaralar ayrı rozette: ${JSON.stringify(rozetler)}`,
+  );
+
+  // AYNI NUMARA UYARI VERİYOR AMA SATIR DURUYOR — öğretmenin kararı.
+  const uyarilar = await p.evaluate(() =>
+    [...document.querySelectorAll('ul.divide-y > li')]
+      .map((li) => li.textContent ?? '')
+      .filter((s) => s.includes('Numara tekrarı')).length,
+  );
+  // TAM BİR KEZ: 9A içindeki 601 çakışması. 9B'deki 601 BAŞKA bir şube,
+  // uyarı vermemeli — ilk yazımda kapsam genel olsaydı burada 2 çıkardı.
+  de(uyarilar === 1, `numara tekrarı uyarısı yalnız aynı şubede (${uyarilar})`);
+
+  // ASIL ÖLÇÜM: uyarı ENGEL DEĞİL. Dört satırın dördü de duruyor.
+  de(adlar.length === 6, 'numara tekrarı satırı düşürmedi');
+
+  // --- ŞUBE TANIMA ---
+  const subeMetni = await p.evaluate(() => document.body.innerText);
+  de(/2 şube var/.test(subeMetni), 'dosyadaki şube sayısı bildiriliyor');
+  de(/9A/.test(subeMetni) && /9C/.test(subeMetni), 'şube adları yazılıyor');
+  // Depoda 9A var (sahte sunucu veriyor), 9B YOK: ayrım görünmeli.
+  de(/Sınıf yok/.test(subeMetni), 'depoda olmayan şube uyarılıyor');
+  de(/9C oluştur/.test(subeMetni), 'eksik şube için oluşturma yolu var');
+
+  // SUNUCUYA {ad, no} GİDİYOR: ekranda görünmesi yetmez, kaydedilecek
+  // olan şey numarayı taşımalı.
+  // İSTEK AĞA ÇIKMIYOR: bu denetim `fetch`i sayfanın içinde taklit ediyor
+  // (`window.__cagrilar`). İlk yazımda `p.route` kullanılmıştı ve hiç
+  // tetiklenmedi — ölçüm boş dizi görüp kırmızı yandı. Kayıt sayfanın
+  // kendisinde; oradan okunuyor.
+  // EKSİK ŞUBE VARKEN EKLEME YAPILMAMALI. Yapılsaydı 9A yazılır, 9C
+  // yazılmaz ve öğretmen yarım bir aktarımla baş başa kalırdı.
+  await p.evaluate(() => {
+    window.__cagrilar.length = 0;
+  });
+  await p.getByRole('button', { name: /öğrenci ekle$/i }).first().click();
+  await p.waitForTimeout(700);
+  const eksikVarkenCagri = await p.evaluate(
+    () => window.__cagrilar.filter((c) => c.ad === 'ogrenciler_toplu_ekle').length,
+  );
+  de(eksikVarkenCagri === 0, `eksik şube varken hiç yazma yapılmadı (${eksikVarkenCagri})`);
+  de(
+    /depoda yok/i.test(await p.evaluate(() => document.body.innerText)),
+    'eksik sınıf adıyla söyleniyor',
+  );
+
+  // ŞUBEYİ OLUŞTUR → sonra ekleme ŞUBE ŞUBE gitmeli.
+  await p.getByRole('button', { name: /9C oluştur/i }).click();
+  await p.waitForTimeout(700);
+  await p.evaluate(() => {
+    window.__cagrilar.length = 0;
+  });
+  await p.getByRole('button', { name: /öğrenci ekle$/i }).first().click();
+  await p.waitForTimeout(1200);
+
+  const cagrilar = await p.evaluate(() =>
+    window.__cagrilar
+      .filter((c) => c.ad === 'ogrenciler_toplu_ekle')
+      .map((c) => ({ sinif: c.govde.p_sinif_id, adlar: c.govde.p_adlar })),
+  );
+  de(cagrilar.length === 2, `her şube için ayrı çağrı (${cagrilar.length})`);
+  de(
+    JSON.stringify(cagrilar[0]?.adlar) ===
+      JSON.stringify([
+        { ad: 'Ali Yılmaz', no: '601' },
+        { ad: 'Ayşe Öztürk', no: '602' },
+        { ad: 'Mehmet Çoban', no: '603' },
+        { ad: 'Zeynep Öz', no: '601' },
+      ]),
+    `9A çağrısı ad+numara taşıyor: ${JSON.stringify(cagrilar[0]?.adlar)}`,
+  );
+  de(
+    JSON.stringify(cagrilar[1]?.adlar) ===
+      JSON.stringify([
+        { ad: 'Kerem Çelik', no: '601' },
+        { ad: 'Selin Demir', no: '604' },
+      ]),
+    `9C çağrısı ayrı gitti: ${JSON.stringify(cagrilar[1]?.adlar)}`,
+  );
+  de(
+    cagrilar[0]?.sinif !== cagrilar[1]?.sinif,
+    'iki çağrı FARKLI sınıflara gitti',
+  );
 }
 
 console.log('7 — 360 px’te taşma yok');

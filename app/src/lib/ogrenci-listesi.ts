@@ -6,9 +6,9 @@
  * öğretmen önizlemeyi onaylamadan sunucuya tek bir ad gitmiyor
  * (Part XXVIII: çıkarım bir öneridir).
  *
- * PDF YOLU DA BURAYA BAĞLANACAK. Metin katmanlı e-Okul PDF'i geldiğinde
- * `pdfSatirlariniOku`'nun döndürdüğü satırlar `\n` ile birleştirilip aynı
- * fonksiyona verilecek; ikinci bir ayrıştırıcı yazılmayacak.
+ * PDF YOLU BURAYA BAĞLANDI (0042 turu). `pdfSatirlariniOku`'nun
+ * döndürdüğü satırlar `\n` ile birleştirilip bu fonksiyona veriliyor;
+ * söz verildiği gibi ikinci bir ayrıştırıcı yazılmadı.
  */
 
 /** Sınıf kodu gibi görünen alan: 9A, 10C, 12B… */
@@ -26,7 +26,17 @@ const BAS_NUMARA = /^\d{1,3}\s*[.)\-–]\s*|^\d{1,3}\s+/;
  *
  * Cinsiyet isteğe bağlı: her listede o sütun olmayabilir.
  */
-const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+\d{2,6}\s+(.+?)(?:\s+(?:Kız|Erkek))?\s*$/u;
+const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+(\d{2,6})\s+(.+?)(?:\s+(?:Kız|Erkek))?\s*$/u;
+
+/**
+ * e-Okul sayfa başlığındaki ŞUBE: "AL - 9. Sınıf / A Şubesi (…) Sınıf Listesi"
+ *
+ * Ölçüldü: öğretmenin gönderdiği tek dosya ÜÇ şube taşıyordu (9A 27, 9B 30,
+ * 9C 30 öğrenci). Başlık okunmasaydı 87 öğrencinin hepsi tek sınıfa
+ * eklenirdi — üstelik şubeler arasında numaralar çakıştığı için ortalık
+ * "numara tekrarı" uyarısına boğulurdu ve asıl sebep görünmezdi.
+ */
+const SUBE_BASLIGI = /(\d{1,2})\.\s*sınıf\s*\/\s*([a-zçğıöşü]{1,2})\s*şubesi/u;
 
 /** Tek başına cinsiyet — öğretmenin fark ettiği kusur buydu. */
 const CINSIYET = /^(?:Kız|Erkek)$/u;
@@ -77,6 +87,27 @@ export type AdSatiri = {
   /** Kaydedilecek hâl. */
   ad: string;
   /**
+   * Bu satırın ait olduğu şube ("9A") — PDF başlığından okundu, yoksa
+   * `null`. Elle yapıştırılan listelerde ve tek şubelik dosyalarda null
+   * olması normal; o zaman ekrandan seçilen sınıf kullanılıyor.
+   */
+  sinif: string | null;
+  /**
+   * Okul numarası — yoksa `null`.
+   *
+   * 0042'den önce numara atılıyordu (şemada yeri yoktu) ve adın içinde
+   * kalması kusurdu. Artık ayrı alanda. Özel ders öğrencisinde ve elle
+   * yazılmış listelerde numara olmaması NORMAL.
+   */
+  no: string | null;
+  /**
+   * Numara tekrarı — ad tekrarından AYRI tutuluyor, çünkü ayrı şeyler:
+   * aynı adda iki öğrenci olabilir, aynı numarada olmaması beklenir.
+   * Yine de ikisi de yalnız UYARI (öğretmenin kararı): tek bir yanlış
+   * okunan numara yüzünden bütün sınıf reddedilmemeli.
+   */
+  noTekrar: 'liste' | 'kayitli' | null;
+  /**
    * `liste`   → aynı yapıştırmada bu ad zaten var
    * `kayitli` → o sınıfta bu adda bir öğrenci zaten kayıtlı
    *
@@ -90,6 +121,11 @@ export type AtlananSatir = { satir: number; ham: string; sebep: string };
 
 export type ListeOzeti = {
   satirlar: AdSatiri[];
+  /**
+   * Dosyada geçen şubeler, göründükleri sırada ("9A", "9B", "9C").
+   * Boşsa dosya şube taşımıyor demektir.
+   */
+  siniflar: string[];
   /** Okunamayan satırlar — SESSİZCE atılmıyor, ham hâliyle gösteriliyor. */
   atlanan: AtlananSatir[];
   /**
@@ -163,13 +199,47 @@ function adAlaniniSec(ham: string): string | null {
 
 export function listeyiCoz(
   metin: string,
-  secenek: { duzelt: boolean; kayitliAdlar?: string[] } = { duzelt: false },
+  secenek: {
+    duzelt: boolean;
+    /** Tek sınıflı kullanım — dosya şube taşımıyorsa. */
+    kayitliAdlar?: string[];
+    kayitliNolar?: string[];
+    /**
+     * ŞUBE BAŞINA zaten kayıtlı olanlar: `{ '9A': { adlar, nolar }, … }`.
+     *
+     * Üç şubelik bir dosyada tek bir liste kullanmak yanlış olurdu: 9B'de
+     * kayıtlı bir numara 9A'daki satır için "zaten kayıtlı" sayılırdı ve
+     * öğretmen olmayan bir çakışmayı kovalardı.
+     */
+    kayitliSube?: Record<string, { adlar?: string[]; nolar?: string[] }>;
+  } = {
+    duzelt: false,
+  },
 ): ListeOzeti {
   const satirlar: AdSatiri[] = [];
   const atlanan: AtlananSatir[] = [];
 
-  const kayitli = new Set((secenek.kayitliAdlar ?? []).map(karsilastirmaAnahtari));
+  /** Kapsam ('' = şubesiz) → o kapsamda zaten kayıtlı ad/numara kümeleri. */
+  const kayitliKapsam = new Map<string, { ad: Set<string>; no: Set<string> }>();
+  kayitliKapsam.set('', {
+    ad: new Set((secenek.kayitliAdlar ?? []).map(karsilastirmaAnahtari)),
+    no: new Set((secenek.kayitliNolar ?? []).filter(Boolean)),
+  });
+  for (const [sube, k] of Object.entries(secenek.kayitliSube ?? {})) {
+    kayitliKapsam.set(sube, {
+      ad: new Set((k.adlar ?? []).map(karsilastirmaAnahtari)),
+      no: new Set((k.nolar ?? []).filter(Boolean)),
+    });
+  }
+
+  // TEKRAR DENETİMİ ŞUBE BAŞINA. Anahtarın başına şube konuyor: 9A'daki
+  // 617 ile 9B'deki 617 ÇAKIŞMA DEĞİL, iki ayrı öğrencinin numarası.
+  // Genel bir küme kullansaydık üç şubelik bir dosya baştan aşağı yanlış
+  // uyarı verir ve gerçek çakışmalar o gürültünün içinde kaybolurdu.
   const gorulen = new Set<string>();
+  const gorulenNo = new Set<string>();
+  const siniflar: string[] = [];
+  let suSinif: string | null = null;
 
   let buyukSayisi = 0;
   let harfliSayisi = 0;
@@ -188,10 +258,22 @@ export function listeyiCoz(
       return;
     }
 
+    const kucuk = kirpik.toLocaleLowerCase('tr');
+
+    // ŞUBE BAŞLIĞI. Mobilya elemesinden ÖNCE bakılıyor, çünkü bu satır
+    // hem elenecek (öğrenci değil) hem de OKUNACAK: ardından gelen
+    // öğrenciler bu şubeye ait.
+    const sube = SUBE_BASLIGI.exec(kucuk);
+    if (sube) {
+      suSinif = `${Number(sube[1])}${sube[2]!.toLocaleUpperCase('tr')}`;
+      if (!siniflar.includes(suSinif)) siniflar.push(suSinif);
+      atlanan.push({ satir: sira, ham: kirpik, sebep: `Şube başlığı (${suSinif})` });
+      return;
+    }
+
     // LİSTE MOBİLYASI: başlık, kurum adı, tablo başlığı, altbilgi ve
     // öğretmen/başkan satırları. Sonuncusu en tehlikelisiydi — içindeki
     // gerçek kişi adı öğrenci olarak kaydedilirdi.
-    const kucuk = kirpik.toLocaleLowerCase('tr');
     const mobilya = MOBILYA.find(([kalip]) => kalip.test(kucuk));
     if (mobilya) {
       atlanan.push({ satir: sira, ham: kirpik, sebep: mobilya[1] });
@@ -204,9 +286,12 @@ export function listeyiCoz(
       return;
     }
 
-    // e-Okul satırıysa adı doğrudan al: sıra no ve okul no atılır,
-    // sondaki cinsiyet sütunu da. Kalıp tutmazsa eski yol işler.
-    const eokul = EOKUL_SATIRI.exec(secilen)?.[1];
+    // e-Okul satırıysa adı ve NUMARAYI ayrı ayrı al: sıra no atılır, okul
+    // no kendi alanına gider, sondaki cinsiyet sütunu da atılır. Kalıp
+    // tutmazsa eski yol işler ve numara null kalır.
+    const eslesme = EOKUL_SATIRI.exec(secilen);
+    const okulNo = eslesme?.[1] ?? null;
+    const eokul = eslesme?.[2];
 
     // Sıra numarası at, sondaki cinsiyeti at, iç boşlukları teke indir.
     const temiz = (eokul ?? secilen.replace(BAS_NUMARA, ''))
@@ -242,16 +327,30 @@ export function listeyiCoz(
     const ad = secenek.duzelt ? adiDuzelt(temiz) : temiz;
     const anahtar = karsilastirmaAnahtari(ad);
 
-    let mukerrer: AdSatiri['mukerrer'] = null;
-    if (gorulen.has(anahtar)) mukerrer = 'liste';
-    else if (kayitli.has(anahtar)) mukerrer = 'kayitli';
-    gorulen.add(anahtar);
+    // Kapsam anahtarı: şube + değer. Şube yoksa tek kümede toplanıyorlar
+    // (eski davranış).
+    const kapsam = suSinif ?? '';
 
-    satirlar.push({ ham: kirpik, ad, mukerrer });
+    const kayitliBu = kayitliKapsam.get(kapsam);
+
+    let mukerrer: AdSatiri['mukerrer'] = null;
+    if (gorulen.has(`${kapsam}|${anahtar}`)) mukerrer = 'liste';
+    else if (kayitliBu?.ad.has(anahtar)) mukerrer = 'kayitli';
+    gorulen.add(`${kapsam}|${anahtar}`);
+
+    let noTekrar: AdSatiri['noTekrar'] = null;
+    if (okulNo !== null) {
+      if (gorulenNo.has(`${kapsam}|${okulNo}`)) noTekrar = 'liste';
+      else if (kayitliBu?.no.has(okulNo)) noTekrar = 'kayitli';
+      gorulenNo.add(`${kapsam}|${okulNo}`);
+    }
+
+    satirlar.push({ ham: kirpik, ad, no: okulNo, sinif: suSinif, mukerrer, noTekrar });
   });
 
   return {
     satirlar,
+    siniflar,
     atlanan,
     // Eşik %80: e-Okul listeleri tamamen büyük harf gelir, elle yazılmış
     // bir listede araya birkaç büyük harfli ad karışabilir. Tek bir

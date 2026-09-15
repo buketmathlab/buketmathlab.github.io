@@ -68,7 +68,9 @@ begin
     select g.id, v_s from public.ogretmenler g where g.yonetici
     on conflict do nothing;
   -- Kesme işareti ve Türkçe karakter: JSON kaçışını da sınıyor
-  v_a := (public.ogrenci_ekle(jt, 'Ayşe O''Brien Çağlar', 'okul', v_s))->>'id';
+  -- OKUL NUMARASI DA TOHUMDA (0042). Numarasız kurulsaydı bu prova,
+  -- numara yedekten düşse bile yeşil kalırdı.
+  v_a := (public.ogrenci_ekle(jt, 'Ayşe O''Brien Çağlar', 'okul', v_s, '0601'))->>'id';
   v_b := (public.ogrenci_ekle(jt, 'Öğünç Şıklıoğlu', 'ozel', null))->>'id';
   v_o := (public.odev_olustur(jt, 'Üslü Sayılar "1. Test"', 'Açıklama: <b>kalın</b> & tırnak''lı',
       v_s, 'test', (current_date + 5)::date, 3,

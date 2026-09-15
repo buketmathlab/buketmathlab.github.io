@@ -203,6 +203,12 @@ export function Ogrenciler() {
                       {/* Ad artık detaya götürüyor: özel ders öğrencisinde
                           ders ve ödeme takibi orada. Ödev kartı başlığının
                           düzenlemeye gitmesiyle aynı desen. */}
+                      {/* 0042: okul numarası — yoksa hiç çizilmiyor. */}
+                      {o.ogrenci_no && (
+                        <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] font-semibold text-muted">
+                          {o.ogrenci_no}
+                        </span>
+                      )}
                       <Link
                         to={`/ogretmen/ogrenciler/${o.id}`}
                         className="inline-flex min-h-[44px] items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"

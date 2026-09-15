@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +14,16 @@ import { rpc } from '@/services/supabase';
 import type { OgrenciListesi, Sinif } from '@/types/api';
 
 type EklenenKayit = { id: string; ad: string; ogrenci_kodu: string; veli_kodu: string };
+
+/**
+ * Metindeki şubeleri kararlı bir dizgiye çevirir.
+ *
+ * `useEffect` bağımlılığı olarak dizi kullanılsaydı her çizimde yeni bir
+ * referans olur ve efekt sonsuz dönerdi.
+ */
+function ozetSiniflariAnahtari(metin: string, duzelt: boolean): string {
+  return listeyiCoz(metin, { duzelt }).siniflar.join('|');
+}
 type TopluSonuc = { eklenen: EklenenKayit[]; adet: number };
 
 /**
@@ -104,29 +114,180 @@ export function TopluOgrenci() {
     [sinifId, mevcut.veri],
   );
 
+  // O sınıfta ZATEN KULLANILAN numaralar — numara tekrarı uyarısının
+  // ikinci kaynağı (birincisi aynı yapıştırmanın içi).
+  const kayitliNolar = useMemo(
+    () =>
+      sinifId
+        ? (mevcut.veri?.kayitlar ?? [])
+            .map((k) => k.ogrenci_no)
+            .filter((n): n is string => Boolean(n))
+        : [],
+    [sinifId, mevcut.veri],
+  );
+
+  /**
+   * ŞUBE BAŞINA zaten kayıtlı ad ve numaralar.
+   *
+   * Şubeli bir dosyada seçilen tek sınıfın listesine bakmak yanıltıcı
+   * olurdu: 9B'de kayıtlı bir numara 9A satırı için "zaten kayıtlı"
+   * sayılır, öğretmen olmayan bir çakışmayı kovalardı. Her şube kendi
+   * listesiyle karşılaştırılıyor.
+   */
+  const [subeKayitli, setSubeKayitli] = useState<
+    Record<string, { adlar: string[]; nolar: string[] }>
+  >({});
+
+  const bulunanSiniflar = ozetSiniflariAnahtari(metin, duzelt);
+
+  useEffect(() => {
+    const adlar = bulunanSiniflar.split('|').filter(Boolean);
+    if (adlar.length === 0 || !oturum?.token) return setSubeKayitli({});
+    let iptal = false;
+    void (async () => {
+      const toplam: Record<string, { adlar: string[]; nolar: string[] }> = {};
+      for (const ad of adlar) {
+        const s = siniflar.veri?.find((x) => x.ad === ad);
+        if (!s) continue;
+        try {
+          const v = await rpc<OgrenciListesi>('ogrenciler_listesi', {
+            p_token: oturum.token,
+            p_arama: null,
+            p_sinif_id: s.id,
+            p_sayfa: 1,
+            p_boyut: 100,
+          });
+          toplam[ad] = {
+            adlar: v.kayitlar.map((k) => k.ad),
+            nolar: v.kayitlar.map((k) => k.ogrenci_no).filter((n): n is string => Boolean(n)),
+          };
+        } catch {
+          // Okuma başarısızsa uyarı vermiyoruz: bu bir KOLAYLIK, engel
+          // değil. Mükerrer uyarısı çıkmaz, ekleme yine çalışır.
+        }
+      }
+      if (!iptal) setSubeKayitli(toplam);
+    })();
+    return () => {
+      iptal = true;
+    };
+  }, [bulunanSiniflar, siniflar.veri, oturum?.token]);
+
   const ozet = useMemo(
-    () => listeyiCoz(metin, { duzelt, kayitliAdlar }),
-    [metin, duzelt, kayitliAdlar],
+    () =>
+      listeyiCoz(metin, {
+        duzelt,
+        kayitliAdlar,
+        kayitliNolar,
+        kayitliSube: subeKayitli,
+      }),
+    [metin, duzelt, kayitliAdlar, kayitliNolar, subeKayitli],
   );
 
   const secilenler = ozet.satirlar.filter((_, i) => !cikarilan.has(i));
   const sinifAdi = siniflar.veri?.find((s) => s.id === sinifId)?.ad ?? '';
 
+  /**
+   * DOSYA ŞUBE TAŞIYOR MU.
+   *
+   * Öğretmenin gönderdiği tek PDF ÜÇ şube taşıyordu (9A 27, 9B 30, 9C 30).
+   * Başlıklar okunmasaydı 87 öğrencinin hepsi seçilen tek sınıfa eklenirdi.
+   */
+  const subeliMi = ozet.siniflar.length > 0;
+
+  /** Her şube: dosyadaki satırları + depodaki karşılığı. */
+  const subeler = useMemo(
+    () =>
+      ozet.siniflar.map((ad) => ({
+        ad,
+        satirlar: ozet.satirlar.filter((s, i) => s.sinif === ad && !cikarilan.has(i)),
+        sinif: siniflar.veri?.find((s) => s.ad === ad) ?? null,
+      })),
+    [ozet, cikarilan, siniflar.veri],
+  );
+
+  const eksikSubeler = subeler.filter((s) => s.sinif === null);
+
   function satirCikar(i: number) {
     setCikarilan((e) => new Set(e).add(i));
   }
 
+  /** Eksik bir şubeyi depoda oluşturur (idempotent: `sinif_ekle`). */
+  async function subeOlustur(ad: string) {
+    const m = /^(\d{1,2})([A-ZÇĞİÖŞÜ]{1,2})$/u.exec(ad);
+    if (!m) return setHata(`"${ad}" bir sınıf adına benzemiyor.`);
+    setHata(null);
+    try {
+      await rpc('sinif_ekle', {
+        p_token: oturum?.token,
+        p_seviye: Number(m[1]),
+        p_sube: m[2],
+      });
+      siniflar.yenile();
+      bildir(`${ad} sınıfı oluşturuldu`, 'basari');
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : `${ad} oluşturulamadı.`);
+    }
+  }
+
   async function ekle() {
-    if (!sinifId) return setHata('Sınıf seçin.');
     if (secilenler.length === 0) return setHata('Eklenecek ad yok.');
     setHata(null);
+
+    // ŞUBELİ DOSYA: her şube KENDİ sınıfına, ayrı çağrılarla.
+    //
+    // Sunucu tek çağrıda tek sınıfa yazıyor; bu yüzden üç şube üç çağrı.
+    // Üçü BİRLİKTE atomik DEĞİL: ikincisi düşerse birincisi yazılmış
+    // kalır. Onun için hata mesajı hangi şubelerin yazıldığını ADIYLA
+    // söylüyor — "bir şeyler oldu" demek, öğretmeni veritabanını elle
+    // kurcalamaya iter.
+    if (subeliMi) {
+      if (eksikSubeler.length > 0) {
+        return setHata(
+          `Şu sınıflar depoda yok: ${eksikSubeler.map((s) => s.ad).join(', ')}. ` +
+            'Önce oluşturun ya da o satırları çıkarın.',
+        );
+      }
+      setKaydediyor(true);
+      const yazilan: string[] = [];
+      const hepsi: EklenenKayit[] = [];
+      try {
+        for (const s of subeler) {
+          if (s.satirlar.length === 0) continue;
+          const v = await rpc<TopluSonuc>('ogrenciler_toplu_ekle', {
+            p_token: oturum?.token,
+            p_tur: 'okul',
+            p_sinif_id: s.sinif!.id,
+            p_adlar: s.satirlar.map((r) => ({ ad: r.ad, no: r.no })),
+          });
+          yazilan.push(`${s.ad} (${v.adet})`);
+          hepsi.push(...v.eklenen);
+        }
+        setSonuc({ eklenen: hepsi, adet: hepsi.length });
+        bildir(`${hepsi.length} öğrenci eklendi: ${yazilan.join(', ')}`, 'basari');
+      } catch (e) {
+        const neden = e instanceof Error ? e.message : 'Öğrenciler eklenemedi.';
+        setHata(
+          yazilan.length > 0
+            ? `${neden} — ŞUNLAR YAZILDI: ${yazilan.join(', ')}. Kalanları tekrar deneyin.`
+            : neden,
+        );
+      } finally {
+        setKaydediyor(false);
+      }
+      return;
+    }
+
+    if (!sinifId) return setHata('Sınıf seçin.');
     setKaydediyor(true);
     try {
       const v = await rpc<TopluSonuc>('ogrenciler_toplu_ekle', {
         p_token: oturum?.token,
         p_tur: 'okul',
         p_sinif_id: sinifId,
-        p_adlar: secilenler.map((s) => s.ad),
+        // 0042: ad ve numara birlikte. Sunucu düz dizgi dizisini de kabul
+        // ediyor (geriye uyum), ama numarayı ancak nesne biçimi taşır.
+        p_adlar: secilenler.map((s) => ({ ad: s.ad, no: s.no })),
       });
       setSonuc(v);
       bildir(`${v.adet} öğrenci eklendi`, 'basari');
@@ -266,6 +427,48 @@ export function TopluOgrenci() {
           )}
         </Field>
 
+        {/* ŞUBELİ DOSYA: seçilen sınıf DEVRE DIŞI.
+            Dosya kendi şubelerini taşıyorsa açılır listeden seçilen sınıf
+            yanıltıcı olurdu — hangisi geçerli belli olmazdı. */}
+        {subeliMi && (
+          <Card className="mb-4" vurgu={eksikSubeler.length > 0 ? 'uyari' : 'basari'}>
+            <h2 className="mb-1 text-[18px] text-ink">
+              Dosyada <span className="sk-sayi">{ozet.siniflar.length}</span> şube var
+            </h2>
+            <p className="mb-3 text-[14px] text-muted">
+              Her şube kendi sınıfına eklenecek; yukarıdaki sınıf seçimi
+              kullanılmıyor.
+            </p>
+            <ul className="grid gap-2">
+              {subeler.map((s) => (
+                <li
+                  key={s.ad}
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2 last:border-0"
+                >
+                  <span className="text-[15px] text-ink">
+                    <strong className="sk-sayi">{s.ad}</strong> ·{' '}
+                    <span className="sk-sayi">{s.satirlar.length}</span> öğrenci
+                  </span>
+                  {s.sinif ? (
+                    <Tag tur="basari">Sınıf var</Tag>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Tag tur="uyari">Sınıf yok</Tag>
+                      <Button
+                        tur="ikincil"
+                        olcu="sm"
+                        onClick={() => void subeOlustur(s.ad)}
+                      >
+                        {s.ad} oluştur
+                      </Button>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
         {/* PDF YOLU. Kopyala-yapıştır PDF okuyucusundan okuyucusuna
             değişiyor ve harfleri bölebiliyor (ölçüldü: "K ı z"). Dosyayı
             biz okursak bu belirsizlik kalkıyor. */}
@@ -384,7 +587,21 @@ export function TopluOgrenci() {
                     className="flex flex-wrap items-center justify-between gap-2 py-2"
                   >
                     <div className="min-w-0">
-                      <p className="text-[15px] font-semibold text-ink">{s.ad}</p>
+                      <p className="text-[15px] font-semibold text-ink">
+                        {/* NUMARA ADIN İÇİNDE DEĞİL, AYRI. 0042'den önce ad
+                            alanı "601 Ali Yılmaz Erkek" diye gidiyordu. */}
+                        {s.sinif && (
+                          <span className="mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] font-semibold text-muted">
+                            {s.sinif}
+                          </span>
+                        )}
+                        {s.no && (
+                          <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] text-muted">
+                            {s.no}
+                          </span>
+                        )}
+                        {s.ad}
+                      </p>
                       {s.ad !== s.ham && (
                         <p className="text-[12px] text-muted">yapıştırılan: {s.ham}</p>
                       )}
@@ -394,6 +611,11 @@ export function TopluOgrenci() {
                           iki öğrenci gerçekten olur; kararı öğretmen verir. */}
                       {s.mukerrer === 'liste' && <Tag tur="uyari">Listede tekrar</Tag>}
                       {s.mukerrer === 'kayitli' && <Tag tur="uyari">Sınıfta kayıtlı</Tag>}
+                      {/* NUMARA TEKRARI AYRI BİR UYARI: aynı adda iki
+                          öğrenci olabilir, aynı numarada olmaması beklenir.
+                          Yine de engel değil — öğretmenin kararı. */}
+                      {s.noTekrar === 'liste' && <Tag tur="uyari">Numara tekrarı</Tag>}
+                      {s.noTekrar === 'kayitli' && <Tag tur="uyari">Numara kayıtlı</Tag>}
                       <Button
                         tur="sade"
                         olcu="sm"

@@ -126,11 +126,28 @@ console.log('\nA — DEFTER TAM: "güncel" demeli');
       `${g.satirlar.length}/${HEPSI.length}`,
     );
     // Kesin/çıkarım ayrımı ekranda duruyor mu (sunucunun `kaynak` alanı).
+    //
+    // SAYI SABİT YAZILMIYOR. İlk yazımda "yalnız 0041 kesin" diye
+    // sabitlenmişti ve 0042 eklenince kırmızı yandı — ekran doğruydu,
+    // ölçüm kırılgandı. Beklenen sayı, sunulan kümeden türetiliyor.
+    const beklenenKesin = defter(HEPSI).dosyalar.filter(
+      (d) => d.kaynak === 'migration',
+    ).length;
     const kesin = g.satirlar.filter((r) => r.kayit === 'Kesin').length;
-    olc('A: yalnız 0041 "Kesin"', kesin === 1, `${kesin} kesin satır`);
     olc(
-      'A: çıkarım satırları "Çıkarım" diyor',
-      g.satirlar.filter((r) => r.kayit === 'Çıkarım').length === HEPSI.length - 1,
+      'A: kesin satır sayısı sunucunun kaynak alanından',
+      kesin === beklenenKesin,
+      `${kesin} kesin (beklenen ${beklenenKesin})`,
+    );
+    olc(
+      'A: geri kalanı "Çıkarım" diyor',
+      g.satirlar.filter((r) => r.kayit === 'Çıkarım').length ===
+        HEPSI.length - beklenenKesin,
+    );
+    // 0041 HER ZAMAN kesin olmalı: defterin kurulduğu dosya kendini yazdı.
+    olc(
+      'A: 0041 kesin görünüyor',
+      g.satirlar.find((r) => r.dosya?.startsWith('0041'))?.kayit === 'Kesin',
     );
     olc('A: yedeğe girmediği yazıyor', /yedeğe .*girmiyor/i.test(g.tumMetin));
   }
