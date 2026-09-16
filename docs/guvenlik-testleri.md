@@ -278,6 +278,34 @@ bunu kilitliyor. Kilidin ısırdığı, panel dosyasındaki bir şartı
 zayıflatarak gösterildi: test `panel sürümünü migration'dan yeniden
 üretin` diyerek kırmızı yandı.
 
+## Öğrenci adını düzeltme (panel) — ölçümler
+
+Uygulamada **kaydedilmiş bir öğrencinin adını değiştiren ekran yok.**
+`panel-icin/ogrenci-adi-duzelt.sql` bu boşluğu geçici olarak kapatıyor;
+kalıcı çözüm bir düzenleme ekranı ve hâlâ yapılmadı.
+
+Dosyanın ağırlığı "adı değiştiriyor mu"da değil, **başka hiçbir şeye
+dokunmuyor mu**da: giriş kodu, okul numarası, ödev gönderimi ve kaydın
+kimliği olduğu gibi kalmalı. `ad_duzeltme_testleri.sql`, panel dosyasının
+metnini okuyup yalnız `girdi` bloğunu değiştirerek çalıştırıyor — 11 grup.
+Girdi bloğunun gerçekten değiştirilebildiği de ayrıca ölçülüyor; yoksa
+bütün gruplar dosyanın varsayılan değerleriyle boşa dönüp yeşil kalırdı.
+
+**10 kusurdan 10'u** yakalandı: tek eşleşme şartının düşmesi, sınıf
+şartının düşmesi, izin yazılmaması, güncellemenin numarayı da silmesi,
+boş/uzun ad korumalarının düşmesi, ad normalleştirmesinin düşmesi, sınıf
+dökümünün verilmemesi, özetin eski adı söylememesi ve dosyanın hiç
+okunamaması.
+
+### `<>` ile yazılmış bir kontrol NULL'da sessizce geçer
+
+"Okul numarası değişti mi" kontrolü `<> '401'` diye yazılmıştı. Güncelleme
+numarayı **NULL'a** çekecek şekilde bozulduğunda `NULL <> '401'` TRUE değil
+**NULL** döndü ve kontrol hiç ateşlemedi; kusuru başka bir grup yakaladı.
+Bir ölçüm, yakalaması gereken kusuru başkasına bırakıyorsa kendi işini
+görmüyor demektir. Kıyaslar `is distinct from`a çevrildi ve aynı kusur
+tekrar yerleştirilerek doğru satırın ısırdığı gösterildi.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede

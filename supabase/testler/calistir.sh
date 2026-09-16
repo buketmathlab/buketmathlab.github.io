@@ -182,6 +182,10 @@ echo "==> Kopya öğrenci temizliği testleri (panel-icin dosyaları)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/kopya_temizlik_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Öğrenci adı düzeltme testleri (panel-icin dosyası)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/ad_duzeltme_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Anon izolasyon testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/anon_izolasyon.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
