@@ -15,7 +15,7 @@
 -- ## ÖLÇÜLEN ŞEY, ÖĞRETMENİN YAPIŞTIRACAĞI DOSYANIN KENDİSİ
 --
 -- Test kendi sorgusunu TAŞIMIYOR. Panel dosyasının metnini diskten okuyup
--- yalnız `girdi` bloğundaki üç satırı değiştirerek çalıştırıyor; alttaki
+-- yalnız `girdi` bloğunu değiştirerek çalıştırıyor; alttaki
 -- bütün mantık dosyanın kendisi. Değiştirmenin GERÇEKTEN olduğu da
 -- ölçülüyor (0. grup) — yoksa test, dosyanın varsayılan değerleriyle
 -- sessizce boşa dönerdi.
@@ -94,8 +94,8 @@ begin
   -- ('9A', '601') çalışır, hiçbir şey eşleşmez ve "değişmedi" ölçümleri
   -- bedavaya yeşil yanardı. Ölçümün en tehlikeli hâli, ölçmeden geçmesidir.
   -- ---------------------------------------------------------------------------
-  if position('-- ↓↓↓ DOLDURULACAK ÜÇ SATIR ↓↓↓' in dosya) = 0
-     or position('-- ↑↑↑ DOLDURULACAK ÜÇ SATIR ↑↑↑' in dosya) = 0 then
+  if position('-- ↓↓↓ DOLDURULACAK ALANLAR ↓↓↓' in dosya) = 0
+     or position('-- ↑↑↑ DOLDURULACAK ALANLAR ↑↑↑' in dosya) = 0 then
     raise exception '0b: girdi bloğunun işaretleri bulunamadı — dosya değişmiş';
   end if;
   raise notice '0 OK — panel dosyası okundu, girdi bloğu bulundu';
@@ -115,7 +115,7 @@ declare
 begin
   sorgu := regexp_replace(
     dosya,
-    '(-- ↓↓↓ DOLDURULACAK ÜÇ SATIR ↓↓↓).*?(-- ↑↑↑ DOLDURULACAK ÜÇ SATIR ↑↑↑)',
+    '(-- ↓↓↓ DOLDURULACAK ALANLAR ↓↓↓).*?(-- ↑↑↑ DOLDURULACAK ALANLAR ↑↑↑)',
     E'\\1\n' || format(
       '%L::text as sinif, %L::text as ogrenci_no, %L::text as eski_ad, %L::text as yeni_ad',
       p_sinif, p_no, p_eski_ad, p_yeni_ad

@@ -11,7 +11,10 @@
 --
 -- ## YAPACAĞINIZ TEK ŞEY
 --
--- Aşağıdaki `girdi` bloğunda ÜÇ SATIRI doldurun. Gerisine dokunmayın.
+-- Aşağıdaki `girdi` bloğundaki alanları doldurun. Gerisine dokunmayın.
+--
+-- Normalde ÜÇÜ yeter: sinif · ogrenci_no · yeni_ad.
+-- `eski_ad` yalnız öğrencinin numarası yoksa gerekiyor.
 --
 --   sinif       → sınıfın adı, tırnak içinde:  '9A'
 --   ogrenci_no  → öğrencinin OKUL NUMARASI:    '601'
@@ -35,12 +38,12 @@
 with
 girdi as (
   select
-    -- ↓↓↓ DOLDURULACAK ÜÇ SATIR ↓↓↓
+    -- ↓↓↓ DOLDURULACAK ALANLAR ↓↓↓
     '9A'::text        as sinif,
     '601'::text       as ogrenci_no,
     null::text        as eski_ad,
     'Doğru Ad'::text  as yeni_ad
-    -- ↑↑↑ DOLDURULACAK ÜÇ SATIR ↑↑↑
+    -- ↑↑↑ DOLDURULACAK ALANLAR ↑↑↑
 ),
 -- Ad normalleştirmesi: "ALİ  YILMAZ" ile "Ali Yılmaz" aynı kişi sayılsın.
 --
