@@ -163,6 +163,71 @@ kaybolmuyor, öğretmenin karnesinde duruyor. Alternatif — öğrencinin eski
 sınıfının ödevlerini görmeyi sürdürmesi — yeni sınıfının listesine
 karışırdı ve istenen bir şey değil.
 
+## Kopya öğrenci temizliği — silen bir betik nasıl sınandı
+
+Öğrenciler önce numarasız eklenmişti; aynı listeler 0042'den sonra
+numaralarla yeniden yüklenince her sınıf iki katına çıktı. Temizlik için
+iki panel dosyası var: `panel-icin/kopya-ogrenci-raporu.sql` (salt okunur)
+ve `panel-icin/kopya-ogrenci-sil.sql` (siler).
+
+**Bu, depodaki en tehlikeli SQL.** `ogrenciler`e bağlı sekiz tablonun
+tamamı `on delete cascade`: yanlış silinen bir öğrencinin ödevleri,
+notları, veli yazışması ve onamı da gider. Bu yüzden testin ağırlığı
+"siliyor mu"da değil, **silmemesi gerekeni silmiyor mu**da.
+
+Silme yalnız **üç şart birden** tutuyorsa oluyor: numara yok · aynı
+sınıfta aynı adda numaralı ve aktif bir ikiz var · **hiç kullanılmamış**
+(`gonderimler`, `mesajlar`, `dersler`, `odemeler`, `okundu`,
+`veli_onaylari`, `oturumlar` — hiçbirinde tek satırı yok). `giris_kodlari`
+bilerek kullanım sayılmıyor: her öğrenciyle birlikte üretiliyor.
+
+### Test, dosyanın KOPYASINI değil KENDİSİNİ çalıştırıyor
+
+`testler/kopya_temizlik_testleri.sql` silme sorgusunu taşımıyor. İki panel
+dosyasının metnini diskten okuyup (`SEKIZ_KOK`, `calistir.sh` veriyor)
+aynen çalıştırıyor. 0041'de öğrenilen ders buydu: ölçüm, çalışan kodun
+kopyasını ölçerse, kopya ile asıl ayrıştığı gün test yeşil kalır ve
+yanılır.
+
+Kurulan dünya 6K'da altı kayıt: temiz kopya (silinmeli), onun **büyük
+harfli ve çift boşluklu** numaralı ikizi, gönderimi olan kullanılmış kopya
+(kalmalı), onun ikizi, ikizi olmayan tekil öğrenci, ve adaşı **başka
+sınıfta** olan bir öğrenci. 10 grup; rapor hem silmeden önceki hem
+sonraki dünyayı doğru okumak zorunda (sayılar sabit yazılamaz).
+
+### Kusur provası — 11 kusurdan 11'i yakalandı
+
+Her ölçümün gerçekten ısırdığı, panel dosyasına tek tek kusur
+yerleştirilerek gösterildi:
+
+| Kusur | Testi kıran ölçüm |
+| --- | --- |
+| "hiç kullanılmamış" şartı düştü | `4a: KULLANILMIŞ kopya silindi — veri kaybı` |
+| ikiz aramasında sınıf şartı düştü | `5d: adaşı BAŞKA sınıfta olan öğrenci silindi` |
+| ikizin numaralı olma şartı düştü | `5c: ikizi olmayan öğrenci silindi` |
+| Türkçe ad normalleştirmesi düştü | `3a: temiz kopya silinmedi` |
+| denetim izi yazılmıyor | `6b: iz sayısı silinen sayısıyla tutmuyor` |
+| iz farklı bir işlem adıyla yazılıyor | `8a: silme denetim izine yazılmadı` |
+| özet yanlış sayı veriyor | `6a: özet 0 silindi diyor, gerçekte 1 satır gitti` |
+| raporda gönderim kullanım sayılmıyor | `2b: silinecek sayısı 1 olmalıydı` |
+| rapor sınıf sayılarını yanlış veriyor | `2a: sınıf durumu yanlış` |
+| rapordan KORUNACAK bölümü çıkarıldı | `2c: kullanılmış kopya adıyla yok` |
+| dosya hiç okunamadı (boş) | `0a: silme dosyası okunamadı (0 karakter)` |
+
+Son satır ayrı bir ders: "dosya okundu mu" çıpası **ölçülen
+davranışlardan biri olamaz**. İlk yazımda çıpa `ogrenci_kopya_silindi`
+dizgesiydi; denetim izinin adını değiştiren kusur, testi doğru yerden
+değil "dosya okunamadı" diye kırdı. Çıpa, ölçülmeyen bir yapıya
+(`delete from public.ogrenciler`) taşındı.
+
+### Panelde yalnız SON ifadenin sonucu görünüyor
+
+Her iki dosya da **tek bir ifade**. Rapor dört bölümü `union all` ile tek
+tabloda döndürüyor; silme dosyası `delete … returning`'i ve denetim izi
+yazımını aynı ifadenin içinde tutup bir özet satırıyla bitiyor. Ayrı
+`delete` + ayrı `select` yazılsaydı öğretmen yalnız sonuncuyu görürdü —
+0041 ve 0042'de "NULL" görmesinin sebebi tam olarak buydu.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede
