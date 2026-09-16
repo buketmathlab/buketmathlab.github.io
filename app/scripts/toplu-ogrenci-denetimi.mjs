@@ -27,8 +27,8 @@ const MEVCUT = {
   sayfa: 1,
   boyut: 100,
   kayitlar: [
-    { id: 'v1', ad: 'Ali Yılmaz', tur: 'okul', sinif: '9A' },
-    { id: 'v2', ad: 'Zeynep Ak', tur: 'okul', sinif: '9A' },
+    { id: 'v1', ad: 'Ali Yılmaz', ogrenci_no: null, tur: 'okul', sinif: '9A' },
+    { id: 'v2', ad: 'Zeynep Ak', ogrenci_no: null, tur: 'okul', sinif: '9A' },
   ],
 };
 
@@ -110,20 +110,52 @@ await s.addInitScript(
           const harf = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
           const kod = (n) =>
             Array.from({ length: 8 }, (_, i) => harf[(n * 7 + i * 13) % harf.length]).join('');
+          // TAKLİT GERÇEĞE SADIK OLMALI (0043).
+          //
+          // Sahte sunucu `p_mevcutlari_guncelle`yi yok saysaydı, ekran
+          // "güncellendi" diyemez ve bayrağın bir işe yaradığı hiç
+          // ölçülmezdi — denetim, bayrak sunucuda hiç okunmasa da yeşil
+          // kalırdı. Burada eşleştirme gerçek kuralla yapılıyor: aynı
+          // sınıfta, Türkçe küçük harfe indirgenmiş aynı ad, ve aynı
+          // çağrıda bir kez.
+          const eslestir = govde?.p_mevcutlari_guncelle === true;
+          const anah = (a) => a.trim().replace(/\s+/g, ' ').toLocaleLowerCase('tr');
+          const kayitli = new Map(mevcut.kayitlar.map((k) => [anah(k.ad), k]));
+          const dokunulan = new Set();
+          const satirlar = adlar.map((e, i) => {
+            // 0042'den sonra eleman ya dizgi ya `{ad, no}`; gerçek sunucu
+            // da tam bu ayrımı yapıyor (`_toplu_ad`).
+            const ad = typeof e === 'string' ? e : e.ad;
+            const no = typeof e === 'string' ? null : (e.no ?? null);
+            const m2 = eslestir ? kayitli.get(anah(ad)) : undefined;
+            if (m2 && !dokunulan.has(m2.id)) {
+              dokunulan.add(m2.id);
+              return {
+                id: m2.id,
+                ad: m2.ad, // kayıttaki ad değişmiyor
+                ogrenci_no: no ?? m2.ogrenci_no ?? null,
+                durum: no ? 'guncellendi' : 'degismedi',
+                // MEVCUT kodlar — yenilenmiyor.
+                ogrenci_kodu: kod(m2.id.length + 3),
+                veli_kodu: kod(m2.id.length + 9),
+              };
+            }
+            return {
+              id: 'y' + i,
+              ad,
+              ogrenci_no: no,
+              durum: 'eklendi',
+              ogrenci_kodu: kod(i + 1),
+              veli_kodu: kod(i + 41),
+            };
+          });
           return new Response(
             JSON.stringify({
-              adet: adlar.length,
-              // TAKLİT GERÇEĞE SADIK OLMALI. 0042'den sonra eleman ya
-              // dizgi ya `{ad, no}`; sahte sunucu `ad`ı aynen yansıtınca
-              // ekrana nesne basılıyordu ve sonuç tablosu boş çıkıyordu.
-              // Gerçek sunucu da tam bu ayrımı yapıyor (`_toplu_ad`).
-              eklenen: adlar.map((e, i) => ({
-                id: 'y' + i,
-                ad: typeof e === 'string' ? e : e.ad,
-                ogrenci_no: typeof e === 'string' ? null : (e.no ?? null),
-                ogrenci_kodu: kod(i + 1),
-                veli_kodu: kod(i + 41),
-              })),
+              adet: satirlar.length,
+              eklenen: satirlar,
+              eklendi: satirlar.filter((r) => r.durum === 'eklendi').length,
+              guncellendi: satirlar.filter((r) => r.durum === 'guncellendi').length,
+              degismedi: satirlar.filter((r) => r.durum === 'degismedi').length,
             }),
             { status: 200, headers: { 'Content-Type': 'application/json' } },
           );
@@ -146,6 +178,15 @@ await s.addInitScript(
 const p = await s.newPage();
 const metin = () => p.evaluate(() => document.body.innerText);
 const cagrilar = () => p.evaluate(() => window.__cagrilar.map((c) => c.ad));
+
+/**
+ * GÖNDER DÜĞMESİ. Etiketi 0043'ten sonra KARARA göre değişiyor
+ * ("6 öğrenci ekle" ya da "5 ekle, 1 güncelle"); sabit bir ada bağlanan
+ * seçici, etiket doğru değiştiği için kırılırdı. Etiketin kendisi ayrı
+ * bir ölçüm (4b) — burada yalnız düğmeye basılıyor.
+ */
+const gonder = () =>
+  p.getByRole('button', { name: /(öğrenci ekle|güncelle)$/i }).first();
 
 await p.goto(KOK + '#/ogretmen/ogrenciler/toplu', { waitUntil: 'networkidle' });
 await p.waitForTimeout(500);
@@ -190,9 +231,19 @@ console.log('2 — SINIF SEÇ + LİSTE YAPIŞTIR → ÖNİZLEME');
   de(t.includes('12345'), 'okunamayan satır HAM hâliyle gösteriliyor, sessizce atılmıyor');
 
   de(t.includes('Listede tekrar'), 'listedeki tekrar işaretli');
-  de(t.includes('Sınıfta kayıtlı'), 'sınıfta zaten kayıtlı ad işaretli');
+  // 0043: etiket artık NE OLACAĞINI söylüyor. "Sınıfta kayıtlı" tek başına
+  // bir bilgiydi; öğretmen ondan sonuca varamıyordu.
+  de(t.includes('Numarası güncellenecek'), 'kayıtlı ad için sonuç etiketi var');
 
   de(t.includes('7 öğrenci eklenecek'), 'eklenecek sayı doğru (7 ad, 1 çöp satır elendi)');
+  // EŞLEŞEN SAYISI, LİSTEDE TEKRAR EDEN KAYITLI ADI DA SAYIYOR.
+  //
+  // Listede "ALİ YILMAZ" iki kez var ve ikisi de sınıfta kayıtlı bir adın
+  // karşılığı. Sayım `mukerrer` alanına dayansaydı ikincisi 'liste'
+  // yazdığı için düşerdi ve önizleme "1 eşleşti" derdi — sunucu ise iki
+  // satırı da eşleştirirdi. Önizleme, olacak şeyi anlatmalı.
+  de(/2 öğrenci sınıfta zaten kayıtlı/.test(t), 'eşleşen sayısı 2 (ikinci Ali de sayıldı)');
+  de(/5 tanesi yeni/.test(t), 'yeni sayısı 5');
   de(
     t.includes('Listenin çoğu büyük harf'),
     'düzeltmenin neden açık geldiği söyleniyor',
@@ -214,9 +265,76 @@ console.log('4 — SATIR ÇIKARMA ÖNİZLEMEYİ DÜŞÜRÜYOR');
   de((await metin()).includes('6 öğrenci eklenecek'), 'çıkarılan satır sayıdan düştü');
 }
 
+console.log('4b — EŞLEŞME KARARI KAYDETMEDEN ÖNCE SORULUYOR (0043)');
+{
+  // Öğretmenin bütün sınıfları iki katına çıktı çünkü bu karar hiç
+  // sorulmuyordu: "Sınıfta kayıtlı" bir uyarıydı, bir yol değil.
+  const t = await metin();
+  de(/1 öğrenci sınıfta zaten kayıtlı/.test(t), 'eşleşen sayısı yazıyor');
+  de(/5 tanesi yeni/.test(t), 'yeni sayısı yazıyor');
+  de(t.includes('Mevcut öğrencilerin numarasını güncelle'), 'güncelleme seçeneği var');
+  de(t.includes('Yeni öğrenci olarak ekle'), 'ikinci kayıt seçeneği var');
+  de(t.includes('giriş kodları değişmez'), 'kodun değişmeyeceği söyleniyor');
+
+  const secili = await p.evaluate(() =>
+    [...document.querySelectorAll('input[name="eslestirme"]')].map((e) => e.checked),
+  );
+  de(
+    JSON.stringify(secili) === JSON.stringify([true, false]),
+    `eşleşen varken varsayılan GÜNCELLE (${JSON.stringify(secili)})`,
+  );
+
+  // KARAR DÜĞMEYE DE YANSIYOR: ne olacağı tıklamadan önce okunuyor.
+  const etiket = await p.evaluate(
+    () => [...document.querySelectorAll('button')].map((b) => b.textContent?.trim()),
+  );
+  de(
+    etiket.some((e) => e === '5 ekle, 1 güncelle'),
+    `düğme kararı yazıyor: ${JSON.stringify(etiket.filter((e) => /ekle|güncelle/.test(e ?? '')))}`,
+  );
+
+  // ÖTEKİ SEÇENEK: etiket ve düğme birlikte değişmeli.
+  await p.locator('input[name="eslestirme"]').nth(1).check();
+  await p.waitForTimeout(300);
+  const t2 = await metin();
+  de(t2.includes('İkinci kayıt açılacak'), 'seçenek değişince satır etiketi de değişti');
+  de(!t2.includes('Numarası güncellenecek'), 'eski etiket kalkmış');
+  de(t2.includes('6 öğrenci ekle'), 'düğme eski davranışı yazıyor');
+
+  // Kaydetmeden karar değiştirmek sunucuya hiçbir şey göndermemeli.
+  const c = await cagrilar();
+  de(!c.includes('ogrenciler_toplu_ekle'), 'karar değiştirmek yazma yapmadı');
+}
+
+console.log('4c — KAPALI SEÇENEKLE GÖNDERİLEN BAYRAK false');
+{
+  await p.getByRole('button', { name: /6 öğrenci ekle/ }).first().click();
+  await p.waitForTimeout(700);
+  const govde = await p.evaluate(
+    () => window.__cagrilar.find((c) => c.ad === 'ogrenciler_toplu_ekle')?.govde ?? null,
+  );
+  de(govde?.p_mevcutlari_guncelle === false, `bayrak false gitti (${govde?.p_mevcutlari_guncelle})`);
+  const t = await metin();
+  de(/6 yeni öğrenci eklendi/.test(t), `sonuç "6 yeni öğrenci eklendi" diyor`);
+  de(!/numarası güncellendi/.test(t), 'güncelleme iddiası yok — hiçbiri güncellenmedi');
+
+  // Aynı ekrana temiz dönüp asıl yolu (güncelleme) ölçeceğiz.
+  await p.goto(KOK + '#/ogretmen/ogrenciler/toplu', { waitUntil: 'networkidle' });
+  await p.reload({ waitUntil: 'networkidle' });
+  await p.waitForTimeout(600);
+  await p.selectOption('select', 's9a');
+  await p.fill('textarea', YAPISTIRMA);
+  await p.waitForTimeout(400);
+  await p.getByRole('button', { name: /Ali Yılmaz satırını çıkar/ }).first().click();
+  await p.waitForTimeout(300);
+  await p.evaluate(() => {
+    window.__cagrilar.length = 0;
+  });
+}
+
 console.log('5 — EKLE → SUNUCUYA YALNIZ ONAYLANAN ADLAR GİDİYOR');
 {
-  await p.getByRole('button', { name: /öğrenci ekle$/i }).first().click();
+  await p.getByRole('button', { name: '5 ekle, 1 güncelle' }).first().click();
   await p.waitForTimeout(700);
 
   const govde = await p.evaluate(
@@ -244,12 +362,23 @@ console.log('5 — EKLE → SUNUCUYA YALNIZ ONAYLANAN ADLAR GİDİYOR');
     (govde?.p_adlar ?? []).every((a) => typeof a === 'object' && a.no === null),
     'numarasız listede numara uydurulmuyor',
   );
+  de(
+    govde?.p_mevcutlari_guncelle === true,
+    `eşleşen varken bayrak true gitti (${govde?.p_mevcutlari_guncelle})`,
+  );
 }
 
 console.log('6 — SONUÇ: KOD TABLOSU, GİZLEME, İNDİRME');
 {
   const t = await metin();
-  de(t.includes('6 öğrenci eklendi'), 'sonuç başlığı doğru');
+  // 0043: başlık artık NE OLDUĞUNU ayırıyor. Yapıştırmada numara yok, o
+  // yüzden eşleşen satır "zaten kayıtlıydı" — ve ASIL KAZANÇ bu:
+  // ikinci bir Ali Yılmaz kaydı AÇILMADI.
+  de(t.includes('5 yeni öğrenci eklendi'), 'yeni sayısı başlıkta');
+  de(t.includes('1 öğrenci zaten kayıtlıydı'), 'eşleşen satır kopya olarak açılmadı');
+  de(t.includes('YENİ KAYIT AÇILMADI'), 'ne yapılmadığı açıkça yazıyor');
+  de(t.includes('kodları'), 'kod uyarısı duruyor');
+  de(t.includes('Zaten kayıtlı'), 'satır durumu tabloda etiketli');
   de(t.includes('Kodları şimdi kaydedin'), 'kodların bir kez gösterildiği uyarısı var');
   de(t.includes('bütün sınıfın'), 'sınıfta ekranı çevirme uyarısı var (0018 dengesi)');
 
@@ -285,8 +414,10 @@ console.log('6 — SONUÇ: KOD TABLOSU, GİZLEME, İNDİRME');
       [...tr.querySelectorAll('td')].map((td) => td.textContent?.trim()),
     ),
   );
+  // 0043: tabloya "Durum" sütunu girdi; CSV karşılaştırması ad/kod
+  // sütunlarını ADIYLA alıyor, sıraya güvenmiyor.
   const ayrisan = ekrandaki.filter(
-    ([ad, ogr, veli]) => !csv.includes(`"${ad}";"${ogr}";"${veli}"`),
+    ([ad, , ogr, veli]) => !csv.includes(`"${ad}";"${ogr}";"${veli}"`),
   );
   de(ayrisan.length === 0, `indirilen dosya ekrandakiyle birebir aynı (${ayrisan.length} fark)`);
 }
@@ -492,7 +623,7 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
   await p.evaluate(() => {
     window.__cagrilar.length = 0;
   });
-  await p.getByRole('button', { name: /öğrenci ekle$/i }).first().click();
+  await gonder().click();
   await p.waitForTimeout(700);
   const eksikVarkenCagri = await p.evaluate(
     () => window.__cagrilar.filter((c) => c.ad === 'ogrenciler_toplu_ekle').length,
@@ -509,7 +640,7 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
   await p.evaluate(() => {
     window.__cagrilar.length = 0;
   });
-  await p.getByRole('button', { name: /öğrenci ekle$/i }).first().click();
+  await gonder().click();
   await p.waitForTimeout(1200);
 
   const cagrilar = await p.evaluate(() =>

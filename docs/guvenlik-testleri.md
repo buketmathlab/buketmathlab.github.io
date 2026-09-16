@@ -228,6 +228,56 @@ yazımını aynı ifadenin içinde tutup bir özet satırıyla bitiyor. Ayrı
 `delete` + ayrı `select` yazılsaydı öğretmen yalnız sonuncuyu görürdü —
 0041 ve 0042'de "NULL" görmesinin sebebi tam olarak buydu.
 
+## Toplu eklemede eşleştirme (0043) — ölçümler
+
+`toplu_eslestirme_testleri.sql`, 10 grup. Asıl ölçüm 3. grup: eşleşen
+öğrencinin **giriş kodu değişmiyor**. Yenilenseydi, öğrencinin ve velinin
+elindeki kâğıt sessizce geçersiz olurdu ve bu ancak biri giriş yapmayı
+deneyince anlaşılırdı. İkinci ağırlık 6. grup: sınıfta aynı adda iki aktif
+öğrenci varsa **hata verilip hiçbir şey yazılmıyor**.
+
+Panel dosyasına tek tek kusur yerleştirildi; **9 kusurdan 9'u** doğru
+ölçümden yakalandı:
+
+| Kusur | Testi kıran ölçüm |
+| --- | --- |
+| eşleşende kodlar yenileniyor | `3b: öğrenci kodu DEĞİŞTİ` |
+| aynı çağrıda dokunulanlar dışlanmıyor | `7a: iki adaş için 2 kayıt bekleniyordu, 1 var` |
+| belirsizlikte hata verilmiyor | `6b: belirsiz eşleşme kabul edildi` |
+| ad anahtarı Türkçeyi çevirmiyor | migration öz-doğrulaması: `_ad_anahtari Türkçeyi bozuyor` |
+| bayrak yok sayılıyor | `1b: bayrak kapalıyken yeni kayıt açılmalıydı` |
+| boş numara mevcut numarayı eziyor | `8a: mevcut numara silindi` |
+| iz farklı işlem adıyla yazılıyor | `9a: numara güncellemesi … yazılmadı` |
+| eşleşende yine de yeni kayıt açılıyor | `2a: yeni kayıt açılmış` |
+| eski imza düşürülmüyor (0007) | `0043 EKSİK KALDI: eski 4 parametreli … hâlâ duruyor` |
+
+Arayüz tarafında `toplu-ogrenci-denetimi.mjs`'e üç grup eklendi (karar
+kartı, kapalı seçenekle giden bayrak, sonuç başlığı). Oraya da tek tek
+**6 kusur** yerleştirildi, 6'sı da yakalandı — biri şuydu: eşleşen sayısı
+`mukerrer` alanından okunduğunda önizleme "1 eşleşti" derken sunucu iki
+satırı birden eşleştiriyordu.
+
+### Bu turda bulunan ölü ölçüm
+
+0042'nin kendi doğrulaması eski imzayı
+`pg_get_function_identity_arguments(p.oid) = 'text, text, uuid'` diye
+arıyordu. O fonksiyon **parametre adlarını da** döndürüyor
+(`p_token text, …`), yani karşılaştırma hiçbir zaman tutmuyor: **asla
+kalamayan bir ölçüm.** Canlıdaki güvence bozulmadı, çünkü yanındaki "tek
+imza değil" satırı ısırıyor — ama tek başına duran bir kontrol olarak
+değersizdi. 0042 çalıştırılmış bir migration olduğu için dosyasına
+dokunulmadı; 0043 `oidvectortypes(p.proargtypes)` kullanıyor ve iki
+kontrolün de ısırdığı geri alınarak gösterildi.
+
+### Panel dosyası ile migration'ın ayrışması
+
+Öğretmenin veritabanında çalışan şey `panel-icin/` altındaki dosya, depoda
+sınanan şey `migrations/` altındaki. 0043'ten itibaren panel sürümü
+migration gövdesini **birebir** taşıyor ve `migration-listesi.test.ts`
+bunu kilitliyor. Kilidin ısırdığı, panel dosyasındaki bir şartı
+zayıflatarak gösterildi: test `panel sürümünü migration'dan yeniden
+üretin` diyerek kırmızı yandı.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede

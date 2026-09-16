@@ -13,7 +13,20 @@ import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { rpc } from '@/services/supabase';
 import type { OgrenciListesi, Sinif } from '@/types/api';
 
-type EklenenKayit = { id: string; ad: string; ogrenci_kodu: string; veli_kodu: string };
+/**
+ * `durum` 0043'te eklendi:
+ *   `eklendi`     → yeni kayıt açıldı, yeni kodlar üretildi
+ *   `guncellendi` → sınıfta duran öğrencinin numarası yazıldı; KOD DEĞİŞMEDİ
+ *   `degismedi`   → eşleşti ama yazılacak bir şey yoktu (numara aynı ya da yok)
+ */
+type EklenenKayit = {
+  id: string;
+  ad: string;
+  ogrenci_no: string | null;
+  durum: 'eklendi' | 'guncellendi' | 'degismedi';
+  ogrenci_kodu: string;
+  veli_kodu: string;
+};
 
 /**
  * Metindeki şubeleri kararlı bir dizgiye çevirir.
@@ -24,7 +37,32 @@ type EklenenKayit = { id: string; ad: string; ogrenci_kodu: string; veli_kodu: s
 function ozetSiniflariAnahtari(metin: string, duzelt: boolean): string {
   return listeyiCoz(metin, { duzelt }).siniflar.join('|');
 }
-type TopluSonuc = { eklenen: EklenenKayit[]; adet: number };
+type TopluSonuc = {
+  eklenen: EklenenKayit[];
+  adet: number;
+  eklendi: number;
+  guncellendi: number;
+  degismedi: number;
+};
+
+/** Sonuç satırlarından sayaçları çıkarır (şubeli dosyada toplama gerekiyor). */
+function sayaclar(satirlar: EklenenKayit[]) {
+  return {
+    eklendi: satirlar.filter((k) => k.durum === 'eklendi').length,
+    guncellendi: satirlar.filter((k) => k.durum === 'guncellendi').length,
+    degismedi: satirlar.filter((k) => k.durum === 'degismedi').length,
+  };
+}
+
+/** "24 öğrencinin numarası güncellendi, 3 yeni öğrenci eklendi" */
+function sonucBasligi(s: TopluSonuc): string {
+  const parca: string[] = [];
+  if (s.eklendi > 0) parca.push(`${s.eklendi} yeni öğrenci eklendi`);
+  if (s.guncellendi > 0) parca.push(`${s.guncellendi} öğrencinin numarası güncellendi`);
+  if (s.degismedi > 0) parca.push(`${s.degismedi} öğrenci zaten kayıtlıydı`);
+  // Boş kalamaz: sunucu her satır için bir durum döndürüyor.
+  return parca.length > 0 ? parca.join(', ') : `${s.adet} satır işlendi`;
+}
 
 /**
  * Toplu öğrenci ekleme — yapıştır, önizle, onayla.
@@ -49,6 +87,9 @@ export function TopluOgrenci() {
   const [sinifId, setSinifId] = useState('');
   const [metin, setMetin] = useState('');
   const [duzeltElle, setDuzeltElle] = useState<boolean | null>(null);
+  // `null` = öğretmen henüz seçmedi; varsayılan ÖLÇÜLEN eşleşme sayısından
+  // türetiliyor (aşağıda), tahminden değil.
+  const [eslestirElle, setEslestirElle] = useState<boolean | null>(null);
   const [cikarilan, setCikarilan] = useState<Set<number>>(new Set());
   const [kaydediyor, setKaydediyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
@@ -188,6 +229,20 @@ export function TopluOgrenci() {
   const sinifAdi = siniflar.veri?.find((s) => s.id === sinifId)?.ad ?? '';
 
   /**
+   * KAÇI ZATEN KAYITLI, KAÇI YENİ.
+   *
+   * Öğretmen bu iki sayıyı KAYDETMEDEN ÖNCE görüyor. Eksik olan tam
+   * buydu: "Sınıfta kayıtlı" etiketi vardı ama ne olacağını söylemiyordu
+   * ve kaydetmeyi engellemiyordu; sonuç, her sınıfın iki katına çıkmasıydı.
+   */
+  const eslesen = secilenler.filter((s) => s.kayitli).length;
+  const yeni = secilenler.length - eslesen;
+
+  // VARSAYILAN: eşleşen varsa güncelle. Kopya üretmek, numarayı yazmaktan
+  // çok daha pahalı bir hata — geri alması elle silmek demek.
+  const eslestir = eslestirElle ?? eslesen > 0;
+
+  /**
    * DOSYA ŞUBE TAŞIYOR MU.
    *
    * Öğretmenin gönderdiği tek PDF ÜÇ şube taşıyordu (9A 27, 9B 30, 9C 30).
@@ -259,12 +314,14 @@ export function TopluOgrenci() {
             p_tur: 'okul',
             p_sinif_id: s.sinif!.id,
             p_adlar: s.satirlar.map((r) => ({ ad: r.ad, no: r.no })),
+            p_mevcutlari_guncelle: eslestir,
           });
           yazilan.push(`${s.ad} (${v.adet})`);
           hepsi.push(...v.eklenen);
         }
-        setSonuc({ eklenen: hepsi, adet: hepsi.length });
-        bildir(`${hepsi.length} öğrenci eklendi: ${yazilan.join(', ')}`, 'basari');
+        const toplu = { eklenen: hepsi, adet: hepsi.length, ...sayaclar(hepsi) };
+        setSonuc(toplu);
+        bildir(`${sonucBasligi(toplu)}: ${yazilan.join(', ')}`, 'basari');
       } catch (e) {
         const neden = e instanceof Error ? e.message : 'Öğrenciler eklenemedi.';
         setHata(
@@ -288,9 +345,12 @@ export function TopluOgrenci() {
         // 0042: ad ve numara birlikte. Sunucu düz dizgi dizisini de kabul
         // ediyor (geriye uyum), ama numarayı ancak nesne biçimi taşır.
         p_adlar: secilenler.map((s) => ({ ad: s.ad, no: s.no })),
+        // 0043: açıkken sınıfta zaten duran öğrenci tanınıyor, numarası
+        // yazılıyor ve YENİ KAYIT AÇILMIYOR.
+        p_mevcutlari_guncelle: eslestir,
       });
       setSonuc(v);
-      bildir(`${v.adet} öğrenci eklendi`, 'basari');
+      bildir(sonucBasligi(v), 'basari');
     } catch (e) {
       setHata(e instanceof Error ? e.message : 'Öğrenciler eklenemedi.');
     } finally {
@@ -329,8 +389,12 @@ export function TopluOgrenci() {
         </div>
 
         <SayfaBasligi
-          baslik={`${sonuc.adet} öğrenci eklendi`}
-          aciklama={`${sinifAdi} sınıfına eklendi. Her öğrenci için ayrı öğrenci ve veli kodu üretildi.`}
+          baslik={sonucBasligi(sonuc)}
+          aciklama={
+            sonuc.guncellendi + sonuc.degismedi > 0
+              ? 'Zaten kayıtlı öğrenciler için YENİ KAYIT AÇILMADI ve giriş kodları değişmedi; yalnız okul numaraları yazıldı.'
+              : `${sinifAdi} sınıfına eklendi. Her öğrenci için ayrı öğrenci ve veli kodu üretildi.`
+          }
         />
 
         {/* KODLAR BİR KEZ GÖSTERİLİYOR. Sayfadan çıkınca kaybolur; sonradan
@@ -342,6 +406,13 @@ export function TopluOgrenci() {
             Bu liste yalnız bu sayfada duruyor; çıkınca kaybolur. Sonradan tek tek{' '}
             <strong>Kodlar</strong> sekmesinden alabilirsiniz, ama toplu liste bir daha
             çıkmaz.
+            {sonuc.guncellendi + sonuc.degismedi > 0 && (
+              <>
+                {' '}
+                Zaten kayıtlı öğrencilerin kodları <strong>değişmedi</strong> — aşağıda
+                eski kodları duruyor, dağıttığınız kâğıtlar geçerli.
+              </>
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button onClick={csvIndir}>Kodları indir (Excel)</Button>
@@ -369,6 +440,9 @@ export function TopluOgrenci() {
                       Ad soyad
                     </th>
                     <th className="py-2 pr-3 text-[12px] font-bold uppercase tracking-wide text-muted">
+                      Durum
+                    </th>
+                    <th className="py-2 pr-3 text-[12px] font-bold uppercase tracking-wide text-muted">
                       Öğrenci
                     </th>
                     <th className="py-2 text-[12px] font-bold uppercase tracking-wide text-muted">
@@ -379,7 +453,23 @@ export function TopluOgrenci() {
                 <tbody>
                   {sonuc.eklenen.map((k) => (
                     <tr key={k.id} className="border-b border-line last:border-0">
-                      <td className="py-2 pr-3 text-[14px] text-ink">{k.ad}</td>
+                      <td className="py-2 pr-3 text-[14px] text-ink">
+                        {k.ogrenci_no && (
+                          <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] text-muted">
+                            {k.ogrenci_no}
+                          </span>
+                        )}
+                        {k.ad}
+                      </td>
+                      <td className="py-2 pr-3 text-[14px]">
+                        {k.durum === 'eklendi' ? (
+                          <Tag tur="basari">Yeni</Tag>
+                        ) : k.durum === 'guncellendi' ? (
+                          <Tag tur="bilgi">Numarası yazıldı</Tag>
+                        ) : (
+                          <Tag>Zaten kayıtlı</Tag>
+                        )}
+                      </td>
                       <td className="sk-sayi py-2 pr-3 text-[14px] font-semibold text-ink">
                         {k.ogrenci_kodu}
                       </td>
@@ -566,6 +656,55 @@ export function TopluOgrenci() {
         </Card>
       )}
 
+      {/* KARAR: eşleşen varsa ne yapılacağı KAYDETMEDEN ÖNCE soruluyor.
+          Bu kart olmadığı için öğretmenin bütün sınıfları iki katına çıktı:
+          "Sınıfta kayıtlı" uyarısı vardı, ama bir yol yoktu. */}
+      {eslesen > 0 && (
+        <Card className="mb-4" vurgu="uyari">
+          <h2 className="mb-1 text-[18px] text-ink">
+            <span className="sk-sayi">{eslesen}</span> öğrenci sınıfta zaten kayıtlı,{' '}
+            <span className="sk-sayi">{yeni}</span> tanesi yeni
+          </h2>
+          <p className="mb-3 text-[14px] text-muted">
+            Aynı listeyi ikinci kez yüklüyorsanız bu normaldir. Ne yapılsın?
+          </p>
+          <div className="grid gap-2">
+            <label className="flex min-h-[44px] items-start gap-2 text-[15px] text-ink">
+              <input
+                type="radio"
+                name="eslestirme"
+                className="mt-1 size-5 accent-ink"
+                checked={eslestir}
+                onChange={() => setEslestirElle(true)}
+              />
+              <span>
+                <strong>Mevcut öğrencilerin numarasını güncelle</strong>
+                <span className="block text-[13px] text-muted">
+                  Yeni kayıt açılmaz, giriş kodları değişmez. Yalnız okul numarası
+                  yazılır.
+                </span>
+              </span>
+            </label>
+            <label className="flex min-h-[44px] items-start gap-2 text-[15px] text-ink">
+              <input
+                type="radio"
+                name="eslestirme"
+                className="mt-1 size-5 accent-ink"
+                checked={!eslestir}
+                onChange={() => setEslestirElle(false)}
+              />
+              <span>
+                <strong>Yeni öğrenci olarak ekle</strong>
+                <span className="block text-[13px] text-muted">
+                  Aynı adda ikinci bir kayıt açılır. Sınıfta gerçekten iki adaş varsa
+                  bunu seçin.
+                </span>
+              </span>
+            </label>
+          </div>
+        </Card>
+      )}
+
       {ozet.satirlar.length > 0 && (
         <>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -610,7 +749,15 @@ export function TopluOgrenci() {
                       {/* MÜKERRER ENGEL DEĞİL, UYARI. Bir okulda aynı adda
                           iki öğrenci gerçekten olur; kararı öğretmen verir. */}
                       {s.mukerrer === 'liste' && <Tag tur="uyari">Listede tekrar</Tag>}
-                      {s.mukerrer === 'kayitli' && <Tag tur="uyari">Sınıfta kayıtlı</Tag>}
+                      {/* ETİKET KARARI SÖYLÜYOR. "Sınıfta kayıtlı" tek
+                          başına ne olacağını söylemiyordu; artık seçilen
+                          yola göre sonucu yazıyor. */}
+                      {s.kayitli &&
+                        (eslestir ? (
+                          <Tag tur="basari">Numarası güncellenecek</Tag>
+                        ) : (
+                          <Tag tur="uyari">İkinci kayıt açılacak</Tag>
+                        ))}
                       {/* NUMARA TEKRARI AYRI BİR UYARI: aynı adda iki
                           öğrenci olabilir, aynı numarada olmaması beklenir.
                           Yine de engel değil — öğretmenin kararı. */}
@@ -641,7 +788,11 @@ export function TopluOgrenci() {
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={ekle} yukleniyor={kaydediyor} disabled={secilenler.length === 0}>
-          {secilenler.length > 0 ? `${secilenler.length} öğrenci ekle` : 'Öğrenci ekle'}
+          {secilenler.length === 0
+            ? 'Öğrenci ekle'
+            : eslestir && eslesen > 0
+              ? `${yeni} ekle, ${eslesen} güncelle`
+              : `${secilenler.length} öğrenci ekle`}
         </Button>
         <Button tur="sade" onClick={() => git('/ogretmen/ogrenciler')}>
           Vazgeç
