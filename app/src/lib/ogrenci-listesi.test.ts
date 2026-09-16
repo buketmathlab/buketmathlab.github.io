@@ -378,6 +378,24 @@ describe('listeyiCoz — çok şubeli e-Okul dosyası', () => {
     expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, null, 'kayitli', null]);
   });
 
+  it('"zaten kayıtlı" ADI da şube başına bakıyor (0043)', () => {
+    // Dosyada "ALİ YILMAZ" hem 9A'da hem 9B'de var; kayıtlı olan yalnız
+    // 9B'deki. Şube ayrımı düşseydi 9A'daki Ali de "eşleşti" sayılır ve
+    // yanlış çocuğun numarası yazılırdı.
+    const v = listeyiCoz(DOSYA, {
+      duzelt: true,
+      kayitliSube: { '9B': { adlar: ['Ali Yılmaz'] } },
+    });
+    expect(
+      v.satirlar.map((s) => `${s.sinif}:${s.ad}:${s.kayitli ? 'kayitli' : 'yeni'}`),
+    ).toEqual([
+      '9A:Ali Yılmaz:yeni',
+      '9A:Ayşe Işık:yeni',
+      '9B:Mehmet Çoban:yeni',
+      '9B:Ali Yılmaz:kayitli',
+    ]);
+  });
+
   it('şubesiz dosyada eski davranış sürüyor', () => {
     const v = listeyiCoz('1 601 ALİ YILMAZ Erkek\n2 601 AYŞE IŞIK Kız', {
       duzelt: true,
@@ -386,4 +404,42 @@ describe('listeyiCoz — çok şubeli e-Okul dosyası', () => {
     expect(v.satirlar.map((s) => s.sinif)).toEqual([null, null]);
     expect(v.satirlar.map((s) => s.noTekrar)).toEqual([null, 'liste']);
   });
+});
+
+/**
+ * `kayitli` alanı (0043): "kaç öğrenci eşleşecek" sayısının kaynağı.
+ *
+ * Bu sayı yanlış olursa öğretmen kaydetmeden önce yanlış bir şey görür —
+ * ve bütün sınıfların iki katına çıkmasının sebebi tam olarak, kaydetmeden
+ * önce ne olacağının söylenmemesiydi.
+ */
+describe('listeyiCoz — zaten kayıtlı işareti (0043)', () => {
+  it('sınıfta kayıtlı adı işaretliyor, olmayanı işaretlemiyor', () => {
+    const v = listeyiCoz('1 601 ALİ YILMAZ Erkek\n2 602 AYŞE IŞIK Kız', {
+      duzelt: true,
+      kayitliAdlar: ['Ali Yılmaz'],
+    });
+    expect(v.satirlar.map((s) => s.kayitli)).toEqual([true, false]);
+  });
+
+  it('büyük/küçük harf ve fazla boşluk eşleşmeyi bozmuyor', () => {
+    const v = listeyiCoz('1 601 ALİ  YILMAZ Erkek', {
+      duzelt: true,
+      kayitliAdlar: ['ali yılmaz'],
+    });
+    expect(v.satirlar[0]?.kayitli).toBe(true);
+  });
+
+  it('LİSTEDE DE TEKRAR EDEN kayıtlı ad, kayıtlı sayılmayı sürdürüyor', () => {
+    // `mukerrer` tek değer taşıyor ve burada 'liste' yazıyor; `kayitli`
+    // ondan bağımsız olmasaydı ikinci satır sayımdan düşer ve önizleme
+    // "1 eşleşti" derken sunucu iki kaydı da güncellerdi.
+    const v = listeyiCoz('1 601 ALİ YILMAZ Erkek\n2 602 ALİ YILMAZ Erkek', {
+      duzelt: true,
+      kayitliAdlar: ['Ali Yılmaz'],
+    });
+    expect(v.satirlar.map((s) => s.mukerrer)).toEqual(['kayitli', 'liste']);
+    expect(v.satirlar.map((s) => s.kayitli)).toEqual([true, true]);
+  });
+
 });

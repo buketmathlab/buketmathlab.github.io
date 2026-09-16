@@ -16,6 +16,9 @@ PORT=${PORT:-5433}
 SOCK=${SOCK:-/tmp}
 DB=sekiz_test
 KOK="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# `kopya_temizlik_testleri.sql` panel dosyalarının GERÇEK metnini okuyup
+# çalıştırıyor; kökü buradan öğreniyor.
+export SEKIZ_KOK="$KOK"
 
 psql_() { psql -h "$SOCK" -p "$PORT" -U sekiz -v ON_ERROR_STOP=1 "$@"; }
 
@@ -123,6 +126,10 @@ echo "==> Toplu öğrenci ekleme testleri (0024)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/toplu_ogrenci_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Toplu eklemede eşleştirme testleri (0043)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/toplu_eslestirme_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> İki ayrı yazışma testleri (0025)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/iki_yazisma_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
@@ -169,6 +176,10 @@ psql_ -d "$DB" -f "$KOK/supabase/testler/analiz_testleri.sql" 2>&1 \
 
 echo "==> Veli onamı testleri (0034)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/onam_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
+echo "==> Kopya öğrenci temizliği testleri (panel-icin dosyaları)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/kopya_temizlik_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
 echo "==> Anon izolasyon testleri"

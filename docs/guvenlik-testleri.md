@@ -163,6 +163,121 @@ kaybolmuyor, öğretmenin karnesinde duruyor. Alternatif — öğrencinin eski
 sınıfının ödevlerini görmeyi sürdürmesi — yeni sınıfının listesine
 karışırdı ve istenen bir şey değil.
 
+## Kopya öğrenci temizliği — silen bir betik nasıl sınandı
+
+Öğrenciler önce numarasız eklenmişti; aynı listeler 0042'den sonra
+numaralarla yeniden yüklenince her sınıf iki katına çıktı. Temizlik için
+iki panel dosyası var: `panel-icin/kopya-ogrenci-raporu.sql` (salt okunur)
+ve `panel-icin/kopya-ogrenci-sil.sql` (siler).
+
+**Bu, depodaki en tehlikeli SQL.** `ogrenciler`e bağlı sekiz tablonun
+tamamı `on delete cascade`: yanlış silinen bir öğrencinin ödevleri,
+notları, veli yazışması ve onamı da gider. Bu yüzden testin ağırlığı
+"siliyor mu"da değil, **silmemesi gerekeni silmiyor mu**da.
+
+Silme yalnız **üç şart birden** tutuyorsa oluyor: numara yok · aynı
+sınıfta aynı adda numaralı ve aktif bir ikiz var · **hiç kullanılmamış**
+(`gonderimler`, `mesajlar`, `dersler`, `odemeler`, `okundu`,
+`veli_onaylari`, `oturumlar` — hiçbirinde tek satırı yok). `giris_kodlari`
+bilerek kullanım sayılmıyor: her öğrenciyle birlikte üretiliyor.
+
+### Test, dosyanın KOPYASINI değil KENDİSİNİ çalıştırıyor
+
+`testler/kopya_temizlik_testleri.sql` silme sorgusunu taşımıyor. İki panel
+dosyasının metnini diskten okuyup (`SEKIZ_KOK`, `calistir.sh` veriyor)
+aynen çalıştırıyor. 0041'de öğrenilen ders buydu: ölçüm, çalışan kodun
+kopyasını ölçerse, kopya ile asıl ayrıştığı gün test yeşil kalır ve
+yanılır.
+
+Kurulan dünya 6K'da altı kayıt: temiz kopya (silinmeli), onun **büyük
+harfli ve çift boşluklu** numaralı ikizi, gönderimi olan kullanılmış kopya
+(kalmalı), onun ikizi, ikizi olmayan tekil öğrenci, ve adaşı **başka
+sınıfta** olan bir öğrenci. 10 grup; rapor hem silmeden önceki hem
+sonraki dünyayı doğru okumak zorunda (sayılar sabit yazılamaz).
+
+### Kusur provası — 11 kusurdan 11'i yakalandı
+
+Her ölçümün gerçekten ısırdığı, panel dosyasına tek tek kusur
+yerleştirilerek gösterildi:
+
+| Kusur | Testi kıran ölçüm |
+| --- | --- |
+| "hiç kullanılmamış" şartı düştü | `4a: KULLANILMIŞ kopya silindi — veri kaybı` |
+| ikiz aramasında sınıf şartı düştü | `5d: adaşı BAŞKA sınıfta olan öğrenci silindi` |
+| ikizin numaralı olma şartı düştü | `5c: ikizi olmayan öğrenci silindi` |
+| Türkçe ad normalleştirmesi düştü | `3a: temiz kopya silinmedi` |
+| denetim izi yazılmıyor | `6b: iz sayısı silinen sayısıyla tutmuyor` |
+| iz farklı bir işlem adıyla yazılıyor | `8a: silme denetim izine yazılmadı` |
+| özet yanlış sayı veriyor | `6a: özet 0 silindi diyor, gerçekte 1 satır gitti` |
+| raporda gönderim kullanım sayılmıyor | `2b: silinecek sayısı 1 olmalıydı` |
+| rapor sınıf sayılarını yanlış veriyor | `2a: sınıf durumu yanlış` |
+| rapordan KORUNACAK bölümü çıkarıldı | `2c: kullanılmış kopya adıyla yok` |
+| dosya hiç okunamadı (boş) | `0a: silme dosyası okunamadı (0 karakter)` |
+
+Son satır ayrı bir ders: "dosya okundu mu" çıpası **ölçülen
+davranışlardan biri olamaz**. İlk yazımda çıpa `ogrenci_kopya_silindi`
+dizgesiydi; denetim izinin adını değiştiren kusur, testi doğru yerden
+değil "dosya okunamadı" diye kırdı. Çıpa, ölçülmeyen bir yapıya
+(`delete from public.ogrenciler`) taşındı.
+
+### Panelde yalnız SON ifadenin sonucu görünüyor
+
+Her iki dosya da **tek bir ifade**. Rapor dört bölümü `union all` ile tek
+tabloda döndürüyor; silme dosyası `delete … returning`'i ve denetim izi
+yazımını aynı ifadenin içinde tutup bir özet satırıyla bitiyor. Ayrı
+`delete` + ayrı `select` yazılsaydı öğretmen yalnız sonuncuyu görürdü —
+0041 ve 0042'de "NULL" görmesinin sebebi tam olarak buydu.
+
+## Toplu eklemede eşleştirme (0043) — ölçümler
+
+`toplu_eslestirme_testleri.sql`, 10 grup. Asıl ölçüm 3. grup: eşleşen
+öğrencinin **giriş kodu değişmiyor**. Yenilenseydi, öğrencinin ve velinin
+elindeki kâğıt sessizce geçersiz olurdu ve bu ancak biri giriş yapmayı
+deneyince anlaşılırdı. İkinci ağırlık 6. grup: sınıfta aynı adda iki aktif
+öğrenci varsa **hata verilip hiçbir şey yazılmıyor**.
+
+Panel dosyasına tek tek kusur yerleştirildi; **9 kusurdan 9'u** doğru
+ölçümden yakalandı:
+
+| Kusur | Testi kıran ölçüm |
+| --- | --- |
+| eşleşende kodlar yenileniyor | `3b: öğrenci kodu DEĞİŞTİ` |
+| aynı çağrıda dokunulanlar dışlanmıyor | `7a: iki adaş için 2 kayıt bekleniyordu, 1 var` |
+| belirsizlikte hata verilmiyor | `6b: belirsiz eşleşme kabul edildi` |
+| ad anahtarı Türkçeyi çevirmiyor | migration öz-doğrulaması: `_ad_anahtari Türkçeyi bozuyor` |
+| bayrak yok sayılıyor | `1b: bayrak kapalıyken yeni kayıt açılmalıydı` |
+| boş numara mevcut numarayı eziyor | `8a: mevcut numara silindi` |
+| iz farklı işlem adıyla yazılıyor | `9a: numara güncellemesi … yazılmadı` |
+| eşleşende yine de yeni kayıt açılıyor | `2a: yeni kayıt açılmış` |
+| eski imza düşürülmüyor (0007) | `0043 EKSİK KALDI: eski 4 parametreli … hâlâ duruyor` |
+
+Arayüz tarafında `toplu-ogrenci-denetimi.mjs`'e üç grup eklendi (karar
+kartı, kapalı seçenekle giden bayrak, sonuç başlığı). Oraya da tek tek
+**6 kusur** yerleştirildi, 6'sı da yakalandı — biri şuydu: eşleşen sayısı
+`mukerrer` alanından okunduğunda önizleme "1 eşleşti" derken sunucu iki
+satırı birden eşleştiriyordu.
+
+### Bu turda bulunan ölü ölçüm
+
+0042'nin kendi doğrulaması eski imzayı
+`pg_get_function_identity_arguments(p.oid) = 'text, text, uuid'` diye
+arıyordu. O fonksiyon **parametre adlarını da** döndürüyor
+(`p_token text, …`), yani karşılaştırma hiçbir zaman tutmuyor: **asla
+kalamayan bir ölçüm.** Canlıdaki güvence bozulmadı, çünkü yanındaki "tek
+imza değil" satırı ısırıyor — ama tek başına duran bir kontrol olarak
+değersizdi. 0042 çalıştırılmış bir migration olduğu için dosyasına
+dokunulmadı; 0043 `oidvectortypes(p.proargtypes)` kullanıyor ve iki
+kontrolün de ısırdığı geri alınarak gösterildi.
+
+### Panel dosyası ile migration'ın ayrışması
+
+Öğretmenin veritabanında çalışan şey `panel-icin/` altındaki dosya, depoda
+sınanan şey `migrations/` altındaki. 0043'ten itibaren panel sürümü
+migration gövdesini **birebir** taşıyor ve `migration-listesi.test.ts`
+bunu kilitliyor. Kilidin ısırdığı, panel dosyasındaki bir şartı
+zayıflatarak gösterildi: test `panel sürümünü migration'dan yeniden
+üretin` diyerek kırmızı yandı.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede

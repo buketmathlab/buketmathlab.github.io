@@ -456,7 +456,8 @@ girilmeden bir şey göstermediği için bu, bütün ürünün önündeki tıka�
 
 **Uç: `ogrenciler_toplu_ekle(p_token, p_tur, p_sinif_id, p_adlar jsonb)`**
 — öğretmene özel, en fazla 200 ad, dönen: her öğrenci için `id`, `ad` ve
-iki kod.
+iki kod. (0043'te beşinci bir parametre eklendi ve eski imza düştü:
+aşağıya bakın.)
 
 **Neden yeni uç — istemciden döngü yetmez.** 30 ayrı `ogrenci_ekle` çağrısı
 30 ayrı işlem demek: ağ 17. öğrencide koparsa 16 öğrenci eklenmiş, 14'ü
@@ -3051,3 +3052,107 @@ Bir ölçüm hatası daha kayda geçti: önizlemedeki ad `<p>`'si artık şube
 rozetini de taşıyor ve o rozet rakam içeriyor; yalnız `sk-sayi` rozetleri
 çıkarıldığında "adda rakam yok" ölçümü haksız yere kırmızı yandı. Tüm
 rozetler çıkarılıyor — ölçülmek istenen şey **kaydedilecek ad**.
+
+## Toplu eklemede eşleştirme (0043)
+
+Öğretmen sınıfları önce **numarasız** eklemişti. 0042 yayına girince aynı
+e-Okul listelerini numaralarla yeniden yükledi ve **her sınıf iki katına
+çıktı**: aynı çocuk hem numarasız hem numaralı kayıtla duruyor.
+
+**Bunu ürün yaptı, öğretmen değil.** Önizleme "Sınıfta kayıtlı" diye
+uyarıyordu, ama uyarı kaydetmeyi engellemiyordu ve *"bu zaten var,
+numarasını yaz"* diyen bir yol **hiç yoktu**. Eksik olan tasarımdı; uyarı
+vermek, yol göstermenin yerine geçmez.
+
+### Sunucu: üç sonuçlu eşleştirme
+
+`ogrenciler_toplu_ekle` beşinci bir parametre aldı:
+`p_mevcutlari_guncelle boolean default false`. Açıkken, gelen her
+`{ad, no}` için o sınıfta aktif ve aynı adlı öğrenci aranıyor:
+
+| durum | yapılan | dönen `durum` |
+| --- | --- | --- |
+| hiç yok | yeni kayıt + iki yeni kod | `eklendi` |
+| tam bir tane, numara farklı | numara yazılır, **yeni kayıt yok, yeni kod yok** | `guncellendi` |
+| tam bir tane, numara aynı ya da yok | hiçbir şey | `degismedi` |
+| birden fazla | **hata**, adı söyleyerek; hiçbir şey yazılmaz | — |
+
+Son satır bilerek katı: belirsizken tahmin etmek, **yanlış çocuğun**
+kaydını değiştirmek demek. Hata mesajı adı taşıyor ki öğretmen hangi
+satıra bakacağını bilsin.
+
+**Kod yenilenmiyor.** Eşleşen öğrencinin kodu zaten var ve büyük
+olasılıkla dağıtıldı; yenilemek elindeki kâğıdı sessizce geçersiz kılardı
+ve bu, ancak biri giriş yapmayı deneyince anlaşılırdı. Dönen satırda
+**mevcut** kodlar var, öğretmen tek listeden okuyabilsin diye.
+
+**Aynı çağrıda dokunulan kayıtlar eşleştirmenin dışında.** Yoksa listede
+aynı ad iki kez geçtiğinde ikinci satır, az önce eklenen birinciyi
+"mevcut öğrenci" sanıp onun numarasını ezerdi: iki adaştan biri kayıt dışı
+kalırdı. Gerçek adaşlar bir sınıfta olur.
+
+**Bayrak varsayılan olarak kapalı**, ve bu ölçülüyor: geride kalmış bir
+arayüz sürümü sessizce kayıt güncellemeye başlamasın.
+
+### Ad anahtarı — `_ad_anahtari(text)`
+
+e-Okul adları BÜYÜK HARFLE veriyor, aradaki boşluk bir ya da iki olabiliyor.
+`translate(btrim(ad), 'İIĞÜŞÖÇ', 'iığüşöç')` → `lower()` → boşluk
+sadeleştirme. Türkçe harfler **elle** çevriliyor: `lower()` veritabanının
+diline bağlı ve "İ"yi bozabiliyor; `lower(x, 'tr')` diye bir şey de yok.
+
+Temizlik panel dosyaları (`panel-icin/kopya-ogrenci-*.sql`) bu yardımcıyı
+çağırmıyor, aynı ifadeyi kendi içlerinde taşıyor — bilerek: o dosyalar bu
+migration çalışmadan önce de çalışabilmeli. İki kopya da ayrı ayrı
+ölçülüyor.
+
+### 0007 tuzağı — bu sefer gerçek
+
+Varsayılanlı parametre yeni bir fonksiyon yaratıyor; eski dört parametreli
+imza kalsaydı PostgREST bayraksız çağrıyı ona yönlendirebilir ve
+**eşleştirme hiç çalışmazdı**: öğretmen seçeneği işaretler, kopyalar yine
+üretilirdi. Eski imza açıkça düşürülüyor.
+
+**Bu turda ölü bir ölçüm bulundu.** 0042'nin kendi doğrulaması eski imzayı
+`pg_get_function_identity_arguments(p.oid) = 'text, text, uuid'` diye
+arıyordu; oysa o fonksiyon **parametre adlarını da** döndürüyor
+(`p_token text, …`), yani karşılaştırma hiçbir zaman tutmuyordu —
+**asla kalamayan bir ölçüm**. Orada gerçek koruma yanındaki "tek imza
+değil" satırıydı ve o ısırıyor, dolayısıyla canlıdaki güvence bozulmadı.
+0042 çalıştırılmış bir migration olduğu için dosyasına dokunulmadı; 0043
+tür listesini `oidvectortypes(p.proargtypes)` ile okuyor ve **iki kontrol
+de** geri alınarak ısırdıkları gösterildi.
+
+İkinci bir ders aynı bloktan çıktı: "bayrak varsayılanı" kontrolü tek satır
+döndüren bir alt sorguydu ve eski imza ayakta kaldığında iki satır dönüp
+`more than one row returned by a subquery` hatası veriyordu — kapı
+kırılıyordu ama **yanlış cümleyle**, asıl kusuru söyleyen satıra hiç sıra
+gelmeden. Bir kapı, tam da işe yarayacağı anda anlaşılmaz konuşmamalı;
+`exists` ile yeniden yazıldı.
+
+### Arayüz: karar kaydetmeden önce
+
+Önizlemede artık bir karar kartı var: *"N öğrenci sınıfta zaten kayıtlı,
+M tanesi yeni"* ve iki seçenek — **numarasını güncelle** (eşleşen varsa
+varsayılan) ya da **yeni öğrenci olarak ekle**. Satır etiketi de sonucu
+yazıyor: "Numarası güncellenecek" / "İkinci kayıt açılacak". Gönder
+düğmesi bile kararı taşıyor: `5 ekle, 1 güncelle`.
+
+Varsayılanın "güncelle" olmasının sebebi basit: **kopya üretmek, numara
+yazmaktan çok daha pahalı bir hata** — geri alması elle silmek demek.
+
+**Önizleme sayısı `mukerrer` alanından okunamaz.** O alan tek bir değer
+taşıyor: aynı ad hem yapıştırmanın içinde tekrar ediyorsa hem de sınıfta
+kayıtlıysa `'liste'` yazıyor ve kayıtlı olduğu bilgisi kayboluyor. Bu
+yüzden `AdSatiri`ye ondan bağımsız bir `kayitli: boolean` eklendi; ölçüm
+geri alındığında önizleme "1 eşleşti" derken sunucu iki satırı da
+eşleştiriyordu.
+
+### Panel sürümü artık üretiliyor
+
+`panel-icin/NNNN_*_kisa.sql` dosyaları elle kısaltılıyordu. Öğretmenin
+veritabanında çalışan şey o dosya; depoda sınanan şey `migrations/`
+altındaki. Ayrışırlarsa bütün SQL testleri **çalışmayan** bir kodu ölçer.
+0043'ten itibaren panel sürümü migration'ın gövdesini birebir taşıyor ve
+bunu `migration-listesi.test.ts` kilitliyor (0042 ve öncesi kapsam dışı:
+çalıştırılmış migration'a dokunulmuyor).

@@ -13,7 +13,7 @@
  * olmasıdır.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { MIGRATION_LISTESI } from './migration-listesi';
 // Test ÜRETİCİYİ ÇAĞIRIYOR. Listeyi burada yeniden türetseydik,
@@ -77,6 +77,47 @@ describe('defter sözleşmesi', () => {
         `${dosya} deftere kendini kaydetmiyor — sonuna ` +
           `\`select public._migration_kaydet('${no}');\` ekleyin`,
       ).toMatch(new RegExp(`_migration_kaydet\\(\\s*'${no}'\\s*\\)`));
+    });
+  }
+
+  /**
+   * PANEL KISA SÜRÜMÜ, MIGRATION'IN GÖVDESİNİ BİREBİR TAŞIMALI (0043'ten).
+   *
+   * Öğretmenin veritabanında çalışan şey `panel-icin/` altındaki dosya;
+   * depoda okunan ve sınanan şey `migrations/` altındaki. İkisi ayrışırsa
+   * bütün SQL testleri, ÇALIŞMAYAN bir kodu ölçer.
+   *
+   * 0042 VE ÖNCESİ KAPSAM DIŞI: o dosyalar elle kısaltılmıştı ve
+   * çalıştırıldılar; çalıştırılmış bir migration'a dokunulmuyor. Kural
+   * ileriye dönük — 0043'ten itibaren panel sürümü ÜRETİLİYOR.
+   */
+  const PANEL_BASLANGICI = '0043';
+  const PANEL_DIZINI = resolve(process.cwd(), '../supabase/panel-icin');
+
+  /** Baştaki açıklama bloğundan sonrası: dosyanın çalışan kısmı. */
+  function govde(metin: string): string {
+    const satir = metin.split('\n');
+    const ciz = satir.flatMap((l, i) => (l.startsWith('-- ====') ? [i] : []));
+    return (ciz.length >= 2 ? satir.slice(ciz[1]! + 1).join('\n') : metin).trim();
+  }
+
+  const panelliler = oku(MIGRATION_DIZINI).filter((m) => m.no >= PANEL_BASLANGICI);
+
+  it('panel kuralının uygulandığı en az bir migration var', () => {
+    expect(panelliler.length).toBeGreaterThan(0);
+  });
+
+  for (const { no, dosya } of panelliler) {
+    it(`${no} panel sürümü migration gövdesiyle birebir`, () => {
+      const panel = readdirSync(PANEL_DIZINI).find(
+        (d) => d.startsWith(no) && d.endsWith('_kisa.sql'),
+      );
+      expect(panel, `${no} için panel-icin/${no}_..._kisa.sql yok`).toBeDefined();
+      const panelMetni = readFileSync(resolve(PANEL_DIZINI, panel!), 'utf8');
+      expect(
+        panelMetni.includes(govde(readFileSync(resolve(MIGRATION_DIZINI, dosya), 'utf8'))),
+        `${panel} ile ${dosya} ayrışmış — panel sürümünü migration'dan yeniden üretin`,
+      ).toBe(true);
     });
   }
 

@@ -115,6 +115,16 @@ export type AdSatiri = {
    * olur ve şemada `ad` üzerinde UNIQUE yok. Kararı öğretmen veriyor.
    */
   mukerrer: 'liste' | 'kayitli' | null;
+  /**
+   * O sınıfta bu adda bir öğrenci ZATEN KAYITLI mı.
+   *
+   * `mukerrer`den AYRI bir alan, çünkü `mukerrer` tek bir değer taşıyor:
+   * aynı ad hem yapıştırmanın içinde tekrar ediyorsa hem de sınıfta
+   * kayıtlıysa `'liste'` yazıyor ve kayıtlı olduğu bilgisi kayboluyor.
+   * "Kaç öğrenci eşleşecek" sayısı o kayıptan etkilenmemeli — öğretmen
+   * kaydetmeden önce ne olacağını buradan okuyor.
+   */
+  kayitli: boolean;
 };
 
 export type AtlananSatir = { satir: number; ham: string; sebep: string };
@@ -333,9 +343,10 @@ export function listeyiCoz(
 
     const kayitliBu = kayitliKapsam.get(kapsam);
 
+    const kayitli = kayitliBu?.ad.has(anahtar) ?? false;
     let mukerrer: AdSatiri['mukerrer'] = null;
     if (gorulen.has(`${kapsam}|${anahtar}`)) mukerrer = 'liste';
-    else if (kayitliBu?.ad.has(anahtar)) mukerrer = 'kayitli';
+    else if (kayitli) mukerrer = 'kayitli';
     gorulen.add(`${kapsam}|${anahtar}`);
 
     let noTekrar: AdSatiri['noTekrar'] = null;
@@ -345,7 +356,15 @@ export function listeyiCoz(
       gorulenNo.add(`${kapsam}|${okulNo}`);
     }
 
-    satirlar.push({ ham: kirpik, ad, no: okulNo, sinif: suSinif, mukerrer, noTekrar });
+    satirlar.push({
+      ham: kirpik,
+      ad,
+      no: okulNo,
+      sinif: suSinif,
+      mukerrer,
+      kayitli,
+      noTekrar,
+    });
   });
 
   return {
