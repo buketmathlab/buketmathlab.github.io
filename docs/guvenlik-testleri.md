@@ -278,6 +278,104 @@ bunu kilitliyor. Kilidin ısırdığı, panel dosyasındaki bir şartı
 zayıflatarak gösterildi: test `panel sürümünü migration'dan yeniden
 üretin` diyerek kırmızı yandı.
 
+## Öğrenci adını düzeltme (panel) — ölçümler
+
+Uygulamada **kaydedilmiş bir öğrencinin adını değiştiren ekran yok.**
+`panel-icin/ogrenci-adi-duzelt.sql` bu boşluğu geçici olarak kapatıyor;
+kalıcı çözüm bir düzenleme ekranı ve hâlâ yapılmadı.
+
+Dosyanın ağırlığı "adı değiştiriyor mu"da değil, **başka hiçbir şeye
+dokunmuyor mu**da: giriş kodu, okul numarası, ödev gönderimi ve kaydın
+kimliği olduğu gibi kalmalı. `ad_duzeltme_testleri.sql`, panel dosyasının
+metnini okuyup yalnız `girdi` bloğunu değiştirerek çalıştırıyor — 11 grup.
+Girdi bloğunun gerçekten değiştirilebildiği de ayrıca ölçülüyor; yoksa
+bütün gruplar dosyanın varsayılan değerleriyle boşa dönüp yeşil kalırdı.
+
+**10 kusurdan 10'u** yakalandı: tek eşleşme şartının düşmesi, sınıf
+şartının düşmesi, izin yazılmaması, güncellemenin numarayı da silmesi,
+boş/uzun ad korumalarının düşmesi, ad normalleştirmesinin düşmesi, sınıf
+dökümünün verilmemesi, özetin eski adı söylememesi ve dosyanın hiç
+okunamaması.
+
+### `<>` ile yazılmış bir kontrol NULL'da sessizce geçer
+
+"Okul numarası değişti mi" kontrolü `<> '401'` diye yazılmıştı. Güncelleme
+numarayı **NULL'a** çekecek şekilde bozulduğunda `NULL <> '401'` TRUE değil
+**NULL** döndü ve kontrol hiç ateşlemedi; kusuru başka bir grup yakaladı.
+Bir ölçüm, yakalaması gereken kusuru başkasına bırakıyorsa kendi işini
+görmüyor demektir. Kıyaslar `is distinct from`a çevrildi ve aynı kusur
+tekrar yerleştirilerek doğru satırın ısırdığı gösterildi.
+
+## Cinsiyet ve pansiyon sütunu adın içine giriyordu
+
+Öğretmen bir öğrencinin adının yanlış kaydedildiğini bildirdi ve iki
+dizgiyi verdi: PDF'te `AYŞE SARI`, SEKİZ'de `Ayşe Sarı Kız Yatılı`.
+
+Ayrıştırıcı **"cinsiyet satırın SONUNDA"** varsayıyordu
+(`(?:\s+(?:Kız|Erkek))?\s*$`). e-Okul listesinde cinsiyetten sonra bir
+**pansiyon sütunu** daha var; cinsiyet artık sonda olmadığı için hiçbir
+kalıp kesemedi ve ikisi birden adın içinde kaldı.
+
+**Neden bu kadar geç fark edildi:** pansiyon sütunu yalnız YATILI
+öğrencilerde dolu. Gündüzlü öğrencilerde satır `… Kız` diye bittiği için
+eski kalıp doğru çalışıyordu. Otuz kişilik bir listede tek çocukta
+görünen bir kusur, kendini gizler.
+
+### Yol boyunca bulunan ikinci, daha ağır kusur
+
+`MOBILYA` listesindeki `[/pansiyon/u, 'Tablo başlığı']` kalıbı **bütün
+satırda** aranıyor ve ad çıkarılmadan ÖNCE çalışıyordu. Pansiyon değeri
+`Pansiyonlu` olan bir ÖĞRENCİ satırı "tablo başlığı" sanılıp **tamamen
+atılıyordu**: çocuk listeye hiç girmiyordu. Bozuk bir addan daha kötüsü,
+sessizce kaybolan bir öğrencidir. Standart başlık zaten `^s\.?\s?no` ile
+eleniyor; kalıp `pansiyon\s+durumu` olarak daraltıldı.
+
+### Düzeltme: adın nerede bittiğine tek bir yer karar veriyor
+
+`adiSutunlardanAyir()` önce ilk **cinsiyet** kelimesinde kesiyor —
+arkasındaki sütunun adını bilmeye gerek kalmıyor, tanımadığımız bir
+pansiyon değeri de temizleniyor. Sonra sondan **bilinen** sütun değerleri
+kırpılıyor (cinsiyet sütunu olmayan listeler için). Kelime kelime
+çalışıyor: "Kızılkaya" soyadı, içinde "kız" geçtiği için kırpılmasın.
+
+**Kusur provası — 6 kusurdan 6'sı yakalandı**
+
+| Kusur | Kıran ölçüm |
+| --- | --- |
+| cinsiyette kesme kalktı | `TANIMADIĞIMIZ bir pansiyon değeri de kesiliyor` |
+| sondan kırpma kalktı | `cinsiyet sütunu OLMAYAN listede pansiyon…` |
+| `/pansiyon/` yine geniş | `PANSİYONLU öğrenci satırı ATILMIYOR` |
+| Türkçe küçük harf yerine düz `toLowerCase` | `sütunlar BÜYÜK HARFLE yazıldığında da kesiliyor` |
+| alan seçiminde yalnız cinsiyet eleniyor | `sekmeli yapıştırmada KISA ad…` |
+| boş sonuç kapısı kalktı | `numaralı ama ADSIZ satır öğrenci sayılmıyor` |
+
+Tarayıcı denetiminde sahte e-Okul PDF'ine pansiyon sütunu eklendi; iki
+kusur orada da geri alınarak gösterildi (biri "6 öğrenci önizlemede (5)"
+diye, yani kaybolan çocuğu sayarak).
+
+**Bir "kusur" kusur çıkmadı ve bu da kayda geçiyor.** `EOKUL_SATIRI`
+kalıbından sondaki cinsiyet grubunu kaldırmak bir davranış düzeltmesi
+değil: eski hâliyle de sonuç aynı çıkıyor, çünkü kesmeyi artık yeni
+fonksiyon yapıyor. Geri aldığımda hiçbir test kırmızı yanmadı — doğrusu
+da bu. Sadeleştirme, düzeltme değildir; ikisini aynı cümleyle anlatmak
+ölçümü abartmak olurdu.
+
+### Mevcut kayıtların onarımı
+
+`panel-icin/ad-kuyrugu-temizle.sql` iki adımlı: `sadece_bak = true`
+hiçbir şey yazmaz, yalnız "şu ad → şu ada dönecek" listesini gösterir.
+Öğretmen okuduktan sonra `false` yapıp çalıştırır.
+`atlanacak_numaralar` ile tek tek öneri veto edilebiliyor — soyadı
+gerçekten "Erkek" olan bir öğrenciyi satıra bakarak ayırt etmek mümkün
+değil, o yüzden **önce bakılıyor**.
+
+`ad_kuyrugu_testleri.sql` (8 grup) panel dosyasının kendi metnini
+çalıştırıyor. Asıl ölçüm "temiz adlara dokunmuyor": `Nehir Kızılkaya`
+kırpılmıyor, adın TAMAMI sütun değeri olan bir kayda dokunulmuyor (boş ad
+kalırdı). **8 kusurdan 8'i** yakalandı; biri (`son > 0` kapısının
+düşürülmesi) veritabanının kendi `ogrenciler_ad_check` kısıtı tarafından,
+yani ikinci bir ağ tarafından durduruldu.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede
