@@ -28,6 +28,7 @@
     "tanitim-gorseller": "node scripts/tanitim-gorselleri.mjs",
     "tanitim-denetim": "node scripts/tanitim-denetimi.mjs",
     "tanitim-geri-alma": "node scripts/geri-alma-tanitim.mjs",
+    "sira-denetim": "node scripts/ogrenci-sirasi-denetimi.mjs",
     "kok-denetim": "node scripts/kok-denetimi.mjs",
     "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
     "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"

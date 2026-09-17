@@ -433,6 +433,63 @@ Yol boyunca iki ÖLÇÜM hatası çıktı ve ikisi de kayda geçiyor:
 seçicisi numara rozetini ad sandı, çünkü rozet de o sınıfı taşıyor. İkisi
 de üründe değil ölçümdeydi.
 
+### 0044'ten sonra: kusur kapsamdaydı, sebep ÖLÇÜLMEMİŞ OLMASIYDI
+
+0044 yayına alındıktan sonra öğretmen "9A'yı tıkladım, numaraya göre
+sıralanmamış" dedi. Sunucu doğru sırayı döndürüyordu — panelden bakılan
+teşhis sorgusu (`panel-icin/sira-neden-bozuk.sql`) `601 · 602 · 603 …`
+diye sıralı döndü. Öğretmen **`Öğrenciler`** ekranındaydı; o ekran turun
+kapsamı dışında bırakılmıştı.
+
+**Ürün doğru çalışıyordu; yanlış olan kapsam kararıydı.** Gerekçe
+"sınıf seçmeden bakarken farklı sınıfların aynı numaraları iç içe geçer"
+idi ve doğruydu; ama kural **"ekran"** düzeyinde yazılmıştı, oysa
+**"sınıf seçili mi"** düzeyinde olmalıydı. Sınıf seçiliyken o itiraz
+ortadan kalkıyor. Düzeltme tek satır:
+
+```ts
+p_sirala: sinifId ? 'numara' : 'ad',
+```
+
+Asıl kayıt bu değil. Asıl kayıt şu: **o iki ekranın sırası tarayıcıda
+hiç ölçülmemişti.** `Kodlar` ve `Kod fişleri` ölçülmüştü; öğretmenin
+gün boyu kullandığı `Sınıf detayı` ve `Öğrenciler` ekranları
+ölçülmemişti. Eksik ölçüm `app/scripts/ogrenci-sirasi-denetimi.mjs` ile
+kapatıldı (`npm run sira-denetim`), 11 ölçüm.
+
+Denetim İKİ AYRI iddiayı ayırıyor:
+
+1. **Ekran sunucunun sırasını bozmuyor.** Sahte veri bilerek
+   ALFABETİK OLMAYAN numara sırasında veriliyor
+   (Ela 601 · Deniz 602 · Cem 603 · Berk 604 · Ada 605). İki dizi aynı
+   olsaydı ekran yeniden sıralasa bile ölçüm yeşil kalırdı.
+2. **Doğru sıra isteniyor.** Sınıf seçiliyken `'numara'`, seçili
+   değilken `'ad'`. Yalnız birini ölçmek, bayrağın sabit yazılmış
+   olmasını fark etmezdi.
+
+**3 kusurdan 3'ü yakalandı ve her biri kendi yerinde:**
+
+| Yerleştirilen kusur | Denetimin dediği |
+| --- | --- |
+| düzeltme geri alınıp `p_sirala: 'ad'` sabitlendi | 3. grup: `'numara' isteniyor (ad)` **ve** `liste sunucunun sırasında` — yani öğretmenin bildirdiği kusurun ta kendisi |
+| `SinifDetay` çizerken `.sort()` yapıyor | 1. grup: sıra ve numara rozetleri tersine döndü |
+| `Öğrenciler` çizerken `.sort()` yapıyor | 3. grup: yalnız liste sırası |
+
+### Taklit sadık değilse ölçüm kör olur
+
+Denetim ilk yazıldığında **hiçbir öğrenci çizilmiyordu** ve kırmızı
+yanıyordu. Kusur üründe değildi: sahte sunucu tanımadığı her uca boş
+nesne (`{}`) döndürüyordu, `Sınıf detayı` ekranındaki konu karnesi
+`kapsam.tur`'u okuyunca ekran çöküyordu. `{}` döndürmek "cevap vermek"
+değil.
+
+İkinci sadakat kuralı daha ince: sahte sunucu `ogrenciler_listesi`
+çağrısında `p_sirala`yı **gerçekten uyguluyor** (sunucudaki
+`_numara_sira` kuralının aynısıyla). Bayrağı yok saysaydı, ekran yanlış
+bayrağı gönderse bile liste doğru sırada görünürdü — ve yukarıdaki ilk
+kusur provasında **yalnız bir ölçüm** kırmızı yanardı, listenin sırası
+yeşil kalırdı. Sadık taklit sayesinde ikisi birden yanıyor.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede

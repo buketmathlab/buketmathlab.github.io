@@ -54,6 +54,20 @@ export function Ogrenciler() {
       p_sinif_id: sinifId || null,
       p_sayfa: sayfa,
       p_boyut: 25,
+      /**
+       * SINIF SEÇİLİYSE NUMARAYA GÖRE (0044).
+       *
+       * Karar "ekran" düzeyinde değil "sınıf seçili mi" düzeyinde
+       * veriliyor ve bunun sebebi ölçüldü: ilk yazımda bu ekranın tamamı
+       * ada göre bırakılmıştı, gerekçe "sınıf seçmeden bakarken farklı
+       * sınıfların aynı numaraları iç içe geçer" idi. Gerekçe doğru ama
+       * kural fazla kabaydı — öğretmen buradan 9A'yı seçip numara sırası
+       * bekledi ve haklıydı: sınıf seçiliyken o itiraz ortadan kalkıyor.
+       *
+       * Sınıf seçili DEĞİLKEN ada göre kalıyor; orada numara sıralaması
+       * iki farklı sınıfın 601'ini yan yana getirirdi.
+       */
+      p_sirala: sinifId ? 'numara' : 'ad',
     },
     (v) => v.kayitlar.length === 0,
   );
