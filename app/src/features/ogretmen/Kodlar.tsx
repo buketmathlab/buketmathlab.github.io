@@ -115,7 +115,16 @@ export function SinifKodlari() {
 
   const { veri, durum, hata, yenile } = useVeri<OgrenciListesi>(
     'ogrenciler_listesi',
-    { p_token: oturum?.token, p_arama: null, p_sinif_id: id, p_sayfa: 1, p_boyut: 100 },
+    {
+      p_token: oturum?.token,
+      p_arama: null,
+      p_sinif_id: id,
+      p_sayfa: 1,
+      p_boyut: 100,
+      // 0044: numara sırasında. Sıralamanın görünür bir dayanağı olsun
+      // diye numara aşağıda adın önünde de yazıyor.
+      p_sirala: 'numara',
+    },
     (v) => v.kayitlar.length === 0,
   );
 
@@ -190,6 +199,11 @@ export function SinifKodlari() {
                         className="flex min-h-[44px] w-full items-center justify-between gap-3 py-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                       >
                         <span className="flex flex-wrap items-center gap-2">
+                          {o.ogrenci_no && (
+                            <span className="sk-sayi rounded bg-line-soft px-1.5 py-0.5 text-[12px] font-semibold text-muted">
+                              {o.ogrenci_no}
+                            </span>
+                          )}
                           <span className="font-semibold text-ink">{o.ad}</span>
                           {o.tur === 'ozel' && <Tag tur="notr">Özel ders</Tag>}
                         </span>

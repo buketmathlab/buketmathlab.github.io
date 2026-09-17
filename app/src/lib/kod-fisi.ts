@@ -28,6 +28,14 @@ export type Fis = {
   tur: FisTuru;
   /** Öğrencinin adı. Veli fişinde de var: hangi çocuğun velisi olduğu. */
   ad: string;
+  /**
+   * Okul numarası — yoksa `null`.
+   *
+   * Fişler 0044'ten sonra NUMARA SIRASINDA basılıyor. Numara fişte
+   * görünmeseydi sıra keyfî görünürdü; üstelik dağıtırken öğretmenin
+   * aradığı şey zaten numara.
+   */
+  no: string | null;
   sinif: string;
   kod: string;
 };
@@ -75,14 +83,19 @@ export function fisMetni(tur: FisTuru): {
  * ayrıca söyleniyor.
  */
 export function fisleriUret(
-  kayitlar: readonly { ad: string; sinif: string; kodlar: { ogrenci?: string; veli?: string } }[],
+  kayitlar: readonly {
+    ad: string;
+    no?: string | null;
+    sinif: string;
+    kodlar: { ogrenci?: string; veli?: string };
+  }[],
   tur: FisTuru,
 ): Fis[] {
   const fisler: Fis[] = [];
   for (const k of kayitlar) {
     const kod = tur === 'ogrenci' ? k.kodlar.ogrenci : k.kodlar.veli;
     if (!kod) continue;
-    fisler.push({ tur, ad: k.ad, sinif: k.sinif, kod });
+    fisler.push({ tur, ad: k.ad, no: k.no ?? null, sinif: k.sinif, kod });
   }
   return fisler;
 }

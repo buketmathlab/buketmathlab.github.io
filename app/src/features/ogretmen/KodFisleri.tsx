@@ -19,7 +19,7 @@ import {
 } from '@/lib/kod-fisi';
 import type { Kodlar as KodlarTipi, OgrenciListesi } from '@/types/api';
 
-type Kayit = { ad: string; sinif: string; kodlar: KodlarTipi };
+type Kayit = { ad: string; no: string | null; sinif: string; kodlar: KodlarTipi };
 
 /**
  * Sınıfın kod fişleri — kesilip dağıtılmak üzere yazdırılır.
@@ -55,7 +55,16 @@ export function KodFisleri() {
 
   const { veri, durum, hata, yenile } = useVeri<OgrenciListesi>(
     'ogrenciler_listesi',
-    { p_token: oturum?.token, p_arama: null, p_sinif_id: id, p_sayfa: 1, p_boyut: 100 },
+    {
+      p_token: oturum?.token,
+      p_arama: null,
+      p_sinif_id: id,
+      p_sayfa: 1,
+      p_boyut: 100,
+      // 0044: fişler NUMARA SIRASINDA bassın. Öğretmen sınıfta numara
+      // sırasıyla dağıtıyor; ad sırası her seferinde aramaya zorluyordu.
+      p_sirala: 'numara',
+    },
     (v) => v.kayitlar.length === 0,
   );
 
@@ -87,7 +96,7 @@ export function KodFisleri() {
           p_token: oturum?.token,
           p_id: o.id,
         });
-        toplanan.push({ ad: o.ad, sinif: o.sinif ?? sinifAdi, kodlar: k });
+        toplanan.push({ ad: o.ad, no: o.ogrenci_no ?? null, sinif: o.sinif ?? sinifAdi, kodlar: k });
         setIlerleme({ biten: toplanan.length, toplam: liste.length });
       }
       setKayitlar(toplanan);
@@ -263,6 +272,10 @@ function FisKarti({ fis }: { fis: Fis }) {
       </div>
 
       <p className="mt-1 text-[13px] font-semibold text-ink">
+        {/* Numara varsa ADIN ÖNÜNDE: fişler numara sırasında basılıyor,
+            dağıtırken göz numaraya bakıyor. Yoksa hiçbir şey çizilmiyor —
+            özel ders öğrencisinde numarasızlık olağan (0042). */}
+        {fis.no && <span className="sk-sayi mr-1 text-muted">{fis.no}</span>}
         {fis.ad} <span className="font-normal text-muted">· {fis.sinif}</span>
       </p>
 
