@@ -456,10 +456,16 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
       'Örnek Anadolu Lisesi Müdürlüğü',
       'AL - 9. Sınıf / A Şubesi (Sayısal) Sınıf Listesi',
       'Sınıf Öğretmeni: NURAY ÖRNEK Sınıf Başkanı:',
-      'S.No Öğrenci No Adı Soyadı Cinsiyeti',
+      // PANSİYON SÜTUNU. Öğretmenin bildirdiği kusur buradaydı: cinsiyetten
+      // SONRA bir sütun daha var ve YALNIZ yatılı öğrencilerde dolu. Bu
+      // yüzden otuz kişilik bir listede tek çocukta görünüyordu — tek
+      // şubelik, pansiyonsuz bir fixture o kusuru hiç göremezdi.
+      'S.No Öğrenci No Adı Soyadı Cinsiyeti Pansiyon',
       '1 601 ALİ YILMAZ Erkek',
-      '2 602 AYŞE ÖZTÜRK Kız',
-      '3 603 MEHMET ÇOBAN Erkek',
+      '2 602 AYŞE ÖZTÜRK Kız Yatılı',
+      // "Pansiyonlu" değeri: eski kodda bu satır "tablo başlığı" sanılıp
+      // TAMAMEN atılıyordu, yani öğrenci sessizce kayboluyordu.
+      '3 603 MEHMET ÇOBAN Erkek Pansiyonlu',
       // AYNI ŞUBEDE aynı numara: uyarı çıkmalı, satır DÜŞMEMELİ.
       '4 601 ZEYNEP ÖZ Kız',
       'Kız Öğrenci Sayısı : 2 Erkek Öğrenci Sayısı : 2',
@@ -566,6 +572,13 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
   de(!/say\u0131s\u0131/i.test(hepsi), 'altbilgi öğrenci sayılmamış');
   de(!/\d/.test(hepsi), 'okul numarası adın içinde kalmamış');
   de(!/\b(erkek|k\u0131z)\b/i.test(hepsi), 'cinsiyet adın içinde kalmamış');
+  // PANSİYON SÜTUNU DA KALMAMALI — öğretmenin bildirdiği kusur buydu:
+  // "AYŞE SARI" yerine "Ayşe Sarı Kız Yatılı" kaydedilmişti. `\b` Türkçe
+  // harflerde çalışmadığı için kelimeler AÇIKÇA aranıyor.
+  de(
+    !/(yat\u0131l\u0131|pansiyonlu|g\u00fcnd\u00fczl\u00fc)/i.test(hepsi),
+    `pansiyon sütunu adın içinde kalmamış: ${hepsi}`,
+  );
 
   // ELENENLER GÖRÜNÜYOR: sessizce yok olmamalı, öğretmen ne atıldığını
   // görüp itiraz edebilmeli.

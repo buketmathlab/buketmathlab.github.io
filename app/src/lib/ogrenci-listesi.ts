@@ -18,15 +18,24 @@ const SINIF_KODU = /^\d{1,2}\s*[A-ZÇĞİÖŞÜ]$/;
 const BAS_NUMARA = /^\d{1,3}\s*[.)\-–]\s*|^\d{1,3}\s+/;
 
 /**
- * e-Okul sınıf listesi satırı: SIRA NO · OKUL NO · AD SOYAD · CİNSİYET
+ * e-Okul sınıf listesi satırı: SIRA NO · OKUL NO · AD SOYAD · (SÜTUNLAR…)
  *
  * Gerçek bir listede ölçüldü. Bu kalıp tanınmadığında ad alanı
  * `601 Ali Yılmaz Erkek` diye kaydediliyordu — okul numarası ve cinsiyet
  * adın İÇİNDE.
  *
- * Cinsiyet isteğe bağlı: her listede o sütun olmayabilir.
+ * KALIP ARTIK SONDAKİ SÜTUNLARI KENDİ AYIKLAMIYOR. İlk yazımda sondaki
+ * cinsiyeti kalıbın kendisi yutuyordu ve `(?:\s+(?:Kız|Erkek))?\s*$`
+ * "cinsiyet SATIRIN SONUNDA" varsayıyordu. Öğretmenin listesinde
+ * cinsiyetten sonra bir PANSİYON sütunu vardı:
+ *
+ *   12 615 AYŞE SARI Kız Yatılı      →  ad: "Ayşe Sarı Kız Yatılı"
+ *
+ * Yalnız yatılı öğrencilerde dolu olduğu için tek bir çocukta göründü ve
+ * uzun süre fark edilmedi. Adın nerede bittiğine artık TEK BİR YER karar
+ * veriyor: `adiSutunlardanAyir`.
  */
-const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+(\d{2,6})\s+(.+?)(?:\s+(?:Kız|Erkek))?\s*$/u;
+const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+(\d{2,6})\s+(.+?)\s*$/u;
 
 /**
  * e-Okul sayfa başlığındaki ŞUBE: "AL - 9. Sınıf / A Şubesi (…) Sınıf Listesi"
@@ -38,11 +47,75 @@ const EOKUL_SATIRI = /^\d{1,3}[\s.)\-–]+(\d{2,6})\s+(.+?)(?:\s+(?:Kız|Erkek))
  */
 const SUBE_BASLIGI = /(\d{1,2})\.\s*sınıf\s*\/\s*([a-zçğıöşü]{1,2})\s*şubesi/u;
 
-/** Tek başına cinsiyet — öğretmenin fark ettiği kusur buydu. */
-const CINSIYET = /^(?:Kız|Erkek)$/u;
+/**
+ * AD OLMAYAN SÜTUN DEĞERLERİ — Türkçe küçük harfle.
+ *
+ * e-Okul satırında addan sonra sütunlar geliyor: önce cinsiyet, sonra —
+ * okulda pansiyon varsa — yatılılık durumu. İkisi de ad değil.
+ *
+ * `/i` BAYRAĞI YETMEZ: JavaScript'in ölçüt-duyarsız eşlemesi Türkçe'nin
+ * İ/ı çiftini bilmiyor ("KIZ" ile "Kız" eşleşmez). Karşılaştırma
+ * `toLocaleLowerCase('tr')` ile yapılıyor.
+ */
+const CINSIYET_SOZU: ReadonlySet<string> = new Set(['kız', 'erkek']);
 
-/** Satır sonundaki cinsiyet sütunu. */
-const SON_CINSIYET = /\s+(?:Kız|Erkek)\s*$/u;
+const PANSIYON_SOZU: ReadonlySet<string> = new Set([
+  'yatılı',
+  'gündüzlü',
+  'pansiyonlu',
+  'pansiyon',
+  'parasız',
+  'paralı',
+  'burslu',
+  'taşımalı',
+]);
+
+const SUTUN_SOZU: ReadonlySet<string> = new Set([...CINSIYET_SOZU, ...PANSIYON_SOZU]);
+
+/** Bir alanın TAMAMI sütun değerlerinden mi ibaret ("Kız", "Parasız Yatılı"). */
+function sutunDegeriMi(alan: string): boolean {
+  const kelimeler = alan.trim().split(/\s+/).filter(Boolean);
+  return (
+    kelimeler.length > 0 &&
+    kelimeler.every((k) => SUTUN_SOZU.has(k.toLocaleLowerCase('tr')))
+  );
+}
+
+/**
+ * ADIN NEREDE BİTTİĞİNE KARAR VEREN TEK YER.
+ *
+ * Önce ilk CİNSİYET kelimesinde kesiyor: ondan sonrası sütundur ve
+ * arkasındaki sütunun adını BİLMEYE GEREK YOK. Öğretmenin listesinde
+ * cinsiyetten sonra bir pansiyon sütunu vardı ve
+ * `12 615 AYŞE SARI Kız Yatılı` satırı `Ayşe Sarı Kız Yatılı` diye
+ * kaydedilmişti; tanımadığımız bir değer gelse de artık kesilir.
+ *
+ * Sonra sondan, BİLİNEN sütun değerlerini kırpıyor — cinsiyet sütunu
+ * olmayan ama pansiyon sütunu olan listeler için.
+ *
+ * KELİME KELİME çalışıyor, dizgi indeksiyle değil: `toLocaleLowerCase`
+ * bazı harflerde uzunluğu değiştirebilir ve indeks kayardı.
+ *
+ * BİLEREK KABUL EDİLEN SINIR: soyadı tam olarak "Erkek" olan bir
+ * öğrencide soyadı kesilir. Satıra bakarak ayırt etmek mümkün değil —
+ * sütun mu, soyadı mı, ikisi de aynı kelime. Sonuç ÖNİZLEMEDE görünüyor;
+ * öğretmen fark edip düzeltebiliyor.
+ */
+function adiSutunlardanAyir(ad: string): string {
+  const parcalar = ad.trim().split(/\s+/).filter(Boolean);
+
+  const cinsiyet = parcalar.findIndex((k) => CINSIYET_SOZU.has(k.toLocaleLowerCase('tr')));
+  const govde = cinsiyet >= 0 ? parcalar.slice(0, cinsiyet) : [...parcalar];
+
+  // Sondan bilinen sütun değerlerini at. Hepsi sütunsa boş dönüyor ve
+  // satır "Cinsiyet/pansiyon sütunu" diye atlananlara düşüyor — sessizce
+  // bir öğrenci olarak kaydedilmiyor.
+  while (govde.length > 0 && SUTUN_SOZU.has(govde[govde.length - 1]!.toLocaleLowerCase('tr'))) {
+    govde.pop();
+  }
+
+  return govde.join(' ');
+}
 
 /**
  * e-Okul listesinin ÖĞRENCİ OLMAYAN satırları.
@@ -71,7 +144,12 @@ const MOBILYA: ReadonlyArray<readonly [RegExp, string]> = [
   [/müdür\s+yrd/u, 'Öğretmen/başkan satırı'],
   [/^s\.?\s?no\b/u, 'Tablo başlığı'],
   [/cinsiyet/u, 'Tablo başlığı'],
-  [/pansiyon/u, 'Tablo başlığı'],
+  // KALIP DAR TUTULUYOR. İlk yazımda yalnız `/pansiyon/` vardı ve BÜTÜN
+  // SATIRDA aranıyordu: pansiyon değeri "Pansiyonlu" olan bir ÖĞRENCİ
+  // satırı "tablo başlığı" sanılıp tamamen atılıyordu — çocuk listeye hiç
+  // girmiyordu. Bozuk bir addan daha kötüsü, sessizce kaybolan bir
+  // öğrencidir. Standart başlık satırı zaten `^s\.?\s?no` ile eleniyor.
+  [/pansiyon\s+durumu/u, 'Tablo başlığı'],
   [/öğrenci\s+sayısı/u, 'Altbilgi'],
 ];
 
@@ -197,10 +275,11 @@ function adAlaniniSec(ham: string): string | null {
         a !== '' &&
         !/^\d+$/.test(a) &&
         !SINIF_KODU.test(a) &&
-        // CİNSİYET SÜTUNU ELENMELİ. Elenmeseydi tek adlı bir öğrencide
-        // ("Ali", 3 harf) en uzun alan "Erkek" (5 harf) olur ve öğrencinin
-        // adı "Erkek" diye kaydedilirdi.
-        !CINSIYET.test(a) &&
+        // SÜTUN DEĞERLERİ ELENMELİ. Elenmeseydi tek adlı bir öğrencide
+        // ("Ali", 3 harf) en uzun alan "Erkek" (5 harf) — pansiyonlu bir
+        // okulda "Yatılı" (6 harf) — olur ve öğrencinin adı o sütun
+        // değeri diye kaydedilirdi.
+        !sutunDegeriMi(a) &&
         HARF_VAR.test(a),
     );
   if (alanlar.length === 0) return null;
@@ -261,10 +340,11 @@ export function listeyiCoz(
     const kirpik = hamSatir.trim();
     if (kirpik === '') return; // Boş satır bir hata değil, sadece boşluk.
 
-    // TEK BAŞINA CİNSİYET. Öğretmenin fark ettiği kusur: sütun ayrı satıra
-    // düştüğünde "Kız"/"Erkek" birer öğrenci sanılıyordu.
-    if (CINSIYET.test(kirpik)) {
-      atlanan.push({ satir: sira, ham: kirpik, sebep: 'Cinsiyet sütunu' });
+    // TEK BAŞINA SÜTUN DEĞERİ. Öğretmenin fark ettiği kusur: sütun ayrı
+    // satıra düştüğünde "Kız"/"Erkek" birer öğrenci sanılıyordu. Aynısı
+    // pansiyon sütunu için de geçerli — "Yatılı" diye bir öğrenci olmaz.
+    if (sutunDegeriMi(kirpik)) {
+      atlanan.push({ satir: sira, ham: kirpik, sebep: 'Cinsiyet/pansiyon sütunu' });
       return;
     }
 
@@ -303,11 +383,18 @@ export function listeyiCoz(
     const okulNo = eslesme?.[1] ?? null;
     const eokul = eslesme?.[2];
 
-    // Sıra numarası at, sondaki cinsiyeti at, iç boşlukları teke indir.
-    const temiz = (eokul ?? secilen.replace(BAS_NUMARA, ''))
-      .replace(SON_CINSIYET, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // Sıra numarasını at, adı sütunlardan ayır, iç boşlukları teke indir.
+    const temiz = adiSutunlardanAyir(eokul ?? secilen.replace(BAS_NUMARA, '')).replace(
+      /\s+/g,
+      ' ',
+    );
+
+    // Geriye hiçbir şey kalmadıysa satırın tamamı sütun değeriydi.
+    // SESSİZCE ATILMIYOR: sebebiyle birlikte önizlemede görünüyor.
+    if (temiz === '') {
+      atlanan.push({ satir: sira, ham: kirpik, sebep: 'Cinsiyet/pansiyon sütunu' });
+      return;
+    }
 
     if (!HARF_VAR.test(temiz)) {
       atlanan.push({ satir: sira, ham: kirpik, sebep: 'Harf içermiyor' });

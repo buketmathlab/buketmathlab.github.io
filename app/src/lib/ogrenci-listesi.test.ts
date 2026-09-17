@@ -229,7 +229,10 @@ describe('listeyiCoz — e-Okul sınıf listesi', () => {
     // "Kız"/"Erkek" birer öğrenci oluyordu.
     const v = listeyiCoz('ALİ YILMAZ\nErkek\nAYŞE IŞIK\nKız', { duzelt: true });
     expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz', 'Ayşe Işık']);
-    expect(v.atlanan.map((a) => a.sebep)).toEqual(['Cinsiyet sütunu', 'Cinsiyet sütunu']);
+    expect(v.atlanan.map((a) => a.sebep)).toEqual([
+      'Cinsiyet/pansiyon sütunu',
+      'Cinsiyet/pansiyon sütunu',
+    ]);
   });
 
   it('sekmeli yapıştırmada TEK ADLI öğrencinin adı "Erkek" olmuyor', () => {
@@ -251,6 +254,94 @@ describe('listeyiCoz — e-Okul sınıf listesi', () => {
   it('cinsiyet sütunu OLMAYAN listeyi de okuyor', () => {
     const v = listeyiCoz('1 601 ALİ YILMAZ\n2 602 AYŞE IŞIK', { duzelt: true });
     expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz', 'Ayşe Işık']);
+  });
+});
+
+/**
+ * PANSİYON SÜTUNU — öğretmenin bildirdiği gerçek kusur.
+ *
+ * PDF'te `AYŞE SARI` yazıyordu, SEKİZ'e `Ayşe Sarı Kız Yatılı` diye
+ * kaydedilmişti. Ayrıştırıcı "cinsiyet SATIRIN SONUNDA" varsayıyordu;
+ * e-Okul'da cinsiyetten sonra bir pansiyon sütunu daha var ve YALNIZ
+ * yatılı öğrencilerde dolu — bu yüzden otuz kişilik bir listede tek
+ * çocukta göründü ve uzun süre fark edilmedi.
+ */
+describe('listeyiCoz — cinsiyet ve pansiyon sütunu', () => {
+  it('cinsiyetten SONRA gelen pansiyon sütunu ada girmiyor', () => {
+    const v = listeyiCoz('12 615 AYŞE SARI Kız Yatılı', { duzelt: true });
+    expect(v.satirlar[0]?.ad).toBe('Ayşe Sarı');
+    expect(v.satirlar[0]?.no).toBe('615');
+  });
+
+  it('sütunlar BÜYÜK HARFLE yazıldığında da kesiliyor', () => {
+    // `/i` bayrağı Türkçe İ/ı çiftini bilmez; karşılaştırma
+    // `toLocaleLowerCase('tr')` ile yapılıyor.
+    const v = listeyiCoz('12 615 AYŞE SARI KIZ YATILI', { duzelt: true });
+    expect(v.satirlar[0]?.ad).toBe('Ayşe Sarı');
+  });
+
+  it('TANIMADIĞIMIZ bir pansiyon değeri de kesiliyor', () => {
+    // Cinsiyette kesiliyor; arkasındaki sütunun adını bilmeye gerek yok.
+    const v = listeyiCoz('12 615 AYŞE SARI Kız Bilinmeyen Değer', { duzelt: true });
+    expect(v.satirlar[0]?.ad).toBe('Ayşe Sarı');
+  });
+
+  it('cinsiyet sütunu OLMAYAN listede pansiyon yine de kesiliyor', () => {
+    const v = listeyiCoz('12 615 AYŞE SARI Yatılı', { duzelt: true });
+    expect(v.satirlar[0]?.ad).toBe('Ayşe Sarı');
+  });
+
+  it('iki kelimelik pansiyon değeri de kesiliyor', () => {
+    const v = listeyiCoz('12 615 AYŞE SARI Kız Parasız Yatılı', { duzelt: true });
+    expect(v.satirlar[0]?.ad).toBe('Ayşe Sarı');
+  });
+
+  it('NEGATİF KONTROL: sütunsuz satır bozulmuyor', () => {
+    // Kesme kuralı fazla hevesli olsaydı burada soyadı düşerdi.
+    const v = listeyiCoz('1 601 ALİ YILMAZ\n2 602 MEHMET ALİ ÇOBANOĞLU', {
+      duzelt: true,
+    });
+    expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz', 'Mehmet Ali Çobanoğlu']);
+  });
+
+  it('PANSİYONLU öğrenci satırı ATILMIYOR', () => {
+    // İkinci kusur: `/pansiyon/` kalıbı bütün satırda aranıyordu ve
+    // pansiyon değeri "Pansiyonlu" olan öğrenci "tablo başlığı" sanılıp
+    // tamamen atılıyordu. Bozuk bir addan daha kötüsü, kaybolan bir
+    // öğrencidir.
+    const v = listeyiCoz('12 615 AYŞE SARI Kız Pansiyonlu', { duzelt: true });
+    expect(v.satirlar.map((s) => s.ad)).toEqual(['Ayşe Sarı']);
+    expect(v.atlanan).toEqual([]);
+  });
+
+  it('tablo başlığı hâlâ eleniyor', () => {
+    const v = listeyiCoz('S.No Öğrenci No Adı Soyadı Cinsiyeti Pansiyon Durumu', {
+      duzelt: true,
+    });
+    expect(v.satirlar).toEqual([]);
+    expect(v.atlanan[0]?.sebep).toBe('Tablo başlığı');
+  });
+
+  it('tek başına duran pansiyon satırı öğrenci sayılmıyor', () => {
+    const v = listeyiCoz('ALİ YILMAZ\nYatılı\nAYŞE IŞIK', { duzelt: true });
+    expect(v.satirlar.map((s) => s.ad)).toEqual(['Ali Yılmaz', 'Ayşe Işık']);
+    expect(v.atlanan.map((a) => a.sebep)).toEqual(['Cinsiyet/pansiyon sütunu']);
+  });
+
+  it('numaralı ama ADSIZ satır öğrenci sayılmıyor', () => {
+    // e-Okul biçiminde gelip ad alanında yalnız sütun değeri taşıyan satır:
+    // kesme sonrası geriye hiçbir şey kalmıyor. Bir öğrenci olarak
+    // kaydedilmemeli ve SESSİZCE de atılmamalı.
+    const v = listeyiCoz('1 601 Kız Yatılı', { duzelt: true });
+    expect(v.satirlar).toEqual([]);
+    expect(v.atlanan.map((a) => a.sebep)).toEqual(['Cinsiyet/pansiyon sütunu']);
+  });
+
+  it('sekmeli yapıştırmada KISA ad, "Yatılı" alanına yenilmiyor', () => {
+    // "Ali" 3 harf, "Yatılı" 6 harf: en uzun alan seçilseydi öğrencinin
+    // adı "Yatılı" olurdu.
+    const v = listeyiCoz('1\t601\tALİ\tKız\tYatılı', { duzelt: true });
+    expect(v.satirlar[0]?.ad).toBe('Ali');
   });
 });
 
