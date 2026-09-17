@@ -22,6 +22,22 @@ describe('fisleriUret', () => {
   });
 
   /**
+   * 0044: fişler NUMARA SIRASINDA basılıyor; numara fişte görünmeseydi
+   * sıra keyfî görünürdü. Numarası olmayan öğrencide alan `null` —
+   * "—" bile yazılmıyor, özel ders öğrencisinde numarasızlık olağan.
+   */
+  it('okul numarası fişe taşınıyor, yoksa null', () => {
+    const fisler = fisleriUret(
+      [
+        { ad: 'Numaralı Öğrenci', no: '601', sinif: '9A', kodlar: { ogrenci: 'AAA11111' } },
+        { ad: 'Numarasız Öğrenci', sinif: 'Özel ders', kodlar: { ogrenci: 'BBB22222' } },
+      ],
+      'ogrenci',
+    );
+    expect(fisler.map((f) => f.no)).toEqual(['601', null]);
+  });
+
+  /**
    * TURUN ÇEKİRDEK GÜVENCESİ. Öğrenci fişlerinin hiçbirinde bir veli kodu
    * geçmemeli — tersi de. Alan adına değil GERÇEK DEĞERE bakılıyor
    * (0021/0026'daki sızıntı testi deseni).
@@ -86,7 +102,13 @@ describe('fisMetni', () => {
 });
 
 describe('sayfalaraBol', () => {
-  const fis = (i: number) => ({ tur: 'ogrenci' as const, ad: 'Ö' + i, sinif: '9A', kod: 'K' + i });
+  const fis = (i: number) => ({
+    tur: 'ogrenci' as const,
+    ad: 'Ö' + i,
+    no: String(600 + i),
+    sinif: '9A',
+    kod: 'K' + i,
+  });
 
   it('A4 başına 10 fiş', () => {
     expect(SAYFA_BASINA).toBe(10);

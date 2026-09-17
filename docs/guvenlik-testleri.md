@@ -376,6 +376,63 @@ kalırdı). **8 kusurdan 8'i** yakalandı; biri (`son > 0` kapısının
 düşürülmesi) veritabanının kendi `ogrenciler_ad_check` kısıtı tarafından,
 yani ikinci bir ağ tarafından durduruldu.
 
+## Numara sırası (0044) — ölçümler
+
+Öğretmen istedi: sınıfa tıklayınca öğrenciler okul numarasına göre
+küçükten büyüğe sıralansın. Kapsam onun kararı: **sınıf detayı · Kodlar ·
+Kod fişleri**. `Öğrenciler` ekranı ada göre kaldı — orada sınıf
+seçilmeden bakıldığında farklı sınıfların aynı numaraları iç içe geçerdi.
+
+**Sıralama sunucuda, tek yerde.** `ogrenciler_listesi` sayfalı;
+istemcide sıralansaydı yalnız o sayfanın içi sıralanır, sayfalar arası
+karışırdı. Anahtar `_numara_sira()`: numara METİN olarak saklandığı için
+(0042: baştaki sıfır korunsun) düz sıralama `'10'`u `'9'`dan önce koyar —
+yalnız rakamdan oluşan numaralar sabit genişliğe sıfırla doldurularak
+karşılaştırılıyor.
+
+`numara_sirasi_testleri.sql`, 9 grup. Fixture bilerek tuzaklı: sayısal
+sıra `2, 9, 10, 0601, 601, A1` iken metin sırası bambaşka. Aynı olsaydı
+"numaraya göre sıralı" ölçümü, sıralama hiç yapılmasa da yeşil kalabilirdi.
+
+**7 kusurdan 7'si yakalandı:**
+
+| Kusur | Kıran ölçüm |
+| --- | --- |
+| sayısal doldurma kalktı | migration öz-doğrulaması: `_numara_sira sayısal sıralamıyor` |
+| boş numara `null` olmuyor | `_numara_sira boş numarayı null yapmıyor` |
+| sınıf detayı yine ada göre | `2a: sınıf detayı sırası yanlış` |
+| **iç sayfalama sorgusu sıralanmıyor** | `6a: sayfalar birleştirilince sıra bozuluyor` |
+| dış `jsonb_agg` sıralanmıyor | `4a: liste sırası yanlış` |
+| varsayılan `'numara'` olmuş | `p_sirala varsayılanı 'ad' değil` |
+| geçersiz sıralama kabul ediliyor | `8a: geçersiz sıralama kabul edildi` |
+
+Dördüncü satır bu turun asıl dersi: sıra **iki yerde** uygulanıyor (iç
+sayfalama sorgusu ve dıştaki `jsonb_agg`). Yalnız biri değişseydi sayfanın
+İÇİ doğru görünür, sayfalar arası karışırdı — ve bu ancak ikinci sayfaya
+bakınca fark edilirdi.
+
+### `nulls last` bir davranış değil, bir not
+
+`order by … nulls last` yazılı, ama PostgreSQL'de ASC için zaten
+varsayılan. Geri aldığımda hiçbir ölçüm kırılmadı — doğrusu da bu; kusur
+değildi. Satır yine de duruyor ve sebebi koda yazıldı: bir gün sıra DESC'e
+çevrilirse varsayılan tersine döner ve numarasız öğrenciler listenin
+başına geçerdi.
+
+### Arayüz
+
+`Kodlar` ve `Kod fişleri` ekranlarında numara **görünmüyordu**; görünmeyen
+bir alana göre sıralamak sırayı keyfî gösterir. İkisine de numara
+eklendi. `kod-fisi-denetimi.mjs` sahte sunucusu `p_sirala`yı gerçekten
+uyguluyor — yok saysaydı, bayrağın bir işe yaradığı hiç ölçülmezdi.
+**3 arayüz kusurundan 3'ü** yakalandı (sıra istenmiyor · numara fişte
+gösterilmiyor · numara fişe taşınmıyor).
+
+Yol boyunca iki ÖLÇÜM hatası çıktı ve ikisi de kayda geçiyor:
+`.sk-fis > p` bütün paragrafları topladı (48 satır); ve `span.font-semibold`
+seçicisi numara rozetini ad sandı, çünkü rozet de o sınıfı taşıyor. İkisi
+de üründe değil ölçümdeydi.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede

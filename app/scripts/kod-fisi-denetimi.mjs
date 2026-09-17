@@ -20,13 +20,36 @@ import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
 const KOK = 'http://127.0.0.1:8788/yeni/';
 
-/** 12 öğrenci: iki sayfa çıkarsın (10 + 2) ve sayfalama ölçülebilsin. */
+/**
+ * 12 öğrenci: iki sayfa çıkarsın (10 + 2) ve sayfalama ölçülebilsin.
+ *
+ * NUMARALAR BİLEREK KARIŞIK ve metin sıralamasıyla ÇAKIŞIYOR (0044):
+ *   sayısal : 1, 2, 3, 5, 7, 8, 9, 11, 12, 25, 40, 100
+ *   metin   : 1, 100, 11, 12, 2, 25, 3, 40, 5, 7, 8, 9
+ * İkisi aynı olsaydı "numaraya göre sıralı" ölçümü, sıralama hiç
+ * yapılmasa da yeşil kalabilirdi.
+ */
+const NUMARALAR = ['12', '3', '25', '7', '100', '1', '9', '40', '2', '11', '8', '5'];
 const OGRENCILER = Array.from({ length: 12 }, (_, i) => ({
   id: 'o' + i,
   ad: `Öğrenci ${i + 1}`,
+  ogrenci_no: NUMARALAR[i],
   tur: 'okul',
   sinif: '9A',
 }));
+
+/** Sunucudaki `_numara_sira` kuralının aynısı. */
+const SIRA_ANAHTARI = (no) =>
+  no === null || no === undefined || no.trim() === ''
+    ? null
+    : /^[0-9]+$/.test(no.trim())
+      ? no.trim().padStart(12, '0')
+      : 'Z' + no.trim();
+
+/** Numara sırasındaki beklenen ad dizisi — ölçümün beklentisi buradan türüyor. */
+const NUMARA_SIRASI = [...OGRENCILER]
+  .sort((x, y) => SIRA_ANAHTARI(x.ogrenci_no).localeCompare(SIRA_ANAHTARI(y.ogrenci_no)))
+  .map((o) => o.ad);
 
 /** Kodlar birbirinden AYIRT EDİLEBİLİR: sızıntı testi değere bakıyor. */
 const KOD = (i) => ({ ogrenci: `OGR${String(i).padStart(5, '0')}`, veli: `VLI${String(i).padStart(5, '0')}` });
@@ -67,8 +90,31 @@ await s.addInitScript(
         }
         window.__cagrilar.push({ ad: m[1], govde });
 
-        if (m[1] === 'ogrenciler_listesi')
-          return json({ toplam: ogrenciler.length, sayfa: 1, boyut: 100, kayitlar: ogrenciler });
+        if (m[1] === 'ogrenciler_listesi') {
+          // TAKLİT GERÇEĞE SADIK OLMALI (0044): sahte sunucu `p_sirala`yı
+          // yok saysaydı, ekran sıralamayı kendi yapmadığı hâlde denetim
+          // yeşil kalırdı — yani bayrağın bir işe yaradığı hiç ölçülmezdi.
+          const anahtar = (no) =>
+            !no || !no.trim()
+              ? null
+              : /^[0-9]+$/.test(no.trim())
+                ? no.trim().padStart(12, '0')
+                : 'Z' + no.trim();
+          const govde2 = JSON.parse(String(o?.body ?? '{}'));
+          const sirali = [...ogrenciler].sort((x, y) => {
+            if (govde2.p_sirala === 'numara') {
+              const a2 = anahtar(x.ogrenci_no);
+              const b2 = anahtar(y.ogrenci_no);
+              if (a2 !== b2) {
+                if (a2 === null) return 1;
+                if (b2 === null) return -1;
+                return a2 < b2 ? -1 : 1;
+              }
+            }
+            return x.ad.localeCompare(y.ad, 'tr');
+          });
+          return json({ toplam: sirali.length, sayfa: 1, boyut: 100, kayitlar: sirali });
+        }
 
         if (m[1] === 'ogrenci_kodlari') {
           const i = ogrenciler.findIndex((x) => x.id === govde?.p_id);
@@ -150,6 +196,59 @@ console.log('3 — SIZINTI: ÖĞRENCİ SAYFASINDA VELİ KODU YOK');
   );
 
   de(t.includes('yalnız öğrenci kodları var'), 'sayfa ne taşıdığını yazıyla söylüyor');
+}
+
+// ===========================================================================
+console.log('3b — FİŞLER NUMARA SIRASINDA, NUMARA FİŞTE GÖRÜNÜYOR (0044)');
+// ===========================================================================
+{
+  // İSTEK: sıralama sunucudan isteniyor mu.
+  const govde = await p.evaluate(
+    () => window.__cagrilar.find((c) => c.ad === 'ogrenciler_listesi')?.govde ?? null,
+  );
+  de(govde?.p_sirala === 'numara', `liste 'numara' sırasıyla istendi (${govde?.p_sirala})`);
+
+  // EKRAN: fişlerin sırası. Adları fiş fiş okuyup numara sırasıyla
+  // karşılaştırıyoruz — "sıralı görünüyor" demek yetmez.
+  // AD VE NUMARA AYRI AYRI OKUNUYOR, düz metinden ayıklanarak değil.
+  // İlk yazımda `.sk-fis > p` bütün paragrafları (kod, yönerge) topladı ve
+  // 48 satır çıktı; ayrıca numara ile ad arasında boşluk KARAKTERİ yok
+  // (aradaki boşluk CSS `mr-1`), yani metinden ayıklamak kırılgandı.
+  const satirlar = await p.evaluate(() =>
+    [...document.querySelectorAll('.sk-fis')].map((fis) => {
+      const bas = fis.querySelector('p');
+      if (!bas) return { no: null, ad: '' };
+      const no = bas.querySelector('span.sk-sayi')?.textContent?.trim() ?? null;
+      const kopya = bas.cloneNode(true);
+      kopya.querySelectorAll('span').forEach((x) => x.remove());
+      return { no, ad: kopya.textContent?.replace(/\s+/g, ' ').trim() ?? '' };
+    }),
+  );
+  de(satirlar.length === 12, `12 fiş çizildi (${satirlar.length})`);
+
+  const sadeceAd = satirlar.map((r) => r.ad);
+  de(
+    JSON.stringify(sadeceAd) === JSON.stringify(NUMARA_SIRASI),
+    `fişler numara sırasında: ${JSON.stringify(sadeceAd.slice(0, 4))}…`,
+  );
+
+  // METİN SIRALAMASI TUZAĞI: bu ikisi aynı olsaydı ölçüm bir şey kanıtlamazdı.
+  const metinSirasi = [...OGRENCILER]
+    .sort((x, y) => (x.ogrenci_no < y.ogrenci_no ? -1 : 1))
+    .map((o) => o.ad);
+  de(
+    JSON.stringify(metinSirasi) !== JSON.stringify(NUMARA_SIRASI),
+    'fixture gerçekten tuzak kuruyor (metin sırası ≠ sayısal sıra)',
+  );
+
+  // NUMARA FİŞTE GÖRÜNÜYOR: görünmeseydi sıra keyfî görünürdü.
+  const numarali = satirlar.filter((r) => r.no !== null && r.no !== '').length;
+  de(numarali === 12, `her fişte numara yazıyor (${numarali}/12)`);
+  de(
+    JSON.stringify(satirlar.map((r) => r.no)) ===
+      JSON.stringify(NUMARA_SIRASI.map((ad) => OGRENCILER.find((o) => o.ad === ad).ogrenci_no)),
+    `fişteki numaralar da sırada: ${JSON.stringify(satirlar.map((r) => r.no))}`,
+  );
 }
 
 // ===========================================================================
@@ -272,6 +371,33 @@ console.log('6 — EKRANDAN ÇIKINCA KODLAR KALMIYOR');
 
   // Sınıf ekranı hâlâ 0018 kuralıyla çalışıyor: tek tek açılıyor.
   de((await metin()).includes('kodu görmek için'), 'tek öğrenci akışı bozulmadı');
+
+  // 0044: KODLAR EKRANI DA NUMARA SIRASINDA ve numarayı gösteriyor.
+  // Fişler numara sırasında basılıyorsa, fişleri üreten ekranın başka bir
+  // sırada durması öğretmeni iki listeyi karşılaştırırken şaşırtırdı.
+  const kodlarSatir = await p.evaluate(() =>
+    [...document.querySelectorAll('ul.divide-y > li button > span:first-child')].map((e) => {
+      // Ad KENDİ `span`'ında duruyor; "bütün span'ları çıkar" deseni
+      // burada adı da siler (fişte işe yarıyordu, burada yaramıyor).
+      const no = e.querySelector('span.sk-sayi')?.textContent?.trim() ?? null;
+      // `span.font-semibold` DEĞİL: numara rozeti de o sınıfı taşıyor ve
+      // seçici numarayı ad sanıyordu. Numara rozeti OLMAYAN ilk span.
+      const ad =
+        [...e.querySelectorAll('span')]
+          .find((x) => !x.classList.contains('sk-sayi'))
+          ?.textContent?.trim() ?? '';
+      return { no, ad };
+    }),
+  );
+  de(kodlarSatir.length === 12, `Kodlar ekranında 12 satır (${kodlarSatir.length})`);
+  de(
+    JSON.stringify(kodlarSatir.map((r) => r.ad)) === JSON.stringify(NUMARA_SIRASI),
+    `Kodlar ekranı numara sırasında: ${JSON.stringify(kodlarSatir.map((r) => r.ad).slice(0, 4))}…`,
+  );
+  de(
+    kodlarSatir.every((r) => r.no !== null && r.no !== ''),
+    'Kodlar ekranında numara görünüyor',
+  );
 }
 
 await b.close();
