@@ -13,18 +13,22 @@
  * vardı). Alışkanlık kırıldığı gün kimse fark etmezdi. Kök artık ürünün
  * ön kapısı; ölçüm otomatik.
  *
- * ALTI ÖLÇÜM ve her biri gerçek bir başarısızlık biçimine karşılık geliyor:
+ * YEDİ ÖLÇÜM ve her biri gerçek bir başarısızlık biçimine karşılık geliyor:
  *
  *   1. Dosya küçük kalıyor      → sessizce yeniden bir uygulamaya dönüşemez
  *   2. Hedef /yeni/             → yanlış yere yönlendirme
  *   3. Üçüncü taraf kaynak yok  → KVKK: ziyaretçi IP'si dışarı sızmasın
  *   4. Tarayıcıda düşüyor       → "yazdım" yetmez, çalıştığı görülmeli
  *   5. JS KAPALIYKEN de düşüyor → betiğe güvenmeyen tek katman
- *   6. tetik.txt ve .nojekyll   → kökteki diğer iki dosya duruyor
+ *   6. tetik.txt ve .nojekyll   → kökteki diğer dosyalar duruyor
+ *   7. CNAME duruyor ve DOĞRU   → alan adı bir yayında sessizce ölmesin
  *
  * Beşincisi özellikle önemli: `location.replace` çalışmazsa geriye yalnız
  * meta yenileme kalıyor. Onu ölçmezsek, biri bir gün meta satırını silince
  * JavaScript'i kapalı kullanıcı sessizce kaybolur.
+ *
+ * Yedincisi bu denetimin varlık sebebinin aynısı: kökteki bir dosyanın
+ * kaybolması ön kapıyı kapatıyor ve hiçbir ekran testi bunu görmüyor.
  *
  * Ön koşul: repo kökünde `npx http-server -p 8788 -c-1 .`
  */
@@ -38,6 +42,15 @@ const SUNUCU = 'http://127.0.0.1:8788';
 
 /** Kök dosya bir uygulamaya dönüşmesin diye üst sınır. Bugün ~3,6 KB. */
 const AZAMI_BAYT = 4096;
+
+/**
+ * Sitenin kendi alan adı. `CNAME` dosyasında bu yazıyor ve GitHub Pages
+ * özel alan adını YALNIZ o dosyadan okuyor.
+ */
+const ALAN_ADI = 'sekizkyal.com';
+
+/** Kökteki sayfanın kendi sayabileceği adresler — 2. bölümde kullanılıyor. */
+const KENDI_ADLAR = new Set([ALAN_ADI, 'buketmathlab.github.io']);
 
 let kusur = 0;
 const bak = (ad, gecti, ek = '') => {
@@ -99,11 +112,15 @@ console.log('\n2. Üçüncü taraf kaynak yok (KVKK)');
  * KENDİ ADRESİMİZ MUAF: `rel="canonical"` tam adres yazmak zorunda ve o
  * bir İSTEK değil, arama motoruna bildirim. Ölçüm host bazında yapılıyor,
  * "http geçiyor mu" diye bakmıyor — aksi hâlde canonical'ı silmek
- * zorunda kalırdık. */
-const KENDI = 'buketmathlab.github.io';
+ * zorunda kalırdık.
+ *
+ * İKİ AD DA KENDİMİZ. `buketmathlab.github.io` ölmedi: GitHub onu
+ * `sekizkyal.com`'a 301 ile yönlendiriyor ve dağıtılmış fişlerdeki eski
+ * adres bu sayede çalışmaya devam ediyor. Eski adı listeden çıkarmak,
+ * meşru bir adresi üçüncü taraf saymak olurdu. */
 const disKaynaklar = [...govde.matchAll(/(?:src|href)="(https?:\/\/[^"]+)"/g)]
   .map((m) => m[1])
-  .filter((u) => new URL(u).host !== KENDI);
+  .filter((u) => !KENDI_ADLAR.has(new URL(u).host));
 bak(
   'üçüncü taraf src/href yok',
   disKaynaklar.length === 0,
@@ -116,7 +133,7 @@ bak('gömülü CDN/font çağrısı yok', !gomulu);
 // ---------------------------------------------------------------------------
 console.log('\n3. Kökteki diğer dosyalar duruyor');
 
-for (const d of ['tetik.txt', '.nojekyll']) {
+for (const d of ['tetik.txt', '.nojekyll', 'CNAME']) {
   let var_mi = true;
   try {
     await stat(join(KOK, d));
@@ -124,6 +141,33 @@ for (const d of ['tetik.txt', '.nojekyll']) {
     var_mi = false;
   }
   bak(`${d} yerinde`, var_mi);
+}
+
+/* CNAME'İN İÇERİĞİ — ve bu ölçümün neden VAR OLMASI gerektiği.
+ *
+ * `sekizkyal.com` 17 Eylül'de alındı. GitHub Pages özel alan adını
+ * ayarlarken bu dosyayı `main` dalına KENDİ ELİYLE yazdı; geliştirme
+ * dalında yoktu. Yani bir sonraki yayında dal main'e itilirken dosya
+ * sessizce düşebilirdi ve alan adı AYNI ANDA çalışmayı bırakırdı —
+ * site 404'e düşer, 720 öğrenci giremez, hiçbir test kırmızı yanmaz.
+ * Kusur ancak "giremiyoruz" diye haber gelince anlaşılırdı.
+ *
+ * Varlığını ölçmek yetmez: içi yanlışsa dosya duruyor ama alan adı yine
+ * ölür. GitHub tek satır bekliyor; ikinci bir satır ya da başka bir ad
+ * aynı sonucu verir.
+ *
+ * SONDA SATIR SONU YOK: GitHub dosyayı satır sonu koymadan yazıyor.
+ * `trim()` ile ikisini de kabul ediyoruz — elle düzenleyen biri satır
+ * sonu bırakırsa bu bir kusur değil. */
+{
+  let ham = null;
+  try {
+    ham = await readFile(join(KOK, 'CNAME'), 'utf8');
+  } catch {
+    /* yokluğu yukarıda zaten ölçüldü */
+  }
+  const satirlar = (ham ?? '').split('\n').filter((s) => s.trim() !== '');
+  bak(`CNAME tam olarak "${ALAN_ADI}"`, satirlar.length === 1 && satirlar[0].trim() === ALAN_ADI, ham === null ? 'dosya yok' : JSON.stringify(ham));
 }
 
 // ---------------------------------------------------------------------------

@@ -78,9 +78,45 @@ describe('fisMetni', () => {
     expect(fisMetni('ogrenci').kodEtiketi).not.toBe(fisMetni('veli').kodEtiketi);
   });
 
-  it('her iki fişte de adres yazıyor', () => {
+  /**
+   * ADRES DÜZ METİNLE BEKLENİYOR — ve bu bir ölçüm onarımı.
+   *
+   * Bu test eskiden `toContain(ADRES)` diyordu; yani sabiti aynı
+   * modülden import edip KENDİSİYLE karşılaştırıyordu. Adres ne olursa
+   * olsun yeşil kalırdı: yanlış bir alan adı bassak, hiç kimsenin
+   * açamayacağı bir adres bassak bile. Kırılamayan bir ölçüm hiçbir şey
+   * ölçmez — 0042'de aynı desenin SQL tarafındaki eşi bulunmuştu
+   * (`pg_get_function_identity_arguments`).
+   *
+   * Artık fişte gerçekten hangi harflerin bulunduğu yazılı. Alan adı bir
+   * gün değişirse bu test kırmızı yanacak ve DEĞİŞTİRİLMESİ GEREKTİĞİ
+   * için yanacak — sessizce uyum sağlamayacak.
+   */
+  it('her iki fişte de alan adı düz metin olarak yazıyor', () => {
+    expect(fisMetni('ogrenci').satirlar.join(' ')).toContain('sekizkyal.com');
+    expect(fisMetni('veli').satirlar.join(' ')).toContain('sekizkyal.com');
+  });
+
+  /**
+   * NEGATİF KONTROL: eski adres fişte GEÇMİYOR.
+   *
+   * Pozitif ölçüm tek başına yetmezdi — `sekizkyal.com/yeni/` yazsaydık
+   * ya da iki adres birden bassaydık üstteki test yine geçerdi. Fişte
+   * `/yeni/` de olmamalı: çocuk fazladan altı karakter yazmasın diye
+   * kısalttık, sonradan geri sızmasın.
+   */
+  it('fişte eski adres ve /yeni/ kuyruğu geçmiyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const metin = fisMetni(tur).satirlar.join(' ');
+      expect(metin).not.toContain('github.io');
+      expect(metin).not.toContain('/yeni/');
+    }
+  });
+
+  it('ADRES sabiti fişte gerçekten kullanılıyor', () => {
+    // Sabit ile basılan metnin bağı yine de ölçülüyor: biri ADRES'i
+    // değiştirip cümleye elle bir adres yazarsa bu yakalanır.
     expect(fisMetni('ogrenci').satirlar.join(' ')).toContain(ADRES);
-    expect(fisMetni('veli').satirlar.join(' ')).toContain(ADRES);
   });
 
   /**

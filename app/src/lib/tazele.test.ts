@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { tazelemeAdresi } from '@/lib/tazele';
 
-const ADRES = 'https://buketmathlab.github.io/yeni/tanitim/';
+const ADRES = 'https://sekizkyal.com/yeni/tanitim/';
 
 describe('tazelemeAdresi', () => {
   it('sürüm okunamadıysa hiçbir şey yapmıyor', () => {

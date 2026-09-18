@@ -490,6 +490,50 @@ bayrağı gönderse bile liste doğru sırada görünürdü — ve yukarıdaki i
 kusur provasında **yalnız bir ölçüm** kırmızı yanardı, listenin sırası
 yeşil kalırdı. Sadık taklit sayesinde ikisi birden yanıyor.
 
+### Kendisiyle karşılaştıran test — üçüncü ölü ölçüm
+
+Alan adı turunda (`sekizkyal.com`) `kod-fisi.test.ts` şöyle yazıyordu:
+
+```ts
+import { ADRES } from './kod-fisi';
+expect(fisMetni('ogrenci').satirlar.join(' ')).toContain(ADRES);
+```
+
+Sabiti **aynı modülden import edip kendisiyle** karşılaştırıyor. Adres ne
+olursa olsun bu test yeşil kalır: yanlış alan adı bassak da, hiç kimsenin
+açamayacağı bir adres bassak da. Bu, 0042'de bulunan
+`pg_get_function_identity_arguments(...) = 'text, text, uuid'` ölü
+ölçümünün arayüz tarafındaki eşi — **kırılamayan bir ölçüm hiçbir şey
+ölçmez.**
+
+Kanıt deneysel: adres eskiye çevrildiğinde yeni testler kırmızı yandı,
+**eski desen (`toContain(ADRES)`) yeşil kaldı.** Yani o satır aylarca
+duruyordu ve tek bir kusur biçimini bile göremezdi.
+
+Onarım üç parça:
+
+| Ölçüm | Ne yakalıyor |
+| --- | --- |
+| `toContain('sekizkyal.com')` — düz metin | yanlış ya da değişmiş alan adı |
+| `not.toContain('github.io')` · `not.toContain('/yeni/')` | eski adresin ya da kuyruğun geri sızması |
+| `toContain(ADRES)` — sabit bağı **korundu** | biri sabiti bırakıp cümleye elle adres yazarsa |
+
+Üçüncüsü bilerek duruyor: kendisiyle karşılaştıran ölçüm **tek başına**
+yanıltıcıydı, düz metnin yanında ise gerçek bir şey ölçüyor.
+
+### `CNAME` — ölçülmeyen dosya ön kapıyı kapatabilir
+
+Aynı turun ikinci dersi: GitHub özel alan adını ayarlarken `CNAME`
+dosyasını `main` dalına kendi yazdı, geliştirme dalında yoktu. Bir
+yayında düşseydi alan adı aynı anda ölürdü ve **hiçbir test kırmızı
+yanmazdı** — 18 tarayıcı denetiminin hepsi yerel sunucuya bakıyor, hiçbiri
+kökteki bu dosyayı görmüyordu.
+
+`kok-denetimi.mjs`'e iki ölçüm eklendi (var mı · içi doğru mu), çünkü
+yalnız varlığı ölçmek yetmez: dosya yerinde ama içinde başka bir ad
+yazıyorsa sonuç aynı. **3 kusurdan 3'ü** yakalandı — dosya silindi ·
+ad değiştirildi · ikinci satır eklendi.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede

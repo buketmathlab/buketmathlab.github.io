@@ -18,8 +18,20 @@
  * Tek fişe iki kodu basmak, çocuğun eline velinin kanalını vermek olurdu.
  */
 
-/** Öğrencinin ve velinin adres çubuğuna yazacağı yer. */
-export const ADRES = 'buketmathlab.github.io/yeni/';
+/**
+ * Öğrencinin ve velinin adres çubuğuna yazacağı yer.
+ *
+ * NEDEN SADECE ALAN ADI, `/yeni/` YOK: bu satırı bir çocuk telefonda
+ * ELLE yazıyor. Kökteki sayfa zaten `/yeni/`'ye düşürüyor ve o
+ * yönlendirme üç katmanlı — `kok-denetimi.mjs` JavaScript kapalıyken
+ * bile çalıştığını ölçüyor. Altı karakter fazla yazdırmanın ve eğik
+ * çizgiyi yanlış koyan çocuğu kaybetmenin karşılığı yok.
+ *
+ * ESKİ ADRES ÖLMEDİ: `buketmathlab.github.io/yeni/` yazan eski fişler
+ * çalışmaya devam ediyor, GitHub onları 301 ile buraya yönlendiriyor
+ * (18 Eylül'de ölçüldü). Yani dağıtılmış kâğıtları toplamak gerekmiyor.
+ */
+export const ADRES = 'sekizkyal.com';
 
 export type FisTuru = 'ogrenci' | 'veli';
 

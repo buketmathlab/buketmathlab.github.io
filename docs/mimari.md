@@ -3156,3 +3156,70 @@ altındaki. Ayrışırlarsa bütün SQL testleri **çalışmayan** bir kodu öl�
 0043'ten itibaren panel sürümü migration'ın gövdesini birebir taşıyor ve
 bunu `migration-listesi.test.ts` kilitliyor (0042 ve öncesi kapsam dışı:
 çalıştırılmış migration'a dokunulmuyor).
+
+## Kendi alan adı — `sekizkyal.com` (yeni SQL yok)
+
+Öğretmen 17 Eylül gecesi alan adını aldı (Spaceship, **17 Eyl 2027**'de
+bitiyor), DNS'i kurdu ve GitHub Pages'te özel alan adını ayarladı. Bu
+tur yeni bir yetenek eklemiyor; **çalışan şeyi kırılmaz hâle getiriyor.**
+
+### Ne nerede duruyor
+
+| Katman | Değer |
+| --- | --- |
+| `sekizkyal.com` A kayıtları | `185.199.108–111.153` (GitHub Pages) |
+| `www` CNAME | `buketmathlab.github.io` |
+| Depodaki `CNAME` dosyası | tek satır: `sekizkyal.com` |
+| Uygulama | değişmedi — hâlâ `/yeni/` altında |
+
+Uygulama **köke taşınmadı** ve bu bilerek: kökteki yönlendirme sayfası
+`sekizkyal.com` yazan herkesi zaten `/yeni/`'ye düşürüyor, yani `/yeni/`
+kimsenin elle yazdığı bir şey değil. Taşımak derleme tabanını, bütün
+varlık yollarını ve PWA künyesini değiştirmek olurdu — dönem ortasında,
+720 öğrencinin sitesinde, karşılığı olmayan bir risk.
+
+`manifest.webmanifest` de bu yüzden hiç değişmedi: yolları köke göreli
+(`/yeni/…`), yani alan adından bağımsız. Değiştirilmemesi bir ihmal
+değil, ölçülmüş bir karar.
+
+### `CNAME` — bu turun asıl sebebi
+
+GitHub, özel alan adı ayarlanırken `CNAME` dosyasını **`main` dalına
+kendi eliyle yazdı** (`ebe19de`). Geliştirme dalında yoktu. Yani bir
+sonraki yayında dal `main`'e itilirken dosya sessizce düşebilirdi ve
+**alan adı aynı anda çalışmayı bırakırdı** — site 404, kimse giremez,
+hiçbir ekran testi kırmızı yanmaz. Kusur ancak "giremiyoruz" diye haber
+gelince anlaşılırdı.
+
+`kok-denetimi.mjs` artık iki şeyi birden ölçüyor: dosya **duruyor mu**
+ve **içi doğru mu**. İkincisi olmadan ilki yetmez — dosya yerinde ama
+içinde başka bir ad yazıyorsa alan adı yine ölür. GitHub tek satır
+bekliyor; ikinci satır da aynı sonucu verir. Üç kusur yerleştirildi,
+üçü de yakalandı: dosya silindi · ad değiştirildi · ikinci satır eklendi.
+
+### Eski adres ölmedi — ölçüldü
+
+`buketmathlab.github.io/yeni/` artık **301 ile** `sekizkyal.com/yeni/`'ye
+gidiyor ve yolu koruyor (`/yeni/tanitim/`, `/assets/…js` dâhil). Yani
+dağıtılmış fişlerdeki eski adres çalışmaya devam ediyor; kâğıtları
+toplamak gerekmedi. Bu varsayılmadı, 18 Eylül'de istek atılarak ölçüldü.
+
+Bu yüzden `kok-denetimi.mjs`'deki "kendi adresimiz muaf" listesi **iki
+ad** taşıyor. Eski adı çıkarmak, hâlâ meşru olan bir adresi üçüncü taraf
+saymak olurdu.
+
+### Fişteki adres: `sekizkyal.com`
+
+`kod-fisi.ts`'deki `ADRES` artık `/yeni/` kuyruğunu taşımıyor. Sebep
+kâğıdın kendisinde: o satırı bir çocuk telefonda **elle** yazıyor. Altı
+karakter fazla yazdırmanın ve eğik çizgiyi yanlış koyan çocuğu
+kaybetmenin karşılığı yok; yönlendirme zaten üç katmanlı ve JavaScript
+kapalıyken bile ölçülü.
+
+### Yenileme — ürünün en ucuz tek arıza noktası
+
+Alan adı **17 Eylül 2027**'de bitiyor. Yenilenmezse adres ölür ve bir
+süre sonra **başkası alabilir**; o gün bütün fişler ve bağlantılar
+yabancı bir siteye gider. Depoda bunu ölçebilecek bir şey yok — kontrol
+tamamen Spaceship hesabındaki otomatik yenilemede. Bu satır o yüzden
+burada duruyor.
