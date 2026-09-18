@@ -3159,7 +3159,7 @@ bunu `migration-listesi.test.ts` kilitliyor (0042 ve öncesi kapsam dışı:
 
 ## Kendi alan adı — `sekizkyal.com` (yeni SQL yok)
 
-Öğretmen 17 Eylül gecesi alan adını aldı (Spaceship, **17 Eyl 2027**'de
+Öğretmen 17 Eylül gecesi alan adını aldı (Spaceship, **18 Eyl 2027**'de
 bitiyor), DNS'i kurdu ve GitHub Pages'te özel alan adını ayarladı. Bu
 tur yeni bir yetenek eklemiyor; **çalışan şeyi kırılmaz hâle getiriyor.**
 
@@ -3218,11 +3218,15 @@ kapalıyken bile ölçülü.
 
 ### Yenileme — ürünün en ucuz tek arıza noktası
 
-Alan adı **17 Eylül 2027**'de bitiyor. Yenilenmezse adres ölür ve bir
+Alan adı **18 Eylül 2027**'de bitiyor. Yenilenmezse adres ölür ve bir
 süre sonra **başkası alabilir**; o gün bütün fişler ve bağlantılar
-yabancı bir siteye gider. Depoda bunu ölçebilecek bir şey yok — kontrol
-tamamen Spaceship hesabındaki otomatik yenilemede. Bu satır o yüzden
-burada duruyor.
+yabancı bir siteye gider.
+
+**Tarih düzeltmesi:** önce "17 Eylül" yazılmıştı. Kayıt kuruluşunda saat
+`17 Eyl 21:00 UTC`, Türkiye saatiyle bu **18 Eylül 00:00** ediyor.
+İkisi de doğru ama öğretmenin Spaceship panelinde gördüğü ve nöbetçinin
+e-postasında yazacak tarih **18 Eylül** — iki ayrı yerde iki ayrı gün
+görünmesi, "hangisi doğru" diye bakmayı gerektirirdi.
 
 ## Fişte telefona kurulum yönergesi (yeni SQL yok)
 
@@ -3276,3 +3280,73 @@ görürdü. Kanıt deneysel: kurulum cümlesi uzatıldığında ızgara 282 mm'y
 
 İkisi farklı şeyler: birincisinde kutu büyüyor, ikincisinde yazı
 kesiliyor. Biri ötekini yakalamıyor.
+
+## Alan adı nöbetçisi (yeni SQL yok)
+
+Öğretmen panelden iki şeyi doğruladı ve ikisi de yerinde: Spaceship'te
+**otomatik yenileme açık**, ve kayıtlı kartın geçerliliği **yenilemeden
+sonra** bitiyor. Yani bugün bir arıza yok.
+
+Nöbetçinin sebebi bu değil — **bu korumaların ikisi de sessizce
+bozulabilir.** Kart son kullanma tarihinden ÖNCE de değişir (kayıp, banka
+yenilemesi); yenileme e-postası spam'e düşer; DNS kaydı değişir; `CNAME`
+bir yayında düşer. Hiçbirinde uyarı gelmez; kusur "giremiyoruz" diye
+haber gelince öğrenilir.
+
+`.github/workflows/alan-adi-nobetci.yml` haftada bir çalışıyor, mantık
+`.github/scripts/alan-adi-denetimi.sh` içinde. **İkisi de geçmeli:**
+
+| Ölçüm | Kusur sayılan hâl |
+| --- | --- |
+| Bitişe kalan gün (RDAP) | 45 günden az |
+| `sekizkyal.com/yeni/` | 200 değil, ya da sayfada `manifest.webmanifest` yok |
+| `buketmathlab.github.io/yeni/` | 301 vermiyor (kâğıda basılı eski adres ölmüş) |
+
+### Neden mantık `yml`'nin içinde değil
+
+GitHub Actions yerelde çalıştırılamaz. Mantık iş akışına gömülseydi
+ısırdığı **hiç gösterilemezdi** — bu depoda kanıtsız ölçüm kabul
+edilmiyor. Betik hâlinde altı senaryo yerelde sınandı ve altısı da
+ısırdı: süre eşiğin altında · süre öğrenilemiyor · adres yanlış · 200
+dönüyor ama SEKİZ değil · `CNAME` boş · `CNAME` yok. Çıkış kodları ayrıca
+doğrulandı; iş akışının gördüğü tek şey o.
+
+### Üç karar ve gerekçeleri
+
+**Alan adı `CNAME`'den okunuyor, betiğe yazılmıyor.** `uyanik-tut.yml`'nin
+kuralının aynısı: *"İkinci bir kopya tutulsaydı biri değişince öbürü
+sessizce eskirdi."* GitHub Pages özel alan adını zaten yalnız o dosyadan
+okuyor; nöbetçinin ayrı bir kopyaya bakması, gerçekte izlenmeyen bir
+adresi izliyormuş gibi görünmesi demekti.
+
+**İmza olarak `<title>` kullanılmadı.** Başlık `app/index.html`'de
+duruyor; depoda değişip site henüz yayınlanmamışken nöbetçi yanlış alarm
+verirdi. `uyanik-tut.yml`'nin en pahalı dersi tam buydu — *"üç günde bir
+yanlış alarm, ve öğretmen alarma güvenmeyi bırakırdı."*
+`manifest.webmanifest` hem sabit hem ASCII.
+
+**"Bakamadım" da bir kusurdur.** Süre iki kaynaktan soruluyor (registry
+RDAP, sonra `rdap.org`); ikisi de yanıt vermezse iş **başarısız oluyor**
+ve mesaj *"süre öğrenilemedi, elle bakın"* diyor. Sessizce başarılı
+saymak, bir gün nöbet tutmayı bırakmış ama hâlâ yeşil yanan bir nöbetçi
+demekti.
+
+Ağ titremesi alarm olmasın diye her HTTP denetimi üç kez, artan
+beklemeyle deneniyor.
+
+### Neden `uyanik-tut.yml`'ye eklenmedi
+
+İki alarm birbirini maskelememeli. Aynı işe konsalardı alan adı uyarısı
+yanarken Supabase nöbetçisinin ne dediği görünmezdi — oysa ikisi bambaşka
+arızalar ve ikisi de kendi başına acil. Temposu da farklı: Supabase 7
+günde duraklıyor, alan adı yılda bir bitiyor.
+
+### Dürüst sınırlar
+
+- GitHub, **60 gün hareketsiz** depolarda zamanlanmış işleri durduruyor.
+  Yaz tatilinde depo sessizleşirse nöbetçi de susar. Takvim
+  hatırlatmasının yerine geçmez, yanına gelir.
+- Otomatik yenilemenin açık olup olmadığını **göremez**; Spaceship bunu
+  dışarıya açmıyor. Ölçtüğü şey sonuç: süre azalıyor mu.
+- Kartın geçerliliğini de göremez. Kart ölürse bu ancak süre eşiğin
+  altına inince anlaşılır — eşik o yüzden cömert (45 gün).

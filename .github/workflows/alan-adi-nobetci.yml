@@ -1,0 +1,55 @@
+# SEKİZ — ALAN ADI NÖBETÇİSİ
+#
+# NEDEN VAR
+# `sekizkyal.com` ürünün ön kapısı ve 720 öğrenciye BASILI fişlerle
+# dağıtıldı. Süresi dolarsa adres bir süre sonra başkası tarafından
+# alınabilir ve o kâğıtların hepsi yabancı bir siteye gider. Bugün
+# otomatik yenileme açık ve kart geçerli; nöbetçinin sebebi bunların
+# SESSİZCE bozulabilmesi (kart kaybolur, e-posta spam'e düşer, DNS ya da
+# CNAME değişir). Hiçbirinde uyarı gelmez.
+#
+# NE ÖLÇÜYOR
+# Bütün mantık `.github/scripts/alan-adi-denetimi.sh` içinde ve sebebi
+# şu: GitHub Actions yerelde çalıştırılamaz. Mantık buraya gömülseydi
+# ısırdığı hiç gösterilemezdi. Betik hâlinde altı kusur senaryosuyla
+# sınandı (süre eşiğin altında · süre öğrenilemiyor · adres yanlış ·
+# 200 dönüyor ama SEKİZ değil · CNAME boş · CNAME yok).
+#
+# NEDEN `uyanik-tut.yml`'YE EKLENMEDİ
+# İki alarm birbirini maskelememeli. Aynı işe konsalardı, alan adı
+# uyarısı yanarken Supabase nöbetçisinin ne dediği görünmezdi — oysa
+# ikisi bambaşka arızalar ve ikisi de kendi başına acil. Nöbetlerin
+# temposu da farklı: Supabase 7 günde duraklıyor, alan adı yılda bir
+# bitiyor.
+#
+# DÜRÜST SINIR
+# GitHub, 60 gün hareketsiz depolarda zamanlanmış işleri durduruyor.
+# Yaz tatilinde depo sessizleşirse bu nöbetçi de susar. Takvim
+# hatırlatmasının YERİNE geçmez, yanına gelir.
+
+name: Alan adı nöbetçisi
+
+on:
+  schedule:
+    # Haftada bir, pazartesi 07:00 UTC (10:00 TR).
+    # Alan adı yılda bir bitiyor; daha sık bakmanın bir karşılığı yok.
+    # 45 günlük eşikle bu, bitişten önce ~6 uyarı demek.
+    - cron: '0 7 * * 1'
+  # Elle: öğretmen "şu an her şey yerinde mi?" diye bakmak isterse
+  # Actions sekmesinden çalıştırabilir.
+  workflow_dispatch:
+
+# Depoyu yalnız okuyoruz.
+permissions:
+  contents: read
+
+jobs:
+  nobet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Alan adını ve adresi yokla
+        run: ./.github/scripts/alan-adi-denetimi.sh
