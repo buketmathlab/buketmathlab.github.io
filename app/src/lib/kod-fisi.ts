@@ -108,7 +108,7 @@ export type Fis = {
 const KURULUM_OGRENCI: readonly string[] = [
   'iPhone: Sayfayı Safari ile aç.',
   'Alttaki üç nokta düğmesine dokun, “Paylaş”a bas.',
-  'Listede aşağı in, “Ana Ekrana Ekle” → “Ekle”.',
+  '“Ana Ekrana Ekle” → “Ekle”.',
   'Android: Sayfayı Chrome ile aç.',
   'Sağ üstteki üç nokta menüsüne dokun.',
   '“Ana ekrana ekle” ya da “Uygulamayı yükle” → “Ekle”.',
@@ -117,7 +117,7 @@ const KURULUM_OGRENCI: readonly string[] = [
 const KURULUM_VELI: readonly string[] = [
   'iPhone: Sayfayı Safari ile açın.',
   'Alttaki üç nokta düğmesine dokunun, “Paylaş”a basın.',
-  'Listede aşağı inin, “Ana Ekrana Ekle” → “Ekle”.',
+  '“Ana Ekrana Ekle” → “Ekle”.',
   'Android: Sayfayı Chrome ile açın.',
   'Sağ üstteki üç nokta menüsüne dokunun.',
   '“Ana ekrana ekle” ya da “Uygulamayı yükle” → “Ekle”.',
