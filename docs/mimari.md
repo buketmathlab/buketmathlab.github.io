@@ -3474,3 +3474,34 @@ ve hiçbirinde punto düşürülmedi:
 Son durum: ızgara **274,2 mm / 277 mm**, pay **2,8 mm**. Fişte en çok
 okunması gereken şeyler — kod ve tarif — aynı büyüklükte kaldı; küçülen
 şey boşluklar oldu.
+
+### Üçüncü düzeltme: iPhone'da düğme üç nokta
+
+Öğretmen tarifi bir kez daha okudu: *"ekranın alt ortasındaki paylaş
+simgesi diyor — orada üç noktalı bir simge yok mu, ona dokununca Paylaş
+çıkmıyor mu?"*
+
+**Haklıydı; eskimiş bilgiyle yazmışım.** Apple'ın kendi belgesindeki
+adım bugün şu: *"Tap the share button (three dots), then tap Share."*
+Öğretmen kendi telefonunda **üç nokta → Paylaş → Ana Ekrana Ekle**
+yolunu doğruladı. Fiş artık bunu yazıyor.
+
+Bu, aynı dersin üçüncü tekrarı ve artık kurala dönüştü: **telefondaki
+adımlar hafızadan yazılmaz.** Cihaz öğretmende; doğrulanacak yer orası.
+İlk turda "Safari" eksikti, ikincide düğmenin yeri, üçüncüde düğmenin
+kendisi yanlıştı — üçünü de ölçüm değil, gerçek bir telefon buldu.
+
+**Bilinen sınır, gizlenmiyor:** Apple aynı sayfada *"sekme düzeni Altta
+ya da Üstte ise paylaş simgesine dokunun"* diyor. Yani bazı ayarlarda
+orada üç nokta yerine paylaş simgesi çıkıyor. Öğretmenin telefonundaki
+yol esas alındı; öteki ayardaki veli aynı listeye bir adım eksik düşüyor
+ve aradığını yine buluyor.
+
+Menü simgesi **çizilmiyor, kelimesi yazılıyor**: `⋮` ve `⋯` gibi
+karakterler yazı tipine göre boş kutu çıkıyor ve kâğıtta bunu düzeltmenin
+yolu yok. Bir test bu kararın geri sızmasını engelliyor.
+
+Ölçümde bir tuzak daha kapatıldı: "üç nokta" kelimesini tek başına aramak
+yetmezdi — iki satırdan biri silinse öteki satırdaki eşleşme testi yeşil
+tutardı. Ölçüm artık `Alttaki üç nokta` ve `Sağ üstteki üç nokta` diye
+**iki yeri ayrı ayrı** arıyor; kusur yerleştirilerek gösterildi.

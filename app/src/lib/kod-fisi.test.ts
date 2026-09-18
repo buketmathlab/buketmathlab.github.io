@@ -224,21 +224,41 @@ describe('fisMetni', () => {
   });
 
   /**
-   * DÜĞMENİN YERİ TARİF EDİLİYOR — öğretmenin ikinci eksiği.
+   * DÜĞMENİN YERİ TARİF EDİLİYOR — öğretmenin ikinci ve üçüncü eksiği.
    *
-   * "Safari'de aç" demek yetmedi: *"paylaş butonunu nereden bulacak?"*
-   * iPhone'da o düğme ekranın ALT ORTASINDA ve simgesi tarif edilmeden
-   * bulunmuyor. Android'de menü SAĞ ÜSTTE. Tarif ikisini de söylemeli;
-   * yalnız "menüden ekleyin" demek, düğmeyi arayan veliyi yolda
-   * bırakırdı.
+   * Önce "Safari'de aç" demek yetmedi: *"paylaş butonunu nereden
+   * bulacak?"* Sonra yazdığım tarif ESKİYDİ: "ekranın alt ortasındaki
+   * paylaş simgesi" dedim, öğretmen "orada üç noktalı bir simge yok mu?"
+   * diye sordu ve haklıydı. Bugünkü iOS'ta alttaki düğme üç nokta;
+   * Apple'ın kendi adımı da "share button (three dots), then tap Share".
+   * Öğretmen kendi telefonunda doğruladı.
+   *
+   * İKİ YER AYRI AYRI ÖLÇÜLÜYOR: iPhone'da ALTTA, Android'de SAĞ ÜSTTE.
+   * Yalnız "üç nokta" aransaydı, iki satırdan biri silinse bile test
+   * yeşil kalırdı — öteki satırdaki "üç nokta" yetiyor olurdu.
    */
-  it('paylaş düğmesinin ve menünün YERİ yazıyor', () => {
+  it('düğmenin yeri iki telefonda da ayrı ayrı yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).toContain('alt ortasındaki');
-      expect(k).toContain('yukarı ok');
-      expect(k).toContain('Sağ üstteki');
-      expect(k).toContain('üç nokta');
+      expect(k).toContain('Alttaki üç nokta');
+      expect(k).toContain('Sağ üstteki üç nokta');
+      expect(k).toContain('Paylaş');
+    }
+  });
+
+  /**
+   * MENÜ SİMGESİ ÇİZİLMİYOR, KELİMESİ YAZILIYOR.
+   *
+   * "⋮" ya da "⋯" gibi karakterler yazı tipine göre boş kutu çıkıyor ve
+   * kâğıtta bunu düzeltmenin yolu yok. Karar bir kez verildi; bu test
+   * geri sızmasını engelliyor.
+   */
+  it('kurulum metninde tipografik üç nokta karakteri yok', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const k = fisMetni(tur).kurulum.join(' ');
+      expect(k).not.toContain('⋮');
+      expect(k).not.toContain('⋯');
+      expect(k).not.toContain('…');
     }
   });
 

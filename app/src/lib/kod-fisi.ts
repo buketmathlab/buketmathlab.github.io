@@ -73,9 +73,26 @@ export type Fis = {
  * seçeneği HİÇ YOKTUR. Safari'de açınca hemen oldu.
  *
  * Sonra öğretmen ikinci eksiği söyledi: "Safari'de açtıktan sonra paylaş
- * butonunu nereden bulacak?" Haklıydı — iPhone'da o düğme EKRANIN ALT
- * ORTASINDA ve simgesi tarif edilmeden bulunmuyor. Tarif artık düğmenin
- * YERİNİ ve GÖRÜNÜŞÜNÜ söylüyor.
+ * butonunu nereden bulacak?" Haklıydı — tarif düğmenin yerini
+ * söylemiyordu.
+ *
+ * ÜÇÜNCÜ DÜZELTME, YİNE ÖĞRETMENDEN VE YİNE HAKLI. "Ekranın alt
+ * ortasındaki paylaş simgesi" diye yazmıştım; öğretmen "orada üç noktalı
+ * bir simge yok mu, ona dokununca Paylaş çıkmıyor mu?" dedi. ESKİMİŞ
+ * BİLGİYLE YAZMIŞIM: bugünkü iOS'ta alttaki düğme üç nokta ve Apple'ın
+ * kendi adımı da öyle — "Tap the share button (three dots), then tap
+ * Share". Öğretmen kendi telefonunda üç nokta → Paylaş → Ana Ekrana
+ * Ekle yolunu doğruladı.
+ *
+ * Ders, geçen turunkinin aynısı ve bu sefer belgeye de yazıldı:
+ * telefondaki adımları HAFIZADAN yazmak, kâğıda yanlış tarif bastırır.
+ * Cihaz öğretmende; doğrulanacak yer orası.
+ *
+ * NOT: Apple aynı sayfada "sekme düzeni Altta ya da Üstte ise paylaş
+ * simgesine dokunun" diyor — yani bazı ayarlarda orada üç nokta yerine
+ * paylaş simgesi çıkıyor. Öğretmenin telefonundaki yol esas alındı;
+ * öteki ayardaki veli de aynı listeye düşüyor, yalnız bir adım eksik
+ * yaşıyor ve aradığını yine buluyor.
  *
  * "UYGULAMAYI YÜKLE" ALTERNATİFİ Android satırında duruyor: Chrome
  * koşullar sağlanınca menüde "Ana ekrana ekle" yerine bunu yazıyor. Tek
@@ -90,7 +107,7 @@ export type Fis = {
  */
 const KURULUM_OGRENCI: readonly string[] = [
   'iPhone: Sayfayı Safari ile aç.',
-  'Ekranın alt ortasındaki paylaş simgesine dokun — içinden yukarı ok çıkan kare.',
+  'Alttaki üç nokta düğmesine dokun, “Paylaş”a bas.',
   'Listede aşağı in, “Ana Ekrana Ekle” → “Ekle”.',
   'Android: Sayfayı Chrome ile aç.',
   'Sağ üstteki üç nokta menüsüne dokun.',
@@ -99,7 +116,7 @@ const KURULUM_OGRENCI: readonly string[] = [
 
 const KURULUM_VELI: readonly string[] = [
   'iPhone: Sayfayı Safari ile açın.',
-  'Ekranın alt ortasındaki paylaş simgesine dokunun — içinden yukarı ok çıkan kare.',
+  'Alttaki üç nokta düğmesine dokunun, “Paylaş”a basın.',
   'Listede aşağı inin, “Ana Ekrana Ekle” → “Ekle”.',
   'Android: Sayfayı Chrome ile açın.',
   'Sağ üstteki üç nokta menüsüne dokunun.',
