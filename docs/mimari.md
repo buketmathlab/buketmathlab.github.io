@@ -3505,3 +3505,35 @@ yolu yok. Bir test bu kararın geri sızmasını engelliyor.
 yetmezdi — iki satırdan biri silinse öteki satırdaki eşleşme testi yeşil
 tutardı. Ölçüm artık `Alttaki üç nokta` ve `Sağ üstteki üç nokta` diye
 **iki yeri ayrı ayrı** arıyor; kusur yerleştirilerek gösterildi.
+
+### Android satırı — doğrulanmadı ve bu yazılı duruyor
+
+Öğretmen sordu: *"Android için tarifin doğru mu, güncel mi?"* İyi soru
+çıktı — **değildi.** Google'ın bugünkü belgesi şunu diyor:
+
+> "On the right of the address bar, tap **More** → **Install and create
+> shortcut** → **Install**"
+
+Yani menü öğesi artık "Ana ekrana ekle" değil, son düğme de "Ekle"
+değil "Yükle". Fişte eski Chrome'un tarifi yazıyordu.
+
+Satır iki etiketi birden veriyor (`"Ana ekrana ekle" ya da "Yükle"`),
+çünkü Chrome sürümüne göre ikisinden biri çıkıyor. **Son düğmenin adı
+bilerek yazılmıyor:** sürümden sürüme değişiyor ve cihazda doğrulanmadan
+söylemek, dördüncü kez yanlış yazmak olurdu.
+
+**Dürüst sınır:** iPhone satırını öğretmen kendi telefonunda denedi,
+Android satırını kimse denemedi — elimizde Android cihaz yok. Öğretmen
+"şimdilik belgeye göre güncelle" dedi ve bu not o kararın karşılığı.
+Kâğıt basılmadan önce bir Android telefonda denenmeli; öğrencilerin çoğu
+muhtemelen Android kullanıyor, yani bu satır iPhone'dan daha çok kişiyi
+ilgilendiriyor.
+
+**Açık soru, gizlenmiyor:** depoda service worker YOK (bilinçli karar,
+`pwa-denetimi.mjs` her koşuda ölçüyor). Chrome'un tam "uygulama olarak
+yükleme" akışı tarihsel olarak service worker istiyordu; onsuz Android
+yalnız bir KISAYOL koyabilir — simge ana ekrana gelir ama tarayıcı
+içinde açılır, iPhone'daki gibi tam uygulama hissi vermez. Chrome bu
+şartı gevşetti ama hangi sürümden itibaren olduğu bizde ölçülmedi. Fiş
+bu yüzden "uygulama olarak ekle" diyor ve **nasıl açılacağına dair bir
+söz vermiyor**.

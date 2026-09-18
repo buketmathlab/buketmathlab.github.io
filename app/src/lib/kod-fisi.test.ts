@@ -263,15 +263,20 @@ describe('fisMetni', () => {
   });
 
   /**
-   * ANDROID'DE İKİ ETİKET DE YAZIYOR. Chrome, koşullar sağlanınca
-   * menüde "Ana ekrana ekle" yerine "Uygulamayı yükle" gösteriyor. Tek
-   * etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
+   * ANDROID'DE İKİ ETİKET DE YAZIYOR. Chrome sürümüne göre menüde
+   * ikisinden biri çıkıyor: eskilerde "Ana ekrana ekle", yenilerde
+   * "Yükle…" (Google'ın bugünkü belgesi: "Install and create shortcut").
+   * Tek etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
+   *
+   * SON DÜĞMENİN ADI BİLEREK ÖLÇÜLMÜYOR — çünkü bilerek YAZILMIYOR.
+   * Sürümden sürüme değişiyor; bu satır cihazda doğrulanana kadar
+   * söylememek, dördüncü kez yanlış yazmaktan dürüst.
    */
   it('Android satırı iki menü etiketini de veriyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
       expect(k).toContain('Ana ekrana ekle');
-      expect(k).toContain('Uygulamayı yükle');
+      expect(k).toContain('Yükle');
     }
   });
 

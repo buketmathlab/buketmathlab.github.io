@@ -94,9 +94,33 @@ export type Fis = {
  * öteki ayardaki veli de aynı listeye düşüyor, yalnız bir adım eksik
  * yaşıyor ve aradığını yine buluyor.
  *
- * "UYGULAMAYI YÜKLE" ALTERNATİFİ Android satırında duruyor: Chrome
- * koşullar sağlanınca menüde "Ana ekrana ekle" yerine bunu yazıyor. Tek
- * etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
+ * ANDROID SATIRI İKİ ETİKET BİRDEN YAZIYOR — ve bu satır, iPhone
+ * satırından farklı olarak GERÇEK BİR CİHAZDA DOĞRULANMADI.
+ *
+ * Öğretmen sordu: "Android için tarifin güncel mi?" Google'ın bugünkü
+ * belgesi şunu diyor: "tap More → Install and create shortcut →
+ * Install". Yani menü öğesi artık "Ana ekrana ekle" değil, son düğme de
+ * "Ekle" değil "Yükle". Fişte eski Chrome'un tarifi yazıyordu.
+ *
+ * İki etiket birden yazılıyor çünkü Chrome sürümüne göre ikisinden biri
+ * çıkıyor: eski sürümlerde "Ana ekrana ekle", yenilerde "Yükle…".
+ * Tek etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
+ * Son düğmenin adı BİLEREK yazılmıyor: sürümden sürüme değişiyor ve
+ * dördüncü kez yanlış yazmaktansa söylenmemesi daha dürüst.
+ *
+ * DOĞRULANMAMIŞ OLDUĞU BURADA DURUYOR. iPhone satırını öğretmen kendi
+ * telefonunda denedi; Android'de kimse denemedi. Elimizde Android cihaz
+ * yok. Kâğıt basılmadan önce bir Android telefonda denenmeli —
+ * öğrencilerin çoğu muhtemelen Android kullanıyor, yani bu satır
+ * iPhone'dan daha çok kişiyi ilgilendiriyor.
+ *
+ * AYRICA AÇIK BİR SORU: depoda service worker YOK (bilinçli karar,
+ * `pwa-denetimi.mjs` her koşuda ölçüyor). Chrome'un tam "uygulama olarak
+ * yükleme" akışı tarihsel olarak service worker istiyordu; onsuz Android
+ * yalnız bir KISAYOL koyabilir — simge gelir ama tarayıcı içinde açılır.
+ * Chrome bu şartı gevşetti ama hangi sürümden itibaren olduğu bizde
+ * ölçülmedi. Fiş bu yüzden "uygulama olarak ekle" diyor ve nasıl
+ * açılacağına dair bir söz VERMİYOR.
  *
  * MENÜ SİMGESİ ÇİZİLMİYOR (⋮ gibi): yazı tipine göre kutu çıkabilir.
  * "Üç nokta" kelimesi her yazı tipinde doğru.
@@ -111,7 +135,7 @@ const KURULUM_OGRENCI: readonly string[] = [
   '“Ana Ekrana Ekle” → “Ekle”.',
   'Android: Sayfayı Chrome ile aç.',
   'Sağ üstteki üç nokta menüsüne dokun.',
-  '“Ana ekrana ekle” ya da “Uygulamayı yükle” → “Ekle”.',
+  '“Ana ekrana ekle” ya da “Yükle” seçeneğine dokun.',
 ];
 
 const KURULUM_VELI: readonly string[] = [
@@ -120,7 +144,7 @@ const KURULUM_VELI: readonly string[] = [
   '“Ana Ekrana Ekle” → “Ekle”.',
   'Android: Sayfayı Chrome ile açın.',
   'Sağ üstteki üç nokta menüsüne dokunun.',
-  '“Ana ekrana ekle” ya da “Uygulamayı yükle” → “Ekle”.',
+  '“Ana ekrana ekle” ya da “Yükle” seçeneğine dokunun.',
 ];
 
 /**
