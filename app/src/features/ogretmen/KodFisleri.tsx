@@ -288,6 +288,18 @@ function FisKarti({ fis }: { fis: Fis }) {
         <br />
         {m.satirlar[1]}
       </p>
+
+      {/* KURULUM — ayrı bir blok, giriş yönergesinin devamı değil.
+          İnce bir çizgiyle ayrılıyor: fişe bakan kişi "giriş" ile
+          "telefona ekleme" işini karıştırmasın. Yazı 9px, çünkü bu
+          bilgi koddan ve adresten sonra gelir; onların önüne geçmemeli. */}
+      <p className="sk-fis-kurulum mt-1 text-[9px] leading-tight text-muted">
+        <span className="font-semibold">{m.kurulumBasligi}</span>
+        <br />
+        {m.kurulum[0]}
+        <br />
+        {m.kurulum[1]}
+      </p>
     </div>
   );
 }

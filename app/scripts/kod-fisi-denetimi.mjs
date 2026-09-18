@@ -342,6 +342,46 @@ console.log('5 — KÂĞIT: YAZDIRMA KİPİNDE KABUK YOK, SAYFA BAŞINA 10 FİŞ
   de(yapi.bolunme === 'avoid', `fiş iki sayfaya bölünmüyor (${yapi.bolunme})`);
   de(yapi.yukseklikPx >= 150, `fiş yüksekliği ~50 mm ve üzeri (${yapi.yukseklikPx} px)`);
 
+  /* ---------------------------------------------------------------------
+   * ON FİŞ KÂĞIDA GERÇEKTEN SIĞIYOR MU — ve bu ölçümün neden VAR OLMASI
+   * gerektiği.
+   *
+   * Yukarıdaki "sayfa başına 10 fiş" ölçümü JAVASCRIPT SAYFALAMASINI
+   * sayıyor (`SAYFA_BASINA`), kâğıdı değil. Yani fişler büyüyüp beşinci
+   * satır A4'ten taşsa bile o ölçüm yeşil kalırdı: DOM'da yine 10 fiş
+   * olurdu, ama yazıcıdan 8'i bir kâğıda, 2'si ayrı kâğıda çıkardı ve
+   * öğretmen bunu ancak 72 sayfa bastıktan sonra görürdü.
+   *
+   * Fişe telefona kurulum yönergesi eklenince pay 9,8 mm'ye indi — satır
+   * başına yaklaşık 2 mm. Bir sonraki cümle bunu sessizce aşabilir.
+   * Ölçülmeyen şey, kırılan şeydir.
+   *
+   * İKİ AYRI ŞEY ÖLÇÜLÜYOR:
+   *   1. Izgaranın toplam boyu A4'ün yazılabilir alanına sığıyor mu
+   *   2. Metin kendi fişinin kutusundan taşıyor mu (kesme çizgisini aşan
+   *      yazı, kâğıtta yarım cümle demek)
+   */
+  const KAGIT = { yukseklikMm: 297, kenarMm: 10 };
+  const KULLANILABILIR_MM = KAGIT.yukseklikMm - 2 * KAGIT.kenarMm;
+
+  const kagit = await p.evaluate(() => {
+    const PX_MM = 96 / 25.4;
+    const sayfa = document.querySelector('.sk-fis-sayfa');
+    const fisler = [...document.querySelectorAll('.sk-fis')];
+    return {
+      izgaraMm: +(sayfa.getBoundingClientRect().height / PX_MM).toFixed(1),
+      ilkSayfa: sayfa.querySelectorAll('.sk-fis').length,
+      // 1 px pay: alt piksel yuvarlamaları taşma sayılmasın.
+      tasan: fisler.filter((f) => f.scrollHeight > f.clientHeight + 1).length,
+    };
+  });
+
+  de(
+    kagit.izgaraMm <= KULLANILABILIR_MM,
+    `${kagit.ilkSayfa} fiş A4'e sığıyor — ızgara ${kagit.izgaraMm} mm / ${KULLANILABILIR_MM} mm (pay ${(KULLANILABILIR_MM - kagit.izgaraMm).toFixed(1)} mm)`,
+  );
+  de(kagit.tasan === 0, `hiçbir fişin metni kutusundan taşmıyor (${kagit.tasan} taşan)`);
+
   await p.emulateMedia({ media: 'screen' });
 }
 

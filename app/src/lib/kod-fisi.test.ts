@@ -120,6 +120,48 @@ describe('fisMetni', () => {
   });
 
   /**
+   * KURULUM YÖNERGESİ — öğretmenin isteği: "hem veli kod fişinde hem
+   * öğrenci kod fişinde bu detaya yer verilmeli".
+   *
+   * İKİ FİŞ AYRI AYRI ÖLÇÜLÜYOR. Tek bir fişe bakmak yetmezdi: metin
+   * fonksiyonu iki ayrı dal döndürüyor ve biri güncellenip öteki unutulsa
+   * yalnız bir dala bakan ölçüm bunu göremezdi.
+   */
+  it('iki fişte de telefona ekleme yönergesi var', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const m = fisMetni(tur);
+      expect(m.kurulumBasligi).toContain('uygulama');
+      expect(m.kurulum.join(' ')).toContain('Ana Ekrana Ekle');
+      expect(m.kurulum.join(' ')).toContain('Ana ekrana ekle');
+    }
+  });
+
+  /**
+   * HER İKİ TELEFON DA ANLATILIYOR. Yalnız birini yazmak, ailelerin
+   * yarısını yolda bırakırdı — iPhone'da yol "Paylaş"ın içinden,
+   * Android'de tarayıcı menüsünden geçiyor.
+   */
+  it('hem iPhone hem Android yolu yazıyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const k = fisMetni(tur).kurulum.join(' ');
+      expect(k).toContain('iPhone');
+      expect(k).toContain('Paylaş');
+      expect(k).toContain('Android');
+      expect(k).toContain('menü');
+    }
+  });
+
+  /**
+   * MUHATAP KURULUM SATIRINDA DA DOĞRU: öğrenciye "ekle", veliye
+   * "ekleyin". Fişin geri kalanında verilen kararın aynısı; tek bir
+   * ortak cümle yazmak kolay olurdu ama veliye sen demek olurdu.
+   */
+  it('kurulum başlığı da öğrenciye sen, veliye siz diyor', () => {
+    expect(fisMetni('ogrenci').kurulumBasligi).toContain('Telefonuna');
+    expect(fisMetni('veli').kurulumBasligi).toContain('Telefonunuza');
+  });
+
+  /**
    * Öğrenciye "sen", veliye "siz" — 0026'da karne cümlelerinde verilen
    * kararın aynısı. Yanlış muhatap, fişi tuhaf yapar.
    */

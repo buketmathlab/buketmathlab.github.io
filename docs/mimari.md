@@ -3223,3 +3223,56 @@ süre sonra **başkası alabilir**; o gün bütün fişler ve bağlantılar
 yabancı bir siteye gider. Depoda bunu ölçebilecek bir şey yok — kontrol
 tamamen Spaceship hesabındaki otomatik yenilemede. Bu satır o yüzden
 burada duruyor.
+
+## Fişte telefona kurulum yönergesi (yeni SQL yok)
+
+Öğretmen istedi: *"öğrencilerin ve velilerin telefonlarına uygulama
+olarak 8'i nasıl indirebilecekleri bilgisi de yazmalı kod fişlerinde.
+Hem veli kod fişinde hem öğrenci kod fişinde."*
+
+### Önce vaadin gerçek olduğu ölçüldü
+
+Kâğıda basılan her cümle bir söz ve 720 aileye gidiyor. "Uygulama gibi
+ekleyin" demeden önce dördü de yerinde mi diye bakıldı:
+`apple-touch-icon` (iOS manifest simgelerini kullanmaz, ayrı etiket
+ister), `apple-mobile-web-app-capable`, `apple-mobile-web-app-title` ve
+manifest'te `display: standalone`. Hepsi vardı — yani ana ekrana eklenen
+SEKİZ gerçekten kendi simgesiyle, tarayıcı çubuğu olmadan açılıyor.
+Olmasaydı bu tur kurulum yönergesiyle değil, o eksiklerle başlardı.
+
+### İki satır, çünkü iki ayrı yol
+
+`iPhone: Paylaş → Ana Ekrana Ekle` · `Android: tarayıcı menüsü → Ana
+ekrana ekle`. Tek bir "menüden ekleyin" cümlesi, telefonunda o menüyü
+bulamayan veliyi yolda bırakırdı — iPhone'da yol "Paylaş"ın içinden
+geçiyor ve orayı bilmeyen kimse bulamaz.
+
+Menü simgesi (⋮) yazılmadı: yazı tipine göre kutu çıkabiliyor ve Samsung
+Internet'te menü altta duruyor. Kelime her yerde doğru.
+
+Muhatap kurulum satırında da ayrı: öğrenciye *"Telefonuna … ekle"*,
+veliye *"Telefonunuza … ekleyin"*. Tek ortak cümle yazmak kolaydı ama
+veliye "sen" demek olurdu.
+
+### Kâğıt ölçümü — asıl bulgu
+
+Fiş 50 mm ve A4'e 2 sütun × 5 satır giriyor. Yönerge eklenince ızgara
+**267,2 mm** oldu; yazılabilir alan **277 mm**. Yani pay **9,8 mm**,
+satır başına yaklaşık 2 mm.
+
+Buradaki asıl ders şu: denetimdeki **"sayfa başına 10 fiş"** ölçümü
+JavaScript sayfalamasını (`SAYFA_BASINA`) sayıyordu, kâğıdı değil.
+Fişler büyüyüp beşinci satır A4'ten taşsa DOM'da yine 10 fiş olurdu ve
+ölçüm yeşil kalırdı — öğretmen bunu ancak 72 sayfa bastıktan sonra
+görürdü. Kanıt deneysel: kurulum cümlesi uzatıldığında ızgara 282 mm'ye
+çıktı, **yeni ölçüm kırmızı yandı, eski "10 fiş" ölçümü yeşil kaldı.**
+
+`kod-fisi-denetimi.mjs` artık iki ayrı kusur biçimini ölçüyor:
+
+| Ölçüm | Hangi kusuru yakalıyor | Isırdığı gösterildi |
+| --- | --- | --- |
+| Izgara ≤ 277 mm | metin büyüyüp sayfa taşıyor | cümle uzatıldı → 282 mm |
+| Hiçbir fiş kutusundan taşmıyor | kutu içeriğinden küçük, yazı kırpılıyor | `height: 40mm` → 12 fiş taştı |
+
+İkisi farklı şeyler: birincisinde kutu büyüyor, ikincisinde yazı
+kesiliyor. Biri ötekini yakalamıyor.

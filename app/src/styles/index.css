@@ -174,6 +174,15 @@
   break-inside: avoid;                     /* fiş iki sayfaya bölünmesin */
 }
 
+/* KURULUM YÖNERGESİ — giriş yönergesinden ince bir çizgiyle ayrık.
+   Fişteki iki iş birbirine karışmasın: önce gir, sonra istersen
+   telefonuna ekle. */
+.sk-fis-kurulum {
+  margin-top: 1.5mm;
+  padding-top: 1.5mm;
+  border-top: 1px solid var(--color-line);
+}
+
 @media print {
   /* Sayfa kenar boşluğu yazıcıya bırakılmıyor: fişler kâğıda ortalanmalı. */
   @page {
