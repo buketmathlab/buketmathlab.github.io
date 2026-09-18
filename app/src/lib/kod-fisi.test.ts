@@ -259,17 +259,43 @@ describe('fisMetni', () => {
    * NE GÖRECEĞİ SAYILARAK YAZILDI. Cümleler kabuklardaki gerçek
    * sekmelerden çıktı; "burada görürsün" gibi içi boş bir ifadeye geri
    * dönülürse bu test yanar.
+   *
+   * Öğretmen cümleleri iki kez kısalttı: önce "takip eder" istedi
+   * ("görür" değil), sonra mesajlaşmanın hiç anılmamasını. Fiş bir
+   * tanıtım broşürü değil; ilk gün ne yapılacağını söylüyor.
    */
   it('ne göreceği gerçekten tarif ediliyor', () => {
     const o = fisMetni('ogrenci').satirlar.join(' ');
-    expect(o).toContain('Ödev');
-    expect(o).toContain('konularındaki gelişimini');
-    expect(o).toContain('fotoğraf');
+    expect(o).toContain('Ödevlerini takip eder');
+    expect(o).toContain('gönderir');
+    expect(o).toContain('gelişimini izlersin');
 
     const v = fisMetni('veli').satirlar.join(' ');
-    expect(v).toContain('ödevlerini');
-    expect(v).toContain('gelişimini');
-    expect(v).toContain('yazış');
+    expect(v).toContain('ödevlerini takip eder');
+    expect(v).toContain('gelişimini izlersiniz');
+  });
+
+  /**
+   * NEGATİF KONTROL — MESAJLAŞMA FİŞTE ANILMIYOR.
+   *
+   * Öğretmenin kararı: *"o mesajlaşma kısmına hiç girme."* Özellik
+   * duruyor, fişte anlatılmıyor. Bir gün "bir cümle daha ekleyelim"
+   * denirse bu test yanar ve kararın konuşulmuş olduğunu hatırlatır.
+   */
+  it('fişte mesajlaşmadan söz edilmiyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const metin = fisMetni(tur).satirlar.join(' ').toLocaleLowerCase('tr');
+      expect(metin).not.toContain('yazış');
+      expect(metin).not.toContain('mesaj');
+    }
+  });
+
+  /**
+   * GİRİŞ CÜMLESİ: "gir" değil "giriş yap" — öğretmenin sözü.
+   */
+  it('giriş cümlesi "giriş yap" diyor', () => {
+    expect(fisMetni('ogrenci').satirlar.join(' ')).toContain('giriş yap.');
+    expect(fisMetni('veli').satirlar.join(' ')).toContain('giriş yapın.');
   });
 
   /**

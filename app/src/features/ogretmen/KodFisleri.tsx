@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Dialog } from '@/components/ui/Dialog';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { Sekiz8Mark } from '@/components/brand/Sekiz8Mark';
+import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -262,10 +262,13 @@ function FisKarti({ fis }: { fis: Fis }) {
   const m = fisMetni(fis.tur);
   return (
     <div className="sk-fis" data-fis={fis.tur}>
-      {/* İMZA KALKTI (öğretmenin kararı): fişi eline alan kimin verdiğini
-          zaten biliyor, satır yalnız yer kaplıyordu. 8 simgesi kalıyor. */}
-      <div className="flex items-center justify-between gap-2">
-        <Sekiz8Mark boyut={14} />
+      {/* ÜRÜNÜN ADI YAZIYLA DA GEÇİYOR.
+          Önce yalnız 8 işareti vardı; öğretmen haklı olarak "işaret tek
+          başına uygulamanın adını söylemiyor" dedi. Ad yazıyla, altında
+          branşıyla duruyor. Öğretmenin kendi adı yok — onu geçen turda
+          kaldırttı, kararı değişmedi. */}
+      <div className="flex items-start justify-between gap-2">
+        <SekizWordmark bicim="ders" boyut="xs" />
         <span className="text-[10px] text-muted">{m.baslik}</span>
       </div>
 

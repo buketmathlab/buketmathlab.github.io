@@ -120,6 +120,13 @@ const KURULUM_VELI: readonly string[] = [
  * bir şey vaat etmiş olurduk. Öğretmenin ödeme kuralı da ayrıca bunu
  * yasaklıyor.
  *
+ * MESAJLAŞMA DA GEÇMİYOR — ama sebebi başka ve öğretmenin kararı:
+ * *"o mesajlaşma kısmına hiç girme."* Özellik duruyor, fişte
+ * anlatılmıyor. Fiş bir tanıtım broşürü değil, giriş kâğıdı; her
+ * yeteneği saymak yerine çocuğun ve velinin ilk gün ne yapacağını
+ * söylüyor. Cümleler bu yüzden kısaldı: takip et, gönder, gelişimini
+ * izle.
+ *
  * İMZA YOK. Fişte önce "Buket Topuzoğlu · Matematik" yazıyordu;
  * öğretmen kaldırttı. Üstte 8 simgesi ve "Öğrenci girişi" / "Veli
  * girişi" kalıyor — fişi eline alan kimin verdiğini zaten biliyor,
@@ -138,8 +145,8 @@ export function fisMetni(tur: FisTuru): {
       kodEtiketi: 'Öğrenci kodun',
       satirlar: [
         `Adrese git: ${ADRES}`,
-        'Kodunu yaz ve gir.',
-        'Ödevlerini görür, çözümünü fotoğrafla gönderir, konularındaki gelişimini izler ve öğretmenine yazabilirsin.',
+        'Kodunu yaz ve giriş yap.',
+        'Ödevlerini takip eder, çözümünü gönderir, konulardaki gelişimini izlersin.',
       ],
       kurulumBasligi: 'Telefonuna uygulama olarak ekle',
       kurulum: KURULUM_OGRENCI,
@@ -150,8 +157,8 @@ export function fisMetni(tur: FisTuru): {
     kodEtiketi: 'Veli kodunuz',
     satirlar: [
       `Adrese girin: ${ADRES}`,
-      'Kodu yazıp girin.',
-      'Çocuğunuzun ödevlerini, teslim durumunu ve konulardaki gelişimini izler, öğretmenle yazışabilirsiniz.',
+      'Kodu yazıp giriş yapın.',
+      'Çocuğunuzun ödevlerini takip eder, konulardaki gelişimini izlersiniz.',
     ],
     kurulumBasligi: 'Telefonunuza uygulama olarak ekleyin',
     kurulum: KURULUM_VELI,

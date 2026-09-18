@@ -160,7 +160,9 @@
 .sk-fis-sayfa {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 4mm;
+  /* 4 → 3 mm: marka bloğu (SEKİZ + Matematik) fişi büyüttü ve A4 ölçümü
+     8,2 mm taşma bildirdi. Kesme payı 3 mm'de hâlâ makasla rahat. */
+  gap: 3mm;
   width: 190mm;
   max-width: 100%;
   margin: 0 auto 8mm;
@@ -169,9 +171,11 @@
 .sk-fis {
   border: 1px dashed var(--color-line);   /* kesme çizgisi */
   border-radius: 2mm;
-  padding: 3mm 4mm;
+  /* Dikey iç boşluk 3 → 2,5 mm, aynı sebeple. Yatayda 4 mm kalıyor:
+     metin kesme çizgisine yapışmasın. */
+  padding: 2.5mm 4mm;
   /* SAYFAYA 8 FİŞ (2 × 4). Üst sınır hesabı: A4'ün yazılabilir boyu
-     277 mm, aradaki 3 boşluk 4'er mm → fiş EN ÇOK 66,2 mm olabilir.
+     277 mm, aradaki 3 boşluk 3'er mm → fiş EN ÇOK 67 mm olabilir.
      Burada alt sınır veriliyor, sabit yükseklik değil: içeriği metin
      belirlesin, sınırı `kod-fisi-denetimi.mjs`'deki A4 ölçümü korusun.
      Sabit yükseklik verilseydi uzun bir ad ya da yeni bir satır kâğıtta
@@ -184,8 +188,11 @@
    Fişteki iki iş birbirine karışmasın: önce gir, sonra istersen
    telefonuna ekle. */
 .sk-fis-kurulum {
-  margin-top: 1.5mm;
-  padding-top: 1.5mm;
+  /* 1,5 → 1 mm. Son 1,2 mm buradan kazanıldı: yazı küçültmek yerine bir
+     ayırıcı boşluğu kısıldı. Fişte en çok okunması gereken şey kod ve
+     tarif; punto düşürmek onları zorlaştırırdı. */
+  margin-top: 1mm;
+  padding-top: 1mm;
   border-top: 1px solid var(--color-line);
 }
 

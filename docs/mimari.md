@@ -3436,3 +3436,41 @@ gelecekteki bir değişiklikte kısa adlı eski fixture da **aynı** kusuru
 veriyordu. Yani uzun ad hiçbir şey yakalamıyor. Fixture gerçekçi veri
 olarak kaldı ama bir güvence olduğu iddiası **silindi** — süs olan ölçüm,
 olmayan ölçümden daha tehlikelidir.
+
+### İkinci editoryal tur — ad yazıyla, cümleler kısa
+
+Öğretmen fişi tekrar okudu ve dört şey söyledi:
+
+1. **Ürünün adı yazıyla da geçsin.** "8 işareti tek başına uygulamanın
+   adını söylemiyor" — haklıydı. Üstte artık `8 SEKİZ`, altında
+   `Matematik`. Kendi adı yok; onu bir önceki turda kaldırttı ve kararı
+   değişmedi.
+2. `gir` → **`giriş yap`**.
+3. `Ödevlerini görür` → **`takip eder`**, ve cümleler kısalsın.
+4. **Mesajlaşma hiç anılmasın:** *"o kısma hiç girme."*
+
+Dördüncüsü bir ürün kararı: özellik duruyor, fişte anlatılmıyor. Fiş bir
+tanıtım broşürü değil, giriş kâğıdı — her yeteneği saymak yerine ilk gün
+ne yapılacağını söylüyor. Negatif bir test (`yazış`/`mesaj` geçmiyor)
+kararı kilitliyor.
+
+Marka bloğu **uydurulmadı**: depoda zaten `SekizWordmark` vardı. İki
+küçük ekleme yapıldı — `bicim="ders"` (ad + yalnız branş; `'tam'`
+öğretmenin adını da yazıyor, o istenmiyordu) ve kâğıt için `boyut="xs"`.
+İşaret yeniden çizilmedi.
+
+### A4 ölçümü bu turda gerçekten işe yaradı
+
+Marka bloğu iki satır getirince denetim **-8,2 mm taşma** bildirdi. Yani
+kusur kâğıda gitmeden, ekranda yakalandı. Yer üç adımda geri kazanıldı
+ve hiçbirinde punto düşürülmedi:
+
+| Değişiklik | Kazanç |
+| --- | --- |
+| Izgara boşluğu 4 → 3 mm | 3 mm |
+| Fiş dikey iç boşluğu 3 → 2,5 mm | 4 mm |
+| Kurulum ayırıcısı 1,5 → 1 mm | ~4 mm |
+
+Son durum: ızgara **274,2 mm / 277 mm**, pay **2,8 mm**. Fişte en çok
+okunması gereken şeyler — kod ve tarif — aynı büyüklükte kaldı; küçülen
+şey boşluklar oldu.
