@@ -143,10 +143,13 @@ describe('fisMetni', () => {
    */
   it('hem iPhone hem Android yolu yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
-      const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).toContain('iPhone');
-      expect(k).toContain('Paylaş');
-      expect(k).toContain('Android');
+      // KÜÇÜK HARFE TÜRKÇE KURALIYLA İNİLİYOR. `toLowerCase()` "I"yı "i"
+      // yapar ve Türkçe metinde yanlış eşleşme üretir; depodaki kural
+      // (0043, ayrıştırıcı) burada da geçerli.
+      const k = fisMetni(tur).kurulum.join(' ').toLocaleLowerCase('tr');
+      expect(k).toContain('iphone');
+      expect(k).toContain('paylaş');
+      expect(k).toContain('android');
       expect(k).toContain('menü');
     }
   });
@@ -190,11 +193,107 @@ describe('fisMetni', () => {
     expect(fisMetni('veli').satirlar.join(' ')).toContain('girin');
   });
 
-  it('fiş metni kısa kalıyor — kesilip dağıtılan bir kâğıt', () => {
+  /**
+   * ÜST SINIR GEVŞEDİ (60 → 130) VE SEBEBİ KAYDA DEĞER.
+   *
+   * Bu test "kâğıda sığsın" demenin VEKİLİYDİ: harf sayısını sayarak
+   * sayfaya sığmayı tahmin ediyordu. Artık sığmayı DOĞRUDAN ölçen bir
+   * şey var — `kod-fisi-denetimi.mjs` ızgaranın A4'ün 277 mm'sini
+   * aşmadığını ve hiçbir fişin kutusundan taşmadığını ölçüyor, ikisi de
+   * kusur yerleştirilerek ısırtıldı.
+   *
+   * Öğretmen tarifin ayrıntılanmasını isteyince 60 harflik vekil, asıl
+   * gereksinimle ÇELİŞTİ. Vekili zorlamak yerine gerçek ölçüme
+   * bırakıldı; buradaki sayı yalnız "bir paragraf yazılmasın" diyen
+   * kaba bir tavan.
+   */
+  it('fiş metni bir paragrafa dönüşmüyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
-      for (const satir of fisMetni(tur).satirlar) {
-        expect(satir.length).toBeLessThanOrEqual(60);
+      for (const satir of [...fisMetni(tur).satirlar, ...fisMetni(tur).kurulum]) {
+        expect(satir.length).toBeLessThanOrEqual(130);
       }
+    }
+  });
+
+  /**
+   * ÖĞRETMENİN İSTEDİĞİ İFADE: "uygulama gibi" değil "uygulama olarak".
+   */
+  it('başlık "uygulama olarak" diyor', () => {
+    expect(fisMetni('ogrenci').kurulumBasligi).toContain('uygulama olarak');
+    expect(fisMetni('veli').kurulumBasligi).toContain('uygulama olarak');
+  });
+
+  /**
+   * DÜĞMENİN YERİ TARİF EDİLİYOR — öğretmenin ikinci eksiği.
+   *
+   * "Safari'de aç" demek yetmedi: *"paylaş butonunu nereden bulacak?"*
+   * iPhone'da o düğme ekranın ALT ORTASINDA ve simgesi tarif edilmeden
+   * bulunmuyor. Android'de menü SAĞ ÜSTTE. Tarif ikisini de söylemeli;
+   * yalnız "menüden ekleyin" demek, düğmeyi arayan veliyi yolda
+   * bırakırdı.
+   */
+  it('paylaş düğmesinin ve menünün YERİ yazıyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const k = fisMetni(tur).kurulum.join(' ');
+      expect(k).toContain('alt ortasındaki');
+      expect(k).toContain('yukarı ok');
+      expect(k).toContain('Sağ üstteki');
+      expect(k).toContain('üç nokta');
+    }
+  });
+
+  /**
+   * ANDROID'DE İKİ ETİKET DE YAZIYOR. Chrome, koşullar sağlanınca
+   * menüde "Ana ekrana ekle" yerine "Uygulamayı yükle" gösteriyor. Tek
+   * etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
+   */
+  it('Android satırı iki menü etiketini de veriyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const k = fisMetni(tur).kurulum.join(' ');
+      expect(k).toContain('Ana ekrana ekle');
+      expect(k).toContain('Uygulamayı yükle');
+    }
+  });
+
+  /**
+   * NE GÖRECEĞİ SAYILARAK YAZILDI. Cümleler kabuklardaki gerçek
+   * sekmelerden çıktı; "burada görürsün" gibi içi boş bir ifadeye geri
+   * dönülürse bu test yanar.
+   */
+  it('ne göreceği gerçekten tarif ediliyor', () => {
+    const o = fisMetni('ogrenci').satirlar.join(' ');
+    expect(o).toContain('Ödev');
+    expect(o).toContain('konularındaki gelişimini');
+    expect(o).toContain('fotoğraf');
+
+    const v = fisMetni('veli').satirlar.join(' ');
+    expect(v).toContain('ödevlerini');
+    expect(v).toContain('gelişimini');
+    expect(v).toContain('yazış');
+  });
+
+  /**
+   * NEGATİF KONTROL — OLMAYAN VAAT SIZMASIN.
+   *
+   * `Ödemeler` sekmesi YALNIZ özel ders velisinde var. Fişe yazılsaydı
+   * yüzlerce okul velisine olmayan bir şey vaat edilmiş olurdu.
+   * Öğretmenin ödeme kuralı da ayrıca bunu yasaklıyor.
+   */
+  it('fişte Ödemeler vaat edilmiyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const metin = [...fisMetni(tur).satirlar, ...fisMetni(tur).kurulum].join(' ');
+      expect(metin.toLocaleLowerCase('tr')).not.toContain('ödeme');
+    }
+  });
+
+  /**
+   * NEGATİF KONTROL — İMZA GERİ GELMESİN. Öğretmen kaldırttı; fiş
+   * metninde adı hiç geçmemeli.
+   */
+  it('fiş metninde imza geçmiyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const metin = [...fisMetni(tur).satirlar, ...fisMetni(tur).kurulum].join(' ');
+      expect(metin).not.toContain('Topuzoğlu');
     }
   });
 });
@@ -208,14 +307,22 @@ describe('sayfalaraBol', () => {
     kod: 'K' + i,
   });
 
-  it('A4 başına 10 fiş', () => {
-    expect(SAYFA_BASINA).toBe(10);
+  /**
+   * A4 BAŞINA 8 — 10 DEĞİL.
+   *
+   * Kurulum tarifi ayrıntılanınca 10 fişlik düzene tek satır bile
+   * sığmadı (ölçüm: satır 2,62 mm, sayfa payı 9,8 mm). Öğretmen kâğıt
+   * bedelini bilerek kabul etti. Bu sayı sessizce 10'a dönerse metin
+   * kâğıttan taşar; o yüzden burada kilitli.
+   */
+  it('A4 başına 8 fiş', () => {
+    expect(SAYFA_BASINA).toBe(8);
     const sayfalar = sayfalaraBol(Array.from({ length: 25 }, (_, i) => fis(i)));
-    expect(sayfalar.map((s) => s.length)).toEqual([10, 10, 5]);
+    expect(sayfalar.map((s) => s.length)).toEqual([8, 8, 8, 1]);
   });
 
   it('tam sayfa dolduğunda boş sayfa açmıyor', () => {
-    expect(sayfalaraBol(Array.from({ length: 20 }, (_, i) => fis(i)))).toHaveLength(2);
+    expect(sayfalaraBol(Array.from({ length: 16 }, (_, i) => fis(i)))).toHaveLength(2);
   });
 
   it('boş listede sayfa yok', () => {

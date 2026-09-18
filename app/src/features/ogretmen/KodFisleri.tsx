@@ -13,7 +13,6 @@ import {
   fisMetni,
   fisleriUret,
   sayfalaraBol,
-  IMZA,
   type Fis,
   type FisTuru,
 } from '@/lib/kod-fisi';
@@ -263,11 +262,10 @@ function FisKarti({ fis }: { fis: Fis }) {
   const m = fisMetni(fis.tur);
   return (
     <div className="sk-fis" data-fis={fis.tur}>
+      {/* İMZA KALKTI (öğretmenin kararı): fişi eline alan kimin verdiğini
+          zaten biliyor, satır yalnız yer kaplıyordu. 8 simgesi kalıyor. */}
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1 text-[10px] text-muted">
-          <Sekiz8Mark boyut={14} />
-          {IMZA}
-        </span>
+        <Sekiz8Mark boyut={14} />
         <span className="text-[10px] text-muted">{m.baslik}</span>
       </div>
 
@@ -283,10 +281,16 @@ function FisKarti({ fis }: { fis: Fis }) {
       {/* Kod BOŞLUKSUZ ve büyük: elle yazılacak, okunması kolay olmalı. */}
       <p className="sk-sayi text-[20px] font-bold tracking-[0.12em] text-ink">{fis.kod}</p>
 
+      {/* SATIR SAYISI ARTIK SABİT DEĞİL: metin turu ikiden üçe çıkardı ve
+          yarın değişebilir. Elle `[0]`/`[1]` yazmak, üçüncü satırı
+          sessizce düşürürdü — nitekim ilk yazımda tam bu olmuştu. */}
       <p className="mt-1 text-[10px] leading-tight text-muted">
-        {m.satirlar[0]}
-        <br />
-        {m.satirlar[1]}
+        {m.satirlar.map((s, i) => (
+          <span key={s}>
+            {i > 0 && <br />}
+            {s}
+          </span>
+        ))}
       </p>
 
       {/* KURULUM — ayrı bir blok, giriş yönergesinin devamı değil.
@@ -295,10 +299,12 @@ function FisKarti({ fis }: { fis: Fis }) {
           bilgi koddan ve adresten sonra gelir; onların önüne geçmemeli. */}
       <p className="sk-fis-kurulum mt-1 text-[9px] leading-tight text-muted">
         <span className="font-semibold">{m.kurulumBasligi}</span>
-        <br />
-        {m.kurulum[0]}
-        <br />
-        {m.kurulum[1]}
+        {m.kurulum.map((s) => (
+          <span key={s}>
+            <br />
+            {s}
+          </span>
+        ))}
       </p>
     </div>
   );

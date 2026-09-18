@@ -3372,3 +3372,67 @@ günde duraklıyor, alan adı yılda bir bitiyor.
   dışarıya açmıyor. Ölçtüğü şey sonuç: süre azalıyor mu.
 - Kartın geçerliliğini de göremez. Kart ölürse bu ancak süre eşiğin
   altına inince anlaşılır — eşik o yüzden cömert (45 gün).
+
+## Fiş metninin editoryal turu — ve sayfaya 8 fiş
+
+Öğretmen fişleri cümle cümle eleştirdi: açıklamalar fazla basit, kurulum
+tarifi "nereye dokunacağını" söylemiyor, imza yer kaplıyor. Kâğıt 720
+aileye gidiyor ve bir kez basılıyor.
+
+### Kâğıt kararı bir ölçümle alındı, tartışmayla değil
+
+Tarifi ayrıntılandırmak istenince önce **ne kadar yerim olduğu** ölçüldü:
+
+| Ölçüm | Değer |
+| --- | --- |
+| 9 px yazıda bir satıra sığan harf (86 mm iç genişlik) | 71 |
+| Bir satırın maliyeti | 2,62 mm |
+| O günkü sayfa payı | 9,8 mm → fiş başına 2,0 mm |
+| **Eklenebilecek satır** | **0** |
+
+İmzayı kaldırmak da yetmiyordu. Yani "biraz sıkıştırırız" diye
+başlanamazdı; istenen şey kâğıt düzenini değiştirmeden **imkânsızdı**.
+Öğretmene seçenekler bedelleriyle sunuldu ve **sayfaya 8 fiş** (2 × 4)
+seçildi: bir takım fiş 72 yerine 90 sayfa.
+
+Yeni ölçüm: ızgara **273,8 mm / 277 mm**, pay **3,2 mm**. Dar, ve tam bu
+yüzden `kod-fisi-denetimi.mjs`'deki A4 ölçümü artık turun en değerli
+güvencesi.
+
+### Metinler sayılarak yazıldı
+
+Cümleler kabuklardaki gerçek sekmelerden çıktı: öğrencide Pano ·
+**Ödevler** · **Konularım** · **Mesajlar**, velide Pano · **Ödevler** ·
+**Konular** · **Mesajlar**; teslim fotoğrafla.
+
+**`Ödemeler` fişte hiç geçmiyor.** O sekme yalnız özel ders velisinde
+var; yazsaydık yüzlerce okul velisine olmayan bir şey vaat ederdik.
+Negatif bir test bunu kilitliyor.
+
+### Düğmenin yeri yazıyor
+
+Öğretmenin ikinci eksiği: *"Safari'de açtıktan sonra paylaş butonunu
+nereden bulacak?"* Haklıydı — iPhone'da o düğme **ekranın alt ortasında**
+ve simgesi tarif edilmeden bulunmuyor; Android'de menü **sağ üstte**.
+Tarif artık ikisini de söylüyor. Android satırında iki menü etiketi de
+var ("Ana ekrana ekle" / "Uygulamayı yükle"), çünkü Chrome koşullara
+göre ikisinden birini gösteriyor.
+
+### Vekil ölçüm, gerçek ölçüme yenildi
+
+`fiş metni kısa kalıyor` testi satırları 60 harfle sınırlıyordu. O sayı
+"kâğıda sığsın"ın **vekiliydi** — sığmayı doğrudan ölçen bir şey yokken
+mantıklıydı. Artık A4 ölçümü var ve öğretmenin isteğiyle vekil, asıl
+gereksinimle çelişti. Vekili zorlamak yerine sınır gevşetildi ve
+gerekçesi teste yazıldı; kâğıdı koruyan şey artık harf sayısı değil,
+milimetre.
+
+### Yanlış çıkan bir sezgi — kayda geçiyor
+
+"Dört adlı bir öğrencide ad satırı taşar, kâğıt patlar" diye düşünüp
+denetime uzun bir ad koydum. **Ölçüm beni yanlışladı:** 54 harflik ad
+bile alt satıra taşmıyor, ve ad yazısı 16 px'e çıkarılarak taklit edilen
+gelecekteki bir değişiklikte kısa adlı eski fixture da **aynı** kusuru
+veriyordu. Yani uzun ad hiçbir şey yakalamıyor. Fixture gerçekçi veri
+olarak kaldı ama bir güvence olduğu iddiası **silindi** — süs olan ölçüm,
+olmayan ölçümden daha tehlikelidir.

@@ -14,14 +14,14 @@
  *
  * ÜÇÜNCÜ ÖLÇÜM, KÂĞIT: `emulateMedia({ media: 'print' })` ile gerçekten
  * yazdırma kipinde bakılıyor — kabuk ve düğmeler çıkmıyor, sayfa başına
- * 10 fiş var. "CSS'te print:hidden yazdım" demek yeterli değil.
+ * 8 fiş var. "CSS'te print:hidden yazdım" demek yeterli değil.
  */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
 const KOK = 'http://127.0.0.1:8788/yeni/';
 
 /**
- * 12 öğrenci: iki sayfa çıkarsın (10 + 2) ve sayfalama ölçülebilsin.
+ * 12 öğrenci: iki sayfa çıkarsın (8 + 4) ve sayfalama ölçülebilsin.
  *
  * NUMARALAR BİLEREK KARIŞIK ve metin sıralamasıyla ÇAKIŞIYOR (0044):
  *   sayısal : 1, 2, 3, 5, 7, 8, 9, 11, 12, 25, 40, 100
@@ -30,9 +30,32 @@ const KOK = 'http://127.0.0.1:8788/yeni/';
  * yapılmasa da yeşil kalabilirdi.
  */
 const NUMARALAR = ['12', '3', '25', '7', '100', '1', '9', '40', '2', '11', '8', '5'];
+
+/**
+ * BİR AD BİLEREK UZUN — ama bunun bir TRİPWIRE OLMADIĞI ölçüldü.
+ *
+ * Fiş, kurulum tarifi eklenince A4'ün tavanına yaklaştı (65,4 / 66,2 mm)
+ * ve "dört adlı bir öğrencide ad satırı alt satıra taşar, kâğıt patlar"
+ * diye düşünüp bu uzun adı ekledim. ÖLÇÜM BENİ YANLIŞLADI ve kayda
+ * geçiyor:
+ *
+ *   - 54 harflik bir ad bile alt satıra TAŞMIYOR (ad satırı iki durumda
+ *     da 20 px).
+ *   - Ad yazısı 13 → 16 px büyütülerek gelecekteki bir değişiklik
+ *     taklit edildi: A4 ölçümü kırmızı yandı (-1,7 mm) — ama KISA adlı
+ *     eski fixture'la da AYNI şekilde yandı.
+ *
+ * Yani bu ad, kısa adın yakalayamadığı hiçbir kusuru yakalamıyor.
+ * Kalmasının sebebi gerçekçi veri olması; bir güvence olduğunu iddia
+ * etmiyor. Kâğıdı koruyan şey aşağıdaki A4 ölçümünün kendisi.
+ *
+ * Ad uydurma ve uydurma olduğu belli — depo herkese açık.
+ */
+const UZUN_AD = 'Öğrenci Uzunadlı Deneme Kaydı';
+
 const OGRENCILER = Array.from({ length: 12 }, (_, i) => ({
   id: 'o' + i,
-  ad: `Öğrenci ${i + 1}`,
+  ad: i === 0 ? UZUN_AD : `Öğrenci ${i + 1}`,
   ogrenci_no: NUMARALAR[i],
   tur: 'okul',
   sinif: '9A',
@@ -294,7 +317,9 @@ console.log('5 — KÂĞIT: YAZDIRMA KİPİNDE KABUK YOK, SAYFA BAŞINA 10 FİŞ
   const dagilim = await p.evaluate(() =>
     [...document.querySelectorAll('.sk-fis-sayfa')].map((s) => s.querySelectorAll('.sk-fis').length),
   );
-  de(JSON.stringify(dagilim) === '[10,2]', `sayfa başına 10 fiş (${JSON.stringify(dagilim)})`);
+  // 10 → 8: kurulum tarifi ayrıntılanınca fiş büyüdü ve 10'luk düzene
+  // tek satır bile sığmıyordu (ölçüm: satır 2,62 mm, sayfa payı 9,8 mm).
+  de(JSON.stringify(dagilim) === '[8,4]', `sayfa başına 8 fiş (${JSON.stringify(dagilim)})`);
 
   // KÂĞIT ÖLÇÜSÜ EKRAN KİPİNDE ÖLÇÜLÜYOR — ve bunun sebebi ölçülerek
   // bulundu: yazdırma kipinde ızgaranın eni bilerek `auto` (gerçek kâğıtta
@@ -346,9 +371,9 @@ console.log('5 — KÂĞIT: YAZDIRMA KİPİNDE KABUK YOK, SAYFA BAŞINA 10 FİŞ
    * ON FİŞ KÂĞIDA GERÇEKTEN SIĞIYOR MU — ve bu ölçümün neden VAR OLMASI
    * gerektiği.
    *
-   * Yukarıdaki "sayfa başına 10 fiş" ölçümü JAVASCRIPT SAYFALAMASINI
+   * Yukarıdaki "sayfa başına 8 fiş" ölçümü JAVASCRIPT SAYFALAMASINI
    * sayıyor (`SAYFA_BASINA`), kâğıdı değil. Yani fişler büyüyüp beşinci
-   * satır A4'ten taşsa bile o ölçüm yeşil kalırdı: DOM'da yine 10 fiş
+   * satır A4'ten taşsa bile o ölçüm yeşil kalırdı: DOM'da yine 8 fiş
    * olurdu, ama yazıcıdan 8'i bir kâğıda, 2'si ayrı kâğıda çıkardı ve
    * öğretmen bunu ancak 72 sayfa bastıktan sonra görürdü.
    *

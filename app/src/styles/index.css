@@ -170,7 +170,13 @@
   border: 1px dashed var(--color-line);   /* kesme çizgisi */
   border-radius: 2mm;
   padding: 3mm 4mm;
-  min-height: 50mm;
+  /* SAYFAYA 8 FİŞ (2 × 4). Üst sınır hesabı: A4'ün yazılabilir boyu
+     277 mm, aradaki 3 boşluk 4'er mm → fiş EN ÇOK 66,2 mm olabilir.
+     Burada alt sınır veriliyor, sabit yükseklik değil: içeriği metin
+     belirlesin, sınırı `kod-fisi-denetimi.mjs`'deki A4 ölçümü korusun.
+     Sabit yükseklik verilseydi uzun bir ad ya da yeni bir satır kâğıtta
+     sessizce kırpılırdı. */
+  min-height: 62mm;
   break-inside: avoid;                     /* fiş iki sayfaya bölünmesin */
 }
 
