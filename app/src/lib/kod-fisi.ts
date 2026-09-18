@@ -75,12 +75,23 @@ export const IMZA = 'Buket Topuzoğlu · Matematik';
  * Android'de tarayıcı menüsünde. Tek bir "menüden ekleyin" cümlesi,
  * telefonunda o menüyü bulamayan veliyi yolda bırakırdı.
  *
+ * TARAYICININ ADI YAZILIYOR — VE BU ÖLÇÜLDÜ, TASARLANMADI.
+ * İlk yazımda satırlar yalnız "Paylaş → Ana Ekrana Ekle" diyordu.
+ * Öğretmen kendi iPhone'unda DENEDİ VE YAPAMADI: bağlantıyı bir
+ * uygulamanın içinden açmıştı ve iOS'ta uygulama içi tarayıcıda
+ * "Ana Ekrana Ekle" seçeneği HİÇ YOKTUR. Safari'de açınca hemen oldu.
+ *
+ * Ürünü en iyi bilen kişi takıldıysa veli hiç yapamaz. O yüzden satır
+ * artık işi nerede yapacağını söylüyor: "Safari'de aç", "Chrome'da aç".
+ * Anlatılan şey tarayıcının markası değil, ŞU: bunu bir uygulamanın
+ * içindeki pencerede değil, tarayıcının kendisinde yapacaksınız.
+ *
  * MENÜ SİMGESİ YAZILMIYOR (⋮ gibi): yazı tipine göre kutu çıkabilir ve
  * Samsung Internet'te menü altta duruyor. Kelime her yerde doğru.
  */
 const KURULUM: readonly [string, string] = [
-  'iPhone: Paylaş → Ana Ekrana Ekle',
-  'Android: tarayıcı menüsü → Ana ekrana ekle',
+  'iPhone: Safari’de aç → Paylaş → Ana Ekrana Ekle',
+  'Android: Chrome’da aç → menü → Ana ekrana ekle',
 ];
 
 /**

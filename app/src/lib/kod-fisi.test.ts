@@ -152,6 +152,26 @@ describe('fisMetni', () => {
   });
 
   /**
+   * TARAYICININ ADI GEÇMELİ — ve bu test bir SAHA BULGUSUNUN karşılığı.
+   *
+   * Yönerge önce yalnız "Paylaş → Ana Ekrana Ekle" diyordu. Öğretmen
+   * kendi iPhone'unda deneyip YAPAMADI: bağlantıyı bir uygulamanın
+   * içinden açmıştı ve iOS'ta uygulama içi tarayıcıda "Ana Ekrana Ekle"
+   * seçeneği hiç yok. Safari'de açınca hemen oldu.
+   *
+   * Yani kusur üründe değil yönergedeydi ve ancak gerçek bir telefonda
+   * göründü. Bu satır o dersin geri sızmasını engelliyor: biri bir gün
+   * "fiş kalabalık olmuş" deyip tarayıcı adlarını atarsa test yanar.
+   */
+  it('kurulum yönergesi tarayıcının adını söylüyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const k = fisMetni(tur).kurulum.join(' ');
+      expect(k).toContain('Safari');
+      expect(k).toContain('Chrome');
+    }
+  });
+
+  /**
    * MUHATAP KURULUM SATIRINDA DA DOĞRU: öğrenciye "ekle", veliye
    * "ekleyin". Fişin geri kalanında verilen kararın aynısı; tek bir
    * ortak cümle yazmak kolay olurdu ama veliye sen demek olurdu.

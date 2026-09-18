@@ -3246,10 +3246,32 @@ Olmasaydı bu tur kurulum yönergesiyle değil, o eksiklerle başlardı.
 
 ### İki satır, çünkü iki ayrı yol
 
-`iPhone: Paylaş → Ana Ekrana Ekle` · `Android: tarayıcı menüsü → Ana
-ekrana ekle`. Tek bir "menüden ekleyin" cümlesi, telefonunda o menüyü
-bulamayan veliyi yolda bırakırdı — iPhone'da yol "Paylaş"ın içinden
-geçiyor ve orayı bilmeyen kimse bulamaz.
+`iPhone: Safari'de aç → Paylaş → Ana Ekrana Ekle` ·
+`Android: Chrome'da aç → menü → Ana ekrana ekle`. Tek bir "menüden
+ekleyin" cümlesi, telefonunda o menüyü bulamayan veliyi yolda bırakırdı
+— iPhone'da yol "Paylaş"ın içinden geçiyor ve orayı bilmeyen kimse
+bulamaz.
+
+### Tarayıcının adı yazıyor — ve bunu bir SAHA BULGUSU ekletti
+
+Yönerge ilk yazıldığında yalnız `Paylaş → Ana Ekrana Ekle` diyordu ve
+teknik olarak doğruydu. **Öğretmen kendi iPhone'unda deneyip yapamadı.**
+
+Sebep üründe değildi: yayındaki `manifest.webmanifest` 200 dönüyor,
+doğru MIME tipiyle sunuluyor, üç simge de yerinde ve `display`
+`standalone`. Hepsi ölçüldü. Sebep şuydu — bağlantı bir uygulamanın
+içinden açılmıştı ve **iOS'ta uygulama içi tarayıcıda "Ana Ekrana Ekle"
+seçeneği HİÇ YOKTUR.** Safari'de açınca hemen oldu.
+
+Buradan çıkan ders, yönergenin kendisinden büyük: **ürünü en iyi bilen
+kişi takıldıysa veli hiç yapamaz.** Kâğıt basılmadan önce bir gerçek
+telefonda denenmesi, on ölçümün göremediğini gösterdi.
+
+Satır artık işin nerede yapılacağını söylüyor. Anlatılan şey tarayıcının
+markası değil: *bunu bir uygulamanın içindeki pencerede değil,
+tarayıcının kendisinde yapacaksınız.* `kod-fisi.test.ts` tarayıcı
+adlarının geçtiğini ölçüyor — biri bir gün "fiş kalabalık olmuş" deyip
+atarsa test yanıyor (kusur yerleştirilip gösterildi).
 
 Menü simgesi (⋮) yazılmadı: yazı tipine göre kutu çıkabiliyor ve Samsung
 Internet'te menü altta duruyor. Kelime her yerde doğru.
