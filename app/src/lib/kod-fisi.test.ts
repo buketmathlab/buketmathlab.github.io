@@ -273,20 +273,20 @@ describe('fisMetni', () => {
    * Öğretmen kendi telefonunda doğruladı.
    *
    * İKİ YER AYRI AYRI ÖLÇÜLÜYOR: iPhone'da ALTTA üç nokta, Samsung'da
-   * ÜSTTE aşağı oklu kare. Yalnız "üç nokta" aransaydı, iki satırdan biri
+   * ÜSTTE aşağı ok işaretli kare. Yalnız "üç nokta" aransaydı, iki satırdan biri
    * silinse bile test yeşil kalırdı — öteki satırdaki "üç nokta" yetiyor
    * olurdu.
    *
    * SAMSUNG SATIRI ÖĞRETMENİN EKRAN GÖRÜNTÜLERİNDEN GELDİ. Daha önce
    * burada "Sağ üstteki üç nokta" yazıyordu; öğretmen kendi Samsung'unda
    * o menüyü açtı ve orada böyle bir seçenek YOKTU. Çalışan yol, üst
-   * çubuktaki aşağı oklu kare simgesiydi.
+   * çubuktaki aşağı ok işaretli kare simgesiydi.
    */
   it('düğmenin yeri iki telefonda da ayrı ayrı yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
       expect(k).toContain('Alttaki üç nokta');
-      expect(k).toContain('Üstteki aşağı oklu kare');
+      expect(k).toContain('Üstteki aşağı ok işaretli kare');
       expect(k).toContain('Paylaş');
     }
   });
@@ -382,7 +382,7 @@ describe('fisMetni', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const adim = fisMetni(tur).kurulum.filter((s) => s.includes('Uygulama olarak ekle'));
       expect(adim).toHaveLength(1);
-      expect(adim[0]).toContain('Üstteki aşağı oklu kare');
+      expect(adim[0]).toContain('Üstteki aşağı ok işaretli kare');
       expect(adim[0]).toContain('“Ekle”');
     }
   });

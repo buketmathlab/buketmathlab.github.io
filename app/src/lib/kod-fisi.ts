@@ -145,7 +145,7 @@ export type Fis = {
  *
  * SİMGE ÇİZİLMİYOR (⋮ ya da aşağı ok gibi): yazı tipine göre boş kutu
  * çıkıyor ve kâğıtta bunu düzeltmenin yolu yok. Simge KELİMEYLE
- * anlatılıyor — "üç nokta", "aşağı oklu kare".
+ * anlatılıyor — "üç nokta", "aşağı ok işaretli kare".
  *
  * MUHATAP YALNIZ BLOK BAŞLIKLARINDA AYRILIYOR (aç / açın): adım satırları
  * ok zinciri, yani fiilsiz. Veliye "sen" demeden iki fişin ortak
@@ -161,7 +161,7 @@ const KURULUM_OGRENCI: readonly string[] = [
   '“Ana Ekrana Ekle” → “Ekle”.',
   `Android: Telefonun kendi tarayıcısında ${ADRES} yaz.`,
   '(Chrome ya da Google ile değil.) Samsung’da adı “Browser”.',
-  'Üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
+  'Üstteki aşağı ok işaretli kare → “Uygulama olarak ekle” → “Ekle”.',
 ];
 
 const KURULUM_VELI: readonly string[] = [
@@ -170,7 +170,7 @@ const KURULUM_VELI: readonly string[] = [
   '“Ana Ekrana Ekle” → “Ekle”.',
   `Android: Telefonun kendi tarayıcısında ${ADRES} yazın.`,
   '(Chrome ya da Google ile değil.) Samsung’da adı “Browser”.',
-  'Üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
+  'Üstteki aşağı ok işaretli kare → “Uygulama olarak ekle” → “Ekle”.',
 ];
 
 /**
