@@ -446,7 +446,7 @@ describe('fisMetni', () => {
 
       expect(ios).toContain('Safari');
       expect(ios).toContain('sekizkyal.com');
-      expect(android).toContain('kendi tarayıcısını');
+      expect(android).toContain('kendi tarayıcısında');
       expect(android).toContain('sekizkyal.com');
     }
   });

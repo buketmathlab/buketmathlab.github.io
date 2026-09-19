@@ -159,7 +159,7 @@ const KURULUM_OGRENCI: readonly string[] = [
   `iOS: Safari’de ${ADRES} yaz (Chrome ya da Google değil).`,
   'Alttaki üç nokta → “Paylaş” → açılan pencereyi yukarı kaydır.',
   '“Ana Ekrana Ekle” → “Ekle”.',
-  `Android: Telefonun kendi tarayıcısını aç, ${ADRES} yaz.`,
+  `Android: Telefonun kendi tarayıcısında ${ADRES} yaz.`,
   '(Chrome ya da Google ile değil.) Samsung’da adı “Browser”.',
   'Üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
 ];
@@ -168,7 +168,7 @@ const KURULUM_VELI: readonly string[] = [
   `iOS: Safari’de ${ADRES} yazın (Chrome ya da Google değil).`,
   'Alttaki üç nokta → “Paylaş” → açılan pencereyi yukarı kaydırın.',
   '“Ana Ekrana Ekle” → “Ekle”.',
-  `Android: Telefonunuzun kendi tarayıcısını açın, ${ADRES} yazın.`,
+  `Android: Telefonun kendi tarayıcısında ${ADRES} yazın.`,
   '(Chrome ya da Google ile değil.) Samsung’da adı “Browser”.',
   'Üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
 ];
