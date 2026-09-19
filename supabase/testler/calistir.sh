@@ -186,6 +186,10 @@ echo "==> Numara sırası testleri (0044)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/numara_sirasi_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Kodu yenile testleri (0045)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/kod_yenile_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Ad kuyruğu (cinsiyet/pansiyon) temizliği testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/ad_kuyrugu_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

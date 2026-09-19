@@ -3537,3 +3537,58 @@ içinde açılır, iPhone'daki gibi tam uygulama hissi vermez. Chrome bu
 şartı gevşetti ama hangi sürümden itibaren olduğu bizde ölçülmedi. Fiş
 bu yüzden "uygulama olarak ekle" diyor ve **nasıl açılacağına dair bir
 söz vermiyor**.
+
+## Kodu yenile (0045)
+
+Öğretmen sordu: *"Veliler, öğrenciler giriş kodlarını sonra kendileri
+değiştirebiliyorlar mı?"* Cevap hayırdı — ve daha kötüsü, **öğretmen de
+değiştiremiyordu.** `giris_kodlari` kişi başına tek satır tutuyor ve kod
+yalnız öğrenci eklenirken bir kez üretiliyordu; sonrasında değiştiren
+hiçbir yol yoktu.
+
+Sorun tahmin değil **sızma**: kod 31 harflik alfabeden 8 karakter ve
+0028'in kilidi kaba kuvveti zaten imkânsız kılıyor. Ama fişler öğrenci
+eliyle dağıtılacak; bir öğrenci velisinin fişini açarsa o ailenin veli
+kanalı (0025'in ayırdığı öğretmen↔veli yazışması, özel derste ödemeler)
+**kalıcı olarak** açık kalıyordu.
+
+### Neden "kendileri değiştirsin" değil
+
+Öğretmene önce bu seçenek soruldu ve çekince kayda geçti: e-posta ya da
+telefon yok, yani kurtarma yolu yok — kodunu değiştirip unutan veli
+tamamen kilitlenir. Dahası, velinin kodunu ele geçiren öğrenci onu
+değiştirip aileyi kilitleyebilirdi; **sızıntının zararını azaltmaz,
+artırırdı.** Eksik olan şey "değiştirme" değil **iptal ve yeniden
+verme**, ve o sorumlu yetişkinde olmalı.
+
+Öğretmen yine de ikisini birden istedi: **önce bu tur (öğretmende
+yenileme), sonra ayrı bir turda öğrenci/veli tarafı.** Sıra zorunlu —
+kilitlenen veliyi ancak öğretmen kurtarabilir.
+
+### Üç kritik karar
+
+**Açık oturum da ölüyor.** Yalnız kodu değiştirmek, kapıyı kilitleyip
+hırsızı içeride unutmaktır. `ogrenci_pasiflestir`'in (0033) zaten
+kullandığı iptal yolu.
+
+**Ama yalnız o rolün oturumu.** `oturumlar.rol` süzgeci şart: veli
+kodunu yenilemek öğrenciyi sistemden atmamalı. Süzgeç unutulursa hiçbir
+hata çıkmaz, ürün sessizce yanlış davranır.
+
+**İz kaydına kod yazılmıyor.** `denetim_izi` yalnız rolü taşıyor. Kodu
+yazmak, ölmüş şifrelerin kalıcı bir arşivini kurardı.
+
+### Kapı neden `ogrenci_kodlari` ile aynı
+
+`_ogretmen` + `_ogrenci_sahibi`. Kodu **görebilen** öğretmen onu zaten
+sızdırabilir; yenilemeyi daha dar bir kapıya koymak güvenlik katmaz,
+yalnız meslektaşı kendi öğrencisinde çaresiz bırakırdı.
+
+### Dürüst sınırlar
+
+- Yenileme **geçmişi geri almaz**: sızdıran kişi daha önce okuduğunu
+  okumuş olur. Koruma ileriye dönüktür.
+- Döngü, aile **yeni fişi eline alana kadar kapanmaz**. Ürün öğretmene
+  yalnız düğmeyi verir; ekran bunu açıkça yazıyor.
+- **Toplu yenileme yok** (dönem sonunda bütün sınıf gibi). Bilerek
+  kapsam dışı.

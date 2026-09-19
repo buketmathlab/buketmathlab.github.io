@@ -16,6 +16,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import type {
   Kodlar,
+  KodYenileme,
   OgrenciListesi,
   OgrenciSatiri,
   OgrenciYazismalari,
@@ -38,7 +39,19 @@ export function Ogrenciler() {
   const [yeniSinif, setYeniSinif] = useState('');
   const [kaydediyor, setKaydediyor] = useState(false);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
-  const [yeniKodlar, setYeniKodlar] = useState<{ ad: string; kodlar: Kodlar } | null>(null);
+  const [yeniKodlar, setYeniKodlar] = useState<{
+    id: string | null;
+    ad: string;
+    kodlar: Kodlar;
+  } | null>(null);
+  /**
+   * YENİLEME ONAYI (0045). Geri alınamaz bir iş: onay olmadan yapılmaz.
+   * `id` null ise (yeni eklenen öğrencinin kodları gösteriliyor) yenileme
+   * düğmesi hiç çizilmiyor — zaten yeni üretilmiş bir kodu yenilemenin
+   * anlamı yok ve elimizde kimlik de olmazdı.
+   */
+  const [yenilenecek, setYenilenecek] = useState<{ rol: 'ogrenci' | 'veli' } | null>(null);
+  const [yenileniyor, setYenileniyor] = useState(false);
   const [silinecek, setSilinecek] = useState<OgrenciSatiri | null>(null);
 
   const siniflar = useVeri<Sinif[]>('siniflar_listesi', {
@@ -94,6 +107,7 @@ export function Ogrenciler() {
       // Kodları hemen göster: öğretmenin bunları öğrenciye iletmesi gerek,
       // listeye dönüp aramak zorunda kalmasın.
       setYeniKodlar({
+        id: null,
         ad: ad.trim(),
         kodlar: { ogrenci: y.ogrenci_kodu, veli: y.veli_kodu },
       });
@@ -110,9 +124,42 @@ export function Ogrenciler() {
   async function kodlariGoster(o: OgrenciSatiri) {
     try {
       const k = await rpc<Kodlar>('ogrenci_kodlari', { p_token: oturum?.token, p_id: o.id });
-      setYeniKodlar({ ad: o.ad, kodlar: k });
+      setYeniKodlar({ id: o.id, ad: o.ad, kodlar: k });
     } catch (e) {
       bildir(e instanceof Error ? e.message : 'Kodlar alınamadı.', 'hata');
+    }
+  }
+
+  /**
+   * KODU YENİLE (0045) — iptal ve yeniden verme.
+   *
+   * Sunucu eski kodu öldürüp yenisini üretiyor ve O ROLÜN açık oturumunu
+   * kapatıyor. Burada kritik olan şey yeni kodun EKRANDA KALMASI:
+   * öğretmen onu hemen yazacak ya da fişini basacak. Diyalog kapanıp
+   * kodun kaybolması, yenilemeyi kullanılamaz yapardı — kod bir daha
+   * hiçbir yerden okunamaz değil ama öğretmeni listeye geri gönderirdi.
+   */
+  async function kodYenile() {
+    if (!yenilenecek || !yeniKodlar?.id) return;
+    setYenileniyor(true);
+    try {
+      const y = await rpc<KodYenileme>('kod_yenile', {
+        p_token: oturum?.token,
+        p_id: yeniKodlar.id,
+        p_rol: yenilenecek.rol,
+      });
+      setYeniKodlar((o) => (o ? { ...o, kodlar: { ...o.kodlar, [y.rol]: y.kod } } : o));
+      bildir(
+        y.rol === 'veli'
+          ? 'Veli kodu yenilendi. Eski kod artık çalışmıyor; yeni fişi veliye ulaştırın.'
+          : 'Öğrenci kodu yenilendi. Eski kod artık çalışmıyor; yeni fişi öğrenciye verin.',
+        'basari',
+      );
+    } catch (e) {
+      bildir(e instanceof Error ? e.message : 'Kod yenilenemedi.', 'hata');
+    } finally {
+      setYenileniyor(false);
+      setYenilenecek(null);
     }
   }
 
@@ -314,15 +361,61 @@ export function Ogrenciler() {
         baslik={yeniKodlar ? `${yeniKodlar.ad} — giriş kodları` : ''}
         aciklama="Kodun üzerine dokunarak kopyalayabilirsiniz. Kodlar bir şifredir; güvenli kanaldan paylaşın."
       >
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-3">
           {yeniKodlar?.kodlar.ogrenci && (
-            <KodKutusu etiket="Öğrenci kodu" kod={yeniKodlar.kodlar.ogrenci} />
+            <div className="flex items-center gap-2">
+              <KodKutusu etiket="Öğrenci kodu" kod={yeniKodlar.kodlar.ogrenci} />
+              {yeniKodlar.id && (
+                <Button
+                  tur="sade"
+                  olcu="sm"
+                  onClick={() => setYenilenecek({ rol: 'ogrenci' })}
+                >
+                  Yenile
+                </Button>
+              )}
+            </div>
           )}
           {yeniKodlar?.kodlar.veli && (
-            <KodKutusu etiket="Veli kodu" kod={yeniKodlar.kodlar.veli} />
+            <div className="flex items-center gap-2">
+              <KodKutusu etiket="Veli kodu" kod={yeniKodlar.kodlar.veli} />
+              {yeniKodlar.id && (
+                <Button tur="sade" olcu="sm" onClick={() => setYenilenecek({ rol: 'veli' })}>
+                  Yenile
+                </Button>
+              )}
+            </div>
+          )}
+          {yeniKodlar?.id && (
+            /* Yenilemenin ne anlama geldiği, düğmeye basmadan ÖNCE
+               burada yazıyor. Onay metni de aynısını söylüyor ama
+               öğretmen düğmeyi görür görmez ne olacağını bilmeli. */
+            <p className="text-[12px] text-muted">
+              Kod sızdıysa <strong>Yenile</strong> deyin: eski kod anında geçersiz olur ve o
+              kişinin açık oturumu kapanır. Yeni kodu içeren fişi kendisine ulaştırmanız gerekir.
+            </p>
           )}
         </div>
       </Dialog>
+
+      {/* --- Kod yenileme onayı (0045) --- */}
+      <Dialog
+        acik={yenilenecek !== null}
+        onKapat={() => setYenilenecek(null)}
+        baslik={yenilenecek?.rol === 'veli' ? 'Veli kodu yenilensin mi?' : 'Öğrenci kodu yenilensin mi?'}
+        aciklama={
+          yenilenecek
+            ? `${yeniKodlar?.ad ?? ''} için yeni bir ${
+                yenilenecek.rol === 'veli' ? 'veli' : 'öğrenci'
+              } kodu üretilecek. Eski kod artık çalışmayacak ve açık oturum kapanacak. Bu işlem geri alınamaz; yeni fişi ${
+                yenilenecek.rol === 'veli' ? 'veliye' : 'öğrenciye'
+              } vermeniz gerekir.`
+            : ''
+        }
+        onayEtiketi={yenileniyor ? 'Yenileniyor…' : 'Evet, yenile'}
+        onayTuru="tehlike"
+        onOnay={kodYenile}
+      />
 
       {/* --- Pasifleştirme onayı --- */}
       <Dialog

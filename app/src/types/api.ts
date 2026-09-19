@@ -64,6 +64,16 @@ export type YeniOgrenci = {
 export type Kodlar = { ogrenci?: string; veli?: string };
 
 /**
+ * `kod_yenile` (0045) — iptal ve yeniden verme.
+ *
+ * Dönüşte YENİ KOD var, çünkü öğretmen onu hemen yazacak ya da fişini
+ * basacak. `rol` de dönüyor: ekran hangi kutuyu tazeleyeceğini
+ * yanıttan öğreniyor, isteği gönderirken kullandığı değerden değil —
+ * ikisi ayrışırsa yanlış kutu güncellenirdi.
+ */
+export type KodYenileme = { rol: 'ogrenci' | 'veli'; kod: string };
+
+/**
  * KOD TOPLU GELMEZ. `sinif_kodlari` (0017) bir sınıfın tüm kodlarını tek
  * yanıtta döndürüyordu; 0018 ile KALDIRILDI ve tipi de silindi.
  *

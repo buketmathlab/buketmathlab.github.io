@@ -534,6 +534,54 @@ yalnız varlığı ölçmek yetmez: dosya yerinde ama içinde başka bir ad
 yazıyorsa sonuç aynı. **3 kusurdan 3'ü** yakalandı — dosya silindi ·
 ad değiştirildi · ikinci satır eklendi.
 
+### Kod ömür boyu sabitti — kapandı (0045)
+
+Öğretmenin sorusu bir boşluğu açtı: *"kodlarını sonra kendileri
+değiştirebiliyorlar mı?"* Hayırdı — ve **öğretmen de yenileyemiyordu.**
+Kod yalnız öğrenci eklenirken bir kez üretiliyor, ömür boyu aynı
+kalıyordu. Yani bir sızıntının geri dönüşü yoktu.
+
+Kod tahmine karşı zaten güçlüydü (8 karakter × 31 harf, 0028'in kilidi);
+zayıf olduğu yer paylaşımdı ve tam orada hiçbir çare yoktu.
+
+`kod_yenile(p_token, p_id, p_rol)` bunu kapatıyor. **En değerli üç
+ölçüm ve yakaladıkları:**
+
+| Ölçüm | Yerleştirilen kusur | Sonuç |
+| --- | --- | --- |
+| 3. grup — o rolün oturumu kapanıyor | oturum iptali tamamen silindi | `3b: … 3 açık oturum kaldı` |
+| 4. grup — öteki rolün oturumu ayakta | `rol` süzgeci kaldırıldı | `4c: ÖĞRENCİ kodu yenilenince VELİ oturumu da kapandı` |
+| 6. grup — iz kaydında kod yok | koda `jsonb`'ye yazıldı | `6c: İZ KAYDINDA YENİ KOD GEÇİYOR` |
+
+### Bu turda iki ölü ölçüm bulundu — ikisi de benim yazdığım
+
+Testler ilk yazıldığında yeşildi. İkisi yanlış sebeple yeşildi:
+
+**1. "Eski kod reddediliyor" ölçümü istisna bekliyordu.** `giris()`
+bilinmeyen kodda istisna ATMIYOR, `{"rol":"yok"}` döndürüyor — bilinçli,
+çünkü hata mesajı kodun var olup olmadığını ele verirdi. Ölçüm ürün
+doğru çalışırken kırmızı yanıyordu; iddia "jeton verilmemeli" olarak
+düzeltildi.
+
+**2. "NULL rol reddediliyor" ölçümü kimin reddettiğini ayırt
+etmiyordu.** `is distinct from` yerine `<>` yazılan kusurlu sürüm
+**bütün testleri geçti**: NULL'da bizim kontrolümüz sessizce atlanıyor
+ama `giris_kodlari.rol` sütunundaki `not null` kısıtı araya girip hata
+veriyor. Ölçüm "biz reddettik" ile "veritabanı kurtardı"yı
+ayıramıyordu. Artık mesaj aranıyor ve kusur ısırıyor.
+
+**3. Bir ölçüm sırası yüzünden erişilemiyordu.** Rol süzgeci
+kaldırıldığında 3. grubun hazırlık kontrolü erken patlıyor ve 4. grup
+hiç çalışmıyordu — yani 4. grup, yakaladığını sandığım kusuru hiç
+göremiyordu. Hazırlık "var mı diye bak"tan "oturumu burada aç"a
+çevrildi; şimdi her iki grup da kendi kusurunu yakalıyor.
+
+Tarayıcı tarafında da bir kusur provası ilk denemede ısırmadı — ama
+sebep denetimde değil provadaydı: React durumu aynı tikte
+güncellenmediği için "onayı atla" diye yazdığım kod aslında hiçbir şey
+yapmıyordu. Onay kapısını gerçekten atlayan bir kusur yazılınca
+`onay öncesi kod_yenile isteği YOK` ölçümü kırmızı yandı.
+
 ## Kalan riskler — gizlenmiyor
 
 1. **Mesajlarda hız sınırı yok. ÖLÇÜLDÜ: 200 mesaj 0,03 saniyede
