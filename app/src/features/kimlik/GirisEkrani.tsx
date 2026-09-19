@@ -7,11 +7,6 @@ import { GeometricDivider } from '@/components/brand/GeometricDivider';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
-import {
-  GIRIS_EKRANI_BASLIGI,
-  KAPANIS_NOTU,
-  TELEFON_YOLLARI,
-} from '@/lib/telefona-ekle';
 import { rpc, type Oturum } from '@/services/supabase';
 import type { GirisSonucu } from '@/types/api';
 
@@ -170,38 +165,6 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
           SEKİZ nedir?
         </a>
       </p>
-
-      {/* TELEFONA EKLEME TARİFİ — KÂĞIDIN YANINDA, EKRANDA DA.
-          Aynı tarif kod fişinde de basılı; ikisi de `telefona-ekle.ts`'ten
-          besleniyor, yani iki kopya yok.
-
-          NEDEN EKRANDA DA VAR: bu tarif dört turda dört kez yanlış
-          yazıldı — Safari eksikti, düğmenin yeri eksikti, düğme yanlıştı,
-          Android'de hem yer hem etiket yanlıştı. Sebep dikkatsizlik
-          değil: tarayıcı menüleri değişken, KÂĞIT İSE BASILDIKTAN SONRA
-          DÜZELTİLEMİYOR. Ekrandaki yanlışı bir yayınla düzeltiyoruz.
-
-          YERLİ `details` — JavaScript gerekmiyor, ekran okuyucu zaten
-          destekliyor, ve VARSAYILAN KAPALI: her gün giren öğrenci için
-          bu bir dipnot, formu kalabalıklaştırmamalı. */}
-      <details className="mt-2 text-left">
-        <summary className="flex min-h-[44px] cursor-pointer items-center justify-center text-center text-[14px] font-semibold text-ink underline">
-          {GIRIS_EKRANI_BASLIGI}
-        </summary>
-        <div className="mt-2 rounded-sk-md border border-line bg-surface p-4">
-          {TELEFON_YOLLARI.map((yol) => (
-            <div key={yol.ad} className="mb-3 last:mb-0">
-              <p className="text-[13px] font-semibold text-ink">{yol.ad}</p>
-              <ol className="mt-1 list-decimal pl-5 text-[13px] leading-snug text-muted">
-                {yol.adimlar.map((a) => (
-                  <li key={a}>{a}</li>
-                ))}
-              </ol>
-            </div>
-          ))}
-          <p className="mt-3 border-t border-line pt-2 text-[12px] text-muted">{KAPANIS_NOTU}</p>
-        </div>
-      </details>
 
       {/* 7 — Ewalu ve mesajı */}
       <div className="mt-7 flex items-center justify-center gap-3">
