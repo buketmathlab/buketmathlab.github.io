@@ -143,16 +143,15 @@ describe('fisMetni', () => {
    * yarısını yolda bırakırdı — iPhone'da yol "Paylaş"ın içinden,
    * Android'de tarayıcı menüsünden geçiyor.
    */
-  it('hem iPhone hem Android yolu yazıyor', () => {
+  it('hem iOS hem Android yolu yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
-      // KÜÇÜK HARFE TÜRKÇE KURALIYLA İNİLİYOR. `toLowerCase()` "I"yı "i"
-      // yapar ve Türkçe metinde yanlış eşleşme üretir; depodaki kural
-      // (0043, ayrıştırıcı) burada da geçerli.
-      const k = fisMetni(tur).kurulum.join(' ').toLocaleLowerCase('tr');
-      expect(k).toContain('iphone');
-      expect(k).toContain('paylaş');
-      expect(k).toContain('android');
-      expect(k).toContain('menü');
+      const k = fisMetni(tur).kurulum.join(' ');
+      // "iPhone" DEĞİL "iOS" — öğretmenin sözü. iPad'i olan veli de aynı
+      // yolu izliyor; marka adı yazmak onu dışarıda bırakıyordu.
+      expect(k).toContain('iOS:');
+      expect(k).not.toContain('iPhone');
+      expect(k).toContain('Paylaş');
+      expect(k).toContain('Android:');
     }
   });
 
@@ -302,13 +301,11 @@ describe('fisMetni', () => {
    * bir satır ekler ya da sıralamayı bozar ve fiş sessizce eski hâline
    * döner. Ölçüm YAPIYI arıyor:
    *
-   *   1. "iPhone:" bloğu "Android:" bloğundan ÖNCE başlıyor.
-   *   2. Android bloğu başladıktan SONRA hiçbir satır iPhone'dan ya da
+   *   1. "iOS:" bloğu "Android:" bloğundan ÖNCE başlıyor.
+   *   2. Android bloğu başladıktan SONRA hiçbir satır iOS'tan ya da
    *      Safari'den söz etmiyor.
-   *   3. Android bloğu başlamadan ÖNCE hiçbir satır Android'den,
-   *      Samsung'dan ya da Chrome'un Android tarafından söz etmiyor —
-   *      iPhone bloğunun kendi Chrome yasağı hariç, o da "ile değil"
-   *      biçimiyle ayrışıyor.
+   *   3. Android bloğu başlamadan ÖNCE hiçbir satır Android'den ya da
+   *      Samsung'dan söz etmiyor.
    *
    * Üçünü birden sağlamayan bir dizilim, öğretmenin reddettiği dizilimdir.
    */
@@ -316,17 +313,17 @@ describe('fisMetni', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const satirlar = fisMetni(tur).kurulum;
 
-      const iosBas = satirlar.findIndex((s) => s.startsWith('iPhone:'));
+      const iosBas = satirlar.findIndex((s) => s.startsWith('iOS:'));
       const androidBas = satirlar.findIndex((s) => s.startsWith('Android:'));
       expect(iosBas).toBeGreaterThanOrEqual(0);
       expect(androidBas).toBeGreaterThan(iosBas);
 
-      // Android bloğunun içinde iPhone'dan söz eden satır olmamalı.
+      // Android bloğunun içinde iOS'tan söz eden satır olmamalı.
       for (const s of satirlar.slice(androidBas)) {
-        expect(s).not.toContain('iPhone');
+        expect(s).not.toContain('iOS');
         expect(s).not.toContain('Safari');
       }
-      // iPhone bloğunun içinde Android'den söz eden satır olmamalı.
+      // iOS bloğunun içinde Android'den söz eden satır olmamalı.
       for (const s of satirlar.slice(iosBas, androidBas)) {
         expect(s).not.toContain('Android');
         expect(s).not.toContain('Samsung');
@@ -412,17 +409,95 @@ describe('fisMetni', () => {
    * menü yolunu uydurmak, dört yanlış tariften sonra yapılacak en son
    * şey olurdu. Fiş yalnız seçeneğin NEREDE olduğunu söylüyor.
    */
-  it('başka markalar için menü de seçenek olarak yazıyor', () => {
+  /**
+   * iOS'TA PAYLAŞ PENCERESİ YUKARI KAYDIRILIYOR — SAHA BULGUSU.
+   *
+   * Öğretmen kendi telefonunda gördü: "Paylaş"a dokununca açılan pencerede
+   * "Ana Ekrana Ekle" İLK BAKIŞTA GÖRÜNMÜYOR; pencereyi yukarı kaydırmak
+   * gerekiyor. Tarif bunu söylemediği sürece, veli pencereyi açıp
+   * aradığını bulamadan kapatıyor — tıpkı uygulama içi tarayıcıda olduğu
+   * gibi, kusur üründe değil yönergede.
+   *
+   * ADIM KENDİ SATIRINDA ARANIYOR, bütün metinde değil: "kaydır" kelimesi
+   * bir gün başka bir satıra düşerse bu ölçüm onu yeşil saymamalı.
+   */
+  /**
+   * HER BLOK KENDİ İÇİNDE TAM: TARAYICI **VE** ADRES.
+   *
+   * Öğretmenin sorusu: *"Sayfayı Safari ile aç" derken hangi sayfa?*
+   * Tarif, fişin üst kısmındaki "Adrese git" satırını okumuş birine
+   * yazılmıştı; kurulum bölümüne sonradan bakan kişi boş bir tarayıcıyla
+   * baş başa kalıyordu.
+   *
+   * ÖLÇÜM BLOK BAŞINA YAPILIYOR, bütün metinde değil — çünkü metnin
+   * herhangi bir yerinde adres zaten var (giriş satırı). Bütün metinde
+   * arasaydık bu ölçüm hiçbir zaman kırılmazdı: tam da düzeltmek için
+   * yazıldığı kusur onu yeşil bırakırdı.
+   *
+   * SABİT DEĞİL DÜZ METİN aranıyor (bu dosyadaki 'alan adı' kararının
+   * aynısı): `ADRES`i import edip kendisiyle karşılaştırmak, yanlış bir
+   * alan adını da geçirirdi.
+   */
+  it('iki blok da tarayıcıyı ve adresi birlikte söylüyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const satirlar = fisMetni(tur).kurulum;
-      const adim = satirlar.filter((s) => s.includes('Uygulama olarak ekle'));
-      expect(adim).toHaveLength(1);
-      // "ya da menü": Samsung'un simgesi olmayan markada aranacak yer.
-      expect(adim[0]).toContain('menü');
-      // VE ANDROID BLOĞUNUN İÇİNDE: öğretmenin "iOS'a Android'e geçme"
-      // kuralı bu satırı da bağlıyor.
-      const androidBas = satirlar.findIndex((s) => s.startsWith('Android:'));
-      expect(satirlar.indexOf(adim[0]!)).toBeGreaterThan(androidBas);
+      const ios = satirlar.find((s) => s.startsWith('iOS:'))!;
+      const android = satirlar.find((s) => s.startsWith('Android:'))!;
+
+      expect(ios).toContain('Safari');
+      expect(ios).toContain('sekizkyal.com');
+      expect(android).toContain('kendi tarayıcısını');
+      expect(android).toContain('sekizkyal.com');
+    }
+  });
+
+  /**
+   * BLOKLARDAKİ ADRES, GİRİŞ SATIRINDAKİYLE AYNI.
+   *
+   * ADIN DÜRÜSTLÜĞÜ İÇİN BİR DÜZELTME: bu test önce "adres sabitten
+   * geliyor" diye adlandırılmıştı. Kusur provası iddianın ölçülenden
+   * büyük olduğunu gösterdi — `${ADRES}` yerine aynı harfleri elle yazmak
+   * testi kırmıyor, çünkü sonuç birebir aynı metin. Kırıldığı yer şu:
+   * elle yazılan adres YANLIŞ olduğunda (prova: `sekiz-kyal.com`).
+   *
+   * Ölçtüğü şey bu yüzden "sabit kullanılmış mı" değil, **fişin üç
+   * yerindeki adresin birbirini tutması**. Asıl korunan da bu:
+   * alan adı bir gün değişip bir yer geride kalırsa test yanar.
+   */
+  it('blokların adresi giriş satırındakiyle aynı', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const bloklar = fisMetni(tur).kurulum.filter((s) => /^(iOS|Android):/.test(s));
+      expect(bloklar).toHaveLength(2);
+      for (const s of bloklar) expect(s).toContain(ADRES);
+    }
+  });
+
+  it('iOS adımı paylaş penceresini yukarı kaydırmayı söylüyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const satir = fisMetni(tur).kurulum.filter((s) => s.includes('Paylaş'));
+      expect(satir).toHaveLength(1);
+      expect(satir[0]).toContain('yukarı kaydır');
+      expect(satir[0]).toContain('Alttaki üç nokta');
+    }
+  });
+
+  /**
+   * CHROME/GOOGLE YASAĞI PARANTEZ İÇİNDE — öğretmenin biçim kararı.
+   *
+   * Cümlenin ana fiili "aç"; tarayıcı yasağı ona takılan bir uyarı.
+   * Parantez bunu görsel olarak ayırıyor, satır emir kipinde kalıyor.
+   * Ölçüm biçimi tutuyor: yasağın geçtiği her satırda parantez de olmalı,
+   * yoksa cümle yeniden düzyazıya dönüşmüş demektir.
+   */
+  it('Chrome/Google yasağı parantez içinde yazıyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const yasakli = fisMetni(tur).kurulum.filter((s) => s.includes('Chrome'));
+      expect(yasakli).toHaveLength(2); // her blokta bir kere
+      for (const s of yasakli) {
+        expect(s).toContain('(');
+        expect(s).toContain(')');
+        expect(s.slice(s.indexOf('('), s.indexOf(')') + 1)).toContain('Chrome');
+      }
     }
   });
 

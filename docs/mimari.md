@@ -3669,6 +3669,58 @@ menü**". Pay 14,8 mm'de kaldı.
 Kâğıt payı **9,8 mm'den 14,8 mm'ye** çıktı (tarayıcıda ölçüldü). Sayfa
 başına 8 fiş değişmedi.
 
+### Tarifin son hâli — dört düzeltme daha
+
+Öğretmen fişi okuyup dört şey söyledi, dördü de uygulandı:
+
+1. **iOS'ta "Paylaş"tan sonra pencere yukarı kaydırılıyor.** Kendi
+   telefonunda gördü: "Ana Ekrana Ekle" ilk bakışta görünmüyor. Tarif
+   bunu söylemediği sürece veli pencereyi açıp aradığını bulamadan
+   kapatıyor — uygulama içi tarayıcı dersinin aynısı, kusur üründe değil
+   yönergede.
+2. **Chrome/Google yasağı parantez içinde.** Cümlenin ana fiili "aç";
+   yasak ona takılan bir uyarı. Parantez ikisini görsel olarak ayırıyor.
+3. **"iPhone" değil "iOS".** iPad'i olan veli de aynı yolu izliyor; marka
+   adı onu dışarıda bırakıyordu.
+4. **"ya da menü" çıktı.** Android adım satırı yalnız Samsung'da görülen
+   simgeyi söylüyor. Başka markadaki veli için fişte artık ayrı bir işaret
+   yok — bilerek, çünkü o cihazlar elimizde yok ve yanlış tarif yazmak
+   dört kez denendi.
+
+### Ve beşincisi: her blok kendi içinde tam
+
+Yönerge "Sayfayı Safari ile aç" diyordu. Öğretmenin sorusu: **hangi
+sayfa?** Haklıydı — o cümle, fişin üstündeki "Adrese git" satırını okumuş
+ve adresi zaten açmış birine yazılmıştı. Kurulum bölümüne sonradan bakan
+kişi boş bir tarayıcıyla baş başa kalıyordu.
+
+Artık iki blok da tarayıcıyı **ve** adresi birlikte söylüyor
+("Safari'i aç, sekizkyal.com yaz"). Adres fişte üç kez geçiyor ve bu
+bilinçli bir tekrar: kâğıt bir akış değil, bakılan bir yer.
+
+**Ölçüm blok başına yapılıyor, bütün metinde değil** — metnin herhangi
+bir yerinde adres zaten var (giriş satırı), yani bütün metinde arayan bir
+ölçüm hiçbir zaman kırılmazdı: düzeltmek için yazıldığı kusuru yeşil
+bırakırdı.
+
+### Bir ölçümün adı ölçtüğünden büyüktü
+
+"Bloklardaki adres ADRES sabitinden geliyor" diye adlandırmıştım. Kusur
+provası yanlışladı: `${ADRES}` yerine aynı harfleri elle yazmak testi
+kırmıyor, çünkü sonuç birebir aynı metin. Kırıldığı yer, elle yazılan
+adresin **yanlış** olması. Test yeniden adlandırıldı — ölçtüğü şey
+"fişin üç yerindeki adres birbirini tutuyor mu".
+
+### Kâğıt payı 2,8 mm — söylenmesi gereken sınır
+
+Yönerge 5 satırdan 6'ya çıktı ve pay 14,8 mm'den **2,8 mm'ye** indi.
+Tarayıcıda ölçüldü: **sığıyor**, hiçbir satır sarmıyor, hiçbir fiş
+kutusundan taşmıyor. Ama bu, bundan sonraki her eklemenin kâğıdı
+taşıracağı anlamına geliyor. Yeni bir cümle gerekirse seçenek üç:
+bir satır kısaltmak, yazıyı 9 px'in altına indirmek (okunurluk bedeli),
+ya da sayfa başına fiş sayısını 8'den 6'ya indirmek (kâğıt bedeli —
+öğretmenin kararı).
+
 ### İki yeni ölçüm, ikisi de kusur yerleştirilerek ısırtıldı
 
 **1. Chrome yalnız elenerek anılabilir.** `toContain('Chrome')` demek bu

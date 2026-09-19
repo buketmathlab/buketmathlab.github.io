@@ -126,6 +126,23 @@ export type Fis = {
  * ve olmayan bir bilgiyi kâğıda basmak, dört yanlış tariften sonra
  * yapılacak en son şey olurdu.
  *
+ * HER BLOK KENDİ İÇİNDE TAM — ADRES İKİ BLOKTA DA YAZIYOR.
+ *
+ * Yönerge önce "Sayfayı Safari ile aç" diyordu. Öğretmen sordu: *hangi
+ * sayfa?* Haklıydı — o cümle, fişin ÜST kısmındaki "Adrese git" satırını
+ * okumuş ve adresi zaten açmış birine yazılmıştı. Oysa kurulum bölümüne
+ * bakan kişi çoğu zaman oraya sonradan dönüyor, ya da fişi eline alıp
+ * doğrudan oradan başlıyor. "Safari'yi aç" deyip hangi adresi yazacağını
+ * söylememek, onu boş bir tarayıcıyla baş başa bırakıyordu.
+ *
+ * Artık iki blok da tarayıcıyı VE adresi birlikte söylüyor. Adres fişte
+ * üç kez geçiyor (giriş satırı + iki blok) ve bu bilinçli bir tekrar:
+ * kâğıt bir akış değil, bakılan bir yer.
+ *
+ * ADRES ELLE YAZILMIYOR, `ADRES` SABİTİNDEN GELİYOR. Alan adı bir gün
+ * değişirse üç yerin üçü birden değişsin; biri geride kalırsa fiş
+ * çalışmayan bir adres bastırır.
+ *
  * SİMGE ÇİZİLMİYOR (⋮ ya da aşağı ok gibi): yazı tipine göre boş kutu
  * çıkıyor ve kâğıtta bunu düzeltmenin yolu yok. Simge KELİMEYLE
  * anlatılıyor — "üç nokta", "aşağı oklu kare".
@@ -139,19 +156,21 @@ export type Fis = {
  * ekranın tarayıcı çubuğu olmadan açılacağına dair bir SÖZ VERMİYOR.
  */
 const KURULUM_OGRENCI: readonly string[] = [
-  'iPhone: Sayfayı Safari ile aç — Chrome ya da Google ile değil.',
-  'Alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
-  'Android: Sayfayı telefonun kendi tarayıcısıyla aç.',
-  'Chrome ya da Google değil — Samsung’da adı “Browser”.',
-  'Üstteki aşağı oklu kare ya da menü → “Uygulama olarak ekle” → “Ekle”.',
+  `iOS: Safari’i aç, ${ADRES} yaz (Chrome ya da Google değil).`,
+  'Alttaki üç nokta → “Paylaş” → açılan pencereyi yukarı kaydır.',
+  '“Ana Ekrana Ekle” → “Ekle”.',
+  `Android: Telefonun kendi tarayıcısını aç, ${ADRES} yaz.`,
+  '(Chrome ya da Google ile değil.) Samsung’da adı “Browser”.',
+  'Üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
 ];
 
 const KURULUM_VELI: readonly string[] = [
-  'iPhone: Sayfayı Safari ile açın — Chrome ya da Google ile değil.',
-  'Alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
-  'Android: Sayfayı telefonunuzun kendi tarayıcısıyla açın.',
-  'Chrome ya da Google değil — Samsung’da adı “Browser”.',
-  'Üstteki aşağı oklu kare ya da menü → “Uygulama olarak ekle” → “Ekle”.',
+  `iOS: Safari’i açın, ${ADRES} yazın (Chrome ya da Google değil).`,
+  'Alttaki üç nokta → “Paylaş” → açılan pencereyi yukarı kaydırın.',
+  '“Ana Ekrana Ekle” → “Ekle”.',
+  `Android: Telefonunuzun kendi tarayıcısını açın, ${ADRES} yazın.`,
+  '(Chrome ya da Google ile değil.) Samsung’da adı “Browser”.',
+  'Üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
 ];
 
 /**
