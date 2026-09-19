@@ -131,8 +131,10 @@ describe('fisMetni', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const m = fisMetni(tur);
       expect(m.kurulumBasligi).toContain('uygulama');
+      // iOS'un etiketi (büyük harfli) ve Samsung'un etiketi — ikisi ayrı
+      // cihazda doğrulandı, ikisi ayrı ayrı ölçülüyor.
       expect(m.kurulum.join(' ')).toContain('Ana Ekrana Ekle');
-      expect(m.kurulum.join(' ')).toContain('Ana ekrana ekle');
+      expect(m.kurulum.join(' ')).toContain('Uygulama olarak ekle');
     }
   });
 
@@ -165,12 +167,50 @@ describe('fisMetni', () => {
    * Yani kusur üründe değil yönergedeydi ve ancak gerçek bir telefonda
    * göründü. Bu satır o dersin geri sızmasını engelliyor: biri bir gün
    * "fiş kalabalık olmuş" deyip tarayıcı adlarını atarsa test yanar.
+   *
+   * SAMSUNG'UN TARAYICISI DA ADIYLA ARANIYOR. Aynı ders ikinci kez,
+   * Android'de yaşandı: fiş "Chrome ile aç" diyordu, öğretmen Samsung'unda
+   * denedi ve o menüde seçenek YOKTU; telefonun kendi "Browser"ında vardı.
    */
   it('kurulum yönergesi tarayıcının adını söylüyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
       expect(k).toContain('Safari');
+      expect(k).toContain('Browser');
+    }
+  });
+
+  /**
+   * TURUN ÇEKİRDEK ÖLÇÜMÜ — TELEFONUN KENDİ TARAYICISI, CHROME DEĞİL.
+   *
+   * Öğretmenin sözü: *"Samsung'da Google'dan ya da Chrome'dan değil,
+   * kendi internet tarayıcısından girmek gerekiyor. Mesela Apple'da
+   * Safari'den. Bu çok önemli bir detay."*
+   *
+   * İKİ ŞEY BİRDEN ÖLÇÜLÜYOR ve ayrı ayrı olması şart:
+   *
+   *   1. KURAL YAZILI MI — "kendi tarayıcısıyla aç/açın".
+   *   2. CHROME BİR YÖNLENDİRME OLARAK GEÇMİYOR MU. Yalnız
+   *      `toContain('Chrome')` demek bu turun tam TERSİNİ de geçirirdi:
+   *      "Android: Sayfayı Chrome ile aç" cümlesi de Chrome içeriyor.
+   *      O yüzden Chrome'un geçtiği HER cümlede "değil" aranıyor —
+   *      yani Chrome ancak elenerek anılabilir.
+   *
+   * Bu ölçüm, eski Android satırı geri sızarsa yanar. Kâğıt basıldıktan
+   * sonra düzeltilemiyor; geri sızmanın bedeli 720 aile.
+   */
+  it('kurulum kendi tarayıcısını söylüyor, Chrome’u yalnız eliyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const satirlar = fisMetni(tur).kurulum;
+      const k = satirlar.join(' ');
+
+      expect(k).toContain('kendi tarayıcısı');
       expect(k).toContain('Chrome');
+      expect(k).toContain('Google');
+
+      for (const satir of satirlar.filter((s) => s.includes('Chrome') || s.includes('Google'))) {
+        expect(satir).toContain('değil');
+      }
     }
   });
 
@@ -233,15 +273,21 @@ describe('fisMetni', () => {
    * Apple'ın kendi adımı da "share button (three dots), then tap Share".
    * Öğretmen kendi telefonunda doğruladı.
    *
-   * İKİ YER AYRI AYRI ÖLÇÜLÜYOR: iPhone'da ALTTA, Android'de SAĞ ÜSTTE.
-   * Yalnız "üç nokta" aransaydı, iki satırdan biri silinse bile test
-   * yeşil kalırdı — öteki satırdaki "üç nokta" yetiyor olurdu.
+   * İKİ YER AYRI AYRI ÖLÇÜLÜYOR: iPhone'da ALTTA üç nokta, Samsung'da
+   * ÜSTTE aşağı oklu kare. Yalnız "üç nokta" aransaydı, iki satırdan biri
+   * silinse bile test yeşil kalırdı — öteki satırdaki "üç nokta" yetiyor
+   * olurdu.
+   *
+   * SAMSUNG SATIRI ÖĞRETMENİN EKRAN GÖRÜNTÜLERİNDEN GELDİ. Daha önce
+   * burada "Sağ üstteki üç nokta" yazıyordu; öğretmen kendi Samsung'unda
+   * o menüyü açtı ve orada böyle bir seçenek YOKTU. Çalışan yol, üst
+   * çubuktaki aşağı oklu kare simgesiydi.
    */
   it('düğmenin yeri iki telefonda da ayrı ayrı yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).toContain('Alttaki üç nokta');
-      expect(k).toContain('Sağ üstteki üç nokta');
+      expect(k).toContain('alttaki üç nokta');
+      expect(k).toContain('üstteki aşağı oklu kare');
       expect(k).toContain('Paylaş');
     }
   });
@@ -252,31 +298,70 @@ describe('fisMetni', () => {
    * "⋮" ya da "⋯" gibi karakterler yazı tipine göre boş kutu çıkıyor ve
    * kâğıtta bunu düzeltmenin yolu yok. Karar bir kez verildi; bu test
    * geri sızmasını engelliyor.
+   *
+   * SAMSUNG SİMGESİ AYNI KURALA GİRDİ. Onu çizmek çok cazip — gerçekten
+   * "içinde aşağı ok olan bir kare" ve Unicode'da karşılığı var (⬇, ⤓,
+   * ⎘ gibi). Ama kâğıda basılan yazı tipinde bunların çıkacağının
+   * garantisi yok; boş kutu basılmış bir fişi kimse düzeltemez. Simge
+   * KELİMEYLE anlatılıyor.
+   *
+   * "→" BİLEREK DIŞARIDA: o karakter bu fişte bir tur boyunca basıldı ve
+   * tarayıcı ölçümünde de sorunsuz çizildi.
    */
-  it('kurulum metninde tipografik üç nokta karakteri yok', () => {
+  it('kurulum metninde çizili simge yok — hepsi kelimeyle', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).not.toContain('⋮');
-      expect(k).not.toContain('⋯');
-      expect(k).not.toContain('…');
+      for (const simge of ['⋮', '⋯', '…', '⬇', '↓', '⇩', '⤓', '⎘', '⊕']) {
+        expect(k).not.toContain(simge);
+      }
     }
   });
 
   /**
-   * ANDROID'DE İKİ ETİKET DE YAZIYOR. Chrome sürümüne göre menüde
-   * ikisinden biri çıkıyor: eskilerde "Ana ekrana ekle", yenilerde
-   * "Yükle…" (Google'ın bugünkü belgesi: "Install and create shortcut").
-   * Tek etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
+   * ANDROID SATIRI CİHAZDA GÖRÜLEN ETİKETİ YAZIYOR — VE SON DÜĞMEYİ DE.
    *
-   * SON DÜĞMENİN ADI BİLEREK ÖLÇÜLMÜYOR — çünkü bilerek YAZILMIYOR.
-   * Sürümden sürüme değişiyor; bu satır cihazda doğrulanana kadar
-   * söylememek, dördüncü kez yanlış yazmaktan dürüst.
+   * Burada daha önce Chrome'un iki etiketi ("Ana ekrana ekle" / "Yükle")
+   * duruyordu; ikisi de Google'ın BELGESİNDEN alınmıştı, cihazdan değil.
+   * Öğretmen Samsung'unda denedi: menüde ikisi de yoktu. Telefonun kendi
+   * tarayıcısında ise seçenek "uygulama olarak ekle" diyor ve ardından
+   * bir pencere çıkıp "Ekle" soruyor ("Bu web sayfası Uygulamalar
+   * ekranına eklensin mi?").
+   *
+   * SON DÜĞME ARTIK YAZILIYOR ve sebebi tek: bu kez GÖRÜLDÜ. Önceki
+   * turlarda bilerek yazılmamıştı çünkü sürüme göre değiştiğini
+   * biliyorduk ama hangisi olduğunu bilmiyorduk. Görülmeyen şey
+   * yazılmıyor, görülen şey yazılıyor.
+   *
+   * ÖLÇÜM SATIRIN İÇİNDE YAPILIYOR, BÜTÜN METİNDE DEĞİL — ve bu bir
+   * ONARIM. İlk yazımda bütün kurulum metni birleştirilip içinde
+   * `“Ekle”` aranıyordu; kusur provası bunun ÖLÜ bir ölçüm olduğunu
+   * gösterdi: Samsung satırının son düğmesini silsem iPhone satırındaki
+   * `→ “Ekle”` testi yeşil tutuyordu. Artık Samsung satırı kendi başına
+   * aranıyor ve iki etiketi birlikte taşımak zorunda.
    */
-  it('Android satırı iki menü etiketini de veriyor', () => {
+  it('Samsung satırı görülen etiketi VE son düğmeyi birlikte veriyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
-      const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).toContain('Ana ekrana ekle');
-      expect(k).toContain('Yükle');
+      const samsung = fisMetni(tur).kurulum.filter((s) => s.includes('Samsung:'));
+      expect(samsung).toHaveLength(1);
+      expect(samsung[0]).toContain('Uygulama olarak ekle');
+      expect(samsung[0]).toContain('“Ekle”');
+    }
+  });
+
+  /**
+   * BAŞKA MARKALARA SÖZ VERİLMİYOR, YER SÖYLENİYOR.
+   *
+   * Öğretmen kuralı genelledi: *"farklı marka Android telefonlarda,
+   * mesela Huawei'de, bu kendi internet tarayıcısının adı neyse oradan
+   * girmesi gerekiyor."* O cihazlar elimizde yok; tarayıcı adını ya da
+   * menü yolunu uydurmak, dört yanlış tariften sonra yapılacak en son
+   * şey olurdu. Fiş yalnız seçeneğin NEREDE olduğunu söylüyor.
+   */
+  it('başka Android telefonlar için menü yeri söyleniyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const k = fisMetni(tur).kurulum.join(' ').toLocaleLowerCase('tr');
+      expect(k).toContain('başka android');
+      expect(k).toContain('menü');
     }
   });
 

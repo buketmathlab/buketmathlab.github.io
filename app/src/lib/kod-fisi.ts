@@ -66,85 +66,73 @@ export type Fis = {
  * `apple-mobile-web-app-capable`, `apple-mobile-web-app-title` ve
  * manifest'te `display: standalone`.
  *
- * TARAYICININ ADI VE DÜĞMENİN YERİ YAZILIYOR — İKİSİ DE ÖLÇÜLDÜ.
- * İlk yazımda satır yalnız "Paylaş → Ana Ekrana Ekle" diyordu. Öğretmen
- * kendi iPhone'unda DENEDİ VE YAPAMADI: bağlantıyı bir uygulamanın
- * içinden açmıştı ve iOS'ta uygulama içi tarayıcıda "Ana Ekrana Ekle"
- * seçeneği HİÇ YOKTUR. Safari'de açınca hemen oldu.
+ * BİRİNCİ SATIR ARTIK BİR YASAK: TELEFONUN KENDİ TARAYICISI.
  *
- * Sonra öğretmen ikinci eksiği söyledi: "Safari'de açtıktan sonra paylaş
- * butonunu nereden bulacak?" Haklıydı — tarif düğmenin yerini
- * söylemiyordu.
+ * Bu satır ürünün en pahalı öğrenilmiş dersi ve tamamı SAHADAN geldi.
+ * Öğretmen tarifi dört kez düzeltti; dördünün de ortak kökü aynı
+ * çıktı: **"uygulama olarak ekle" seçeneği tarayıcıya özgüdür.**
  *
- * ÜÇÜNCÜ DÜZELTME, YİNE ÖĞRETMENDEN VE YİNE HAKLI. "Ekranın alt
- * ortasındaki paylaş simgesi" diye yazmıştım; öğretmen "orada üç noktalı
- * bir simge yok mu, ona dokununca Paylaş çıkmıyor mu?" dedi. ESKİMİŞ
- * BİLGİYLE YAZMIŞIM: bugünkü iOS'ta alttaki düğme üç nokta ve Apple'ın
- * kendi adımı da öyle — "Tap the share button (three dots), then tap
- * Share". Öğretmen kendi telefonunda üç nokta → Paylaş → Ana Ekrana
- * Ekle yolunu doğruladı.
+ *   - iOS'ta uygulama içi tarayıcıda (bir mesajdaki bağlantıya dokununca
+ *     açılan pencere) seçenek HİÇ YOK. Öğretmen kendi iPhone'unda
+ *     deneyip yapamadı; Safari'de açınca hemen oldu.
+ *   - Android'de Chrome'un tarifini yazdık, öğretmen Samsung'unda
+ *     denedi: **o menüde öyle bir şey yoktu.** Kendi telefonunun
+ *     "Browser" adlı tarayıcısında ise vardı ve çalıştı.
  *
- * Ders, geçen turunkinin aynısı ve bu sefer belgeye de yazıldı:
- * telefondaki adımları HAFIZADAN yazmak, kâğıda yanlış tarif bastırır.
- * Cihaz öğretmende; doğrulanacak yer orası.
+ * Öğretmenin sözü: *"Samsung'da Google'dan ya da Chrome'dan değil,
+ * kendi internet tarayıcısından girmek gerekiyor. Mesela Apple'da
+ * Safari'den. Bu çok önemli bir detay."*
  *
- * NOT: Apple aynı sayfada "sekme düzeni Altta ya da Üstte ise paylaş
- * simgesine dokunun" diyor — yani bazı ayarlarda orada üç nokta yerine
- * paylaş simgesi çıkıyor. Öğretmenin telefonundaki yol esas alındı;
- * öteki ayardaki veli de aynı listeye düşüyor, yalnız bir adım eksik
- * yaşıyor ve aradığını yine buluyor.
+ * Bu yüzden ilk satır Chrome'u ve Google uygulamasını AÇIKÇA ELİYOR.
+ * Önceki sürümlerde Android satırı "Sayfayı Chrome ile aç" diyordu —
+ * yani fiş, işe yaramayan yolu tarif ediyordu. Marka marka tarayıcı adı
+ * saymak mümkün değil (Huawei, Xiaomi, Oppo… her birinde başka ad), o
+ * yüzden KURAL yazılıyor ve iki örnek veriliyor: iPhone'da Safari,
+ * Samsung'da "Browser".
  *
- * ANDROID SATIRI İKİ ETİKET BİRDEN YAZIYOR — ve bu satır, iPhone
- * satırından farklı olarak GERÇEK BİR CİHAZDA DOĞRULANMADI.
+ * SAMSUNG YOLU CİHAZDA DOĞRULANDI — öğretmenin ekran görüntüleriyle.
+ * Üst çubuktaki "içinde aşağı ok olan kare" simgesi → "uygulama olarak
+ * ekle" → çıkan pencerede "Ekle" ("Bu web sayfası Uygulamalar ekranına
+ * eklensin mi?"). Bu, tarifin cihazda doğrulanan İLK Android yolu;
+ * öncekilerin hepsi belgeden ya da hafızadan yazılmıştı.
  *
- * Öğretmen sordu: "Android için tarifin güncel mi?" Google'ın bugünkü
- * belgesi şunu diyor: "tap More → Install and create shortcut →
- * Install". Yani menü öğesi artık "Ana ekrana ekle" değil, son düğme de
- * "Ekle" değil "Yükle". Fişte eski Chrome'un tarifi yazıyordu.
+ * iPHONE YOLU DA CİHAZDA DOĞRULANDI: alttaki üç nokta → Paylaş → Ana
+ * Ekrana Ekle → Ekle. (Apple'ın belgesi de böyle diyor: "tap the share
+ * button (three dots), then tap Share".) Bazı sekme ayarlarında orada
+ * üç nokta yerine paylaş simgesi çıkıyor; o veli de aynı listeyi
+ * izliyor, yalnız bir adım eksik yaşıyor ve aradığını buluyor.
  *
- * İki etiket birden yazılıyor çünkü Chrome sürümüne göre ikisinden biri
- * çıkıyor: eski sürümlerde "Ana ekrana ekle", yenilerde "Yükle…".
- * Tek etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
- * Son düğmenin adı BİLEREK yazılmıyor: sürümden sürüme değişiyor ve
- * dördüncü kez yanlış yazmaktansa söylenmemesi daha dürüst.
+ * BAŞKA MARKALAR İÇİN SÖZ VERİLMİYOR, YER SÖYLENİYOR. Son satır
+ * "aynı seçenek tarayıcının menüsünde" diyor — elimizde o cihazlar yok
+ * ve olmayan bir bilgiyi kâğıda basmak, dört yanlış tariften sonra
+ * yapılacak en son şey olurdu.
  *
- * DOĞRULANMAMIŞ OLDUĞU BURADA DURUYOR. iPhone satırını öğretmen kendi
- * telefonunda denedi; Android'de kimse denemedi. Elimizde Android cihaz
- * yok. Kâğıt basılmadan önce bir Android telefonda denenmeli —
- * öğrencilerin çoğu muhtemelen Android kullanıyor, yani bu satır
- * iPhone'dan daha çok kişiyi ilgilendiriyor.
+ * SİMGE ÇİZİLMİYOR (⋮ ya da aşağı ok gibi): yazı tipine göre boş kutu
+ * çıkıyor ve kâğıtta bunu düzeltmenin yolu yok. Simge KELİMEYLE
+ * anlatılıyor — "üç nokta", "aşağı oklu kare".
  *
- * AYRICA AÇIK BİR SORU: depoda service worker YOK (bilinçli karar,
- * `pwa-denetimi.mjs` her koşuda ölçüyor). Chrome'un tam "uygulama olarak
- * yükleme" akışı tarihsel olarak service worker istiyordu; onsuz Android
- * yalnız bir KISAYOL koyabilir — simge gelir ama tarayıcı içinde açılır.
- * Chrome bu şartı gevşetti ama hangi sürümden itibaren olduğu bizde
- * ölçülmedi. Fiş bu yüzden "uygulama olarak ekle" diyor ve nasıl
- * açılacağına dair bir söz VERMİYOR.
+ * MUHATAP YALNIZ İLK SATIRDA AYRILIYOR (aç / açın): geri kalan satırlar
+ * ok zinciri, yani fiilsiz. Veliye "sen" demeden iki fişin ortak
+ * kalabildiği tek nokta bu.
  *
- * MENÜ SİMGESİ ÇİZİLMİYOR (⋮ gibi): yazı tipine göre kutu çıkabilir.
- * "Üç nokta" kelimesi her yazı tipinde doğru.
- *
- * İKİ AYRI DİZİ: öğrenciye "dokun", veliye "dokunun". Fişin geri
- * kalanında verilen kararın aynısı; tek ortak metin yazmak kolay olurdu
- * ama veliye "sen" demek olurdu.
+ * AÇIK KALAN: depoda service worker YOK (bilinçli karar, `pwa-denetimi`
+ * her koşuda ölçüyor). Bu yüzden fiş "uygulama olarak ekle" diyor ama
+ * ekranın tarayıcı çubuğu olmadan açılacağına dair bir SÖZ VERMİYOR.
  */
 const KURULUM_OGRENCI: readonly string[] = [
-  'iPhone: Sayfayı Safari ile aç.',
-  'Alttaki üç nokta düğmesine dokun, “Paylaş”a bas.',
-  '“Ana Ekrana Ekle” → “Ekle”.',
-  'Android: Sayfayı Chrome ile aç.',
-  'Sağ üstteki üç nokta menüsüne dokun.',
-  '“Ana ekrana ekle” ya da “Yükle” seçeneğine dokun.',
+  'Telefonunun kendi tarayıcısıyla aç — Chrome ya da Google değil.',
+  'iPhone’da Safari, Samsung’da “Browser”, ötekilerde kendi tarayıcısı.',
+  'iPhone: alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
+  'Samsung: üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
+  'Başka Android telefonlarda aynı seçenek tarayıcının menüsünde.',
 ];
 
 const KURULUM_VELI: readonly string[] = [
-  'iPhone: Sayfayı Safari ile açın.',
-  'Alttaki üç nokta düğmesine dokunun, “Paylaş”a basın.',
-  '“Ana Ekrana Ekle” → “Ekle”.',
-  'Android: Sayfayı Chrome ile açın.',
-  'Sağ üstteki üç nokta menüsüne dokunun.',
-  '“Ana ekrana ekle” ya da “Yükle” seçeneğine dokunun.',
+  'Telefonunuzun kendi tarayıcısıyla açın — Chrome ya da Google değil.',
+  'iPhone’da Safari, Samsung’da “Browser”, ötekilerde kendi tarayıcısı.',
+  'iPhone: alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
+  'Samsung: üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
+  'Başka Android telefonlarda aynı seçenek tarayıcının menüsünde.',
 ];
 
 /**

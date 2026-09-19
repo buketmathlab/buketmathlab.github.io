@@ -3592,3 +3592,82 @@ yalnız meslektaşı kendi öğrencisinde çaresiz bırakırdı.
   yalnız düğmeyi verir; ekran bunu açıkça yazıyor.
 - **Toplu yenileme yok** (dönem sonunda bütün sınıf gibi). Bilerek
   kapsam dışı.
+
+## Fişte "telefonun kendi tarayıcısı" (yeni SQL yok)
+
+Öğretmen Samsung telefonunda fişteki Android tarifini denedi ve **o menüde
+öyle bir seçenek yoktu.** Kendi telefonunun "Browser" adlı tarayıcısında
+ise vardı ve çalıştı. Sözü:
+
+> "Samsung'da Google'dan ya da Chrome'dan değil, kendi internet
+> tarayıcısından girmek gerekiyor. Mesela Apple'da Safari'den. Bu çok
+> önemli bir detay."
+
+### Kök sebep — dört yanlış tarifin ortak kökü
+
+Fişteki kurulum yönergesi bu turdan önce **dört kez** düzeltildi
+(Safari eksikti, düğmenin yeri eksikti, düğme yanlıştı, Android tamamen
+yanlıştı). Dördünün de altında tek bir şey çıktı:
+
+> **"Uygulama olarak ekle" seçeneği tarayıcıya özgüdür.**
+
+- iOS'ta **uygulama içi tarayıcıda** (bir mesajdaki bağlantıya dokununca
+  açılan pencere) seçenek hiç yok — Safari'de var.
+- Android'de **Chrome'da** öğretmenin aradığı seçenek çıkmadı; telefonun
+  **kendi tarayıcısında** çıktı.
+
+Yani düzeltilmesi gereken şey menü adımları değil, **hangi uygulamayla
+açılacağıydı.** Fişin ilk satırı artık bunu bir kural olarak yazıyor ve
+Chrome ile Google uygulamasını **açıkça eliyor.**
+
+### Neden marka marka tarayıcı adı yazılmıyor
+
+Huawei, Xiaomi, Oppo… her birinde tarayıcının adı başka ve elimizde o
+cihazlar yok. Kural yazılıyor, iki örnek veriliyor (iPhone'da Safari,
+Samsung'da "Browser"), son satır da başka markalarda seçeneğin **nerede**
+olduğunu söylüyor — ne olduğunu değil. Olmayan bilgiyi kâğıda basmak,
+dört yanlış tariften sonra yapılacak en son şey olurdu.
+
+### Cihazda doğrulanan ilk Android yolu
+
+Öğretmenin ekran görüntüleri: üst çubuktaki **içinde aşağı ok olan kare**
+simgesi → **"uygulama olarak ekle"** → çıkan pencere *"Bu web sayfası
+Uygulamalar ekranına eklensin mi?"* → **Ekle**.
+
+Önceki Android satırları Google'ın belgesinden ya da hafızadan yazılmıştı;
+bu ilk kez **görüldü.** Son düğmenin adı bu yüzden artık yazılıyor —
+önceki turlarda bilerek yazılmamıştı, çünkü değiştiğini biliyorduk ama
+hangisi olduğunu bilmiyorduk. **Görülmeyen yazılmıyor, görülen yazılıyor.**
+
+### Yönerge kısaldı — 6 satır yerine 5
+
+Kâğıt payı **9,8 mm'den 14,8 mm'ye** çıktı (tarayıcıda ölçüldü). Sayfa
+başına 8 fiş değişmedi.
+
+### İki yeni ölçüm, ikisi de kusur yerleştirilerek ısırtıldı
+
+**1. Chrome yalnız elenerek anılabilir.** `toContain('Chrome')` demek bu
+turun tam tersini de geçirirdi: *"Android: Sayfayı Chrome ile aç"* cümlesi
+de Chrome içeriyor. Ölçüm artık Chrome'un ya da Google'ın geçtiği **her
+satırda** "değil" arıyor.
+
+**2. Kurulum satırları kâğıdın enine sığıyor.** Sarılan bir satır ne taşma
+üretiyor (kutu büyüyor) ne de A4 ölçümünü kırmızı yakıyor (pay 14,8 mm,
+bir sarma 2,5 mm) — yani cümleyi uzatan kişi **hiçbir uyarı almıyordu.**
+Denetim artık her fişte `<br>` sayısından beklenen satır sayısını çıkarıp
+çizilen satır sayısıyla karşılaştırıyor. Kusur provası: bir satır uzatıldı,
+A4 ölçümü **yeşil kaldı**, yeni ölçüm kırmızı yandı (6 yerine 7 satır).
+
+### Ölü bir ölçüm yakalandı ve onarıldı
+
+Samsung satırının son düğmesi ilk yazımda bütün metinde aranıyordu:
+`toContain('“Ekle”')`. Kusur provası bunun **ölü** olduğunu gösterdi —
+Samsung satırının son düğmesini silsem iPhone satırındaki `→ "Ekle"`
+testi yeşil tutuyordu. Ölçüm artık Samsung satırını kendi başına süzüp
+içinde iki etiketi birlikte arıyor.
+
+### Bu tur yalnız fişte
+
+Öğretmenin isteği fiş içindi. Giriş ekranına da açılır bir tarif koyan
+önceki tur (`0e292ad`) beğenilmedi ve geri alındı; oraya bir daha
+dokunulmadı.

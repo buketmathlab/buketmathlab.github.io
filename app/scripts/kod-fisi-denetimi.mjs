@@ -337,6 +337,41 @@ console.log('5 — KÂĞIT: YAZDIRMA KİPİNDE KABUK YOK, SAYFA BAŞINA 10 FİŞ
     `önizleme ızgarası 190 mm (beklenen ${mm190} px, ölçülen ${ekranEni} px)`,
   );
 
+  /* ---------------------------------------------------------------------
+   * KURULUM SATIRLARI SARMIYOR — ve bu ölçümün SESSİZ BİR KUSURU var
+   * olduğu için burada.
+   *
+   * Kurulum yönergesi `<br>` ile yazılmış satırlardan oluşuyor. Bir satır
+   * kâğıdın enine sığmazsa ne taşma olur (kutu büyür) ne de A4 ölçümü
+   * kırmızı yanar (pay 14,8 mm, bir sarma 2,5 mm) — yani cümleyi uzatan
+   * kişi hiçbir uyarı almaz, kâğıtta yalnız tarif çirkinleşir ve
+   * numaralı adımlar kayar. Ölçülmeyen şey, kırılan şeydir.
+   *
+   * EKRAN KİPİNDE ÖLÇÜLÜYOR, ÖNEMLİ: yazdırma taklidinde ızgaranın eni
+   * bilerek `auto` ve Playwright `@page`'i uygulamadığı için kutu gerçek
+   * kâğıttan geniş çıkıyor; orada sarma ölçmek her cümleyi sığmış
+   * gösterirdi. Ekranda ızgara 190 mm, yani kâğıtla aynı.
+   *
+   * BEKLENEN SATIR SAYISI DOM'DAN SAYILIYOR (`<br>` + 1), sabit
+   * yazılmıyor: yönergeye bir satır eklenince ölçüm kendini günceller,
+   * ama SARMA yine yakalanır.
+   */
+  const sarma = await p.evaluate(() => {
+    const kutular = [...document.querySelectorAll('.sk-fis-kurulum')];
+    return kutular.map((k) => {
+      const satirYuksekligi = parseFloat(getComputedStyle(k).lineHeight);
+      return {
+        beklenen: k.querySelectorAll('br').length + 1,
+        cizilen: Math.round(k.getBoundingClientRect().height / satirYuksekligi),
+      };
+    });
+  });
+  const sarilan = sarma.filter((s) => s.cizilen > s.beklenen);
+  de(
+    sarma.length === 12 && sarilan.length === 0,
+    `kurulum satırları kâğıdın enine sığıyor — ${sarma.length} fiş, beklenen ${sarma[0]?.beklenen} satır, çizilen ${sarma[0]?.cizilen}`,
+  );
+
   await p.emulateMedia({ media: 'print' });
   await p.waitForTimeout(300);
 
