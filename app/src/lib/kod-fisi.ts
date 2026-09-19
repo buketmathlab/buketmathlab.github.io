@@ -1,3 +1,5 @@
+import { telefonBasligi, TELEFON_YOLLARI } from '@/lib/telefona-ekle';
+
 /**
  * Kod fişinin METNİ — React'siz, doğrudan test edilebilir (`lib/` ilkesi).
  *
@@ -53,99 +55,21 @@ export type Fis = {
 };
 
 /**
- * KURULUM YÖNERGESİ — telefona uygulama olarak ekleme.
+ * KURULUM YÖNERGESİ ARTIK BURADA YAZMIYOR — `telefona-ekle.ts`'te.
  *
- * NEDEN FİŞTE: öğretmen istedi, ve sebebi ürünün kendisinde. SEKİZ ana
- * ekrana eklenince tarayıcı çubuğu olmadan, kendi simgesiyle, uygulama
- * olarak açılıyor. Bunu bilmeyen bir veli her seferinde adresi yeniden
- * yazar; çoğu da bir daha hiç açmaz.
+ * NEDEN TAŞINDI: aynı tarif iki yerde gösteriliyor, fişte ve giriş
+ * ekranında. İki kopya tutulsaydı biri düzeltilip öteki unutulurdu ve o
+ * dosyanın bütün hikâyesi zaten dört kez yanlış yazılmış bir tarifin
+ * hikâyesi. Tek kaynak, tek düzeltme.
  *
- * VAAT GERÇEK Mİ — ÖNCE ONU ÖLÇTÜK. Kâğıda basılan her cümle bir söz;
- * olmayan bir şeyi 720 aileye taahhüt edemezdik. Dört şey yerinde:
- * `apple-touch-icon` (iOS manifest simgelerini kullanmıyor),
- * `apple-mobile-web-app-capable`, `apple-mobile-web-app-title` ve
- * manifest'te `display: standalone`.
+ * FİŞTE KISA HÂLİ KULLANILIYOR (`kisa`): her tarayıcı TEK SATIR, ok
+ * zinciriyle. Kâğıtta yer dar; ekranda bol, orada `adimlar` görünüyor.
+ * Aynı bilgi, iki yoğunluk.
  *
- * TARAYICININ ADI VE DÜĞMENİN YERİ YAZILIYOR — İKİSİ DE ÖLÇÜLDÜ.
- * İlk yazımda satır yalnız "Paylaş → Ana Ekrana Ekle" diyordu. Öğretmen
- * kendi iPhone'unda DENEDİ VE YAPAMADI: bağlantıyı bir uygulamanın
- * içinden açmıştı ve iOS'ta uygulama içi tarayıcıda "Ana Ekrana Ekle"
- * seçeneği HİÇ YOKTUR. Safari'de açınca hemen oldu.
- *
- * Sonra öğretmen ikinci eksiği söyledi: "Safari'de açtıktan sonra paylaş
- * butonunu nereden bulacak?" Haklıydı — tarif düğmenin yerini
- * söylemiyordu.
- *
- * ÜÇÜNCÜ DÜZELTME, YİNE ÖĞRETMENDEN VE YİNE HAKLI. "Ekranın alt
- * ortasındaki paylaş simgesi" diye yazmıştım; öğretmen "orada üç noktalı
- * bir simge yok mu, ona dokununca Paylaş çıkmıyor mu?" dedi. ESKİMİŞ
- * BİLGİYLE YAZMIŞIM: bugünkü iOS'ta alttaki düğme üç nokta ve Apple'ın
- * kendi adımı da öyle — "Tap the share button (three dots), then tap
- * Share". Öğretmen kendi telefonunda üç nokta → Paylaş → Ana Ekrana
- * Ekle yolunu doğruladı.
- *
- * Ders, geçen turunkinin aynısı ve bu sefer belgeye de yazıldı:
- * telefondaki adımları HAFIZADAN yazmak, kâğıda yanlış tarif bastırır.
- * Cihaz öğretmende; doğrulanacak yer orası.
- *
- * NOT: Apple aynı sayfada "sekme düzeni Altta ya da Üstte ise paylaş
- * simgesine dokunun" diyor — yani bazı ayarlarda orada üç nokta yerine
- * paylaş simgesi çıkıyor. Öğretmenin telefonundaki yol esas alındı;
- * öteki ayardaki veli de aynı listeye düşüyor, yalnız bir adım eksik
- * yaşıyor ve aradığını yine buluyor.
- *
- * ANDROID SATIRI İKİ ETİKET BİRDEN YAZIYOR — ve bu satır, iPhone
- * satırından farklı olarak GERÇEK BİR CİHAZDA DOĞRULANMADI.
- *
- * Öğretmen sordu: "Android için tarifin güncel mi?" Google'ın bugünkü
- * belgesi şunu diyor: "tap More → Install and create shortcut →
- * Install". Yani menü öğesi artık "Ana ekrana ekle" değil, son düğme de
- * "Ekle" değil "Yükle". Fişte eski Chrome'un tarifi yazıyordu.
- *
- * İki etiket birden yazılıyor çünkü Chrome sürümüne göre ikisinden biri
- * çıkıyor: eski sürümlerde "Ana ekrana ekle", yenilerde "Yükle…".
- * Tek etiket yazsaydık, öteki etiketi gören veli aradığını bulamazdı.
- * Son düğmenin adı BİLEREK yazılmıyor: sürümden sürüme değişiyor ve
- * dördüncü kez yanlış yazmaktansa söylenmemesi daha dürüst.
- *
- * DOĞRULANMAMIŞ OLDUĞU BURADA DURUYOR. iPhone satırını öğretmen kendi
- * telefonunda denedi; Android'de kimse denemedi. Elimizde Android cihaz
- * yok. Kâğıt basılmadan önce bir Android telefonda denenmeli —
- * öğrencilerin çoğu muhtemelen Android kullanıyor, yani bu satır
- * iPhone'dan daha çok kişiyi ilgilendiriyor.
- *
- * AYRICA AÇIK BİR SORU: depoda service worker YOK (bilinçli karar,
- * `pwa-denetimi.mjs` her koşuda ölçüyor). Chrome'un tam "uygulama olarak
- * yükleme" akışı tarihsel olarak service worker istiyordu; onsuz Android
- * yalnız bir KISAYOL koyabilir — simge gelir ama tarayıcı içinde açılır.
- * Chrome bu şartı gevşetti ama hangi sürümden itibaren olduğu bizde
- * ölçülmedi. Fiş bu yüzden "uygulama olarak ekle" diyor ve nasıl
- * açılacağına dair bir söz VERMİYOR.
- *
- * MENÜ SİMGESİ ÇİZİLMİYOR (⋮ gibi): yazı tipine göre kutu çıkabilir.
- * "Üç nokta" kelimesi her yazı tipinde doğru.
- *
- * İKİ AYRI DİZİ: öğrenciye "dokun", veliye "dokunun". Fişin geri
- * kalanında verilen kararın aynısı; tek ortak metin yazmak kolay olurdu
- * ama veliye "sen" demek olurdu.
+ * SAMSUNG INTERNET EKLENDİĞİ HÂLDE FİŞ KISALDI: eskiden her tarayıcı üç
+ * satırdı (aç · dokun · ekle), toplam yedi satır. Şimdi üç tarayıcı
+ * dört satır. Eksik olan tarayıcı eklendi ve kâğıt yine de küçüldü.
  */
-const KURULUM_OGRENCI: readonly string[] = [
-  'iPhone: Sayfayı Safari ile aç.',
-  'Alttaki üç nokta düğmesine dokun, “Paylaş”a bas.',
-  '“Ana Ekrana Ekle” → “Ekle”.',
-  'Android: Sayfayı Chrome ile aç.',
-  'Sağ üstteki üç nokta menüsüne dokun.',
-  '“Ana ekrana ekle” ya da “Yükle” seçeneğine dokun.',
-];
-
-const KURULUM_VELI: readonly string[] = [
-  'iPhone: Sayfayı Safari ile açın.',
-  'Alttaki üç nokta düğmesine dokunun, “Paylaş”a basın.',
-  '“Ana Ekrana Ekle” → “Ekle”.',
-  'Android: Sayfayı Chrome ile açın.',
-  'Sağ üstteki üç nokta menüsüne dokunun.',
-  '“Ana ekrana ekle” ya da “Yükle” seçeneğine dokunun.',
-];
 
 /**
  * Fişin başlığı, giriş yönergesi ve kurulum yönergesi.
@@ -189,8 +113,8 @@ export function fisMetni(tur: FisTuru): {
         'Kodunu yaz ve giriş yap.',
         'Ödevlerini takip eder, çözümünü gönderir, konulardaki gelişimini izlersin.',
       ],
-      kurulumBasligi: 'Telefonuna uygulama olarak ekle',
-      kurulum: KURULUM_OGRENCI,
+      kurulumBasligi: telefonBasligi('sen'),
+      kurulum: TELEFON_YOLLARI.map((y) => y.kisa),
     };
   }
   return {
@@ -201,8 +125,8 @@ export function fisMetni(tur: FisTuru): {
       'Kodu yazıp giriş yapın.',
       'Çocuğunuzun ödevlerini takip eder, konulardaki gelişimini izlersiniz.',
     ],
-    kurulumBasligi: 'Telefonunuza uygulama olarak ekleyin',
-    kurulum: KURULUM_VELI,
+    kurulumBasligi: telefonBasligi('siz'),
+    kurulum: TELEFON_YOLLARI.map((y) => y.kisa),
   };
 }
 
@@ -240,9 +164,17 @@ export function fisleriUret(
  * yalnız 9,8 mm pay vardı — yani fiş başına 2 mm, **tek satır bile
  * eklenemezdi.** İmzayı kaldırmak da yetmedi.
  *
- * Bedeli kâğıt ve öğretmen bilerek kabul etti: 720 öğrenci için bir
- * takım fiş 72 yerine 90 sayfa. Karşılığı, velinin tarifi okuyup
- * uygulayabilmesi — bunu yapamayan veli zaten hiç girmiyor.
+ * SONRA TARİF SIKIŞTI ve 10'a dönüp dönemeyeceğimiz TEKRAR ÖLÇÜLDÜ.
+ * Her tarayıcı üç satırdan tek satıra inince fiş 65,4 mm'den 61,9 mm'ye
+ * düştü ve sayfa payı 2,8 mm'den 20 mm'ye çıktı. "O hâlde 10 sığar"
+ * demek kolaydı; denendi:
+ *
+ *   10 fiş (min-height 50 mm'e indirilerek bile) → ızgara 298,8 mm,
+ *   A4'ün yazılabilir 277 mm'sini 21,8 mm AŞIYOR.
+ *
+ * İçerik beş satıra bölünecek kadar küçülmüyor. 8'de kalındı — kâğıt
+ * kazanmak için sınırı zorlamak, bu dosyanın bütün dersine aykırı
+ * olurdu. 720 öğrenci için bir takım fiş 90 sayfa.
  */
 export const SAYFA_BASINA = 8;
 

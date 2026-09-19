@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ADRES, fisMetni, fisleriUret, sayfalaraBol, SAYFA_BASINA } from './kod-fisi';
+import { TELEFON_YOLLARI } from './telefona-ekle';
 
 const KAYITLAR = [
   { ad: 'Ali Yılmaz', sinif: '9A', kodlar: { ogrenci: 'ABC12345', veli: 'XYZ98765' } },
@@ -137,40 +138,34 @@ describe('fisMetni', () => {
   });
 
   /**
-   * HER İKİ TELEFON DA ANLATILIYOR. Yalnız birini yazmak, ailelerin
-   * yarısını yolda bırakırdı — iPhone'da yol "Paylaş"ın içinden,
-   * Android'de tarayıcı menüsünden geçiyor.
+   * FİŞ, TARİFİ KENDİ İÇİNDE TUTMUYOR — `telefona-ekle.ts`'ten alıyor.
+   *
+   * Aynı tarif giriş ekranında da gösteriliyor. İki kopya tutulsaydı
+   * biri düzeltilip öteki unutulurdu; bu turun tamamı zaten dört kez
+   * yanlış kalmış bir tarifin hikâyesi.
+   *
+   * ÖLÇÜM DEĞERE BAKIYOR: fişteki satırlar, kaynaktaki `kisa` satırların
+   * BİREBİR aynısı olmalı. "İkisi de üç tarayıcıdan söz ediyor" demek
+   * yetmezdi — iki metin ayrışsa da o iddia doğru kalırdı.
    */
-  it('hem iPhone hem Android yolu yazıyor', () => {
+  it('fişteki kurulum satırları tek kaynaktan geliyor', () => {
+    const beklenen = TELEFON_YOLLARI.map((y) => y.kisa);
     for (const tur of ['ogrenci', 'veli'] as const) {
-      // KÜÇÜK HARFE TÜRKÇE KURALIYLA İNİLİYOR. `toLowerCase()` "I"yı "i"
-      // yapar ve Türkçe metinde yanlış eşleşme üretir; depodaki kural
-      // (0043, ayrıştırıcı) burada da geçerli.
-      const k = fisMetni(tur).kurulum.join(' ').toLocaleLowerCase('tr');
-      expect(k).toContain('iphone');
-      expect(k).toContain('paylaş');
-      expect(k).toContain('android');
-      expect(k).toContain('menü');
+      expect(fisMetni(tur).kurulum).toEqual(beklenen);
     }
   });
 
   /**
-   * TARAYICININ ADI GEÇMELİ — ve bu test bir SAHA BULGUSUNUN karşılığı.
-   *
-   * Yönerge önce yalnız "Paylaş → Ana Ekrana Ekle" diyordu. Öğretmen
-   * kendi iPhone'unda deneyip YAPAMADI: bağlantıyı bir uygulamanın
-   * içinden açmıştı ve iOS'ta uygulama içi tarayıcıda "Ana Ekrana Ekle"
-   * seçeneği hiç yok. Safari'de açınca hemen oldu.
-   *
-   * Yani kusur üründe değil yönergedeydi ve ancak gerçek bir telefonda
-   * göründü. Bu satır o dersin geri sızmasını engelliyor: biri bir gün
-   * "fiş kalabalık olmuş" deyip tarayıcı adlarını atarsa test yanar.
+   * ÜÇ TARAYICI DA KÂĞITTA. Öğretmenin kararı: açık tarif hem fişte hem
+   * giriş ekranında olsun. Samsung Internet ekran görüntüsüyle
+   * kanıtlanan eksikti; düşerse bu test yanar.
    */
-  it('kurulum yönergesi tarayıcının adını söylüyor', () => {
+  it('fişte üç tarayıcı da yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).toContain('Safari');
+      expect(k).toContain('iOS');
       expect(k).toContain('Chrome');
+      expect(k).toContain('Samsung');
     }
   });
 
@@ -221,29 +216,6 @@ describe('fisMetni', () => {
   it('başlık "uygulama olarak" diyor', () => {
     expect(fisMetni('ogrenci').kurulumBasligi).toContain('uygulama olarak');
     expect(fisMetni('veli').kurulumBasligi).toContain('uygulama olarak');
-  });
-
-  /**
-   * DÜĞMENİN YERİ TARİF EDİLİYOR — öğretmenin ikinci ve üçüncü eksiği.
-   *
-   * Önce "Safari'de aç" demek yetmedi: *"paylaş butonunu nereden
-   * bulacak?"* Sonra yazdığım tarif ESKİYDİ: "ekranın alt ortasındaki
-   * paylaş simgesi" dedim, öğretmen "orada üç noktalı bir simge yok mu?"
-   * diye sordu ve haklıydı. Bugünkü iOS'ta alttaki düğme üç nokta;
-   * Apple'ın kendi adımı da "share button (three dots), then tap Share".
-   * Öğretmen kendi telefonunda doğruladı.
-   *
-   * İKİ YER AYRI AYRI ÖLÇÜLÜYOR: iPhone'da ALTTA, Android'de SAĞ ÜSTTE.
-   * Yalnız "üç nokta" aransaydı, iki satırdan biri silinse bile test
-   * yeşil kalırdı — öteki satırdaki "üç nokta" yetiyor olurdu.
-   */
-  it('düğmenin yeri iki telefonda da ayrı ayrı yazıyor', () => {
-    for (const tur of ['ogrenci', 'veli'] as const) {
-      const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).toContain('Alttaki üç nokta');
-      expect(k).toContain('Sağ üstteki üç nokta');
-      expect(k).toContain('Paylaş');
-    }
   });
 
   /**

@@ -3592,3 +3592,78 @@ yalnız meslektaşı kendi öğrencisinde çaresiz bırakırdı.
   yalnız düğmeyi verir; ekran bunu açıkça yazıyor.
 - **Toplu yenileme yok** (dönem sonunda bütün sınıf gibi). Bilerek
   kapsam dışı.
+
+## Telefona ekleme tarifi — kâğıt ile ekran birlikte (yeni SQL yok)
+
+Öğretmen Android'de denedi ve **ekran görüntüleriyle** kanıtladı: fişteki
+Android tarifi baştan sona yanlıştı.
+
+| Fişte yazan | Telefonda gerçek |
+| --- | --- |
+| "**sağ üstteki** üç nokta" | üç nokta **sağ ALTTA** |
+| `"Ana ekrana ekle"` / `"Yükle"` | menüde **böyle bir seçenek yok** |
+
+Yerine **"Sayfa ekle"** var. Sebep: telefonu SEKİZ'i Chrome değil
+**Samsung Internet** ile açıyor — ve bu, Türkiye'de kenar durum değil,
+muhtemelen çoğunluk.
+
+### Dört tur, dört yanlış tarif, tek kök
+
+1. `Paylaş → Ana Ekrana Ekle` — öğretmen yapamadı; bağlantıyı bir
+   uygulamanın içinden açmıştı ve iOS'ta orada o seçenek **hiç yok**.
+2. Düğmenin **yeri** eksikti.
+3. Yeri yazdım ama **düğme yanlıştı**: bugünkü iOS'ta alttaki düğme üç
+   nokta, Paylaş onun içinden çıkıyor.
+4. Android'de **hem yer hem etiket** yanlıştı.
+
+Dördünü de ölçüm değil, **gerçek bir telefon** buldu. Ortak kök
+dikkatsizlik değil: **tarayıcı menüleri değişken, kâğıt basıldıktan
+sonra düzeltilemiyor.** 720 nüshaya, doğası gereği bayatlayacak bir
+bilgi basıyorduk.
+
+### Karar: aynı tarif iki yerde, TEK KAYNAKTAN
+
+Öğretmenin kararı açık tarifin **hem fişte hem giriş ekranında** olması
+oldu. Ekrandaki yanlış bir yayınla düzeltilebiliyor; kâğıttaki
+düzeltilemiyor — yani ekran, kâğıdın emniyet kemeri.
+
+`app/src/lib/telefona-ekle.ts` **tek kaynak**: fiş de giriş ekranı da
+oradan besleniyor. İki kopya tutulsaydı biri düzeltilip öteki
+unutulurdu — bu turun tamamı zaten ayrışmış bir metnin hikâyesi. Bir
+test fişteki satırların kaynaktakilerle **birebir** aynı olduğunu
+ölçüyor; "ikisi de üç tarayıcıdan söz ediyor" demek yetmezdi.
+
+### Samsung eklendiği hâlde fiş KÜÇÜLDÜ
+
+Eskiden her tarayıcı üç satırdı (aç · dokun · ekle), toplam yedi satır.
+Ok zinciriyle her tarayıcı tek satıra indi: başlık + 3 satır. Eksik olan
+tarayıcı eklendi ve kâğıt yine de küçüldü — fiş 65,4 → 61,9 mm, sayfa
+payı **2,8 → 20 mm**.
+
+"O hâlde sayfaya 10 fiş sığar" demek kolaydı; **denendi ve sığmadı**:
+`min-height` 50 mm'ye indirilerek bile ızgara 298,8 mm, A4'ün 277
+mm'sini 21,8 mm aşıyor. 8'de kalındı. Kâğıt kazanmak için sınırı
+zorlamak, bu turun bütün dersine aykırı olurdu.
+
+### "iPhone" değil "iOS"
+
+Öğretmenin kararı ve gerekçesi sağlam: iPad de aynı sistemi kullanıyor,
+tarif orada da aynı; "iPhone" yazmak iPad'i olan veliyi dışarıda
+bırakırdı. Karşısındaki "Android" de bir sistem adı — iki taraf artık
+simetrik. Negatif bir test "iPhone" ve "Apple"ın geri sızmasını
+engelliyor.
+
+### Neyi bilmediğimiz de kodda
+
+Her yol `cihazda_dogrulandi` alanı taşıyor ve **yalnız iOS'ta `true`**.
+Chrome ve Samsung yolları belgelerden ve öğretmenin ekran görüntüsünden;
+son adımları hiçbir Android cihazda görülmedi. Bir test bunu kilitliyor:
+birinin bir gün "hepsi tamam" diye işaretlemesi kırmızı yanıyor.
+Bilinmeyeni bilinen gibi göstermek, dört yanlış tarifin ortak sebebiydi.
+
+**Gizlenmeyen sınır:** Samsung Internet'te eklenen simge, kaynaklara
+göre sayfayı tarayıcı içinde açıyor olabilir — iOS'taki tam uygulama
+hissini vermeyebilir. Depoda service worker yok (bilinçli karar) ve bu
+bizde ölçülmedi. Metin bu yüzden yalnız *"adres yazmadan açarsınız"*
+diyor; tarayıcı çubuğu hakkında **söz vermiyor**. Bir test o sözün
+sonradan eklenmesini de engelliyor.
