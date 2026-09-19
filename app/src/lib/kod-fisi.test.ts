@@ -286,9 +286,51 @@ describe('fisMetni', () => {
   it('düğmenin yeri iki telefonda da ayrı ayrı yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const k = fisMetni(tur).kurulum.join(' ');
-      expect(k).toContain('alttaki üç nokta');
-      expect(k).toContain('üstteki aşağı oklu kare');
+      expect(k).toContain('Alttaki üç nokta');
+      expect(k).toContain('Üstteki aşağı oklu kare');
       expect(k).toContain('Paylaş');
+    }
+  });
+
+  /**
+   * İKİ BLOK İÇ İÇE GEÇMİYOR — ÖĞRETMENİN SON DÜZELTMESİNİN ÖLÇÜMÜ.
+   *
+   * *"Anlatırken bir iOS'a bir Android'e geçme. iOS için tarifi bir bütün
+   * şeklinde anlat, sonra Android için."*
+   *
+   * Bu, gözle bakılıp "düzgün duruyor" denecek bir şey değil: biri bir gün
+   * bir satır ekler ya da sıralamayı bozar ve fiş sessizce eski hâline
+   * döner. Ölçüm YAPIYI arıyor:
+   *
+   *   1. "iPhone:" bloğu "Android:" bloğundan ÖNCE başlıyor.
+   *   2. Android bloğu başladıktan SONRA hiçbir satır iPhone'dan ya da
+   *      Safari'den söz etmiyor.
+   *   3. Android bloğu başlamadan ÖNCE hiçbir satır Android'den,
+   *      Samsung'dan ya da Chrome'un Android tarafından söz etmiyor —
+   *      iPhone bloğunun kendi Chrome yasağı hariç, o da "ile değil"
+   *      biçimiyle ayrışıyor.
+   *
+   * Üçünü birden sağlamayan bir dizilim, öğretmenin reddettiği dizilimdir.
+   */
+  it('iOS bloğu ve Android bloğu iç içe geçmiyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const satirlar = fisMetni(tur).kurulum;
+
+      const iosBas = satirlar.findIndex((s) => s.startsWith('iPhone:'));
+      const androidBas = satirlar.findIndex((s) => s.startsWith('Android:'));
+      expect(iosBas).toBeGreaterThanOrEqual(0);
+      expect(androidBas).toBeGreaterThan(iosBas);
+
+      // Android bloğunun içinde iPhone'dan söz eden satır olmamalı.
+      for (const s of satirlar.slice(androidBas)) {
+        expect(s).not.toContain('iPhone');
+        expect(s).not.toContain('Safari');
+      }
+      // iPhone bloğunun içinde Android'den söz eden satır olmamalı.
+      for (const s of satirlar.slice(iosBas, androidBas)) {
+        expect(s).not.toContain('Android');
+        expect(s).not.toContain('Samsung');
+      }
     }
   });
 
@@ -335,16 +377,29 @@ describe('fisMetni', () => {
    * ÖLÇÜM SATIRIN İÇİNDE YAPILIYOR, BÜTÜN METİNDE DEĞİL — ve bu bir
    * ONARIM. İlk yazımda bütün kurulum metni birleştirilip içinde
    * `“Ekle”` aranıyordu; kusur provası bunun ÖLÜ bir ölçüm olduğunu
-   * gösterdi: Samsung satırının son düğmesini silsem iPhone satırındaki
-   * `→ “Ekle”` testi yeşil tutuyordu. Artık Samsung satırı kendi başına
-   * aranıyor ve iki etiketi birlikte taşımak zorunda.
+   * gösterdi: Android satırının son düğmesini silsem iPhone satırındaki
+   * `→ “Ekle”` testi yeşil tutuyordu. Artık o satır kendi başına aranıyor
+   * ve iki etiketi birlikte taşımak zorunda.
    */
-  it('Samsung satırı görülen etiketi VE son düğmeyi birlikte veriyor', () => {
+  it('Android adım satırı görülen etiketi VE son düğmeyi birlikte veriyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
-      const samsung = fisMetni(tur).kurulum.filter((s) => s.includes('Samsung:'));
-      expect(samsung).toHaveLength(1);
-      expect(samsung[0]).toContain('Uygulama olarak ekle');
-      expect(samsung[0]).toContain('“Ekle”');
+      const adim = fisMetni(tur).kurulum.filter((s) => s.includes('Uygulama olarak ekle'));
+      expect(adim).toHaveLength(1);
+      expect(adim[0]).toContain('Üstteki aşağı oklu kare');
+      expect(adim[0]).toContain('“Ekle”');
+    }
+  });
+
+  /**
+   * SAMSUNG'UN TARAYICISI ANDROID BLOĞUNDA ADIYLA GEÇİYOR. Ayrı bir ölçüm
+   * çünkü artık ayrı bir satırda: adım satırı simgeyi, bu satır tarayıcıyı
+   * söylüyor. Biri silinse öteki yeşil kalırdı.
+   */
+  it('Android bloğu Samsung’un tarayıcısını adıyla veriyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const satir = fisMetni(tur).kurulum.filter((s) => s.includes('Browser'));
+      expect(satir).toHaveLength(1);
+      expect(satir[0]).toContain('Samsung');
     }
   });
 
@@ -357,11 +412,17 @@ describe('fisMetni', () => {
    * menü yolunu uydurmak, dört yanlış tariften sonra yapılacak en son
    * şey olurdu. Fiş yalnız seçeneğin NEREDE olduğunu söylüyor.
    */
-  it('başka Android telefonlar için menü yeri söyleniyor', () => {
+  it('başka markalar için menü de seçenek olarak yazıyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
-      const k = fisMetni(tur).kurulum.join(' ').toLocaleLowerCase('tr');
-      expect(k).toContain('başka android');
-      expect(k).toContain('menü');
+      const satirlar = fisMetni(tur).kurulum;
+      const adim = satirlar.filter((s) => s.includes('Uygulama olarak ekle'));
+      expect(adim).toHaveLength(1);
+      // "ya da menü": Samsung'un simgesi olmayan markada aranacak yer.
+      expect(adim[0]).toContain('menü');
+      // VE ANDROID BLOĞUNUN İÇİNDE: öğretmenin "iOS'a Android'e geçme"
+      // kuralı bu satırı da bağlıyor.
+      const androidBas = satirlar.findIndex((s) => s.startsWith('Android:'));
+      expect(satirlar.indexOf(adim[0]!)).toBeGreaterThan(androidBas);
     }
   });
 

@@ -66,7 +66,26 @@ export type Fis = {
  * `apple-mobile-web-app-capable`, `apple-mobile-web-app-title` ve
  * manifest'te `display: standalone`.
  *
- * BİRİNCİ SATIR ARTIK BİR YASAK: TELEFONUN KENDİ TARAYICISI.
+ * İKİ BLOK, İÇ İÇE DEĞİL — ÖĞRETMENİN SON DÜZELTMESİ.
+ *
+ * Önceki yazımda satırlar iki telefon arasında gidip geliyordu: önce ortak
+ * bir kural, sonra iki markanın tarayıcı adları aynı satırda, sonra
+ * iPhone, sonra Samsung. Öğretmen okuyunca şunu söyledi: *"Anlatırken bir
+ * iOS'a bir Android'e geçme. iOS için tarifi bir bütün şeklinde anlat,
+ * sonra Android için."*
+ *
+ * Haklıydı ve sebebi fişin kullanıldığı yerde: bunu okuyan kişi elinde
+ * TEK bir telefon tutuyor. Kendini ilgilendirmeyen satırları atlaya
+ * atlaya okumak zorunda kalıyordu. Artık iki blok var — önce iPhone'un
+ * tamamı, sonra Android'in tamamı — ve her blok kendi başlığıyla açılıyor
+ * ("iPhone:", "Android:"). Okuyan kişi kendi bloğunu bulup üstten alta
+ * okuyor.
+ *
+ * Bu yüzden Chrome/Google yasağı da TEK bir ortak satır değil: her iki
+ * blokta ayrı ayrı yazıyor. Tekrar gibi görünüyor ama tekrar değil —
+ * bloğunu okuyan kişi öteki bloğu hiç okumuyor, ve yasak turun çekirdeği.
+ *
+ * YASAĞIN KENDİSİ: TELEFONUN KENDİ TARAYICISI.
  *
  * Bu satır ürünün en pahalı öğrenilmiş dersi ve tamamı SAHADAN geldi.
  * Öğretmen tarifi dört kez düzeltti; dördünün de ortak kökü aynı
@@ -111,7 +130,7 @@ export type Fis = {
  * çıkıyor ve kâğıtta bunu düzeltmenin yolu yok. Simge KELİMEYLE
  * anlatılıyor — "üç nokta", "aşağı oklu kare".
  *
- * MUHATAP YALNIZ İLK SATIRDA AYRILIYOR (aç / açın): geri kalan satırlar
+ * MUHATAP YALNIZ BLOK BAŞLIKLARINDA AYRILIYOR (aç / açın): adım satırları
  * ok zinciri, yani fiilsiz. Veliye "sen" demeden iki fişin ortak
  * kalabildiği tek nokta bu.
  *
@@ -120,19 +139,19 @@ export type Fis = {
  * ekranın tarayıcı çubuğu olmadan açılacağına dair bir SÖZ VERMİYOR.
  */
 const KURULUM_OGRENCI: readonly string[] = [
-  'Telefonunun kendi tarayıcısıyla aç — Chrome ya da Google değil.',
-  'iPhone’da Safari, Samsung’da “Browser”, ötekilerde kendi tarayıcısı.',
-  'iPhone: alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
-  'Samsung: üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
-  'Başka Android telefonlarda aynı seçenek tarayıcının menüsünde.',
+  'iPhone: Sayfayı Safari ile aç — Chrome ya da Google ile değil.',
+  'Alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
+  'Android: Sayfayı telefonun kendi tarayıcısıyla aç.',
+  'Chrome ya da Google değil — Samsung’da adı “Browser”.',
+  'Üstteki aşağı oklu kare ya da menü → “Uygulama olarak ekle” → “Ekle”.',
 ];
 
 const KURULUM_VELI: readonly string[] = [
-  'Telefonunuzun kendi tarayıcısıyla açın — Chrome ya da Google değil.',
-  'iPhone’da Safari, Samsung’da “Browser”, ötekilerde kendi tarayıcısı.',
-  'iPhone: alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
-  'Samsung: üstteki aşağı oklu kare → “Uygulama olarak ekle” → “Ekle”.',
-  'Başka Android telefonlarda aynı seçenek tarayıcının menüsünde.',
+  'iPhone: Sayfayı Safari ile açın — Chrome ya da Google ile değil.',
+  'Alttaki üç nokta → “Paylaş” → “Ana Ekrana Ekle” → “Ekle”.',
+  'Android: Sayfayı telefonunuzun kendi tarayıcısıyla açın.',
+  'Chrome ya da Google değil — Samsung’da adı “Browser”.',
+  'Üstteki aşağı oklu kare ya da menü → “Uygulama olarak ekle” → “Ekle”.',
 ];
 
 /**

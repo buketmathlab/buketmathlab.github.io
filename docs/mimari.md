@@ -3639,6 +3639,31 @@ bu ilk kez **görüldü.** Son düğmenin adı bu yüzden artık yazılıyor —
 önceki turlarda bilerek yazılmamıştı, çünkü değiştiğini biliyorduk ama
 hangisi olduğunu bilmiyorduk. **Görülmeyen yazılmıyor, görülen yazılıyor.**
 
+### İki blok, iç içe değil
+
+Yönergenin ilk yazımı iki telefon arasında gidip geliyordu: ortak bir
+kural, sonra iki markanın tarayıcı adları aynı satırda, sonra iPhone,
+sonra Samsung. Öğretmen okuyunca reddetti:
+
+> "Anlatırken bir iOS'a bir Android'e geçme. iOS için tarifi bir bütün
+> şeklinde anlat, sonra Android için."
+
+Haklıydı, ve sebebi fişin kullanıldığı yerde: bunu okuyan kişi elinde
+**tek** bir telefon tutuyor; kendini ilgilendirmeyen satırları atlaya
+atlaya okumak zorunda kalıyordu. Artık iki blok var — önce iPhone'un
+tamamı, sonra Android'in tamamı — ve her biri kendi başlığıyla açılıyor
+(`iPhone:`, `Android:`).
+
+Chrome/Google yasağı bu yüzden tek bir ortak satır **değil**: her iki
+blokta ayrı ayrı yazıyor. Tekrar gibi görünüyor ama değil — bloğunu okuyan
+kişi öteki bloğu hiç okumuyor, ve yasak turun çekirdeği.
+
+**Başka markaların yeri adım satırına taşındı.** Ayrı bir satır olarak
+yazıldığında kâğıt payı 14,8 mm'den **2,8 mm'ye** düşüyordu (ölçüldü):
+sığıyordu ama bundan sonraki en küçük değişiklik taşırırdı. Bilgi
+kaybedilmeden satır birleştirildi — "üstteki aşağı oklu kare **ya da
+menü**". Pay 14,8 mm'de kaldı.
+
 ### Yönerge kısaldı — 6 satır yerine 5
 
 Kâğıt payı **9,8 mm'den 14,8 mm'ye** çıktı (tarayıcıda ölçüldü). Sayfa
@@ -3651,7 +3676,15 @@ turun tam tersini de geçirirdi: *"Android: Sayfayı Chrome ile aç"* cümlesi
 de Chrome içeriyor. Ölçüm artık Chrome'un ya da Google'ın geçtiği **her
 satırda** "değil" arıyor.
 
-**2. Kurulum satırları kâğıdın enine sığıyor.** Sarılan bir satır ne taşma
+**2. İki blok iç içe geçmiyor.** Gözle bakıp "düzgün duruyor" denecek bir
+şey değil: biri bir satır ekler ve fiş sessizce eski hâline döner. Ölçüm
+yapıyı arıyor — `iPhone:` bloğu `Android:`ten önce başlıyor, Android
+bloğunda iPhone/Safari geçmiyor, iPhone bloğunda Android/Samsung geçmiyor.
+Dört kusur provası: Samsung satırı iPhone bloğuna sızdırıldı, Safari
+satırı Android bloğuna sızdırıldı, blok başlığı silindi, iki blok yer
+değiştirildi — dördü de kırmızı yandı.
+
+**3. Kurulum satırları kâğıdın enine sığıyor.** Sarılan bir satır ne taşma
 üretiyor (kutu büyüyor) ne de A4 ölçümünü kırmızı yakıyor (pay 14,8 mm,
 bir sarma 2,5 mm) — yani cümleyi uzatan kişi **hiçbir uyarı almıyordu.**
 Denetim artık her fişte `<br>` sayısından beklenen satır sayısını çıkarıp
