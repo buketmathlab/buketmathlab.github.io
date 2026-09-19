@@ -156,7 +156,7 @@ export type Fis = {
  * ekranın tarayıcı çubuğu olmadan açılacağına dair bir SÖZ VERMİYOR.
  */
 const KURULUM_OGRENCI: readonly string[] = [
-  `iOS: Safari’i aç, ${ADRES} yaz (Chrome ya da Google değil).`,
+  `iOS: Safari’de ${ADRES} yaz (Chrome ya da Google değil).`,
   'Alttaki üç nokta → “Paylaş” → açılan pencereyi yukarı kaydır.',
   '“Ana Ekrana Ekle” → “Ekle”.',
   `Android: Telefonun kendi tarayıcısını aç, ${ADRES} yaz.`,
@@ -165,7 +165,7 @@ const KURULUM_OGRENCI: readonly string[] = [
 ];
 
 const KURULUM_VELI: readonly string[] = [
-  `iOS: Safari’i açın, ${ADRES} yazın (Chrome ya da Google değil).`,
+  `iOS: Safari’de ${ADRES} yazın (Chrome ya da Google değil).`,
   'Alttaki üç nokta → “Paylaş” → açılan pencereyi yukarı kaydırın.',
   '“Ana Ekrana Ekle” → “Ekle”.',
   `Android: Telefonunuzun kendi tarayıcısını açın, ${ADRES} yazın.`,
