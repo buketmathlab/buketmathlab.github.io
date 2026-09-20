@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
+import { KodYenilemeKarti } from '@/components/KodYenilemeKarti';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -188,6 +189,12 @@ export function OgrenciPano() {
               </li>
             )}
           </ul>
+
+          {/* KOD YENİLEME — panonun EN ALTINDA (0046).
+              Yılda bir, belki hiç kullanılmayacak bir iş; her gün açılan
+              ekranın görünür yerini kaplamamalı. Aranınca bulunacak kadar
+              görünür, kazara basılmayacak kadar aşağıda. */}
+          <KodYenilemeKarti tur="ogrenci" />
         </>
       )}
     </AsyncBoundary>

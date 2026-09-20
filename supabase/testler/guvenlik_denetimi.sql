@@ -91,6 +91,14 @@ begin
                'dosya_erisim_izni', 'kendi_karnem', 'mesaj_gonder',
                'odev_gonder', 'ogrenci_mesajlari', 'ogrenci_odevleri',
                'okundu_isaretle', 'veli_paneli',
+               -- 0046: `kendi_kodumu_yenile` ÖĞRENCİ VE VELİNİN KENDİ ucu —
+               -- kişi kendi giriş kodunu yeniliyor. Bu denetim listeyi
+               -- genişletmeyi bilinçli bir karara çevirdiği için not
+               -- düşülüyor: muafiyet "öğretmen ucu öğrenciye açıldı"
+               -- demek DEĞİL. Tersi ölçülüyor — `kendi_kodum_testleri.sql`
+               -- 6. grup ÖĞRETMEN JETONUNUN reddedildiğini ayrıca sınıyor,
+               -- yani kapı iki yönde de kapalı.
+               'kendi_kodumu_yenile',
                -- 0034: `onam_ver` VELİNİN kendi ucu — onamı veli verir,
                -- başkası onun adına veremez. Öğrenci jetonunu 42501 ile
                -- reddediyor (bu listenin ölçtüğü şey), veli jetonunda ise

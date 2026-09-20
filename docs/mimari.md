@@ -3756,3 +3756,110 @@ içinde iki etiketi birlikte arıyor.
 Öğretmenin isteği fiş içindi. Giriş ekranına da açılır bir tarif koyan
 önceki tur (`0e292ad`) beğenilmedi ve geri alındı; oraya bir daha
 dokunulmadı.
+
+## Kendi kodumu yenile (0046)
+
+`0045` öğretmenin sorusunun birinci yarısıydı. Bu ikincisi: kişinin kendi
+giriş kodunu, öğretmene ulaşmayı beklemeden yenileyebilmesi.
+
+### Çözdüğü ihtiyaç sızıntı, hatırlanabilirlik değil
+
+Oturum cihazda saklanıyor (`sekiz_oturum`), yani kod bir kez yazılıyor ve
+uygulama açık kalıyor; üstelik kod fişte de yazıyor. Asıl senaryo şu:
+*kardeşim kodumu gördü*, *fişimi kaybettim*. O anda öğretmene ulaşamayan
+kişi 0045'ten sonra bile çaresizdi.
+
+### Öğretmenin iki kararı ve gerekçeleri
+
+**Kodu sistem üretiyor, kişi seçmiyor.** Kendi yazabilseydi `0028`'in
+güvenlik hesabı çökerdi: 31 harflik alfabeden 8 karakter ≈ 8,5×10¹¹,
+ilk isabet "milyon yıl mertebesinde". Üstelik `kod` sütunu
+`giris_kodlari`'nın **birincil anahtarı** — kodlar bütün aileler arasında
+tekil. "ANNE2024" gibi bir kod, belirli bir **yabancının** kapısını açan
+zayıf bir koddur.
+
+**Kişi kendi mevcut kodunu göremiyor.** Böyle bir uç yok ve bilerek yok:
+açık bırakılmış telefonu eline alan kişi bugün yalnız o oturumu
+görebiliyor; kodu okuyabilseydi kendi telefonundan **kalıcı** giriş
+sağlardı. Geçici erişimi kalıcıya çevirmek, özelliğin çözdüğü sorunu
+üretirdi.
+
+### Öğretmenin üç sorusu — cevaplar koddan okundu
+
+| Soru | Cevap |
+| --- | --- |
+| Kodu görebilecek miyim? | **Evet, her zaman.** `ogrenci_kodlari` (0033:904) kodu saklamıyor, her açılışta `giris_kodlari`'ndan okuyor. |
+| Unutursa? | **Kayıp yok**; öğretmen okuyup söyler, yeniden üretmesi bile gerekmez. |
+| Yeniden üretebilir miyim, kayıpsız? | **Evet.** `references public.giris_kodlari` → sıfır sonuç: hiçbir tablo koda bağlı değil. |
+
+### Kendi oturumu kalıyor, ötekiler düşüyor
+
+Tek bir `id <> v_oturum_id` süzgeci iki işi birden yapıyor ve **ikisi
+birbirinin tersi**: süzgeci kaldıran kusur kullanıcıyı yeni kodu okumadan
+dışarı atar, süzgeci hiç yazmayan kusur sızan kişiyi içeride bırakır.
+Testte 3. ve 4. grup ayrı ayrı ölçüyor; ikisi de kusur yerleştirilerek
+ısırtıldı.
+
+### Mevcut iki denetim yeni ucu yakaladı — ve ikisi de doğru davrandı
+
+**`guvenlik_denetimi.sql`:** anon'a açık her uç, beyaz listede değilse
+öğrenci/veli jetonunu reddetmek zorunda. Varsayılan "reddetmeli"; listeyi
+genişletmek bilinçli bir karar. `kendi_kodumu_yenile` meşru olarak
+öğrenci/veli ucu olduğu için gerekçesiyle eklendi — ve muafiyetin "kapı
+açıldı" demek olmadığını göstermek için testte **öğretmen jetonunun
+reddedildiği** ayrıca ölçülüyor.
+
+**`onam_testleri.sql` 9. grup:** "onamsız veli 1 uca girebildi". Burada
+muafiyet **istenmedi**. Kapının değişmezi şu: onam verilmeden hiçbir veli
+ucu çalışmaz. Tek bir istisna, kuralı "bir istisnası olan kural"a çevirir.
+Kazanılacak şey küçüktü — onam vermemiş velinin ulaşabildiği veri zaten
+yok — ve yol kapanmıyor: önce onam, sonra yenileme.
+
+### Vekâlet için fazladan koruma EKLENMEDİ
+
+`oturumlar.vekil_id` yalnız öğretmen oturumunda dolu (vekâlet
+öğretmen→öğretmen). Rol süzgeci öğretmeni zaten eliyor. `vekil_id is null`
+kontrolü eklemek, hiçbir zaman kırılamayacak bir ölçüm olurdu.
+
+### Arayüz: kart, sekme değil
+
+Öğrenci kabuğunda 4, veli kabuğunda 5 sekme var; altıncısı başparmak
+hedeflerini daraltırdı. Yılda bir, belki hiç kullanılmayacak bir iş —
+panonun **en altında** bir kart: aranınca bulunacak kadar görünür, kazara
+basılmayacak kadar aşağıda.
+
+Metin `lib/kod-yenileme-metni.ts`'de (fiş deseninin aynısı): öğretmen bir
+cümleyi beğenmezse tek yerden değişir.
+
+### Tarayıcı denetiminde İKİ ölü ölçüm yakalandı
+
+Her ikisi de "yeni kod hatırlatmayla birlikte görünüyor" iddiasındaydı:
+
+1. **Sayfanın tamamına bakıyordu.** `Dialog` yerel `<dialog>` kullanıyor
+   ve kapalı pencere DOM'da kalıyor; sonuç penceresindeki hatırlatmaları
+   tamamen silsem bile **onay penceresinde** duran cümle ölçümü yeşil
+   tutuyordu. Ölçüm `dialog[open]`'a daraltıldı.
+2. **`/not et/` parçasını arıyordu.** Daraltıldıktan sonra da ısırmadı:
+   kapatma düğmesinin etiketi "Tamam, not **ettim**". Artık hatırlatmanın
+   kendi cümlesi aranıyor.
+
+İkisi de ancak kusur provasıyla göründü. Yeşil bir ölçüm, ölçtüğünü
+kanıtlamaz.
+
+### Bütün ölçümler yeşilken ekran görüntüsünün gösterdiği iki kusur
+
+Denetim de testler de yeşildi; kusurlar **resme bakınca** göründü:
+
+1. **"Yeni kodun" iki kez yazıyordu** — bir kez pencere başlığı olarak,
+   bir kez `KodKutusu`'nun etiketi olarak. Hiçbir ölçüm bunu yakalayamazdı,
+   çünkü her ölçüm "cümle ekranda mı" diye soruyor; iki kez olması da
+   yeşildir. Kutunun etiketi artık ne olduğunu değil **ne işe yaradığını**
+   söylüyor: "Dokun, kopyalansın".
+2. **Sonuç penceresinde "Vazgeç" düğmesi vardı.** O pencere bir soru
+   değil, bir sonuç: eski kod çoktan ölmüş. "Vazgeç" kullanıcıya geri
+   alabileceğini düşündürürdü. `Dialog`'a isteğe bağlı `kapatEtiketi`
+   eklendi (varsayılan yine "Vazgeç"); bu pencere "Tamam, not ettim"
+   diyor ve tek düğmesi var.
+
+Ders: tarayıcı denetimi metnin **varlığını** ölçüyor, **anlamını**
+ölçmüyor. Ekran görüntüsü hâlâ turun bir parçası.

@@ -12,6 +12,15 @@ type Props = {
   onOnay?: () => void;
   onayTuru?: 'birincil' | 'tehlike';
   onayYukleniyor?: boolean;
+  /**
+   * Kapatma düğmesinin etiketi. Varsayılan "Vazgeç" — çünkü diyalogların
+   * çoğu bir SORU soruyor ve vazgeçilecek bir şey var.
+   *
+   * 0046'da gerekti: kod yenilendikten sonra açılan pencere bir soru
+   * değil, bir SONUÇ. İş olmuş bitmiş; orada "Vazgeç" yazmak kullanıcıya
+   * geri alabileceğini düşündürürdü. O pencere "Tamam, not ettim" diyor.
+   */
+  kapatEtiketi?: string;
 };
 
 /**
@@ -32,6 +41,7 @@ export function Dialog({
   onOnay,
   onayTuru = 'birincil',
   onayYukleniyor = false,
+  kapatEtiketi = 'Vazgeç',
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -62,7 +72,7 @@ export function Dialog({
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button tur="sade" onClick={onKapat}>
-            Vazgeç
+            {kapatEtiketi}
           </Button>
           {onayEtiketi && onOnay && (
             <Button tur={onayTuru} onClick={onOnay} yukleniyor={onayYukleniyor}>

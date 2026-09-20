@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
+import { KodYenilemeKarti } from '@/components/KodYenilemeKarti';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -133,6 +134,10 @@ export function VeliPano() {
               </li>
             )}
           </ul>
+
+          {/* KOD YENİLEME — panonun EN ALTINDA (0046). Öğrenci
+              panosundaki kartın aynısı, yalnız muhatap "siz". */}
+          <KodYenilemeKarti tur="veli" />
         </>
       )}
     </AsyncBoundary>
