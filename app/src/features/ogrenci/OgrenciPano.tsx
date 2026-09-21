@@ -6,6 +6,7 @@ import { KodYenilemeKarti } from '@/components/KodYenilemeKarti';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { ogrenciOzeti } from '@/lib/ogrenci-ozet-metni';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OgrenciOdevleri } from '@/types/api';
 
@@ -57,6 +58,13 @@ export function OgrenciPano() {
     a.son_tarih.localeCompare(b.son_tarih),
   )[0];
 
+  // Üst satırın cümlesi ve Ewalu pozu — ikisi de TEK yerden.
+  // `odevler.length` de veriliyor çünkü "bekleyen yok" iki ayrı durum
+  // demek: hiç ödev yayınlanmamış olabilir ya da hepsi gönderilmiş
+  // olabilir. Bunları ayırmayan eski hâli, hiçbir şey yapmamış
+  // öğrenciyi tebrik ediyordu.
+  const ozet = ogrenciOzeti(odevler.length, bekleyenler.length);
+
   // Son puan: en son gönderilen ve PUANI OLAN ödev. Açık uçlu ödev
   // puanlanana kadar burada görünmüyor — "puanın yok" değil, "henüz
   // yok"; olmayan bir sayı uydurulmuyor.
@@ -83,24 +91,21 @@ export function OgrenciPano() {
       {veri && (
         <>
           <div className="mb-6 flex items-center gap-3">
-            <EwaluFigure
-              poz={bekleyenler.length === 0 ? 'kutlama' : 'calisma'}
-              boyut={56}
-              dekoratif
-              className="shrink-0"
-            />
+            {/* CÜMLE VE POZ TEK ÇAĞRIDAN (`ogrenciOzeti`).
+                Burada ikisi ayrı koşullarda duruyordu ve ayrıştılar:
+                hiç ödev yayınlanmamış bir öğrenci "Eline sağlık" ve
+                kutlayan bir ayı görüyordu. Ayrışabilen şey ayrıştı;
+                artık ayrışamıyor. */}
+            <EwaluFigure poz={ozet.poz} boyut={56} dekoratif className="shrink-0" />
             <div className="min-w-0">
               <h1 className="font-display text-[24px] font-semibold text-ink">
                 Merhaba {veri.ogrenci.ad.split(' ')[0]}
               </h1>
-              {/* Ewalu'nun sözü — öğretmenin seçimi: "Özet + Ewalu'nun
-                  sözü". Bir İDDİA taşımıyor: ne "harikasın" ne
-                  "geri kaldın", yalnız şu an ne olduğunu söylüyor. */}
-              <p className="text-[14px] text-muted">
-                {bekleyenler.length === 0
-                  ? 'Bekleyen ödevin yok. Eline sağlık.'
-                  : `${bekleyenler.length} ödevin seni bekliyor.`}
-              </p>
+              {/* Öğretmenin seçimi: "Özet + Ewalu'nun sözü". Bir İDDİA
+                  taşımıyor: ne "harikasın" ne "geri kaldın", yalnız şu
+                  an ne olduğunu söylüyor. Cümlelerin kendisi ve bu
+                  kuralın ölçümü `lib/ogrenci-ozet-metni.ts`'te. */}
+              <p className="text-[14px] text-muted">{ozet.cumle}</p>
             </div>
           </div>
 

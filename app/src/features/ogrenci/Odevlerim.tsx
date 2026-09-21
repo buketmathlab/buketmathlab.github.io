@@ -5,6 +5,7 @@ import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { ogrenciOzeti } from '@/lib/ogrenci-ozet-metni';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OgrenciOdevleri, OgrenciOdev } from '@/types/api';
 
@@ -75,11 +76,19 @@ export function Odevlerim() {
           başında ve puanı gördüğü anda. */}
       <div className="mb-5">
         <h1 className="font-display text-[24px] font-semibold text-ink">Ödevlerim</h1>
-        <p className="text-[14px] text-muted">
-          {bekleyen === 0
-            ? 'Bekleyen ödevin yok. Eline sağlık.'
-            : `${bekleyen} ödevin seni bekliyor.`}
-        </p>
+        {/* HİÇ ÖDEV YOKSA BU SATIR HİÇ ÇİZİLMİYOR.
+            Bu ekranda `useVeri`'nin `bosMu`'su zaten boş durumu
+            gösteriyor ve "Henüz ödev yok / Öğretmenin ödev yayınlayınca
+            burada görünecek." yazıyor. Aynı şeyi üst üste iki kez
+            söylemenin kimseye faydası yok.
+
+            Cümle Pano'yla AYNI fonksiyondan geliyor: ikisi ayrı yerde
+            yazılıydı ve bu turun sebebi tam olarak o ayrışmaydı. */}
+        {odevler.length > 0 && (
+          <p className="text-[14px] text-muted">
+            {ogrenciOzeti(odevler.length, bekleyen).cumle}
+          </p>
+        )}
       </div>
 
       <AsyncBoundary

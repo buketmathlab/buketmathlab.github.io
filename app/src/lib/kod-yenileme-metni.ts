@@ -9,6 +9,24 @@
  * ÖĞRENCİ VE VELİ AYRI — tek ortak metin yazmak kolay olurdu ama veliye
  * "sen" demek olurdu. Fişte verilen kararın aynısı.
  *
+ * -----------------------------------------------------------------------------
+ * AÇIKLAMA GEREKÇE SORMUYOR — öğretmenin düzeltmesi
+ *
+ * İlk hâli "Kodunu başkası öğrendiyse yenileyebilirsin." idi. Öğretmen
+ * bunu reddetti: *"Burada olumsuz bir cümleyle yazma. Bir gerekçeye
+ * ihtiyacınız yok, kodu yenilemek için."*
+ *
+ * Haklıydı ve kusur cümlenin üslubundan derindi: o cümle kullanıcıya
+ * kendi kodunu yenilemek için bir MAZERET olması gerektiğini söylüyordu.
+ * Oysa uç kimseye "neden" diye sormuyor; ekran da sormamalı. Açıklama
+ * artık yalnız kartın ne işe yaradığını söylüyor.
+ *
+ * KALAN SATIR BİR GEREKÇE DEĞİL. "Eski kodun o anda çalışmaz olur —
+ * fişindeki kod da dâhil." bir SONUÇ: geri alınamaz bir işlemin ne
+ * yapacağı. Öğretmenin *"kaydetmeleri gerektiğini hatırlatıyor değil
+ * mi?"* sorusunun cevabı da o. Kalıyor.
+ *
+ * -----------------------------------------------------------------------------
  * ÜÇ CÜMLE BİLEREK BURADA VE HER BİRİNİN BİR SEBEBİ VAR:
  *
  *   1. "Eski kodun bir daha çalışmaz" — BASMADAN ÖNCE söyleniyor.
@@ -53,7 +71,7 @@ export type YenilemeMetni = {
 
 const OGRENCI: YenilemeMetni = {
   baslik: 'Giriş kodun',
-  aciklama: 'Kodunu başkası öğrendiyse yenileyebilirsin.',
+  aciklama: 'Buradan yeni bir giriş kodu alabilirsin.',
   dugme: 'Kodumu yenile',
   onayBasligi: 'Yeni kod alınsın mı?',
   onayUyarilari: [
@@ -72,7 +90,7 @@ const OGRENCI: YenilemeMetni = {
 
 const VELI: YenilemeMetni = {
   baslik: 'Giriş kodunuz',
-  aciklama: 'Kodunuzu başkası öğrendiyse yenileyebilirsiniz.',
+  aciklama: 'Buradan yeni bir giriş kodu alabilirsiniz.',
   dugme: 'Kodumu yenile',
   onayBasligi: 'Yeni kod alınsın mı?',
   onayUyarilari: [

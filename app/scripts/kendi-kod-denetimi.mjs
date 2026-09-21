@@ -243,7 +243,10 @@ console.log('6 — VELİDE DE KART VAR VE DİL "SİZ"');
 {
   const t = await pv.evaluate(() => document.body.innerText);
   de(t.includes('Giriş kodunuz'), 'veli panosunda kart var');
-  de(t.includes('yenileyebilirsiniz'), 'veli metni "siz" diliyle');
+  // Fiil 2026-09-21'de değişti: açıklama artık kodu yenilemek için
+  // GEREKÇE sormuyor ("başkası öğrendiyse…" kalktı), yalnız kartın ne
+  // işe yaradığını söylüyor. Ölçülen şey aynı: muhatap "siz" mi.
+  de(t.includes('alabilirsiniz'), 'veli metni "siz" diliyle');
   // NEGATİF: öğrenci metni sızmamış.
   de(!t.includes('yenileyebilirsin.'), 'veli kartında "sen" dili yok');
 

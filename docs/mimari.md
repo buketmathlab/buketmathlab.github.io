@@ -3863,3 +3863,111 @@ Denetim de testler de yeşildi; kusurlar **resme bakınca** göründü:
 
 Ders: tarayıcı denetimi metnin **varlığını** ölçüyor, **anlamını**
 ölçmüyor. Ekran görüntüsü hâlâ turun bir parçası.
+
+## Ürün dili: övgü yok, gerekçe yok (yeni SQL yok)
+
+Öğretmen iki cümleyi reddetti ve arkalarından bir kural koydu:
+
+> *"Kodunuzu başkası öğrendiyse yenileyebilirsiniz şeklinde yazmadı.
+> Yani burada olumsuz bir cümleyle yazma. Bir gerekçeye ihtiyacınız yok
+> e, kodu yenilemek için. Bir de bekleyen ödevin yok, eline sağlık
+> cümlesinde eline sağlık cümlesine gerek yok. Daha pedagojik, daha
+> profesyonel bir şey yazabilirsiniz. **Genel olarak tüm cümleler öyle
+> olmalı.**"*
+
+İki şikâyet, iki ayrı kusur:
+
+- **Gerekçe dayatmak.** Kart, kişiden kendi kodunu yenilemek için bir
+  *mazeret* olması gerektiğini ima ediyordu. Oysa uç kimseye "neden"
+  diye sormuyor — 0046 bunu bilerek sormuyor. Ekran da sormamalı.
+- **Hak edilmemiş övgü.** Ürün, ölçülmüş bir sonuç olmadan çocuk
+  hakkında iyi bir şey söylüyordu.
+
+### "Eline sağlık" göründüğünden kötüydü: tek koşul iki durumu anlatıyordu
+
+Pano `bekleyenler.length === 0` diye TEK bir soru soruyordu ve o soru
+iki bambaşka durumu aynı kutuya koyuyordu: *öğretmen henüz hiç ödev
+yayınlamadı* ve *öğrenci bütün ödevlerini gönderdi*. Yani hiç ödev
+verilmemiş bir öğrenci, hiçbir şey yapmadan tebrik ediliyordu —
+üstelik yanında kolunu havaya kaldırmış kutlayan bir Ewalu'yla.
+
+Dosyanın kendi yorumu doğru kuralı yazmıştı (*"Bir İDDİA taşımıyor: ne
+'harikasın' ne 'geri kaldın'"*), cümle o kuralı tutmuyordu. **Yorum bir
+ölçüm değildir.**
+
+Öğretmenin kararı: durum ikiye ayrıldı.
+
+| Durum | Cümle | Ewalu |
+| --- | --- | --- |
+| Hiç ödev yayınlanmamış | Henüz ödev yayınlanmadı. | `kesif` |
+| Hepsi gönderilmiş | Bütün ödevlerini gönderdin. | `kutlama` |
+| Bekleyen var | *N* ödevin seni bekliyor. | `calisma` |
+
+`kesif` uydurulmadı: `components/brand/ewalu.ts` o pozun yerini zaten
+*"Boş durumlar — henüz ödev yok"* diye tanımlıyordu. **Katalog doğru
+pozu söylüyordu, ekran onu kullanmıyordu.** `kutlama` ise artık bir
+işin karşılığı — Kural 9 kapsamında öğretmenin kararı.
+
+### Cümle ve poz TEK çağrıdan geliyor
+
+Kusur tam olarak ayrışmadan doğmuştu: cümle bir koşulda, poz bir satır
+yukarıda **ayrı** bir koşulda duruyordu. `lib/ogrenci-ozet-metni.ts`
+ikisini birlikte döndürüyor; birim testi de tarayıcı denetimi de
+ikisini birlikte ölçüyor. Ayrışabilen şey ayrıştı; artık ayrışamıyor.
+
+Aynı cümle `OgrenciPano.tsx` ve `Odevlerim.tsx` içinde **ayrı ayrı**
+yazılıydı — bu turun kendisi, dağılmış metnin neden tehlikeli olduğunun
+kanıtı. İkisi de artık tek kaynaktan.
+
+**Ödevlerim'de hiç ödev yoksa üst satır hiç çizilmiyor:** o ekranın boş
+durumu zaten *"Henüz ödev yok"* diyor. Aynı şeyi üst üste iki kez
+söylemenin kimseye faydası yok.
+
+### `lib/urun-dili.ts` — kuralı ölçüye bağlamak
+
+*"Genel olarak tüm cümleler öyle olmalı"* yazılı bir kural olmadan bir
+sonraki turda yeniden bozulur. `urun-dili.test.ts` bütün kaynağı
+tarıyor; yasak kalıplardan biri geri gelirse **kırmızı** yanıyor.
+
+**Nöbetçi yazıldığı anda ısırdı — ve tasarımını düzeltti.** İlk tarama
+dört bulgu verdi ve dördü de **yorumdu**: dosya başlıkları, bir kalıbın
+neden yasak olduğunu anlatmak için onu tırnak içinde anmak zorunda.
+Kuralın gerekçesini silmek, kuralı korumanın bedeli olamaz. Kural
+kullanıcının **okuduğu** metin hakkında, yorumu kullanıcı okumuyor —
+bu yüzden `yorumlariAt()` yazıldı. Dize içindeki `//` korunuyor
+(`'https://…'` bir yorum değildir) ve atıcının kendisi ayrıca
+ölçülüyor: taramayı gevşeten bir değişiklik, nöbetçiyi sessizce
+hiçbir şey görmeyen bir şeye çevirebilirdi.
+
+#### `Harika!` yasak değil, `Harikasın` yasak
+
+`ewalu-puan.ts`'te 100 puan alan öğrenciye *"Harika! Konuyu gerçekten
+iyi kavramışsın."* deniyor. O cümle **öğretmenindir** (Kural 9) ve
+**ölçülmüş** bir sonucun karşılığı — hak edilmiş. Yasaklanan
+`Harikasın`: biri **işi**, öbürü **çocuğu** niteliyor. Ayrım
+uydurulmadı; deponun kendi yazılı kuralı (`karne-sozu.ts`: *"ÇOCUĞU
+DEĞİL İŞİ İŞARET EDİYOR"*) burada yeniden kullanıldı.
+
+#### İkinci bir liste DEĞİL
+
+`karne-sozu.ts`'teki `YASAKLI_KELIMELER` yeniden kullanılmadı ve bu
+bilinçli. O liste (`ortalama`, `sıralama`, `sınıfın`) konu karnesi
+cümlesine özel; bütün kaynağa uygulansaydı **öğretmenin kendi** sınıf
+ortalaması ekranını kırardı. *"İkinci liste yazma"* uyarısı **aynı
+kapsam** için geçerli; bunlar farklı kapsamlar. Bir ölçüm ayrıca iki
+listenin birbirine sızmadığını sınıyor.
+
+#### Nöbetçinin DÜRÜST SINIRI
+
+Ölçtüğü şey **gerileme**, üslup değil: daha önce hakkında karar
+verdiğimiz bir kalıbın geri gelmesini yakalar. Hiç görmediği yeni bir
+övgü cümlesini yakalayamaz — bir düzenli ifadenin üslup yargısı yoktur.
+"Eline sağlık"ı yakalar, "Ne güzel yapmışsın"ı yakalamaz.
+
+### Yan bulgu: panoda ölü bir `bosBaslik`
+
+`OgrenciPano`, `useVeri`'yi `bosMu` geri çağrısı olmadan çağırıyor;
+`durum` hiçbir zaman `'bos'` olmuyor ve `bosBaslik="Henüz bir şey yok"`
+**hiç çizilmiyor**. Panoda "sıfır sayı boş değil" kararı bilinçli
+(`useVeri.ts`); ölü olan yalnız o başlık metni. Bu turda dokunulmadı,
+kayda geçti.

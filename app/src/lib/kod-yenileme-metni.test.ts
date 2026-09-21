@@ -85,8 +85,8 @@ describe('yenilemeMetni', () => {
 
     expect(o.baslik).toBe('Giriş kodun');
     expect(v.baslik).toBe('Giriş kodunuz');
-    expect(o.aciklama).toContain('yenileyebilirsin.');
-    expect(v.aciklama).toContain('yenileyebilirsiniz.');
+    expect(o.aciklama).toContain('alabilirsin.');
+    expect(v.aciklama).toContain('alabilirsiniz.');
     expect(o.kapatDugmesi).toBe(v.kapatDugmesi); // düğme fiilsiz, ortak
   });
 
@@ -123,6 +123,26 @@ describe('yenilemeMetni', () => {
       const m = yenilemeMetni(tur);
       expect(m.aciklama.length).toBeGreaterThan(20);
       expect(m.dugme).toContain('yenile');
+    }
+  });
+
+  /**
+   * AÇIKLAMA GEREKÇE SORMUYOR — öğretmenin düzeltmesi:
+   * *"Bir gerekçeye ihtiyacınız yok, kodu yenilemek için."*
+   *
+   * ÖLÇÜM YALNIZ AÇIKLAMAYA BAKIYOR, kartın tamamına değil. Onay
+   * penceresindeki "Bu kodla başka bir telefondan girilmişse…" satırı
+   * meşru: o bir gerekçe değil, işlemin SONUCU. Tüm metne bakan bir
+   * ölçüm onu da yasaklardı ve kullanıcı ne satın aldığını bilemezdi.
+   *
+   * Aranan şey koşul kipi: "…ise/…diyse yenileyebilirsin" kalıbı.
+   */
+  it('açıklama kodu yenilemek için sebep istemiyor', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const a = yenilemeMetni(tur).aciklama.toLocaleLowerCase('tr');
+      for (const kosul of ['öğrendiyse', 'başkası', 'kaybeder', 'unutursa', 'çaldır']) {
+        expect(a).not.toContain(kosul);
+      }
     }
   });
 
