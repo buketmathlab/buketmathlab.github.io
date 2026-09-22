@@ -13,7 +13,7 @@ describe('kiyasMetni', () => {
   it('kartta övgü ya da yargı kalıbı yok', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const m = kiyasMetni(tur);
-      const hepsi = [m.baslik, m.puanEtiketi, m.ortalamaYok, m.adetNotu(3)].join(' ');
+      const hepsi = [m.baslik, m.puanEtiketi].join(' ');
       expect(yasakKaliplariBul(hepsi)).toEqual([]);
     }
   });
@@ -26,7 +26,7 @@ describe('kiyasMetni', () => {
   it('metin bir karşılaştırma HÜKMÜ kurmuyor', () => {
     for (const tur of ['ogrenci', 'veli'] as const) {
       const m = kiyasMetni(tur);
-      const hepsi = [m.baslik, m.puanEtiketi, m.ortalamaYok, m.adetNotu(3)]
+      const hepsi = [m.baslik, m.puanEtiketi]
         .join(' ')
         .toLocaleLowerCase('tr');
       for (const hukum of ['üstünde', 'altında', 'geride', 'ileride', 'başarılı']) {
@@ -41,10 +41,22 @@ describe('kiyasMetni', () => {
     expect(kiyasMetni('veli').puanEtiketi).toBe('Puanı');
   });
 
-  /** Tekil/çoğul: "1 teslimden", "3 teslimden". */
-  it('adet notu tekil ve çoğulda doğru', () => {
-    expect(kiyasMetni('ogrenci').adetNotu(1)).toBe('1 teslimden');
-    expect(kiyasMetni('ogrenci').adetNotu(24)).toBe('24 teslimden');
+  /**
+   * TESLİM SAYISI METİNDE HİÇ YOK — öğretmenin kararı: "Teslim sayısı
+   * veliye ya da öğrenciye gösterilmesin."
+   *
+   * Ölçüm metnin TAMAMINI tarıyor, kaldırdığım alanın yokluğunu değil:
+   * biri bir gün "kaç kişiden" diye başka bir cümle eklerse burası
+   * kırmızı yanar.
+   */
+  it('metinde teslim sayısından söz eden hiçbir şey yok', () => {
+    for (const tur of ['ogrenci', 'veli'] as const) {
+      const m = kiyasMetni(tur);
+      const hepsi = Object.values(m).join(' ').toLocaleLowerCase('tr');
+      for (const yasak of ['teslim', 'kişi', 'öğrenci sayısı', 'kaç']) {
+        expect(hepsi, `"${yasak}" geçiyor: "${hepsi}"`).not.toContain(yasak);
+      }
+    }
   });
 });
 

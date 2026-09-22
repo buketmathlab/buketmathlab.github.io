@@ -168,21 +168,33 @@ begin
      and not s2.ozel
      and coalesce(g.ogretmen_puan, g.puan) is not null;
 
+  -- TESLİM SAYISI GÖNDERİLMİYOR — öğretmenin kararı: "Teslim sayısı
+  -- veliye ya da öğrenciye gösterilmesin."
+  --
+  -- EKRANDAN GİZLEMEK YETMEZ, YANITTAN DA ÇIKIYOR. Bu deponun kuralı
+  -- (Part XXI): göstermediğin şeyi göndermezsin. Sayı yanıtta dursa
+  -- tarayıcının geliştirici araçlarını açan herkes onu okurdu; "ekranda
+  -- yok" demek "kimse göremez" demek değil. Ödeme bilgisinde ve cevap
+  -- anahtarında verilen kararın aynısı.
+  --
+  -- HESAP YİNE YAPILIYOR (`v_sinif_adet`, `v_seviye_adet`): bir gün alt
+  -- sınır kararı değişirse dönülecek yer belli olsun. Sadece dışarı
+  -- çıkmıyor.
   return jsonb_build_object(
     'durum', 'hazir',
     'sinif', jsonb_build_object(
       'ad',      (select s.ad from public.siniflar s where s.id = d.sinif_id),
-      'ortalama', v_sinif_ort,
-      'adet',     v_sinif_adet
+      'ortalama', v_sinif_ort
     ),
     -- Kardeş şube yoksa (yalnız kendi sınıfına verilmiş) bu alan null
     -- ve ekran o satırı hiç çizmiyor. Öğretmenin kuralı: "diğer şubelere
     -- verilmemişse sadece ödevin verildiği sınıf ortalaması alınsın."
+    --
+    -- `v_sube_adet` de gönderilmiyor: ekranda görünmüyor, yalnız bu
+    -- koşulu kuruyor.
     'seviye', case when v_sube_adet > 1 then jsonb_build_object(
       'ad',       v_seviye::text || '. sınıflar',
-      'ortalama', v_seviye_ort,
-      'adet',     v_seviye_adet,
-      'sube',     v_sube_adet
+      'ortalama', v_seviye_ort
     ) else null end
   );
 end;

@@ -154,14 +154,16 @@ async function ac(kiyas, { rol = 'ogrenci', sonTarih = gun(-2) } = {}) {
   return { s, p };
 }
 
+// Sunucu teslim sayısını GÖNDERMİYOR (öğretmenin kararı); taklit de
+// göndermiyor ki denetim gerçek yanıtı temsil etsin.
 const HAZIR_KARDESLI = {
   durum: 'hazir',
-  sinif: { ad: '9A', ortalama: 65, adet: 24 },
-  seviye: { ad: '9. sınıflar', ortalama: 61.4, adet: 71, sube: 3 },
+  sinif: { ad: '9A', ortalama: 65 },
+  seviye: { ad: '9. sınıflar', ortalama: 61.4 },
 };
 const HAZIR_KARDESSIZ = {
   durum: 'hazir',
-  sinif: { ad: '9A', ortalama: 65, adet: 24 },
+  sinif: { ad: '9A', ortalama: 65 },
   seviye: null,
 };
 
@@ -189,7 +191,7 @@ console.log('A — SÜRE DOLMADI: kart hiç çizilmiyor');
   // gönderirse kart süre dolmadan ortalamayı SIZDIRIRDI.
   const { s, p } = await ac({
     durum: 'sure_dolmadi',
-    sinif: { ad: '9A', ortalama: 65, adet: 24 },
+    sinif: { ad: '9A', ortalama: 65 },
     seviye: null,
   });
   const t = await p.evaluate(() => document.body.innerText);
@@ -204,13 +206,13 @@ console.log('B — TEK TESLİM: ortalama yine görünüyor (alt sınır yok)');
 {
   const { s, p } = await ac({
     durum: 'hazir',
-    sinif: { ad: '9A', ortalama: 80, adet: 1 },
+    sinif: { ad: '9A', ortalama: 80 },
     seviye: null,
   });
   const t = await p.evaluate(() => document.body.innerText);
   de(iceriyorMu(t, 'Bu ödevde durum'), 'kart çizildi');
-  de(t.includes('1 teslimden'), 'tek teslim olduğu yazıyor');
   de(/9A ortalaması/.test(t), 'sınıf satırı var');
+  de(/80\s*$|80\n/m.test(t) || t.includes('80'), 'tek teslimin ortalaması görünüyor');
   await s.close();
 }
 
@@ -243,11 +245,13 @@ console.log('D — KARDEŞ ŞUBE VAR: iki satır, sayılar DOĞRU satırda');
   de(bul('Puanın').endsWith('80'), `puan satırı: "${bul('Puanın')}"`);
   de(bul('9A ortalaması').endsWith('65'), `sınıf satırı: "${bul('9A ortalaması')}"`);
   de(bul('9. sınıflar').endsWith('61,4'), `seviye satırı: "${bul('9. sınıflar')}"`);
-  de(bul('9A ortalaması').includes('24 teslimden'), 'sınıf adedi doğru satırda');
-  de(bul('9. sınıflar').includes('71 teslimden'), 'seviye adedi doğru satırda');
+  // TESLİM SAYISI EKRANDA YOK — öğretmenin kararı.
+  const t = await p.evaluate(() => document.body.innerText);
+  for (const iz of ['teslimden', 'teslim', 'kişiden']) {
+    de(!t.toLocaleLowerCase('tr').includes(iz), `"${iz}" ekranda yok`);
+  }
 
   // YARGI CÜMLESİ YOK — bir önceki turun kuralı.
-  const t = await p.evaluate(() => document.body.innerText);
   for (const hukum of ['üstündesin', 'altındasın', 'geridesin', 'Eline sağlık']) {
     de(!t.includes(hukum), `"${hukum}" yazmıyor`);
   }
@@ -268,6 +272,8 @@ console.log('E — VELİ TARAFI: aynı kart, aynı sayılar');
   de(bul('Puanı').endsWith('80'), `veli puan satırı: "${bul('Puanı')}"`);
   de(bul('9A ortalaması').endsWith('65'), 'veliye giden sınıf ortalaması öğrencininkiyle aynı');
   de(bul('9. sınıflar').endsWith('61,4'), 'veliye giden seviye ortalaması aynı');
+  const tv = await p.evaluate(() => document.body.innerText);
+  de(!tv.toLocaleLowerCase('tr').includes('teslimden'), 'veli ekranında da teslim sayısı yok');
   // Muhatap ayrımı: veliye "Puanın" değil "Puanı".
   de(!satirlar.some((x) => x.startsWith('Puanın')), 'veliye "sen" diliyle seslenilmiyor');
   await s.close();

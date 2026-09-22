@@ -172,9 +172,8 @@ begin
   if v->>'durum' <> 'hazir' then
     raise exception '3: TEK teslimde kıyas gelmedi — sessiz bir alt sınır eklenmiş: %', v::text;
   end if;
-  if (v->'sinif'->>'adet')::int <> 1 then
-    raise exception '3b: tek teslim beklenirken adet %', v->'sinif'->>'adet';
-  end if;
+  -- Adet artık gönderilmiyor (öğretmenin kararı); "tek teslim" olduğunu
+  -- ortalamanın KENDİSİ kanıtlıyor: iki kişi olsaydı 100,0 çıkmazdı.
   if (v->'sinif'->>'ortalama')::numeric <> 100.0 then
     raise exception '3c: tek teslimde ortalama 100,0 olmalı, gelen %', v->'sinif'->>'ortalama';
   end if;
@@ -198,9 +197,6 @@ begin
   if v->'sinif'->>'ortalama' is not null then
     raise exception '4b: teslim yokken ortalama uydurulmuş: %', v::text;
   end if;
-  if (v->'sinif'->>'adet')::int <> 0 then
-    raise exception '4c: teslim yokken adet 0 olmalı, gelen %', v->'sinif'->>'adet';
-  end if;
   raise notice '4 OK — teslim yokken ortalama null, uç çökmüyor';
 
   -- ---------------------------------------------------------------------------
@@ -211,9 +207,6 @@ begin
   v := public.odev_kiyasi(j_ox1, d_9x);
   if (v->'sinif'->>'ortalama')::numeric <> 75.0 then
     raise exception '5: 9X ortalaması 75,0 olmalı, gelen %', v->'sinif'->>'ortalama';
-  end if;
-  if (v->'sinif'->>'adet')::int <> 2 then
-    raise exception '5b: 9X teslim sayısı 2 olmalı, gelen %', v->'sinif'->>'adet';
   end if;
   if v->'sinif'->>'ad' <> '9X' then
     raise exception '5c: sınıf adı 9X olmalı, gelen %', v->'sinif'->>'ad';
@@ -233,12 +226,6 @@ begin
   if (v->'seviye'->>'ortalama')::numeric <> 58.3 then
     raise exception '6b: seviye ortalaması 58,3 olmalı, gelen % (43,8 ise 10''lar, 68,8 ise farklı gün karıştı)',
       v->'seviye'->>'ortalama';
-  end if;
-  if (v->'seviye'->>'adet')::int <> 3 then
-    raise exception '6c: seviye teslim sayısı 3 olmalı, gelen %', v->'seviye'->>'adet';
-  end if;
-  if (v->'seviye'->>'sube')::int <> 2 then
-    raise exception '6d: kardeş şube sayısı 2 olmalı, gelen %', v->'seviye'->>'sube';
   end if;
   raise notice '6 OK — seviye ortalaması ad + gün + seviye ile doğru (58,3)';
 
@@ -416,6 +403,10 @@ begin
       raise exception '14e: veli satırında seviye ortalaması 58,3 olmalı, gelen %',
         satir->'kiyas'->'seviye'->>'ortalama';
     end if;
+    -- Teslim sayısı VELİYE de gitmiyor.
+    if satir->'kiyas'->'sinif' ? 'adet' or satir->'kiyas'->'seviye' ? 'adet' then
+      raise exception '14g: veli satırında teslim sayısı var: %', satir->'kiyas'::text;
+    end if;
 
     -- SÜRESİ DOLMAMIŞ ödev velinin panelinde de ortalama taşımamalı.
     select o into satir
@@ -429,6 +420,34 @@ begin
   end;
   raise notice '14 OK — velinin GERÇEK yolu (veli_paneli) öğrenciyle aynı sayıyı veriyor';
 
+  -- ---------------------------------------------------------------------------
+  -- 15 — TESLİM SAYISI YANITTA HİÇ YOK
+  --
+  -- Öğretmenin kararı: "Teslim sayısı veliye ya da öğrenciye
+  -- gösterilmesin." Ekrandan kaldırmak YETMEZ — bu depo gizlemeyi
+  -- arayüzde yapmıyor (Part XXI). Sayı yanıtta dursaydı tarayıcının
+  -- geliştirici araçlarını açan herkes okurdu.
+  --
+  -- Ölçüm alanın VARLIĞINA bakıyor (`?`), değerine değil: 0 ya da null
+  -- göndermek de "göndermemek" sayılmaz.
+  -- ---------------------------------------------------------------------------
+  v := public.odev_kiyasi(j_ox1, d_9x);
+  if v->'sinif' ? 'adet' then
+    raise exception '15: sınıf teslim sayısı yanıtta: %', v::text;
+  end if;
+  if v->'seviye' ? 'adet' then
+    raise exception '15b: seviye teslim sayısı yanıtta: %', v::text;
+  end if;
+  if v->'seviye' ? 'sube' then
+    raise exception '15c: şube sayısı yanıtta: %', v::text;
+  end if;
+  -- POZİTİF KONTROL: ortalama HÂLÂ geliyor. Yukarıdaki üç iddia, uç
+  -- boş bir nesne döndürse de yeşil kalırdı.
+  if (v->'sinif'->>'ortalama')::numeric <> 75.0 then
+    raise exception '15d: sayı kalkarken ortalama da kaybolmuş: %', v::text;
+  end if;
+  raise notice '15 OK — teslim sayısı yanıtta hiç yok, ortalama duruyor';
+
   raise notice '';
-  raise notice 'ÖDEV KIYASI TESTLERİ: 14 GRUP GEÇTİ';
+  raise notice 'ÖDEV KIYASI TESTLERİ: 15 GRUP GEÇTİ';
 end $$;

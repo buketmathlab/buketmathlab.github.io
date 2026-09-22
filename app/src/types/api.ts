@@ -79,6 +79,9 @@ export type Kodlar = { ogrenci?: string; veli?: string };
  *   'kiyas_yok'    → özel ders öğrencisi; kıyasın anlamı yok
  *   'hazir'        → sayılar var
  *
+ * TESLİM SAYISI GÖNDERİLMİYOR (öğretmenin kararı). Sunucu `adet` ve
+ * `sube` alanlarını hiç koymuyor — ekrandan gizlemek yetmezdi.
+ *
  * `ortalama` null olabilir: hiç PUANLANMIŞ teslim yoksa. Bu bir alt
  * sınır değil, bölünecek bir şeyin olmaması — 0 ile karıştırılmamalı.
  *
@@ -87,14 +90,9 @@ export type Kodlar = { ogrenci?: string; veli?: string };
  */
 export type OdevKiyasi = {
   durum: 'hazir' | 'sure_dolmadi' | 'kiyas_yok';
-  sinif?: { ad: string; ortalama: number | string | null; adet: number };
+  sinif?: { ad: string; ortalama: number | string | null };
   /** Aynı ödev başka şubeye verilmediyse null — satır hiç çizilmiyor. */
-  seviye?: {
-    ad: string;
-    ortalama: number | string | null;
-    adet: number;
-    sube: number;
-  } | null;
+  seviye?: { ad: string; ortalama: number | string | null } | null;
 };
 
 export type KodYenileme = { rol: 'ogrenci' | 'veli'; kod: string };

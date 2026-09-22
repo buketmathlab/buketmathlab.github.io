@@ -4075,3 +4075,27 @@ ve biri yapının patlamasından kaynaklanıyordu: `npm run build`
 başarısızken denetim **eski paketi** ölçüyor ve her zaman yeşil çıkıyor.
 O prova aslında bir nöbetçi buldu: kusuru **tip sistemi** yakalıyor,
 yayına çıkamıyor.
+
+### Teslim sayısı kaldırıldı — ekrandan VE yanıttan
+
+İlk sürümde her satırın yanında "(24 teslimden)" yazıyordu. Öğretmenin
+kararı: *"Teslim sayısı veliye ya da öğrenciye gösterilmesin."*
+
+**Ekrandan gizlemek yetmedi, sayı sunucu yanıtından da çıktı.** Bu
+deponun kuralı (Part XXI): göstermediğini göndermezsin. Yanıtta dursa
+tarayıcının geliştirici araçlarını açan herkes okurdu; "ekranda yok"
+ile "kimse göremez" aynı şey değil. Ödeme bilgisinde ve cevap
+anahtarında verilen kararın aynısı.
+
+`v_sinif_adet` ve `v_seviye_adet` **hesaplanmaya devam ediyor**, yalnız
+dışarı çıkmıyor: alt sınır kararı bir gün değişirse dönülecek yer belli
+kalsın diye.
+
+İki ayrı nöbetçi kuruldu ve ikisi de kusur provasında ısırdı:
+`odev_kiyasi_testleri.sql` **15. grup** alanın yanıtta bulunmadığını
+(`?` ile, değerine değil **varlığına** bakarak) ölçüyor; tarayıcı
+denetimi hem öğrenci hem veli ekranında "teslim" geçmediğini arıyor.
+
+Bu sırada **ölü bir alan** da çıktı: `ortalamaYok: 'Teslim yok'` hiçbir
+yerde kullanılmıyordu (kart ortalama yoksa zaten çizilmiyor). Metnin
+tamamını tarayan yeni test onu yakaladı ve alan silindi.

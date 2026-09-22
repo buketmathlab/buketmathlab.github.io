@@ -47,17 +47,9 @@ export function KiyasKarti({ kiyas, puan, tur }: {
         {puan !== null && (
           <Satir etiket={m.puanEtiketi} deger={String(puan)} kalin />
         )}
-        <Satir
-          etiket={`${kiyas.sinif.ad} ortalaması`}
-          deger={sinifOrt}
-          not={m.adetNotu(kiyas.sinif.adet)}
-        />
+        <Satir etiket={`${kiyas.sinif.ad} ortalaması`} deger={sinifOrt} />
         {kiyas.seviye && seviyeOrt !== null && (
-          <Satir
-            etiket={kiyas.seviye.ad}
-            deger={seviyeOrt}
-            not={m.adetNotu(kiyas.seviye.adet)}
-          />
+          <Satir etiket={kiyas.seviye.ad} deger={seviyeOrt} />
         )}
       </dl>
     </div>
@@ -71,17 +63,15 @@ export function KiyasKarti({ kiyas, puan, tur }: {
  * ekran okuyucu "9A ortalaması: 65" diye okuyor. Sayılar `sk-sayi`
  * sınıfıyla, ürünün geri kalanındaki rakamlarla aynı yüzde.
  */
-function Satir({ etiket, deger, not, kalin = false }: {
+function Satir({ etiket, deger, kalin = false }: {
   etiket: string;
   deger: string;
-  not?: string;
   kalin?: boolean;
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className={`text-[14px] ${kalin ? 'font-semibold text-ink' : 'text-muted'}`}>
         {etiket}
-        {not && <span className="ml-1 text-[12px] text-muted">({not})</span>}
       </dt>
       <dd className={`sk-sayi text-[15px] ${kalin ? 'font-semibold text-ink' : 'text-ink'}`}>
         {deger}

@@ -33,6 +33,10 @@
 -- ÖZEL DERS öğrencisinde kart hiç çıkmıyor (tek grup, her seviye
 -- karışık — orada "sınıf ortalaması" bir şey ifade etmez).
 --
+-- TESLİM SAYISI GÖSTERİLMİYOR — sizin kararınız. Ekrandan kaldırmakla
+-- kalmadık, sunucu yanıtından da çıkardık: "ekranda yok" ile "kimse
+-- göremez" aynı şey değil.
+--
 -- ONAM KURALI KORUNDU: onam vermemiş veli bunu da göremez.
 --
 -- Veri silinmiyor, hiçbir tablo değişmiyor; yalnız iki fonksiyon
@@ -127,6 +131,114 @@ begin
       'ortalama', v_seviye_ort,
       'adet',     v_seviye_adet,
       'sube',     v_sube_adet
+    ) else null end
+  );
+end;
+$$;
+
+revoke all on function public._odev_kiyasi(uuid) from public, anon, authenticated;
+
+-- -----------------------------------------------------------------------------
+-- HESAP TEK YERDE: `_odev_kiyasi`
+--
+-- İki yüzey bu sayıyı gösteriyor — öğrencinin ödev sonuç ekranı (uç:
+-- `odev_kiyasi`) ve velinin ödev listesi (uç: `veli_paneli`). Veli
+-- ekranında ÖDEV KİMLİĞİ YOK (`VeliOdevi`'de `id` alanı bilerek
+-- tutulmuyor), o yüzden veli kimlikle ayrı bir çağrı yapamıyor; kıyas
+-- satırın içine gömülüyor — tıpkı `konu_analizi` gibi.
+--
+-- ORTALAMA HESABI İKİ KEZ YAZILMIYOR. 0030'un dersi: "ikinci bir insert
+-- yazsaydık iki yol bir gün ayrışırdı." Burada ayrışma daha sinsi
+-- olurdu — kimse çökmez, yalnız veliye ve öğrenciye FARKLI iki sayı
+-- gider. `odev_kiyasi_testleri.sql` 13c ikisinin eşit olduğunu ayrıca
+-- ölçüyor.
+--
+-- YETKİ YOK, KAPI YOK: bu dahili bir hesap. Kapılar çağıranda.
+-- -----------------------------------------------------------------------------
+create or replace function public._odev_kiyasi(p_odev_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  d record;
+  v_seviye smallint;
+  v_ozel boolean;
+  v_sinif_ort numeric;
+  v_sinif_adet integer;
+  v_seviye_ort numeric;
+  v_seviye_adet integer;
+  v_sube_adet integer;
+begin
+  select * into d from public.odevler where id = p_odev_id and yayinda;
+  if not found then
+    return jsonb_build_object('durum', 'kiyas_yok');
+  end if;
+
+  select s.seviye, s.ozel into v_seviye, v_ozel
+    from public.siniflar s where s.id = d.sinif_id;
+
+  -- Özel ders grubunda sınıf ortalamasının anlamı yok (bkz. başlık).
+  if v_ozel then
+    return jsonb_build_object('durum', 'kiyas_yok');
+  end if;
+
+  if d.son_tarih >= (now() at time zone 'Europe/Istanbul')::date then
+    return jsonb_build_object('durum', 'sure_dolmadi');
+  end if;
+
+  -- KENDİ SINIFI
+  select round(avg(coalesce(g.ogretmen_puan, g.puan)), 1), count(*)
+    into v_sinif_ort, v_sinif_adet
+    from public.gonderimler g
+   where g.odev_id = d.id
+     and coalesce(g.ogretmen_puan, g.puan) is not null;
+
+  -- SEVİYE — öğretmenin üç koşulu. Kendi ödevi de dâhil; "tüm 9'lar"
+  -- ortalaması kendi sınıfını dışarıda bırakırsa o sayı gerçeği
+  -- göstermez.
+  select round(avg(coalesce(g.ogretmen_puan, g.puan)), 1),
+         count(*), count(distinct d2.sinif_id)
+    into v_seviye_ort, v_seviye_adet, v_sube_adet
+    from public.odevler d2
+    join public.siniflar s2 on s2.id = d2.sinif_id
+    join public.gonderimler g on g.odev_id = d2.id
+   where d2.yayinda
+     and btrim(d2.baslik) = btrim(d.baslik)
+     and d2.created_at::date = d.created_at::date
+     and s2.seviye = v_seviye
+     and not s2.ozel
+     and coalesce(g.ogretmen_puan, g.puan) is not null;
+
+  -- TESLİM SAYISI GÖNDERİLMİYOR — öğretmenin kararı: "Teslim sayısı
+  -- veliye ya da öğrenciye gösterilmesin."
+  --
+  -- EKRANDAN GİZLEMEK YETMEZ, YANITTAN DA ÇIKIYOR. Bu deponun kuralı
+  -- (Part XXI): göstermediğin şeyi göndermezsin. Sayı yanıtta dursa
+  -- tarayıcının geliştirici araçlarını açan herkes onu okurdu; "ekranda
+  -- yok" demek "kimse göremez" demek değil. Ödeme bilgisinde ve cevap
+  -- anahtarında verilen kararın aynısı.
+  --
+  -- HESAP YİNE YAPILIYOR (`v_sinif_adet`, `v_seviye_adet`): bir gün alt
+  -- sınır kararı değişirse dönülecek yer belli olsun. Sadece dışarı
+  -- çıkmıyor.
+  return jsonb_build_object(
+    'durum', 'hazir',
+    'sinif', jsonb_build_object(
+      'ad',      (select s.ad from public.siniflar s where s.id = d.sinif_id),
+      'ortalama', v_sinif_ort
+    ),
+    -- Kardeş şube yoksa (yalnız kendi sınıfına verilmiş) bu alan null
+    -- ve ekran o satırı hiç çizmiyor. Öğretmenin kuralı: "diğer şubelere
+    -- verilmemişse sadece ödevin verildiği sınıf ortalaması alınsın."
+    --
+    -- `v_sube_adet` de gönderilmiyor: ekranda görünmüyor, yalnız bu
+    -- koşulu kuruyor.
+    'seviye', case when v_sube_adet > 1 then jsonb_build_object(
+      'ad',       v_seviye::text || '. sınıflar',
+      'ortalama', v_seviye_ort
     ) else null end
   );
 end;

@@ -30,6 +30,16 @@
  * kurulunca ölçüm bir hükme dönüşür.
  *
  * -----------------------------------------------------------------------------
+ * TESLİM SAYISI YOK — öğretmenin kararı
+ *
+ * İlk sürümde her satırın yanında "(24 teslimden)" yazıyordu. Öğretmen
+ * kaldırttı: "Teslim sayısı veliye ya da öğrenciye gösterilmesin."
+ *
+ * Sayı YANITTAN da çıkarıldı (0047). Ekrandan gizlemek yetmezdi; bu
+ * depo gizlemeyi arayüzde yapmıyor (Part XXI) — yanıtta dursa
+ * geliştirici araçlarını açan herkes okurdu.
+ *
+ * -----------------------------------------------------------------------------
  * SEVİYE SATIRI KOŞULLU
  *
  * Aynı ödev başka şubelere verilmediyse `seviye` sunucudan `null`
@@ -46,17 +56,11 @@ export type KiyasMetni = {
   baslik: string;
   /** Öğrencinin kendi puanının etiketi. */
   puanEtiketi: string;
-  /** Hiç teslim yokken ortalamanın yerine yazılan. */
-  ortalamaYok: string;
-  /** Kaç teslimden hesaplandığını söyleyen küçük not. */
-  adetNotu: (n: number) => string;
 };
 
 const OGRENCI: KiyasMetni = {
   baslik: 'Bu ödevde durum',
   puanEtiketi: 'Puanın',
-  ortalamaYok: 'Teslim yok',
-  adetNotu: (n) => (n === 1 ? '1 teslimden' : `${n} teslimden`),
 };
 
 const VELI: KiyasMetni = {
@@ -64,8 +68,6 @@ const VELI: KiyasMetni = {
   // Veliye çocuğun puanı "puanı" diye anlatılıyor: kart velinin
   // ekranında çocuğun hakkında, velinin kendisi hakkında değil.
   puanEtiketi: 'Puanı',
-  ortalamaYok: 'Teslim yok',
-  adetNotu: (n) => (n === 1 ? '1 teslimden' : `${n} teslimden`),
 };
 
 export function kiyasMetni(tur: KiyasTuru): KiyasMetni {
