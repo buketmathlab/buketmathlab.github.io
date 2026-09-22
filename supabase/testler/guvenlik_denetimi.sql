@@ -99,6 +99,16 @@ begin
                -- 6. grup ÖĞRETMEN JETONUNUN reddedildiğini ayrıca sınıyor,
                -- yani kapı iki yönde de kapalı.
                'kendi_kodumu_yenile',
+               -- 0047: `odev_kiyasi` ÖĞRENCİ VE VELİNİN kendi ucu — öğrenci
+               -- KENDİ ödevinin sınıf/seviye ortalamasını okuyor. Bu liste
+               -- sahte bir ödev kimliğiyle çağırdığı için P0002 ("ödev
+               -- bulunamadı") dönüyor; muafiyet o yüzden gerekli.
+               --
+               -- MUAFİYET "KAPI AÇILDI" DEMEK DEĞİL, tersi ayrıca ölçülüyor:
+               -- `odev_kiyasi_testleri.sql` 11. grup BAŞKA SINIFIN ödev
+               -- kimliğinin 42501 ile reddedildiğini, 12. grup ÖĞRETMEN
+               -- jetonunun reddedildiğini sınıyor.
+               'odev_kiyasi',
                -- 0034: `onam_ver` VELİNİN kendi ucu — onamı veli verir,
                -- başkası onun adına veremez. Öğrenci jetonunu 42501 ile
                -- reddediyor (bu listenin ölçtüğü şey), veli jetonunda ise

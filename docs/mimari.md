@@ -3971,3 +3971,107 @@ verdiğimiz bir kalıbın geri gelmesini yakalar. Hiç görmediği yeni bir
 **hiç çizilmiyor**. Panoda "sıfır sayı boş değil" kararı bilinçli
 (`useVeri.ts`); ölü olan yalnız o başlık metni. Bu turda dokunulmadı,
 kayda geçti.
+
+## Ödev kıyası — sınıf ve seviye ortalaması (0047)
+
+Öğretmen ve okul müdürü birlikte karar verdi: bir ödev puanlandıktan
+sonra öğrenci kendi sınıfının ve — aynı ödev başka şubelere de
+verildiyse — seviyenin ortalamasını görebilsin. Veli de aynısını görsün.
+
+### Depoda yazılı bir kararla çelişiyor ve bu gizlenmiyor
+
+`kendi_karnem` (0026) yazılırken bilerek kaydedilmişti: *"sınıf mevcudu,
+ortalaması GİTMİYOR — bir çocuğa 'sınıfın neresindesin' demek bu ekranın
+işi değil."*
+
+**O nöbetçi bu turu engellemedi ve bunu abartmamak gerek:**
+`kendi_karnem_testleri.sql` 3c *Konularım* karnesini koruyor, bu tur ise
+**ödev sonuç ekranına** dokunuyor — ayrı bir yüzey. Hiçbir test
+kırılmadı. "Kod buna izin vermiyordu" demek yanlış olurdu.
+
+Değişen gerçek şu: ürün artık iki yöne bakıyor. `veli_paneli`'de
+"sınıf ortalaması buraya da eklenmiyor" diyen yorum artık doğru
+değildi; **silinmedi, düzeltildi** — eski hâli ve neden değiştiği
+dosyada duruyor.
+
+### Alt sınır YOK — ölçüldü, bildirildi, gerekmediğine karar verildi
+
+Öğretmene şu risk somut sayılarla bildirildi:
+
+> 9A'da ödevi iki kişi teslim etti, süre doldu, ortalama 70 görünüyor.
+> Kendi puanının 80 olduğunu bilen öğrenci, arkadaşının notunun **tam
+> 60** olduğunu hesaplar.
+
+Cevabı: *"Alt sınıra gerek yok."* Karar onun ve uygulandı.
+
+Sessiz kalınmadı: hem migration başlığında hem burada, "düşünülmedi"
+değil **karar verildi** diye duruyor. Geri dönülecek yer belli —
+`v_sinif_adet` zaten hesaplanıyor, tek bir `if` yeter. Ayrıca
+`odev_kiyasi_testleri.sql` **3. grup** bunun sessizce geri alınmasını
+engelliyor: biri "güvenli olsun" diye eşik eklerse test kırmızı yanar
+ve karar yeniden öğretmene sorulur.
+
+### "Veriliş tarihi" diye bir alan yok
+
+Öğretmen `son_tarih` yerine **veriliş tarihini** seçti. Ölçüldü:
+`odevler.yayinda` yalnız bir bayrak, yayına alma **zamanı** hiçbir yerde
+tutulmuyor. Elimizdeki tek tarih `created_at` — ödevin *oluşturulduğu*
+an. Sonuçları:
+
+- Tek seferde 9A+9B+9C seçilirse üç kopya aynı anda oluşur → eşleşir.
+- 9A pazartesi, 9B salı oluşturulduysa **eşleşmezler**; seviye satırı
+  hiç çizilmez.
+- Taslak pazartesi açılıp perşembe yayınlandıysa tarih **pazartesi**.
+
+`grup_id` (0030) kullanılmadı: öğretmenin kuralı birlikte oluşturulan
+kopyaları zaten kapsıyor. **Bilinen sınır:** bir kopyanın başlığı
+sonradan düzenlenirse gruptan düşer.
+
+### Hesap tek yerde, çünkü ayrışma burada SESSİZ olurdu
+
+İki yüzey aynı sayıyı gösteriyor ama **farklı yollardan**: öğrenci
+`odev_kiyasi` ucundan, veli `veli_paneli` satırının içinden (veliye ödev
+kimliği gitmiyor, `VeliOdevi`'de `id` yok — kimlikle ayrı çağrı
+yapamıyor).
+
+Hesap `_odev_kiyasi`'de tek yerde. 0030'un dersinin aynısı, ama buradaki
+ayrışma daha sinsi olurdu: kimse çökmez, yalnız **veliye ve öğrenciye
+farklı iki sayı** gider. 14. grup ikisinin eşit olduğunu ölçüyor ve
+kusur provasında ısırdı.
+
+`veli_paneli` gövdesi 0034'ten **birebir kopyalandı**, ezberden
+yazılmadı (0016 ve 0029'un dersi); diff ölçüldü: tek alan eklendi, bir
+yorum düzeltildi, başka satır değişmedi.
+
+### Sayılar hüküm kurmuyor
+
+Ekran üç sayıyı yan yana koyuyor: `Puanın 80 · 9A ortalaması 65 ·
+9. sınıflar 61,4`. **"Üstündesin" yazmıyor.**
+
+Öğretmenin isteği "üstünde mi altında mı görebilsin" idi; ekran bunu
+karşılaştırılabilir sayılarla veriyor. Cümle kurulunca ölçüm bir hükme
+dönüşür ve bir tur önce üründen temizlediğimiz yargı dili geri gelirdi.
+`odev-kiyasi-metni.test.ts` hem `urun-dili` nöbetçisini hem "üstünde /
+altında / geride" kelimelerini tarıyor.
+
+### Tarayıcı denetiminde bir ölü ölçüm daha yakalandı
+
+"Süre dolmadan kart çizilmiyor" ölçümü `'Bu ödevde durum'` arıyordu ama
+başlık CSS'te `uppercase`: `innerText` **BÜYÜK HARF** döndürüyor, aranan
+dize metinde hiçbir zaman o hâliyle yoktu. Kart çizilse bile yeşil
+kalırdı. Türkçe küçük harfe indirilerek onarıldı.
+
+Aynı grupta ikinci bir eksik de kusur provasıyla çıktı: `durum` kapısını
+silmek denetimi **kırmıyordu**, çünkü taklit yanıtta `sinif` alanı hiç
+yoktu ve kart "sayı yok" diye zaten çizilmiyordu. Sayıları **dolu** olan
+bir `sure_dolmadi` yanıtı eklendi; artık kapı ölçülüyor. Bugün sunucu
+böyle bir yanıt üretmiyor ama ölçüm sözleşmeyi kilitliyor.
+
+### Prova ısırmayınca önce HARNESS'e bakıldı
+
+İki UI provası ilk çalıştırmada ısırmadı. "Ölçüm ölü" demeden önce
+kusurun gerçekten yerleştiği ve **yapının başarılı olduğu** ölçüldü —
+ve biri yapının patlamasından kaynaklanıyordu: `npm run build`
+başarısızken denetim **eski paketi** ölçüyor ve her zaman yeşil çıkıyor.
+O prova aslında bir nöbetçi buldu: kusuru **tip sistemi** yakalıyor,
+yayına çıkamıyor.

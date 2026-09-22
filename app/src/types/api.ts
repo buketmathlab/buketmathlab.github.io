@@ -71,6 +71,32 @@ export type Kodlar = { ogrenci?: string; veli?: string };
  * yanıttan öğreniyor, isteği gönderirken kullandığı değerden değil —
  * ikisi ayrışırsa yanlış kutu güncellenirdi.
  */
+/**
+ * Ödev kıyası (0047) — bir ödevin sınıf ve seviye ortalaması.
+ *
+ * `durum` dört değer alıyor ve ekran her biri için BAŞKA şey çiziyor:
+ *   'sure_dolmadi' → kart hiç çizilmiyor (öğretmenin kuralı)
+ *   'kiyas_yok'    → özel ders öğrencisi; kıyasın anlamı yok
+ *   'hazir'        → sayılar var
+ *
+ * `ortalama` null olabilir: hiç PUANLANMIŞ teslim yoksa. Bu bir alt
+ * sınır değil, bölünecek bir şeyin olmaması — 0 ile karıştırılmamalı.
+ *
+ * Sunucu `numeric` döndürüyor; PostgREST bunu sayı ya da dize olarak
+ * verebiliyor, `ortalamaYazisi()` ikisini de kabul ediyor.
+ */
+export type OdevKiyasi = {
+  durum: 'hazir' | 'sure_dolmadi' | 'kiyas_yok';
+  sinif?: { ad: string; ortalama: number | string | null; adet: number };
+  /** Aynı ödev başka şubeye verilmediyse null — satır hiç çizilmiyor. */
+  seviye?: {
+    ad: string;
+    ortalama: number | string | null;
+    adet: number;
+    sube: number;
+  } | null;
+};
+
 export type KodYenileme = { rol: 'ogrenci' | 'veli'; kod: string };
 
 /**
@@ -592,6 +618,12 @@ export type VeliOdevi = {
   durum: string | null;
   /** Konu analizi (0020). Veli hangi konuda eksik olduğunu görüyor. */
   konu_analizi: KonuAnalizi[];
+  /**
+   * Ödev kıyası (0047) — SATIRIN İÇİNDE, ayrı bir çağrıyla değil.
+   * Veliye ödev kimliği gitmediği için (`id` alanı yok) veli
+   * `odev_kiyasi` ucunu çağıramıyor; `konu_analizi` ile aynı desen.
+   */
+  kiyas: OdevKiyasi | null;
   /**
    * YALNIZ NUMARA. Öğrencinin işaretlediği şık da doğru şık da BURADA YOK
    * ve olmayacak: numara "hangi soruda takıldı" der, şık göndermek dört

@@ -8,6 +8,7 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
 import { KonuListesi } from '@/components/ui/KonuListesi';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
+import { KiyasKarti } from '@/components/KiyasKarti';
 import { puanMesaji, type OzelCumleler } from '@/lib/ewalu-puan';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
@@ -16,7 +17,7 @@ import { rpc } from '@/services/supabase';
 import { dosyaAdresi, dosyaYukle } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
 import { sureDurumu } from '@/lib/son-tarih';
-import type { OgrenciOdev, OgrenciOdevleri } from '@/types/api';
+import type { OdevKiyasi, OgrenciOdev, OgrenciOdevleri } from '@/types/api';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -75,6 +76,22 @@ export function OdevTeslim() {
   const { veri: ozelListe } = useVeri<Array<{ bant: number; cumle: string }>>(
     'ewalu_mesajlari',
     { p_token: oturum?.token },
+  );
+
+  /**
+   * ÖDEV KIYASI (0047) — ayrı uç, `ogrenci_odevleri`'ne EKLENMEDİ.
+   *
+   * Sebebi yukarıdakiyle aynı: o gövdeyi kopyalamak 0016'nın hatasını
+   * tekrarlardı. Ayrıca kıyas yalnız BU ekranda gerekiyor; ödev
+   * listesindeki her satıra ortalama hesaplatmanın anlamı yok.
+   *
+   * HATASI YUTULUYOR: kıyas ulaşılamazsa kart çizilmiyor, puan ve
+   * Ewalu'nun cümlesi olduğu gibi duruyor. Bir ek bilginin gelmemesi
+   * sonuç ekranını bozmamalı (Part VIII).
+   */
+  const { veri: kiyas } = useVeri<OdevKiyasi>(
+    'odev_kiyasi',
+    { p_token: oturum?.token, p_odev_id: id },
   );
   const ozelCumleler: OzelCumleler = {};
   for (const s of ozelListe ?? []) ozelCumleler[s.bant] = s.cumle;
@@ -169,6 +186,7 @@ export function OdevTeslim() {
           onPdf={pdfAc}
           onGeri={() => git('/ogrenci')}
           ozelCumleler={ozelCumleler}
+          kiyas={kiyas}
         />
       )}
     </AsyncBoundary>
@@ -188,6 +206,8 @@ type IcerikProps = {
   onGeri: () => void;
   /** Öğretmenin yazdığı Ewalu cümleleri (0032); boşsa varsayılanlar. */
   ozelCumleler: OzelCumleler;
+  /** Sınıf/seviye ortalaması (0047); ulaşılamazsa null, kart çizilmez. */
+  kiyas: OdevKiyasi | null;
 };
 
 function OdevIcerigi({
@@ -202,6 +222,7 @@ function OdevIcerigi({
   onPdf,
   onGeri,
   ozelCumleler,
+  kiyas,
 }: IcerikProps) {
   const sure = sureDurumu(odev.son_tarih);
   const gonderildi = odev.gonderim !== null;
@@ -259,7 +280,7 @@ function OdevIcerigi({
       </Card>
 
       {gonderildi ? (
-        <Sonuc odev={odev} onPdf={onPdf} ozelCumleler={ozelCumleler} />
+        <Sonuc odev={odev} onPdf={onPdf} ozelCumleler={ozelCumleler} kiyas={kiyas} />
       ) : sinifKapali ? (
         <Card vurgu="uyari">
           <p className="mb-2 font-semibold text-ink">Bu sınıf kapatılmış.</p>
@@ -379,10 +400,12 @@ function Sonuc({
   odev,
   onPdf,
   ozelCumleler,
+  kiyas,
 }: {
   odev: OgrenciOdev;
   onPdf: (yol: string) => void;
   ozelCumleler: OzelCumleler;
+  kiyas: OdevKiyasi | null;
 }) {
   const g = odev.gonderim;
   if (!g) return null;
@@ -425,6 +448,14 @@ function Sonuc({
             puanlanmadıysa söyleyecek bir şeyi yok; olmayan bir puana cümle
             uydurmuyoruz. */}
         {puan !== null && <EwaluSozu puan={puan} ozelCumleler={ozelCumleler} />}
+
+        {/* KIYAS (0047) — Ewalu'nun cümlesinden SONRA.
+            Sıra bilinçli: önce "şimdi ne yapmalı", sonra çıplak
+            sayılar. Tersi olsaydı ekran bir tabloyla açılır,
+            öğretmenin cümlesi sayıların altında kalırdı.
+            Kart kendi kendini gizliyor: süre dolmadıysa, özel ders
+            öğrencisiyse ya da hiç puanlanmış teslim yoksa null. */}
+        <KiyasKarti kiyas={kiyas} puan={puan} tur="ogrenci" />
 
         {g.dogru !== null && (
           <p className="mt-3 text-[14px] text-ink">

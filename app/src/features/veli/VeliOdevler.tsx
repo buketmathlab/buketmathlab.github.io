@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card';
+import { KiyasKarti } from '@/components/KiyasKarti';
 import { KonuListesi, SoruNumaralari } from '@/components/ui/KonuListesi';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -79,6 +80,18 @@ export function VeliOdevler() {
                       )}
                     </div>
                   </div>
+
+                  {/* KIYAS (0047) — sınıf ve seviye ortalaması.
+                      Öğrencinin ödev sonuç ekranındaki kartın aynısı,
+                      "siz" muhatabıyla. Sayılar AYNI koddan geliyor
+                      (`_odev_kiyasi`); `odev_kiyasi_testleri.sql` 14.
+                      grup veliye ve öğrenciye giden değerin eşit
+                      olduğunu ölçüyor.
+
+                      `?? null`: 0047 panelde çalıştırılmadan önce bu
+                      alan gelmiyor ve ekran o hâlde de açılmalı —
+                      0020'de öğrenilen ders. */}
+                  <KiyasKarti kiyas={o.kiyas ?? null} puan={o.puan} tur="veli" />
 
                   {/* NUMARA GİDİYOR, ŞIK GİTMİYOR (Kural 6).
                       Öğretmenin isteği "veli de hangi soruları yanlış
