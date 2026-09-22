@@ -3687,6 +3687,33 @@ başına 8 fiş değişmedi.
    yok — bilerek, çünkü o cihazlar elimizde yok ve yanlış tarif yazmak
    dört kez denendi.
 
+#### Tarifin son hâli CİHAZDA doğrulandı (22.09.2026)
+
+Öğretmen iOS tarifini son hâliyle gerçek bir cihazda denedi ve
+**doğru olduğunu bildirdi.** Doğrulanan yol, fişte yazdığı gibi:
+
+> Safari'de `sekizkyal.com` yaz → alttaki üç nokta → "Paylaş" → açılan
+> pencereyi **yukarı kaydır** → "Ana Ekrana Ekle" → "Ekle"
+
+Bu not ayrıca duruyor, çünkü yukarıdaki 1. madde yalnız **gözlemi**
+kaydediyordu ("Ana Ekrana Ekle ilk bakışta görünmüyor"). Gözlem ile
+"yazdığımız tarif uçtan uca çalışıyor" ayrı iki şey; ikincisi bugüne
+kadar kayıtlı değildi.
+
+Samsung yolu zaten cihazda doğrulanmıştı (bkz. *Cihazda doğrulanan ilk
+Android yolu*). Yani fişteki iki blok da artık denenmiş.
+
+**AÇIK SINIR AYNEN DURUYOR — 720 fiş basılmadan önce bilinmesi gereken
+tek şey bu:** Samsung DIŞINDAKİ Android markaları hâlâ denenmedi,
+elimizde o cihazlar yok. Fiş o markalar için simge adı vermiyor
+(4. madde); veli "uygulama olarak ekle" benzeri bir seçeneği kendi
+menüsünde aramak zorunda. Bu, çözülmüş değil, **bilerek açık
+bırakılmış** bir eksik.
+
+**NEDEN BUNUN TESTİ YOK.** "Bir insan telefonunda denedi" bir ölçüm
+değil, bir tanıklık. Koda bağlamak, ölçmediğimiz bir şeyi ölçüyormuş
+gibi göstermek olurdu. Kayıt burada duruyor ve kaynağı belli.
+
 ### Ve beşincisi: her blok kendi içinde tam
 
 Yönerge "Sayfayı Safari ile aç" diyordu. Öğretmenin sorusu: **hangi
