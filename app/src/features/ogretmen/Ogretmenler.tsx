@@ -49,6 +49,8 @@ export function Ogretmenler() {
 
   const [sinifAcik, setSinifAcik] = useState<OgretmenSatiri | null>(null);
   const [secili, setSecili] = useState<string[]>([]);
+  /** Bütün sınıfları kaldırmanın ayrı onayı (0050) — aşağıda gerekçesi. */
+  const [bosOnay, setBosOnay] = useState<OgretmenSatiri | null>(null);
 
   const { veri, durum, hata, yenile } = useVeri<OgretmenSatiri[]>(
     'ogretmenler_listesi',
@@ -128,23 +130,74 @@ export function Ogretmenler() {
     }
   }
 
-  async function sinifKaydet() {
-    if (!sinifAcik) return;
+  /**
+   * "Sınıfları" penceresini MEVCUT ATAMAYLA açar (0050).
+   *
+   * BU ÜÇ SATIR BİR CANLI HATANIN ONARIMI. Pencere eskiden `secili`
+   * dokunulmadan açılıyordu: kutucuklar hep boş geliyordu ve öğretmen
+   * "atadığım sınıflar gözükmüyor" dedi. Dahası `secili` kapanışta
+   * sıfırlanmıyordu — bir öğretmende işaretleyip vazgeçince işaretler
+   * öbür öğretmenin penceresinde duruyordu.
+   */
+  function sinifPenceresiniAc(o: OgretmenSatiri) {
+    setSecili(o.sinif_idler ?? []);
+    setSinifAcik(o);
+  }
+
+  /**
+   * Pencereyi kapatır.
+   *
+   * BURADA BİR SIFIRLAMA DA VARDI VE KALDIRILDI. Kusur provasında
+   * ısırmadı: `sinifPenceresiniAc` pencereyi her açılışta `sinif_idler`
+   * ile YENİDEN dolduruyor, yani kapanışta sıfırlamanın değiştirdiği
+   * hiçbir davranış yok. Hiçbir ölçümün kıramadığı bir satır, güvence
+   * değil süstür — silindi.
+   *
+   * Seçimin öğretmenler arasında taşınmadığı hâlâ ölçülüyor
+   * (`ogretmen-siniflari-denetimi` 2. grup); onu koruyan şey açılıştaki
+   * doldurma.
+   */
+  function sinifPenceresiniKapat() {
+    setSinifAcik(null);
+  }
+
+  async function sinifAta(hedef: OgretmenSatiri, idler: string[]) {
     setKaydediyor(true);
     try {
       const s = await rpc<{ sinif_sayisi: number }>('ogretmen_sinif_ata', {
         p_token: oturum?.token,
-        p_id: sinifAcik.id,
-        p_sinif_idler: secili,
+        p_id: hedef.id,
+        p_sinif_idler: idler,
       });
-      bildir(`${sinifAcik.ad}: ${s.sinif_sayisi} sınıf atandı.`, 'basari');
-      setSinifAcik(null);
+      bildir(`${hedef.ad}: ${s.sinif_sayisi} sınıf atandı.`, 'basari');
+      sinifPenceresiniKapat();
       yenile();
     } catch (e) {
       bildir(e instanceof Error ? e.message : 'Sınıf atanamadı.', 'hata');
     } finally {
       setKaydediyor(false);
     }
+  }
+
+  /**
+   * HİÇBİR ŞEY İŞARETLİ DEĞİLKEN KAYDETMEK AYRI ONAY İSTİYOR (0050).
+   *
+   * `ogretmen_sinif_ata` listeyi değiştiriyor (delete + insert), yani boş
+   * liste "bütün sınıfları kaldır" demek. Bu meşru bir işlem — ama kazara
+   * yapılabilecek bir işlem olmamalı; nitekim pencere boş açıldığı sürece
+   * tam olarak kazara yapılabiliyordu.
+   *
+   * Onay YALNIZ kaybedilecek bir şey varken çıkıyor: sınıfı zaten olmayan
+   * bir öğretmende soru sormak gürültü olurdu.
+   */
+  async function sinifKaydet() {
+    if (!sinifAcik) return;
+    if (secili.length === 0 && (sinifAcik.sinif_idler?.length ?? 0) > 0) {
+      setBosOnay(sinifAcik);
+      setSinifAcik(null);
+      return;
+    }
+    await sinifAta(sinifAcik, secili);
   }
 
   async function vekaleteGir() {
@@ -206,7 +259,7 @@ export function Ogretmenler() {
                     reddedilecek bir düğmeyi hiç göstermiyor. */}
                 {!o.sahip && (
                   <div className="flex flex-wrap gap-2">
-                    <Button tur="sade" olcu="sm" onClick={() => setSinifAcik(o)}>
+                    <Button tur="sade" olcu="sm" onClick={() => sinifPenceresiniAc(o)}>
                       Sınıfları
                     </Button>
                     <Button tur="sade" olcu="sm" onClick={() => setPinAcik(o)}>
@@ -352,7 +405,7 @@ export function Ogretmenler() {
       </Dialog>
 
       {/* --- Sınıf atama --- */}
-      <Dialog acik={!!sinifAcik} onKapat={() => setSinifAcik(null)} baslik="Sınıfları">
+      <Dialog acik={!!sinifAcik} onKapat={sinifPenceresiniKapat} baslik="Sınıfları">
         <div className="flex flex-col gap-3">
           <p className="text-[14px] text-muted">
             {sinifAcik?.ad} hangi sınıflara giriyor? İşaretlenmeyen sınıflar listesinden düşer.
@@ -385,7 +438,7 @@ export function Ogretmenler() {
             Özel ders grubu listede yok — özel ders yalnız sizde.
           </p>
           <div className="flex justify-end gap-2">
-            <Button tur="sade" onClick={() => setSinifAcik(null)}>
+            <Button tur="sade" onClick={sinifPenceresiniKapat}>
               Vazgeç
             </Button>
             <Button onClick={() => void sinifKaydet()} yukleniyor={kaydediyor}>
@@ -394,6 +447,31 @@ export function Ogretmenler() {
           </div>
         </div>
       </Dialog>
+
+      {/* --- BÜTÜN SINIFLARI KALDIRMA ONAYI (0050) ---
+          Ayrı bir pencere, çünkü `ogretmen_sinif_ata` listeyi
+          DEĞİŞTİRİYOR: boş liste "hepsini kaldır" demek. Vazgeçilirse
+          seçim pencereye geri dönüyor (`secili`ye dokunulmuyor). */}
+      <Dialog
+        acik={bosOnay !== null}
+        onKapat={() => {
+          setSinifAcik(bosOnay);
+          setBosOnay(null);
+        }}
+        baslik="Bütün sınıfları kaldırılsın mı?"
+        aciklama={
+          bosOnay
+            ? `${bosOnay.ad} şu an ${bosOnay.sinif_idler.length} sınıfa giriyor ve hiçbiri işaretli değil. Devam ederseniz bu öğretmenin sınıflarının tamamı kaldırılır; sınıflarındaki öğrencileri, ödevlerini ve yazışmalarını göremez olur. Ödevleri ve verdiği notlar silinmez.`
+            : ''
+        }
+        onayEtiketi={kaydediyor ? 'Kaldırılıyor…' : 'Evet, hepsini kaldır'}
+        onayTuru="tehlike"
+        onOnay={() => {
+          const hedef = bosOnay;
+          setBosOnay(null);
+          if (hedef) void sinifAta(hedef, []);
+        }}
+      />
     </>
   );
 }

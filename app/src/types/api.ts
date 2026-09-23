@@ -767,6 +767,16 @@ export type OgretmenSatiri = {
   aktif: boolean;
   /** PIN'i belirlenmiş mi (yedekten geri yüklemede boş olabilir). */
   pin_var: boolean;
+  /**
+   * Öğretmene atanmış sınıfların kimlikleri (0050).
+   *
+   * BU ALAN BİR CANLI HATADAN DOĞDU: "Sınıfları" penceresi atanmış
+   * sınıfları işaretsiz açıyordu, çünkü uç yalnız `sinif_sayisi`
+   * döndürüyordu — ekranın işaretleyecek verisi yoktu. Pencere aynı
+   * zamanda listeyi DEĞİŞTİRDİĞİ için (işaretlenmeyen düşer), boş
+   * açılan bir pencerede "Kaydet" bütün atamayı siliyordu.
+   */
+  sinif_idler: string[];
   sinif_sayisi: number;
   odev_sayisi: number;
   son_gorulme: string | null;

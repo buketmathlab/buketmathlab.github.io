@@ -4405,3 +4405,76 @@ Takım, kusuru kurulu veritabanına uygulayıp yalnız 0049 testini koşacak
 `veliler_listesi` (sınıf listesi ekranı) hâlâ `ogretmen_id` süzmüyor;
 bugün tek öğretmen olduğu için ikisi aynı sayıyı veriyor. Ayrı bir tur
 işi ve buraya yazıldı ki unutulmasın.
+
+## Canlı hata: öğretmene atanan sınıflar ekranda görünmüyordu (0050)
+
+Öğretmen bildirdi: *"Sistemdeki öğretmenlerin sınıfları sekmesine
+tıkladığımda o öğretmenlere tanımladığım sınıflar gözükmüyor."*
+
+### Hata üç parçaydı ve üçüncüsü bildirilenden ağırdı
+
+1. `ogretmenler_listesi` yalnız **`sinif_sayisi`** döndürüyordu — bir
+   sayı. Ekranın kutucukları işaretleyecek **kimlik verisi hiç yoktu.**
+2. Arayüz pencereyi açarken seçimi doldurmuyordu (dolduracak veri
+   olmadığı için dolduramıyordu da).
+3. `ogretmen_sinif_ata` listeyi **değiştiriyor** (`delete` + `insert`).
+
+Üçü birleşince ekran yalnız "göstermiyor" değildi: pencereyi açıp hiçbir
+şey işaretlemeden **"Kaydet" demek o öğretmenin bütün sınıflarını
+siliyordu.** Pencerenin kendi cümlesi bunu zaten söylüyordu —
+*"İşaretlenmeyen sınıflar listesinden düşer"* — ama hepsi işaretsiz
+açıldığı için o cümle bir uyarı değil, bir tuzaktı.
+
+Öğretmene önce bu söylendi ve "o pencerede Kaydet'e basmayın" denildi;
+veri kaybı olup olmadığını satırdaki **"N sınıf"** sayısından kontrol
+edebileceği anlatıldı — o sayı veritabanından geliyor, penceredeki
+kutucuklardan değil.
+
+### Onarım
+
+- **Sunucu:** uç artık `sinif_idler` de döndürüyor. `sinif_sayisi`
+  kaldırılmadı ama **aynı kaynaktan** türetiliyor; iki ayrı `count`
+  bırakmak 0030'un dersini tekrarlardı (liste "3 sınıf" derken pencerede
+  iki işaret).
+- **Arayüz:** pencere mevcut atamayla açılıyor; hiçbir şey işaretli
+  değilken kaydetmek **ayrı bir onay** istiyor. Onay yalnız kaybedilecek
+  bir şey varken çıkıyor — sınıfı olmayan öğretmende soru sormak gürültü
+  olurdu.
+
+Boş listeyle kaydetmek hâlâ **mümkün**: meşru bir işlem. Değişen şey
+kazara yapılamaması. SQL testinin 5. grubu bu davranışı kayda geçiriyor,
+yani onay bir gün kaldırılırsa neyin korunduğu yazılı kalıyor.
+
+### Neden bir yıl sessiz kaldı — ve asıl ders
+
+**Bu ekranın hiçbir tarayıcı denetimi yoktu.** Sunucu doğru veriyi
+tutuyordu, SQL testleri yeşildi; yalnız ekran onu göstermiyordu. Hiçbir
+ölçüm "ekranda ne görünüyor" diye sormuyordu.
+
+`ogretmen-siniflari-denetimi.mjs` (24. denetim) bu yüzden yazıldı. En
+önemli ölçümü ekranda görünen bir şey değil: **sunucuya giden istek.**
+"Onay verilmeden `ogretmen_sinif_ata` çağrılmadı" iddiası, ekranda bir
+şeyin olup olmadığına değil, **ne gönderildiğine** bakıyor.
+
+### Denetimin kendisi iki kez ölü çıktı
+
+1. `getByRole('button', {name:'Vazgeç'})` "strict mode violation" verdi:
+   bu depoda `Dialog` native `<dialog>` üzerine kurulu ve **kapalı
+   diyaloglar DOM'da kalıyor**. Seçiciler `dialog[open]`'a daraltıldı.
+2. Satır bulucu `find` kullanıyordu; `find` belgedeki **ilk** eşleşmeyi
+   döndürüyor, o da bütün listeyi saran en dış kapsayıcı. Üç grup birden
+   kırmızı yandı ve suçlu koddaymış gibi göründü. Doğrusu: adı içeren
+   elemanlardan **en az torunu olanı**.
+
+Ayrıca bir iddia **ölçülemez** olduğu için değiştirildi: "sahip satırında
+düğme yok" ölçümü, satır bulunamadığında bir üst kapsayıcıyı buluyordu.
+Sayılabilir bir şeye çevrildi: sayfadaki "Sınıfları" düğmesi sayısı
+**tam iki** (üç öğretmenin biri sahip).
+
+### Ölçemediğim bir satırı sildim
+
+Arayüzde pencereyi kapatırken seçimi sıfırlayan bir satır yazmıştım.
+Kusur provasında **ısırmadı**: pencere her açılışta zaten yeniden
+dolduruluyor, yani o satırın değiştirdiği hiçbir davranış yoktu.
+Bırakmak yerine sildim — hiçbir ölçümün kıramadığı bir satır güvence
+değil, süstür.
