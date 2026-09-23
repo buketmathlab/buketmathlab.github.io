@@ -11,6 +11,7 @@ import {
   ARAMA_YER_TUTUCU,
   KANAL_ETIKETI,
   KANAL_NOTU,
+  SAYFA_ACIKLAMASI,
   bosDurum,
   zamanYazisi,
   type MesajKanali,
@@ -55,10 +56,7 @@ export function Mesajlar() {
 
   return (
     <>
-      <SayfaBasligi
-        baslik="Mesajlar"
-        aciklama="En son yazışılan sınıf ve öğrenci en üstte."
-      />
+      <SayfaBasligi baslik="Mesajlar" aciklama={SAYFA_ACIKLAMASI} />
 
       {/* KANAL DÜĞMELERİ — sekme çubuğuna YENİ SEKME eklemek yerine.
           Öğretmenin kararı: "ikisi de, ama ayrı bölümde." */}

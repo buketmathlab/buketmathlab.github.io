@@ -22,6 +22,21 @@
 
 export type MesajKanali = 'ogrenci' | 'veli';
 
+/**
+ * Sayfa başlığının altındaki açıklama.
+ *
+ * İLK HÂLİ "En son yazışılan sınıf ve öğrenci en üstte." idi; öğretmen
+ * "yazışılan" kelimesini beğenmedi ve daha profesyonel bir karşılık
+ * istedi. "Yazışılan" edilgen bir ortaç — kim yazışıyor belirsiz ve
+ * cümle konuşma diline kayıyor. Yenisi bunun yerine KURALI söylüyor:
+ * sıralamanın neye göre yapıldığını.
+ *
+ * Cümle bu dosyada, bileşenin içinde değil: bir daha değişmek isterse
+ * aranacak tek yer burası olsun.
+ */
+export const SAYFA_ACIKLAMASI =
+  'Sınıflar ve öğrenciler son mesaja göre sıralanır; en yeni en üstte.';
+
 /** Kanal düğmelerinin etiketleri. */
 export const KANAL_ETIKETI: Readonly<Record<MesajKanali, string>> = {
   ogrenci: 'Öğrenciler',

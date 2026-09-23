@@ -4,6 +4,7 @@ import {
   ARAMA_YER_TUTUCU,
   KANAL_ETIKETI,
   KANAL_NOTU,
+  SAYFA_ACIKLAMASI,
   bosDurum,
   zamanYazisi,
 } from './mesaj-listesi-metni';
@@ -15,6 +16,7 @@ describe('mesaj listesi metni', () => {
     const hepsi = [
       ...Object.values(KANAL_ETIKETI),
       ...Object.values(KANAL_NOTU),
+      SAYFA_ACIKLAMASI,
       ARAMA_YER_TUTUCU,
       ARAMA_BOS,
       bosDurum('ogrenci').baslik,
@@ -37,6 +39,20 @@ describe('mesaj listesi metni', () => {
     expect(o.aciklama).not.toBe(v.aciklama);
     expect(o.baslik).toContain('öğrenci');
     expect(v.baslik).toContain('veli');
+  });
+
+  /**
+   * SAYFA AÇIKLAMASI — öğretmen "yazışılan" kelimesini beğenmedi.
+   *
+   * İlk hâli "En son yazışılan sınıf ve öğrenci en üstte." idi. Edilgen
+   * ortaç konuşma diline kayıyordu; yenisi sıralamanın KURALINI söylüyor.
+   * Ölçüm iki yönlü: eski kelime geri gelemez, yeni cümle de sessizce
+   * kaybolamaz.
+   */
+  it('sayfa açıklamasında "yazışılan" yok, sıralama kuralı var', () => {
+    expect(SAYFA_ACIKLAMASI).not.toContain('yazışıl');
+    expect(SAYFA_ACIKLAMASI).toContain('son mesaja göre');
+    expect(SAYFA_ACIKLAMASI).toContain('en yeni en üstte');
   });
 
   /**
