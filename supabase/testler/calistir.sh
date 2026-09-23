@@ -198,6 +198,10 @@ echo "==> Yazışma listesi testleri (0048)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/yazisma_listesi_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Sınıf velileri kanal onarımı testleri (0049)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/sinif_velileri_kanal_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Ödev kıyası testleri (0047)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/odev_kiyasi_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

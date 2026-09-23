@@ -4317,3 +4317,91 @@ burada sessiz kalırdı.
 Geri alma kanıtına üç yeni yama eklendi ve üçü de ısırdı; betik bu turdan
 sonra **41 yamanın 41'ini** yakalıyor. Tanıtım denetimi 143 ölçümle
 kusursuz.
+
+## Canlı hata: "Bu bölüm yüklenemedi" (0049)
+
+Öğretmen bildirdi: **Veliler → 9A** dediğinde ekran
+`more than one row returned by a subquery used as an expression` (21000)
+verdi.
+
+### Sebep — tahmin edilmedi, yerelde birebir üretildi
+
+`okundu` tablosunun anahtarı `(ogrenci_id, rol, kanal, ogretmen_id)`.
+Yani bir öğrenci için aynı rolde birden çok okuma işareti olabilir. Oysa
+`sinif_velileri` işareti yalnız `rol = 'ogretmen'` ile arıyordu — tek
+değer bekleyen bir alt sorgu, iki satır.
+
+Kanal ayrımı **0025**'te gelmişti ve o turda okuyan uçların hepsi
+güncellenmişti; **bu biri atlanmıştı.** Hata bir yıl uyudu çünkü ikinci
+satırın oluşması için öğretmenin aynı öğrencinin öğrenci kanalını da
+açması gerekiyordu ve o yazışma başka bir sekmenin içindeydi.
+
+**0048 iki kanalı yan yana iki düğme yaptı.** Öğretmen ikisine de bastı,
+ikinci satır oluştu, uyuyan hata uyandı. Kaydı açıkça duruyor: **0048 bu
+hatayı yaratmadı ama erişilir kıldı.**
+
+### Ararken ikinci bir tuzak çıktı — ve o daha kötüydü
+
+"Başka nerede var" diye kataloğu tarayınca üç uç daha işaretlendi:
+`ogrenci_odevleri`, `ogrenci_mesajlari`, `veli_paneli`. İlk bakışta yanlış
+alarm gibiydi — hepsi `kanal` süzüyordu. Ama `okundu_isaretle` satırı
+öğrencinin **o anki** öğretmeniyle yazıyor. Sınıf başka bir öğretmene
+devredilirse ikinci satır doğuyor.
+
+Ölçüldü: sınıf devredildikten sonra **öğrencinin kendi panosu ve kendi
+mesajları da 21000 ile patlıyordu.** Henüz yaşanmamıştı; yola çıkmıştı.
+
+### Onarım — iki taraf, iki farklı doğru cevap
+
+| Taraf | Sorun | Cevap |
+| --- | --- | --- |
+| Öğretmen | işaret gerçekten öğretmene ve kanala ait | süzgeci tamamla (dört sütun) |
+| Öğrenci/veli | `ogretmen_id` oradaki işarette anlamsız | **kısmi tekil dizin** — çok satır imkânsız |
+
+İkinci satır için üç sorguyu tek tek düzeltmek de mümkündü. **Yapılmadı**,
+çünkü o yine unutulabilir bir çözümdü: bu hatanın bir yıl saklanabilmesinin
+sebebi tam olarak sorgulara güvenilmesiydi. `okundu_kisi_tek` kısmi tekil
+dizini, hangi sorgunun nasıl yazıldığından bağımsız olarak çift satırı
+veritabanı düzeyinde imkânsız kılıyor. **Metin süzgeci bir alışkanlıktır,
+kısıt bir kanıttır.**
+
+Kısıt bilerek DAR: yalnız `rol <> 'ogretmen'`. Öğretmen rolünde satırın
+öğretmen başına ayrı olması doğru — meslektaşımın okuması benim okumam
+değil. Testin 10. grubu kısıtın fazla genişlemediğini ayrıca ölçüyor.
+
+### Bir sayı da düzeldi — çökmeyen yalan
+
+Aynı ekranda `mesaj_sayisi` ve `son_mesaj` hiçbir kanal ya da öğretmen
+süzgeci taşımıyordu. Liste "4 mesaj" derken tıklayınca açılan yazışmada
+2 mesaj görünebiliyordu: öğrenci kanalındaki ve meslektaşın yazdığı
+mesajlar sayıya karışıyordu. `mesajlar_ogretmen`'in süzgeçleriyle
+birebir eşitlendi.
+
+Bu, istenmemiş bir davranış değişikliği değil — ekranın söylediğiyle
+yaptığı arasındaki farkın kapatılması. Testin 2. grubu artık iki ucu
+karşılaştırarak ölçüyor; sabit bir rakam değil, **eşitlik** iddia ediyor.
+
+### Kusur provaları — üçü de ısırdı, kanıtıyla
+
+| Prova | Kırılan |
+| --- | --- |
+| Öğretmen süzgeci geri alınır | `more than one row returned by a subquery` — canlı hatanın kendisi |
+| `okundu_kisi_tek` düşürülür | `9a: okundu_kisi_tek dizini yok` |
+| Mesaj süzgeçleri kaybolur | `2: listedeki sayı 4 ile yazışmadaki 2 tutmuyor` |
+
+### Provanın kendisi de bir kez ölü çıktı
+
+İlk koşum takımı üç provanın üçüne de "ısırmadı" dedi. Ölçüm ölüydü:
+zincir çıktısında `^ERROR|GRUP GEÇTİ` arayıp `head -2` alıyordum ve ilk
+iki eşleşme 0049'dan çok önceki dosyaların "GEÇTİ" satırlarıydı.
+
+Kural bir kez daha işledi: **prova ısırmadığında önce provaya bak.**
+Takım, kusuru kurulu veritabanına uygulayıp yalnız 0049 testini koşacak
+şekilde yeniden yazıldı; artık kırılan grubun kendi satırını gösteriyor.
+
+### Açık kalan, bilerek
+
+`sinif_velileri` artık yalnız bu öğretmenin veli yazışmasını sayıyor.
+`veliler_listesi` (sınıf listesi ekranı) hâlâ `ogretmen_id` süzmüyor;
+bugün tek öğretmen olduğu için ikisi aynı sayıyı veriyor. Ayrı bir tur
+işi ve buraya yazıldı ki unutulmasın.
