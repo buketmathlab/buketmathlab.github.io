@@ -23,6 +23,7 @@ import { Pano } from '@/features/ogretmen/Pano';
 import { Ayarlar } from '@/features/ogretmen/Ayarlar';
 import { Ogretmenler } from '@/features/ogretmen/Ogretmenler';
 import { EwaluMesajlari } from '@/features/ogretmen/EwaluMesajlari';
+import { OgrenciCikar } from '@/features/ogretmen/OgrenciCikar';
 import { OgrenciDetay } from '@/features/ogretmen/OgrenciDetay';
 import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
@@ -138,6 +139,11 @@ function Yonlendirme() {
             `:id = "toplu"` olarak eşleşir ve "öğrenci bulunamadı" ekranı
             açılırdı. */}
         <Route path="ogrenciler/toplu" element={<TopluOgrenci />} />
+        {/* ÇIKARMA EKRANI (öğretmenin isteği: "Öğrenci çıkarmak ayarlar
+            içerisinde bir sekmede olsun"). `:id`'den ÖNCE gelmek
+            ZORUNDA — sonra gelseydi `:id = "cikar"` olarak eşleşir ve
+            ekran hiç açılmazdı. Giriş kapısı Ayarlar'daki kart. */}
+        <Route path="ogrenciler/cikar" element={<OgrenciCikar />} />
         {/* Öğrenci yazışması da `:id`'den ÖNCE — aynı tuzak: sonra
             gelseydi `:id = "yazisma"` olarak eşleşirdi. */}
         <Route path="ogrenciler/yazisma/:id" element={<OgrenciYazismasi />} />

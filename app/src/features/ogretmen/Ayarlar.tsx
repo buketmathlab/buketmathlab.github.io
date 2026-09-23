@@ -7,6 +7,11 @@ import { SurumDefteriDugmesi } from '@/features/ogretmen/SurumDefteri';
 import { Field, Input } from '@/components/ui/Field';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useBenKimim } from '@/hooks/useBenKimim';
+import {
+  KART_ACIKLAMASI as CIKARMA_KART_ACIKLAMASI,
+  KART_BASLIGI as CIKARMA_KART_BASLIGI,
+  KART_DUGMESI as CIKARMA_KART_DUGMESI,
+} from '@/lib/ogrenci-cikarma-metni';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { rpc } from '@/services/supabase';
 
@@ -204,6 +209,18 @@ export function Ayarlar() {
         </p>
         <Button tur="sade" onClick={() => git('/ogretmen/kodlar')}>
           Kodları aç
+        </Button>
+      </Card>
+
+      {/* ÖĞRENCİ ÇIKARMA BURAYA TAŞINDI (öğretmenin isteği).
+          Çıkar düğmesi Öğrenciler sekmesinde her satırın sağındaydı:
+          geri alınamaz bir iş, en sık açılan listenin kenarında
+          duruyordu. Kodlar da aynı gerekçeyle 0048'de buraya geldi. */}
+      <Card className="mt-4">
+        <h2 className="mb-1 text-[18px] text-ink">{CIKARMA_KART_BASLIGI}</h2>
+        <p className="mb-3 text-[14px] text-muted">{CIKARMA_KART_ACIKLAMASI}</p>
+        <Button tur="sade" onClick={() => git('/ogretmen/ogrenciler/cikar')}>
+          {CIKARMA_KART_DUGMESI}
         </Button>
       </Card>
 

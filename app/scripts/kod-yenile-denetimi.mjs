@@ -257,11 +257,19 @@ console.log('6 — ÖĞRENCİLER SEKMESİNDE KOD YOK');
 
   // POZİTİF KONTROL: satırlar gerçekten çizildi. Bu olmadan yukarıdaki
   // sıfır, "ekran hiç yüklenmedi" yüzünden de çıkardı.
-  const cikarDugmesi = await p.evaluate(() =>
-    [...document.querySelectorAll('button')].filter((d) => d.textContent.trim() === 'Çıkar')
-      .length,
+  //
+  // ÇIPA ÖĞRENCİNİN ADI, BİR DÜĞME DEĞİL. İlk hâli "Çıkar" düğmesini
+  // sayıyordu ve o düğme bir sonraki turda Ayarlar'a taşınınca bu grup
+  // kırmızı yandı — kusur üründe değil ölçümdeydi. Pozitif kontrol,
+  // ölçtüğü ekranın en kalıcı parçasına bağlanmalı: satırın kendisi.
+  // Ad, satırda bir BAĞLANTI olarak duruyor (öğrenci detayına gider);
+  // etiket adına değil metne bakılıyor ki işaretleme değişse de ölçüm
+  // yerinde kalsın.
+  const satir = await p.evaluate(
+    (a) => [...document.querySelectorAll('a, span')].filter((d) => d.textContent.trim() === a).length,
+    OGRENCI.ad,
   );
-  de(cikarDugmesi > 0, `satırlar çizildi — "Çıkar" duruyor (${cikarDugmesi})`);
+  de(satir > 0, `satırlar çizildi — öğrencinin adı ekranda (${satir})`);
 
   // Kod hiçbir yoldan bu sekmede istenmiyor.
   const kodIstegi = (await p.evaluate(() => window.__cagrilar)).filter(

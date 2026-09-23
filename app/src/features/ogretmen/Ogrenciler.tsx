@@ -10,7 +10,6 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { Pagination } from '@/components/ui/Pagination';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { KodKutusu } from '@/components/ui/KodKutusu';
-import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -28,7 +27,6 @@ import type { Kodlar, OgrenciListesi, Sinif, SinifOgrenciOzeti, YeniOgrenci } fr
 
 export function Ogrenciler() {
   const { oturum } = useOturum();
-  const { bildir } = useToast();
   const git = useNavigate();
 
   const [arama, setArama] = useState('');
@@ -55,16 +53,6 @@ export function Ogrenciler() {
    * ekranının işi.
    */
   const [yeniKodlar, setYeniKodlar] = useState<{ ad: string; kodlar: Kodlar } | null>(null);
-  /**
-   * ÇIKARILACAK ÖĞRENCİ — tip `OgrenciSatiri` DEĞİL, yalnız {id, ad}.
-   *
-   * 0051'de sınıf özeti satırları da bu düğmeleri kullanıyor ve o
-   * satırlarda `sinif` alanı yok (öğrenci zaten seçili sınıfın içinde).
-   * Akışın ihtiyacı olan tek şey kimlik ve ad; tipi daraltmak, özet
-   * satırını buraya sokmak için sahte bir `sinif` uydurmayı gerektirirdi.
-   */
-  const [silinecek, setSilinecek] = useState<{ id: string; ad: string } | null>(null);
-
   const siniflar = useVeri<Sinif[]>('siniflar_listesi', {
     p_token: oturum?.token,
     p_arsiv: false,
@@ -80,8 +68,9 @@ export function Ogrenciler() {
    * çağrıyı atlayamaması — hook ebeveynde dursaydı, sınıf kutusuna
    * bakarken bile `ogrenciler_listesi` boş yere çağrılırdı.
    *
-   * Öğrenci eklendiğinde ya da çıkarıldığında bu sayaç artıyor ve
-   * çocuklara `key` olarak geçtiği için yeniden kuruluyorlar.
+   * Öğrenci eklendiğinde bu sayaç artıyor ve çocuklara `key` olarak
+   * geçtiği için yeniden kuruluyorlar. (Çıkarma artık bu ekranda değil;
+   * kendi ekranında kendi sayacı var.)
    */
   const [tazele, setTazele] = useState(0);
 
@@ -120,18 +109,18 @@ export function Ogrenciler() {
     }
   }
 
-  async function pasiflestir() {
-    if (!silinecek) return;
-    try {
-      await rpc('ogrenci_pasiflestir', { p_token: oturum?.token, p_id: silinecek.id });
-      bildir(`${silinecek.ad} listeden çıkarıldı`);
-      setSilinecek(null);
-      setTazele((t) => t + 1);
-      siniflar.yenile();
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'İşlem yapılamadı.', 'hata');
-    }
-  }
+  /*
+   * ÖĞRENCİ ÇIKARMA BURADAN KALKTI (öğretmenin isteği: "Öğrenci
+   * çıkarmak ayarlar içerisinde bir sekmede olsun").
+   *
+   * Her satırın sağında bir `Çıkar` düğmesi vardı. Geri alınamaz bir iş,
+   * öğretmenin en sık açtığı listenin kenarında duruyordu. Yeni yeri
+   * `OgrenciCikar.tsx` — Ayarlar → Öğrenci çıkarma.
+   *
+   * Silinmedi, TAŞINDI: kayıt burada dursun ki bir yıl sonra "burada
+   * neden çıkarma yok" diye bakan biri, hiç olmadığını değil yerinin
+   * değiştiğini görsün (0048'in Mesajlar kaydıyla aynı gerekçe).
+   */
 
   return (
     <>
@@ -222,7 +211,6 @@ export function Ogrenciler() {
           arama={aranan}
           sayfa={sayfa}
           onSayfa={setSayfa}
-          onCikar={setSilinecek}
         />
       ) : sinifId ? (
         <SinifOzeti
@@ -230,7 +218,6 @@ export function Ogrenciler() {
           sinifId={sinifId}
           onGeri={() => setSinifId('')}
           onKarne={() => git(`/ogretmen/siniflar/${sinifId}`)}
-          onCikar={setSilinecek}
         />
       ) : null}
 
@@ -302,21 +289,6 @@ export function Ogrenciler() {
           </p>
         </div>
       </Dialog>
-
-      {/* --- Pasifleştirme onayı --- */}
-      <Dialog
-        acik={silinecek !== null}
-        onKapat={() => setSilinecek(null)}
-        baslik="Öğrenci listeden çıkarılsın mı?"
-        aciklama={
-          silinecek
-            ? `${silinecek.ad} listeden çıkarılacak ve giriş kodları iptal edilecek. Geçmiş ödevleri ve notları silinmez, kayıtlarda kalır.`
-            : ''
-        }
-        onayEtiketi="Evet, çıkar"
-        onayTuru="tehlike"
-        onOnay={pasiflestir}
-      />
     </>
   );
 }
@@ -354,12 +326,10 @@ function AramaSonuclari({
   arama,
   sayfa,
   onSayfa,
-  onCikar,
 }: {
   arama: string;
   sayfa: number;
   onSayfa: (s: number) => void;
-  onCikar: (o: { id: string; ad: string }) => void;
 }) {
   const { oturum } = useOturum();
   const liste = useVeri<OgrenciListesi>(
@@ -412,11 +382,6 @@ function AramaSonuclari({
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button tur="sade" olcu="sm" onClick={() => onCikar(o)}>
-                      Çıkar
-                    </Button>
-                  </div>
                 </div>
               </Card>
             ))}
@@ -453,12 +418,10 @@ function SinifOzeti({
   sinifId,
   onGeri,
   onKarne,
-  onCikar,
 }: {
   sinifId: string;
   onGeri: () => void;
   onKarne: () => void;
-  onCikar: (o: { id: string; ad: string }) => void;
 }) {
   const { oturum } = useOturum();
   const ozet = useVeri<SinifOgrenciOzeti>(
@@ -527,11 +490,6 @@ function SinifOzeti({
                           </span>
                         )}
                       </p>
-                      <div className="flex gap-2">
-                        <Button tur="sade" olcu="sm" onClick={() => onCikar(o)}>
-                          Çıkar
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 </Card>

@@ -4685,3 +4685,85 @@ sonundaki "yanlışı yoktur" onu zaten karşılıyordu, yani ilk yarıyı
 | Eski teknik cümle geri konur | `açıklama bir sonraki adımı gösteriyor` |
 | Cümle emir kipine çevrilir | `açıklama emir kipinde değil` |
 | Yanlış kelimesi yumuşatılır | `yanlışın nerede biriktiği söyleniyor` |
+
+---
+
+## Öğrenci çıkarma Ayarlar'ın altına taşındı
+
+Öğretmenin isteği: *"Öğrenci çıkarmak ayarlar içerisinde bir sekmede
+olsun."*
+
+`Çıkar` düğmesi Öğrenciler sekmesinde her satırın sağındaydı: geri
+alınamaz bir iş, öğretmenin en sık açtığı listenin kenarında duruyordu.
+Yeni yeri **Ayarlar → Öğrenci çıkarma** (`/ogretmen/ogrenciler/cikar`).
+Kodlar da aynı gerekçeyle 0048'de oraya taşınmıştı: nadir ve kasıtlı
+işlerin yeri Ayarlar. Öğrenciler sekmesinin satırlarında artık hiç düğme
+yok — ad, ortalama ve konu.
+
+### Neden sınıf sınıf değil, tek aramalı liste
+
+Kodlar ekranı önce sınıf soruyor çünkü kod dağıtmak sınıf sınıf yapılan
+bir iş. Çıkarma öyle değil ve daha önemlisi **ölçüldü:** sınıf sınıf
+gidilseydi **özel ders öğrencilerine hiç ulaşılamazdı.** Onların
+`sinif_id`'si yok, `siniflar_listesi`'nde karşılıkları çıkmıyor ve
+`ogrenciler_listesi` sınıf süzgeciyle çağrıldığında listeye girmiyorlar.
+Bugün onlara Öğrenciler sekmesindeki arama üzerinden ulaşılıyordu; o
+düğme kalkarken yerine konan şey aynı kapsamı taşımak zorundaydı.
+
+Denetimin 5. grubu tam bunu sayıyor: özel ders öğrencisi listede **ve**
+ekran hiç `p_sinif_id` göndermiyor. İkincisi olmadan birincisi, sahte
+sunucunun cömertliğiyle de yeşil kalabilirdi.
+
+### Ekran söylemesi gerekeni söylüyor
+
+Sunucu **silmiyor**: `ogrenci_pasiflestir` yalnız `aktif = false` yapıyor,
+giriş kodlarını siliyor, açık oturumları kapatıyor. Ödevler, gönderimler
+ve puanlar duruyor. Ekran bunu hem girişte hem onay penceresinde
+söylüyor — ve `ogrenci-cikarma-metni.test.ts` söylediğini ölçüyor.
+
+**Geri alma yolu olmadığı da yazıyor.** Uygulamada bir öğrenciyi yeniden
+aktif edecek uç yok (ölçüldü: `set aktif` yalnız `false` yapan iki yerde
+geçiyor) ve toplu ekleme yalnız *aktif* öğrencileri eşleştirdiği için
+yeniden ekleme yeni bir kayıt açar. Bunu gizlemek, öğretmene geri
+alabileceğini düşündürürdü; hata onun değil ürünün olurdu.
+
+### Bir ölçüm yanlış yeri okuyordu
+
+"Çıkarılan öğrenci listeden düştü" ilk yazıldığında
+`document.body.innerText`e bakıyordu ve **kırmızı yandı** — ama kusur
+üründe değildi: çıkarma bildirimi ("… listeden çıkarıldı.") öğrencinin
+adını taşıyor ve ekranda birkaç saniye duruyor. Ölçüm satırı iddia
+ediyorsa satırı saymalı; listeye daraltıldı.
+
+### Kusur provaları — dördü de ısırdı
+
+| Prova | Kırılan |
+| --- | --- |
+| `Çıkar` düğmesi Öğrenciler'e geri konur | `1: sınıf özetinde "Çıkar" yok (2)` |
+| Ayarlar kartı yanlış yere götürür | `2: çıkarma ekranına gidildi (…/ogrenciler)` |
+| Onay kapısı kalkar | `3: onay öncesi ogrenci_pasiflestir isteği YOK` |
+| Sınıf süzgeci konur | `5: özel ders öğrencisi listede` |
+
+İkinci prova ilk hâlinde kartı tümden siliyordu ve **derlemeyi kırdı**
+(kullanılmayan sabit kaldı). Derleyicinin yakaladığı bir kusur denetimin
+ısırdığını kanıtlamaz; kusur derlenebilir hâle getirildi.
+
+### Açık kalan
+
+- **Geri alma ekranı yok.** Kayıt veritabanında duruyor, yani
+  kurtarılabilir bir durum — ama öğretmenin kendi başına yapabileceği bir
+  iş değil. Ayrı bir tur.
+- `ogrenci_pasiflestir` sunucuda `_yonetici` istiyor; sahip olmayan bir
+  öğretmen kartı görüyor ama işlem **42501** ile reddediliyor. Düğme eskiden
+  de herkese görünüyordu, davranış değişmedi — ama kartı yalnız sahibe
+  göstermek daha dürüst olurdu.
+
+### Pozitif kontrol yanlış çıpaya bağlanmıştı
+
+Bir tur önce `kod-yenile-denetimi`'nin 6. grubuna yazdığım pozitif
+kontrol *"satırlar çizildi — 'Çıkar' duruyor"* diyordu. Bu turda o düğme
+Ayarlar'a taşınınca grup **kırmızı yandı** ve kusur üründe değildi.
+
+Ders: bir pozitif kontrol, ölçtüğü ekranın **en kalıcı** parçasına
+bağlanmalı. "Ekran yüklendi mi" sorusunun cevabı bir düğme olamaz —
+düğmeler taşınır. Çıpa artık öğrencinin adı.
