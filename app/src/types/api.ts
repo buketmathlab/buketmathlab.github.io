@@ -95,6 +95,30 @@ export type OdevKiyasi = {
   seviye?: { ad: string; ortalama: number | string | null } | null;
 };
 
+/**
+ * Yazışma listesi (0048) — Mesajlar sekmesinin verisi.
+ *
+ * SIRA SUNUCUDAN GELİYOR: sınıflar `max(son_mesaj)`, sınıf içi
+ * `son_mesaj`. Arayüz yeniden sıralamıyor; iki yerin ayrışması ekranda
+ * sessizce yanlış bir sıra demek olurdu.
+ */
+export type YazismaListesi = {
+  kanal: 'ogrenci' | 'veli';
+  toplam_okunmamis: number;
+  gruplar: Array<{
+    sinif_id: string;
+    sinif: string;
+    okunmamis: number;
+    satirlar: Array<{
+      ogrenci_id: string;
+      ad: string;
+      /** Son mesajın zamanı; listede yalnız mesajı olanlar var, yani dolu. */
+      son_mesaj: string;
+      okunmamis: number;
+    }>;
+  }>;
+};
+
 export type KodYenileme = { rol: 'ogrenci' | 'veli'; kod: string };
 
 /**

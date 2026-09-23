@@ -44,20 +44,24 @@ export function Kabuk() {
       yol: '/ogretmen/ogrenciler',
       etiket: 'Öğrenciler',
       ikon: SEKME_IKON.ogrenci,
-      // ÖĞRENCİ YAZIŞMALARI BU SEKMEDE (öğretmenin kararı, 0025). Rozet
-      // hâlâ TEK: iki ayrı sayı öğretmene iki ayrı yer aratırdı. Sekmenin
-      // içi hangisinin beklediğini zaten söylüyor.
-      rozet: bildirim.okunmamis_mesaj,
-      rozetAdi: (n) => `${n} okunmamış mesaj`,
+      // ROZET BURADAN KALKTI (0048). 0025'te yazışmalar bu sekmedeydi ve
+      // rozet oraya aitti; öğretmen bu turda yazışmaları ayrı bir
+      // Mesajlar sekmesine taşıttı ("tek kapı Mesajlar"). Okunmamış
+      // sayısını hâlâ burada göstermek, basan öğretmeni mesaj
+      // bulamayacağı bir ekrana yollardı.
     },
+    { yol: '/ogretmen/veliler', etiket: 'Veliler', ikon: SEKME_IKON.veli },
     {
-      yol: '/ogretmen/veliler',
-      etiket: 'Veliler',
-      ikon: SEKME_IKON.veli,
+      // KODLAR'IN YERİNE (0048 — öğretmenin isteği). Kodlar silinmedi,
+      // Ayarlar'a taşındı: çubuk 360 px'de altı sekmeyle dolu ve
+      // yedincisi sığmıyor (yukarıda ölçülmüş). Kod dağıtmak yılda bir,
+      // mesajlaşma her gün.
+      yol: '/ogretmen/mesajlar',
+      etiket: 'Mesajlar',
+      ikon: SEKME_IKON.mesaj,
       rozet: bildirim.okunmamis_mesaj,
       rozetAdi: (n) => `${n} okunmamış mesaj`,
     },
-    { yol: '/ogretmen/kodlar', etiket: 'Kodlar', ikon: SEKME_IKON.kod },
   ];
 
   return (

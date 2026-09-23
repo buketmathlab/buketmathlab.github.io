@@ -193,6 +193,20 @@ export function Ayarlar() {
           Ayrı bir ekran, çünkü beş bant × (önizleme + metin kutusu + iki
           düğme) bu sayfayı PIN formu görünmeyecek kadar uzatırdı. Buradan
           giriliyor: ikisi de nadir ve kasıtlı işler. */}
+      {/* KODLAR BURAYA TAŞINDI (0048 — öğretmenin isteği).
+          Sekme çubuğundaki yerini Mesajlar aldı. Ekran ve adres
+          değişmedi; yalnız oraya nereden gidildiği değişti. Kod
+          dağıtmak yılda bir yapılan bir iş — Ayarlar onun yeri. */}
+      <Card className="mt-4">
+        <h2 className="mb-1 text-[18px] text-ink">Giriş kodları</h2>
+        <p className="mb-3 text-[14px] text-muted">
+          Sınıf sınıf kodları görün, fişleri yazdırın.
+        </p>
+        <Button tur="sade" onClick={() => git('/ogretmen/kodlar')}>
+          Kodları aç
+        </Button>
+      </Card>
+
       <Card className="mt-4">
         <h2 className="mb-1 text-[18px] text-ink">Ewalu’nun söyledikleri</h2>
         <p className="mb-4 text-[14px] text-muted">

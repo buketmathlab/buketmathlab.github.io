@@ -311,34 +311,50 @@ console.log('\n4 — İKİ YAZIŞMA BİRBİRİNE KARIŞMIYOR');
 //
 // İKİNCİ ÖLÇÜM ASIL OLAN: yalnız yeni cümleyi aramak, eski cümle onun
 // YANINA eklendiğinde de yeşil verirdi.
+//
+// -----------------------------------------------------------------------------
+// ÖLÇÜMÜN HEDEFİ 0048'DE DEĞİŞTİ — cümle silinmedi, TAŞINDI
+//
+// Cümle Veliler ekranının açıklamasıydı. 0048'de öğretmenin kararıyla
+// yazışma girişi o ekrandan kalktı ("eski kapılar kalksın, tek kapı
+// Mesajlar") ve cümle orada sahipsiz kaldı: mesajlaşmayı anlatan bir
+// satır, mesajlaşmanın yapılmadığı bir sayfada duruyordu.
+//
+// Bu denetim o turda KIRMIZI YANDI ve doğrusunu yaptı — cümlenin sessizce
+// kaybolmasına izin vermedi. Cümle Mesajlar ekranına, yazışmanın
+// GERÇEKTEN yapıldığı yere taşındı; ölçüm de oraya taşındı. İki iddia da
+// duruyor: doğru cümle var, eski yanlış cümle yok.
 {
-  // KENDİ SAYFASINI KURUYOR: paylaşılan `sayfaAc` bilmediği uca `{}`
-  // dönüyor ve `veliler_listesi` boş nesneyle geldiğinde ekran hiç
-  // çizilmiyor (ölçüldü — gövde bomboş çıktı). Ölçüm o hâlde "cümle yok"
-  // derdi ve yanlış bir kusur bildirirdi.
   const s = await tarayici.newPage({ viewport: { width: 360, height: 780 } });
   await s.route('**/rest/v1/rpc/*', (r) => {
     const uc = r.request().url().split('/').pop().split('?')[0];
-    const govde = uc === 'veliler_listesi'
-      ? { toplam_okunmamis: 0, yanit_bekleyen: [],
-          gruplar: [{ sinif_id: '9a', sinif: '9A', ozel: false,
-                      veli_sayisi: 12, okunmamis: 0 }] }
+    const govde = uc === 'yazisma_listesi'
+      ? { kanal: 'veli', toplam_okunmamis: 0, gruplar: [] }
       : {};
     r.fulfill({ status: 200, contentType: 'application/json',
                 body: JSON.stringify(govde) });
   });
   await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)),
     OTURUM.ogretmen());
-  await s.goto(KOK + '/ogretmen/veliler', { waitUntil: 'networkidle' });
+  await s.goto(KOK + '/ogretmen/mesajlar', { waitUntil: 'networkidle' });
   await s.waitForTimeout(700);
 
-  const metin = await s.evaluate(() => document.body.innerText);
-  // Önce ekranın GERÇEKTEN çizildiğini doğrula; yoksa aşağıdaki iki ölçüm
+  // Önce ekranın GERÇEKTEN çizildiğini doğrula; yoksa aşağıdaki ölçümler
   // boş bir sayfada da "geçer" görünürdü.
-  olc('Veliler ekranı çizildi', metin.includes('Veliler'));
-  olc('Veliler ekranı "kendi panelinde" diyor', metin.includes('kendi panelinde'));
+  const ogrenciMetni = await s.evaluate(() => document.body.innerText);
+  olc('Mesajlar ekranı çizildi', ogrenciMetni.includes('Mesajlar'));
+  olc('öğrenci kanalı "kendi panelinde" diyor',
+    ogrenciMetni.includes('kendi panelinde'));
+
+  // VELİ KANALI ASIL ÖLÇÜLEN: düzeltilen cümle veli yazışmasını
+  // anlatıyordu.
+  await s.getByRole('tab', { name: 'Veliler' }).click();
+  await s.waitForTimeout(500);
+  const veliMetni = await s.evaluate(() => document.body.innerText);
+  olc('veli kanalı "veli kendi koduyla girer, kendi panelinde okur" diyor',
+    veliMetni.includes('veli kendi koduyla girer, kendi panelinde okur'));
   olc('"çocuğunun panelinde" ifadesi GERİ GELMEMİŞ',
-    !metin.includes('çocuğunun panelinde'));
+    !veliMetni.includes('çocuğunun panelinde'));
   await s.close();
 }
 

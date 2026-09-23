@@ -19,7 +19,6 @@ import type {
   KodYenileme,
   OgrenciListesi,
   OgrenciSatiri,
-  OgrenciYazismalari,
   Sinif,
   YeniOgrenci,
 } from '@/types/api';
@@ -193,7 +192,6 @@ export function Ogrenciler() {
         }
       />
 
-      <YanitBekleyenOgrenciler />
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
         <div className="flex-1">
@@ -435,73 +433,20 @@ export function Ogrenciler() {
   );
 }
 
-const ZAMAN = new Intl.DateTimeFormat('tr-TR', {
-  day: 'numeric',
-  month: 'long',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
-/**
- * "Yanıt bekleyen öğrenciler" — öğrenci yazışmalarının giriş kapısı (0025).
+/*
+ * "YANIT BEKLEYEN ÖĞRENCİLER" BÖLÜMÜ BURADAN KALDIRILDI (0048).
  *
- * ÖĞRETMENİN KARARI BURAYA KOYDU: "Öğretmen girişinde öğrenci ile
- * mesajlaşma bölümünü öğrenciler kısmına ekle." Veliler sekmesi veli
- * yazışmalarıyla kalıyor; iki yazışma iki sekmede.
+ * 0025'te öğretmenin kararıyla buraya konmuştu: "Öğretmen girişinde
+ * öğrenci ile mesajlaşma bölümünü öğrenciler kısmına ekle." O karar bu
+ * turda DEĞİŞTİ — öğretmen ayrı bir Mesajlar sekmesi istedi ve "eski
+ * kapılar kalksın, tek kapı Mesajlar" dedi.
  *
- * `Veliler.tsx`'teki desenin aynısı ve aynı sebeple listenin ÜSTÜNDE:
- * "kim bana yazmış" sorusu asıl iş; öğrenci listesinin altına gömseydik
- * öğretmen bekleyen bir öğrenciyi ancak tesadüfen görürdü. En uzun
- * süredir cevapsız duran üstte.
+ * Eski karar silinmiyor, üzerine yazılıyor: bir yıl sonra "burada neden
+ * mesajlaşma yok" diye bakan biri, hiç olmadığını değil, taşındığını
+ * görsün.
  *
- * KENDİ `useVeri`'si var: yanıt bekleyenler gelmezse (0025 panelde henüz
- * çalıştırılmadıysa) öğrenci listesi eskisi gibi açılmaya devam etsin.
- * Bölüm o durumda hiç çizilmiyor — hata kutusu göstermek, aslında var
- * olmayan bir arıza duygusu verirdi.
+ * Yazışma EKRANI duruyor (`/ogretmen/ogrenciler/yazisma/:id`); yalnız
+ * bu sayfadaki giriş listesi kalktı. Mesajlar sekmesi oraya
+ * yönlendiriyor.
  */
-function YanitBekleyenOgrenciler() {
-  const { oturum } = useOturum();
-  const git = useNavigate();
-
-  const { veri } = useVeri<OgrenciYazismalari>('ogrenci_yazismalari', {
-    p_token: oturum?.token,
-  });
-
-  const bekleyen = veri?.yanit_bekleyen ?? [];
-  if (bekleyen.length === 0) return null;
-
-  return (
-    <section className="mb-6" aria-labelledby="yanit-bekleyen-ogrenciler">
-      <h2
-        id="yanit-bekleyen-ogrenciler"
-        className="mb-2 font-display text-[18px] font-semibold text-ink"
-      >
-        Yanıt bekleyen öğrenciler
-      </h2>
-      <Card vurgu="uyari">
-        <ul className="divide-y divide-line">
-          {bekleyen.map((o) => (
-            <li key={o.ogrenci_id}>
-              <button
-                type="button"
-                onClick={() => git(`/ogretmen/ogrenciler/yazisma/${o.ogrenci_id}`)}
-                className="flex min-h-[44px] w-full items-center justify-between gap-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                <span className="min-w-0">
-                  <span className="block font-semibold text-ink">{o.ad}</span>
-                  <span className="block text-[13px] text-muted">
-                    {o.sinif ?? 'Sınıfsız'}
-                    {o.son_mesaj && ` · ${ZAMAN.format(new Date(o.son_mesaj))}`}
-                  </span>
-                </span>
-                <Tag tur="uyari">
-                  <span className="sk-sayi">{o.okunmamis} yeni</span>
-                </Tag>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Card>
-    </section>
-  );
-}

@@ -30,6 +30,7 @@ import { SinifDetay } from '@/features/ogretmen/SinifDetay';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { TopluOgrenci } from '@/features/ogretmen/TopluOgrenci';
 import { Odevler } from '@/features/ogretmen/Odevler';
+import { Mesajlar } from '@/features/ogretmen/Mesajlar';
 import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
 import { KodFisleri } from '@/features/ogretmen/KodFisleri';
 import { OnamDokumu } from '@/features/ogretmen/OnamDokumu';
@@ -145,6 +146,12 @@ function Yonlendirme() {
         <Route path="odevler/yeni" element={<OdevOlustur />} />
         <Route path="odevler/:id" element={<OdevDuzenle />} />
         <Route path="odevler/:id/gonderimler" element={<OdevGonderimleri />} />
+        {/* MESAJLAR (0048) — Kodlar sekmesinin yerine. Yazışma
+            ekranlarının kendisi ESKİ ROTALARINDA kaldı; bu sayfa
+            onlara yönlendiriyor. */}
+        <Route path="mesajlar" element={<Mesajlar />} />
+        {/* Kodlar SEKME DEĞİL artık (0048) ama rota aynı: Ayarlar'daki
+            karttan geliniyor, adres değişmedi. */}
         {/* Kodlar da iki kademeli: önce sınıf, sonra o sınıfın kodları. */}
         <Route path="kodlar" element={<Kodlar />} />
         {/* `:id`'den ÖNCE değil SONRA gelebilir: yol iki parçalı

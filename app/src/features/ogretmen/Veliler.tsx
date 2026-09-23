@@ -20,18 +20,20 @@ const ZAMAN = new Intl.DateTimeFormat('tr-TR', {
 });
 
 /**
- * Veliler sekmesi.
+ * Veliler sekmesi — VELİ YÖNETİMİ.
  *
- * İKİ SORUYA BİRDEN CEVAP VERİYOR ve bu yüzden diğer sekmelerden farklı:
+ * 0048'E KADAR BURADA ŞU YAZIYORDU: "İki soruya birden cevap veriyor:
+ * (1) kim bana yazmış, (2) filanca velinin yazışması nerede." O CÜMLE
+ * ARTIK DOĞRU DEĞİL ve silinmek yerine düzeltiliyor.
  *
- *   1. "Kim bana yazmış?" → en üstte **Yanıt bekleyenler**, sınıf ayrımı
- *      olmadan, en uzun süredir cevapsız duran üstte. Mesajlaşmada asıl iş
- *      bu; sınıfların altına gömseydik öğretmen bekleyen bir veliyi ancak o
- *      sınıfa girerse görürdü.
- *   2. "Filanca velinin yazışması nerede?" → altında sınıf listesi, diğer
- *      sekmelerdeki desenin aynısı.
+ * Öğretmen 0048'de yazışmaları ayrı bir Mesajlar sekmesine taşıttı
+ * ("eski kapılar kalksın, tek kapı Mesajlar"). Bu sekmeden yazışma
+ * girişi kalktı.
  *
- * Yani gezinme sınıf sınıf, ama acil olan yukarı çıkıyor.
+ * GERİYE KALAN İŞ BOŞ DEĞİL — ölçüldü: `sinif_velileri` ucu `onam_var`
+ * ve `veli_kodu_var` da döndürüyor, ayrıca onam belgesi ekranı burada.
+ * Yani sekme "hangi veli onam verdi, hangisinin kodu var, belgeyi nereden
+ * yazdırırım" sorularının yeri. Gezinme yine sınıf sınıf.
  */
 export function Veliler() {
   const { oturum } = useOturum();
@@ -58,7 +60,7 @@ export function Veliler() {
           ÖLÇTÜĞÜ güvence aynı olmalı. */}
       <SayfaBasligi
         baslik="Veliler"
-        aciklama="Mesajlar uygulama içinde gider; veli kendi koduyla girer, kendi panelinde okur. Öğrenci bu yazışmayı görmez."
+        aciklama="Onam durumu ve veli kodları. Yazışmalar Mesajlar sekmesinde."
       />
 
       <AsyncBoundary
@@ -70,37 +72,12 @@ export function Veliler() {
       >
         {veri && (
           <>
-            {veri.yanit_bekleyen.length > 0 && (
-              <section className="mb-6">
-                <h2 className="mb-2 font-display text-[18px] font-semibold text-ink">
-                  Yanıt bekleyenler
-                </h2>
-                <Card vurgu="uyari">
-                  <ul className="divide-y divide-line">
-                    {veri.yanit_bekleyen.map((v) => (
-                      <li key={v.ogrenci_id}>
-                        <button
-                          type="button"
-                          onClick={() => git(`/ogretmen/veliler/yazisma/${v.ogrenci_id}`)}
-                          className="flex min-h-[44px] w-full items-center justify-between gap-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                        >
-                          <span className="min-w-0">
-                            <span className="block font-semibold text-ink">{v.ad}</span>
-                            <span className="block text-[13px] text-muted">
-                              {v.sinif}
-                              {v.son_mesaj && ` · ${ZAMAN.format(new Date(v.son_mesaj))}`}
-                            </span>
-                          </span>
-                          <Tag tur="uyari">
-                            <span className="sk-sayi">{v.okunmamis} yeni</span>
-                          </Tag>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              </section>
-            )}
+            {/* "YANIT BEKLEYENLER" BURADAN KALKTI (0048).
+                Öğretmenin kararı: "eski kapılar kalksın, tek kapı
+                Mesajlar." Veli yazışmaları artık Mesajlar sekmesinin
+                Veliler bölümünde; yazışma EKRANI aynı adreste duruyor
+                (`/ogretmen/veliler/yazisma/:id`), oraya Mesajlar'dan
+                geliniyor. */}
 
             <h2 className="mb-2 font-display text-[18px] font-semibold text-ink">Sınıflar</h2>
             <Card>

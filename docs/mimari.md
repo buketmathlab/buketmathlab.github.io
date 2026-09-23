@@ -4126,3 +4126,144 @@ denetimi hem öğrenci hem veli ekranında "teslim" geçmediğini arıyor.
 Bu sırada **ölü bir alan** da çıktı: `ortalamaYok: 'Teslim yok'` hiçbir
 yerde kullanılmıyordu (kart ortalama yoksa zaten çizilmiyor). Metnin
 tamamını tarayan yeni test onu yakaladı ve alan silindi.
+
+## Mesajlar sekmesi — Kodlar Ayarlar'a taşındı (0048)
+
+Öğretmenin isteği tek cümleydi: *"Kodlar sekmesi ayarlar sekmesinin
+içinde olsun. Kodlar sekmesi yerine mesajlar gelsin ve en son
+mesajlaşılan öğrenciler en üstte çıksın ve sınıflarına göre kategorize
+olsun."*
+
+### Dört karar
+
+| Soru | Karar |
+| --- | --- |
+| Hangi kanal | **İkisi de, ayrı bölümde** — üstte `[Öğrenciler\|Veliler]` düğmeleri |
+| Sıralama | **Sınıflar da tazeliğe göre** — en son yazışılan sınıf en üstte |
+| Kimler listede | **Yalnız yazışması olanlar**; yenisi arama kutusundan başlıyor |
+| Eski kapılar | **Kalksın, tek kapı Mesajlar** |
+
+### "Ayarlar sekme değil" sınırı bu turda kendiliğinden çözüldü
+
+Öğretmen "ayarlar sekmesi" dedi ama **Ayarlar sekme değil**, yan menünün
+altındaki bir bağlantı. Sebebi kodda yazılı ve ölçülmüştü: *"yedincisi
+360 px'de alt çubuğa sığmıyor."* İstediği düzen o sınırı zaten
+çözüyordu — Kodlar sekmeden çıkıp Ayarlar sayfasına girdi, yerine
+Mesajlar geldi. **Sekme sayısı altı kaldı** ve `mesajlar-denetimi` 1.
+grubu bunu her koşuda sayıyor.
+
+Kodlar **silinmedi, taşındı**: rota (`/ogretmen/kodlar`) ve ekranın
+kendisi aynı; Ayarlar'a yalnız bir kart ve "Kodları aç" düğmesi eklendi.
+Kod dağıtmak yılda bir yapılan bir iş, mesajlaşma her gün.
+
+### Veliler sekmesi boşalmadı — ölçüldü, varsayılmadı
+
+"Tek kapı" kararı Veliler sekmesini boşaltacak gibi duruyordu: dosyanın
+başlığında yazan iki işi de mesajlaşmaydı. Ama `sinif_velileri` ucu
+**`onam_var`** ve **`veli_kodu_var`** da döndürüyor ve onam belgesi
+ekranı orada. Sekme *veli yönetimi* olarak duruyor; yalnız yazışma
+girişi çıktı. Dosya başlığındaki artık doğru olmayan yorum **silinmedi,
+düzeltildi** — eski hâli ve neden değiştiği dosyada duruyor (0047'de
+`veli_paneli`'de yapılanın aynısı).
+
+### 0025'in kararı bu turda ÖĞRETMEN TARAFINDAN değişti
+
+0025'te yazışmalar öğretmenin kendi isteğiyle Öğrenciler sekmesine
+konmuştu: *"Öğretmen girişinde öğrenci ile mesajlaşma bölümünü
+öğrenciler kısmına ekle."* Bu turda o karar değişti. Kod bunu
+gizlemiyor: kaldırılan bölümün yerinde eski kararı, kimin değiştirdiğini
+ve neyin taşındığını anlatan bir yorum bloğu duruyor. Bir yıl sonra
+"burada neden mesajlaşma yok" diye bakan biri, hiç olmadığını değil,
+**taşındığını** görsün.
+
+`okunmamis_mesaj` rozeti de Öğrenciler'den kalktı ve yalnız Mesajlar'da
+kaldı: basan öğretmeni mesaj bulamayacağı bir ekrana yollayan bir sayı
+rozet değil, tuzak olurdu.
+
+### Uç sıfırdan yazılmadı — `ogrenci_yazismalari` genelleştirildi
+
+`yazisma_listesi` (0048) yeni bir hesap değil. `ogrenci_yazismalari`
+(0025) `son_mesaj` ve `okunmamis`'ı tam olarak gereken biçimde
+hesaplıyordu; alt sorgular oradan birebir alındı. Değişen üç şey: `kanal`
+artık parametre, süzgeç "cevapsız" yerine "en az bir mesaj var", çıktı
+sınıfa göre gruplu.
+
+İkinci bir hesap yazmak 0030'un dersini tekrarlardı: iki yol bir gün
+ayrışır ve öğretmen aynı öğrenci için iki farklı "okunmamış" sayısı
+görür. İkisinin aynı sayıyı verdiği `yazisma_listesi_testleri.sql` 11.
+grupta ayrıca ölçülüyor.
+
+Sıra **sunucudan geliyor ve arayüzde yeniden sıralanmıyor.** İkinci bir
+`sort` yazmak iki yerin bir gün ayrışması demekti — ve ekranda görünen
+sıra sessizce yanlış olurdu. `mesajlar-denetimi` 3. grubu sırayı
+**DOM'dan** okuyor, sunucudan gelen yanıttan değil; taklit veri zaten
+sıralı gönderiliyor ki yanlış bir sıra çıkarsa suçlu tek olsun: arayüz.
+
+### Bu turda çıkan iki tuzak — ikisi de ölçerek bulundu
+
+**1. `now()` bir işlem boyunca DONUK.** 6c grubu (meslektaşın yazışması
+okunmamış sayılmamalı) kusur provasında ısırmadı. Nedeni düşünerek değil
+**satırlara bakarak** bulundu: `okundu.zaman` ile mesajın `created_at`'i
+**birebir aynıydı**, çünkü tek bir `do` bloğundaki bütün `now()`
+çağrıları aynı damgayı veriyor. Testin "sonra yazılmış mesaj"a ihtiyacı
+olduğu yerde `clock_timestamp()` kullanıldı.
+
+Aynı grupta **yanıltıcı bir pozitif kontrol** de kayda geçti: meslektaşın
+hiç okuma işareti yok, yani karşılaştırma `-infinity` ile yapılıyor ve
+o satır her hâlükârda sayılıyordu — "çalışıyor" görüntüsü veren ama
+hiçbir şey kanıtlamayan bir ölçüm.
+
+**2. Yorumun içindeki `$$` dolar-tırnaklı bloğu kapatıyor.** Yukarıdaki
+tuzağı anlatmak için yazdığım yorumda `do $$` geçiyordu ve blok tam
+orada bitti; hata mesajı bambaşka bir yeri gösteriyordu. Yorum dolar
+işareti kullanmadan yeniden yazıldı.
+
+### Nöbetçiler
+
+- `yazisma_listesi_testleri.sql` — 11 grup; sıra, kanal ayrımı,
+  meslektaş süzgeci, arşiv, kapsam, geçersiz kanal (22023), öğrenci/veli
+  jetonu (42501) ve `ogrenci_yazismalari` ile eşitlik. Beş kusur provası
+  da ısırdı.
+- `mesajlar-denetimi.mjs` (23. tarayıcı denetimi) — sekme çubuğu,
+  Ayarlar'dan Kodlar, ekrandaki sıra, kanal düğmesi, kapanan eski
+  kapılar, arama. İki arayüz kusur provası ısırdı: *Kodlar sekmesi
+  çubukta bırakılır* → 1. grup; *Öğrenciler'deki yazışma girişi geri
+  konur* → 5. grup.
+- `mesaj-listesi-metni.test.ts` — 10 test; göreli zaman **takvim günüyle**
+  hesaplanıyor (24 saatle değil) ve "3 dakika önce" gibi ekran
+  yenilenmeden eskiyip yalan söylemeye başlayan ifade üretilmiyor.
+
+Denetimin kendi ölçümü de bu turda onarıldı: sekme etiketlerini sayarken
+yan menü ile alt çubuk **ikisi birden DOM'da** olduğu için 12 sekme
+sayılıyordu, ayrıca rozetin rakamı etikete yapışıyordu (`Mesajlar3`).
+Ölçüm tek bir `nav`'a daraltıldı ve rakamlar etiketten ayıklandı.
+
+### Bir cümlenin sessizce kaybolmasını başka bir denetim engelledi
+
+Tur bitmek üzereyken `kabuk-denetimi.mjs` kırmızı yandı ve **haklıydı.**
+
+Veliler ekranının açıklaması şuydu: *"Mesajlar uygulama içinde gider;
+veli kendi koduyla girer, kendi panelinde okur. Öğrenci bu yazışmayı
+görmez."* Bu cümle daha önceki bir turda öğretmenin sorusuyla
+düzeltilmişti — ekran uzun süre "veli kendi **çocuğunun** panelinde
+görür" diyordu, ki bu iki kanalın ayrı olduğu güvencesinin tersini ima
+ediyordu; doğru olsaydı gizlilik ihlali olurdu. Düzeltildikten sonra
+sessizce geri gelmesin diye **bir denetime bağlanmıştı.**
+
+0048'de yazışma girişi o ekrandan kalkınca ben cümleyi de sildim. Nöbetçi
+tam bunun için vardı.
+
+Cümle **silinmedi, taşındı**: mesajlaşmayı anlatan bir satırın yeri
+mesajlaşmanın yapıldığı ekran. Şimdi Mesajlar sekmesinde, seçili kanala
+göre yazıyor (`KANAL_NOTU`, `mesaj-listesi-metni.ts`) ve öğrenci kanalına
+da simetriği kondu — 0025'in bütün kararı iki yazışmanın birbirini
+görmemesiydi, öğretmen kime yazdığını ekranda okuyabilmeli.
+
+Ölçüm de taşındı ve **zayıflatılmadı**: iki iddia da duruyor (doğru cümle
+var, eski yanlış cümle yok) ve taşındıktan sonra kusur provasıyla
+ısırdığı doğrulandı. Ayrıca metnin kendisi React'siz iki testle
+kilitlendi.
+
+Kaydı düşülen ders: **bir turun kaldırdığı şey, başka bir turun
+kilitlediği şey olabilir.** Ekran kaldırmak yalnız kodu değil, o koda
+bağlı güvenceleri de gözden geçirmeyi gerektiriyor.
