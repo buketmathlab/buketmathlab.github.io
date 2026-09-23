@@ -8,8 +8,8 @@
 -- NE YAPIYOR: Sekme çubuğundaki "Kodlar" sekmesinin yerine "Mesajlar"
 -- geliyor. Bu SQL o sekmenin verisini üretiyor.
 --
--- Listede: en son yazışılan SINIF en üstte, o sınıfın içinde de en son
--- yazışılan öğrenci en üstte — sizin kararınız.
+-- Listede: sınıflar son mesaja göre sıralanır, sınıfın içinde öğrenciler
+-- de son mesaja göre — en yeni en üstte. Sizin kararınız.
 --
 -- Listede YALNIZ yazışması olanlar var. Hiç mesajlaşmadığınız öğrenciyi
 -- ekrandaki arama kutusundan bulup yazışma başlatabilirsiniz.
