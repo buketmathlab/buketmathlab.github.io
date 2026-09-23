@@ -6,6 +6,12 @@
  * olmaz. Sunucu tarafı `kod_yenile_testleri.sql` ile ölçülüyor; burada
  * ölçülen şey EKRANIN VAADİ.
  *
+ * EKRAN DEĞİŞTİ: yenileme Öğrenciler sekmesindeki `Kodlar` düğmesinin
+ * arkasındaydı; öğretmen o düğmeyi istemedi ("Öğrenciler sekmesinin
+ * içinde kodlara gerek yok") ve akış Kodlar ekranına taşındı. Bu denetim
+ * yeni yerinde koşuyor — aynı dört vaat, yeni adres. 6. grup düğmenin
+ * gerçekten kalktığını ayrıca sayıyor: taşımanın yarısı kalmasın.
+ *
  * DÖRT ÖLÇÜM:
  *
  *   1. ONAYSIZ SUNUCUYA İSTEK GİTMİYOR. 0024'te kod fişleri için ölçülen
@@ -79,6 +85,23 @@ await s.addInitScript(
       if (m[1] === 'ogrenciler_listesi')
         return json({ toplam: 1, sayfa: 1, boyut: 25, kayitlar: [ogrenci] });
       if (m[1] === 'ogrenci_kodlari') return json({ ...kodlar });
+      // 0051 sınıf özeti — 6. grup Öğrenciler sekmesinde satır çizdirmek
+      // için buna ihtiyaç duyuyor.
+      if (m[1] === 'sinif_ogrenci_ozeti')
+        return json({
+          sinif: { id: 's9a', ad: '9A', ozel: false },
+          ogrenciler: [
+            {
+              id: ogrenci.id,
+              ad: ogrenci.ad,
+              ogrenci_no: ogrenci.ogrenci_no,
+              tur: ogrenci.tur,
+              ortalama: 62.5,
+              odev_sayisi: 4,
+              en_eksik_konu: 'Köklü Sayılar',
+            },
+          ],
+        });
       if (m[1] === 'kod_yenile') {
         const rol = govde?.p_rol;
         kodlar[rol] = yeni[rol];
@@ -104,21 +127,26 @@ const metin = () => p.evaluate(() => document.body.innerText);
 const yenilemeIstekleri = async () =>
   (await p.evaluate(() => window.__cagrilar)).filter((c) => c.ad === 'kod_yenile');
 
-await p.goto(KOK + '#/ogretmen/ogrenciler', { waitUntil: 'networkidle' });
+await p.goto(KOK + '#/ogretmen/kodlar/s9a', { waitUntil: 'networkidle' });
 await p.waitForTimeout(600);
 
 // ===========================================================================
 console.log('1 — ONAYSIZ SUNUCUYA İSTEK GİTMİYOR');
 // ===========================================================================
 {
-  await p.getByRole('button', { name: 'Kodlar' }).first().click();
+  // Kodlar ekranında kod öğrencinin ADINA dokununca açılıyor (0018'in
+  // "aynı anda tek öğrenci" kuralı).
+  await p.getByRole('button', { name: new RegExp(OGRENCI.ad) }).first().click();
   await p.waitForTimeout(400);
 
   const t = await metin();
   de(t.includes(ESKI.ogrenci), 'kodlar diyaloğu açıldı ve eski kod görünüyor');
 
   // Yenile'ye bas, ONAYLAMA.
-  await p.getByRole('button', { name: 'Yenile' }).first().click();
+  // `exact: true` ŞART: `getByRole` adı ALT DİZE olarak eşliyor ve
+  // deneğin adı "Yenileme Deneği". Bu satırı gevşek yazmak, tıklamayı
+  // öğrencinin satır düğmesine gönderiyor ve kodlar kapanıyordu.
+  await p.getByRole('button', { name: 'Yenile', exact: true }).first().click();
   await p.waitForTimeout(400);
 
   de((await yenilemeIstekleri()).length === 0, 'onay öncesi kod_yenile isteği YOK');
@@ -171,7 +199,7 @@ console.log('4 — YENİ FİŞ HATIRLATMASI');
 
   // Veli kodunu da yenileyip mesajın MUHATABA göre değiştiğini ölç:
   // tek bir genel cümle yazılsaydı bu ayrım görünmezdi.
-  await p.getByRole('button', { name: 'Yenile' }).nth(1).click();
+  await p.getByRole('button', { name: 'Yenile', exact: true }).nth(1).click();
   await p.waitForTimeout(300);
   await p.getByRole('button', { name: 'Evet, yenile' }).click();
   await p.waitForTimeout(700);
@@ -198,6 +226,48 @@ console.log('5 — 360 px');
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   de(fark <= 0, `360 px yatay taşma yok (${fark}px)`);
+}
+
+// ===========================================================================
+console.log('6 — ÖĞRENCİLER SEKMESİNDE KOD YOK');
+// ===========================================================================
+{
+  // Öğretmenin bu turdaki isteğinin KENDİ ölçümü: "Öğrenciler sekmesinin
+  // içinde kodlara gerek yok." Taşıma yapıldı diye düğmenin kalktığını
+  // varsaymak yetmez — sayılıyor.
+  await p.setViewportSize({ width: 1280, height: 900 });
+  // Çağrı defteri sıfırlanıyor: kod isteği ÖNCEKİ ekranda yapıldı, burada
+  // yapılmadığını ölçeceğiz.
+  await p.evaluate(() => {
+    window.__cagrilar = [];
+  });
+  await p.goto(KOK + '#/ogretmen/ogrenciler', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(600);
+
+  // Sınıf kutusundan 9A'ya girip satırları çizdiriyoruz: düğme varsa
+  // burada olurdu.
+  await p.getByRole('button', { name: /^9A/ }).first().click();
+  await p.waitForTimeout(600);
+
+  const kodDugmesi = await p.evaluate(() =>
+    [...document.querySelectorAll('button')].filter((d) => d.textContent.trim() === 'Kodlar')
+      .length,
+  );
+  de(kodDugmesi === 0, `Öğrenciler'de "Kodlar" düğmesi yok (${kodDugmesi})`);
+
+  // POZİTİF KONTROL: satırlar gerçekten çizildi. Bu olmadan yukarıdaki
+  // sıfır, "ekran hiç yüklenmedi" yüzünden de çıkardı.
+  const cikarDugmesi = await p.evaluate(() =>
+    [...document.querySelectorAll('button')].filter((d) => d.textContent.trim() === 'Çıkar')
+      .length,
+  );
+  de(cikarDugmesi > 0, `satırlar çizildi — "Çıkar" duruyor (${cikarDugmesi})`);
+
+  // Kod hiçbir yoldan bu sekmede istenmiyor.
+  const kodIstegi = (await p.evaluate(() => window.__cagrilar)).filter(
+    (c) => c.ad === 'ogrenci_kodlari',
+  ).length;
+  de(kodIstegi === 0, `bu sekmede ogrenci_kodlari hiç çağrılmadı (${kodIstegi})`);
 }
 
 await s.close();

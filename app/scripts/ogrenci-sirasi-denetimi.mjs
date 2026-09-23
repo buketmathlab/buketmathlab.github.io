@@ -127,6 +127,37 @@ await s.addInitScript(
         return json({ toplam: sirali.length, sayfa: 1, boyut: 25, kayitlar: sirali });
       }
 
+      // SINIF ÖĞRENCİ ÖZETİ (0051) — sınıfa dokunulduğunda açılan liste.
+      // Taklit, gerçek ucun yaptığını yapıyor: NUMARA SIRASINDA döndürüyor
+      // ve numarasızı sona koyuyor. Ekranın kendi başına yeniden
+      // sıralamadığı ancak böyle ölçülebilir.
+      if (m[1] === 'sinif_ogrenci_ozeti') {
+        const anahtar2 = (no) =>
+          !no || !no.trim() ? null : /^[0-9]+$/.test(no.trim()) ? no.trim().padStart(12, '0') : 'Z' + no.trim();
+        const sirali2 = [...kayitlar].sort((x, y) => {
+          const a = anahtar2(x.ogrenci_no);
+          const b2 = anahtar2(y.ogrenci_no);
+          if (a !== b2) {
+            if (a === null) return 1;
+            if (b2 === null) return -1;
+            return a < b2 ? -1 : 1;
+          }
+          return x.ad.localeCompare(y.ad, 'tr');
+        });
+        return json({
+          sinif: { id: 's9a', ad: '9A', ozel: false },
+          ogrenciler: sirali2.map((k, i) => ({
+            id: k.id,
+            ad: k.ad,
+            ogrenci_no: k.ogrenci_no,
+            tur: 'okul',
+            ortalama: 40 + i,
+            odev_sayisi: 3,
+            en_eksik_konu: i === 0 ? 'Turev' : null,
+          })),
+        });
+      }
+
       if (m[1] === 'ben_kimim')
         return json({ id: 'g1', ad: 'Buket', sahip: true, vekalet: false, vekil: null });
       if (m[1] === 'bildirim_sayilari') return json({ okunmamis_mesaj: 0, puan_bekleyen: 0 });
@@ -201,21 +232,44 @@ console.log('1 — SINIF DETAYI: SUNUCUNUN SIRASI AYNEN ÇİZİLİYOR');
 }
 
 // ===========================================================================
-console.log('2 — ÖĞRENCİLER: SINIF SEÇİLİ DEĞİLKEN ADA GÖRE İSTENİYOR');
+console.log('2 — ÖĞRENCİLER: ARAMA BÜTÜN SINIFLAR ARASINDA, ADA GÖRE');
 // ===========================================================================
+//
+// BU GRUBUN HEDEFİ 0051'DE DEĞİŞTİ — ve değişmesi gerekiyordu.
+//
+// Eskiden ekran varsayılan olarak DÜZ BİR LİSTE açıyordu ve burada
+// "sınıf seçili değilken 'ad' isteniyor" ölçülüyordu. 0051'de öğretmenin
+// isteğiyle varsayılan görünüm SINIF KUTUSU oldu; sınıf seçili değilken
+// artık hiç liste çizilmiyor, dolayısıyla `ogrenciler_listesi` de
+// çağrılmıyor.
+//
+// Korunan güvence AYNI: arama BÜTÜN sınıflar arasında ve ADA göre
+// yapılır. Numaraya göre sıralamak iki farklı sınıfın 601'ini yan yana
+// getirirdi. Ölçüm silinmedi, arama akışına taşındı.
 {
   await p.goto(KOK + '#/ogretmen/ogrenciler', { waitUntil: 'networkidle' });
   await p.waitForTimeout(600);
 
+  // Sınıf kutusu açılışta var ve düz liste yok.
+  const kutuVar = await p.evaluate(() => document.body.innerText.includes('Sınıflar'));
+  de(kutuVar, 'açılışta sınıf kutusu çiziliyor');
+  const bosCagri = await p.evaluate(
+    () => window.__cagrilar.filter((c) => c.ad === 'ogrenciler_listesi').length,
+  );
+  de(bosCagri === 0, `sınıf kutusundayken öğrenci listesi çağrılmıyor (${bosCagri})`);
+
+  await p.evaluate(() => {
+    window.__cagrilar.length = 0;
+  });
+  await p.fill('input[type="search"]', 'Deneme');
+  await p.waitForTimeout(800);
+
   const govde = await p.evaluate(
     () => window.__cagrilar.filter((c) => c.ad === 'ogrenciler_listesi').at(-1)?.govde ?? null,
   );
-  de(govde?.p_sirala === 'ad', `sınıfsızken 'ad' isteniyor (${govde?.p_sirala})`);
-  de(govde?.p_sinif_id === null, 'sınıf süzgeci boş');
+  de(govde?.p_sirala === 'ad', `aramada 'ad' isteniyor (${govde?.p_sirala})`);
+  de(govde?.p_sinif_id === null, 'arama sınıfla sınırlı değil');
 
-  // Sunucu 'ad' istendiğinde alfabetik döndürüyor; ekran onu da aynen
-  // çiziyor. Bu satır aynı zamanda taklidin bayrağı GERÇEKTEN dinlediğini
-  // gösteriyor — 3. gruptaki numara sırası ölçümü ancak o zaman anlamlı.
   const adlar = await p.evaluate(() =>
     [...document.querySelectorAll('a[href*="/ogrenciler/"]')].map(
       (e) => e.textContent?.trim() ?? '',
@@ -223,30 +277,46 @@ console.log('2 — ÖĞRENCİLER: SINIF SEÇİLİ DEĞİLKEN ADA GÖRE İSTENİY
   );
   de(
     JSON.stringify(adlar) === JSON.stringify(ALFABETIK),
-    `sınıfsız liste ada göre: ${JSON.stringify(adlar)}`,
+    `arama sonucu ada göre: ${JSON.stringify(adlar)}`,
   );
 }
 
 // ===========================================================================
-console.log('3 — ÖĞRENCİLER: SINIF SEÇİLİNCE NUMARAYA GÖRE İSTENİYOR');
+console.log('3 — SINIFA DOKUNULUNCA: SUNUCUNUN SIRASI AYNEN ÇİZİLİYOR');
 // ===========================================================================
+//
+// Öğretmenin bildirdiği kusur burada doğmuştu: 9A seçiliyken liste ada
+// göre geliyordu. Güvence AYNEN duruyor, yeri değişti — sıralama artık
+// `sinif_ogrenci_ozeti`nin işi (sunucuda, okul numarasına göre) ve bu
+// grup ekranın onu BOZMADIĞINI ölçüyor.
 {
-  // Öğretmenin bildirdiği kusur tam buradaydı: 9A seçiliyken liste ada
-  // göre geliyordu. Kapsam "ekran" düzeyinde kararlaştırılmıştı; oysa
-  // karar "sınıf seçili mi" düzeyinde olmalıydı.
+  await p.goto(KOK + '#/ogretmen/ogrenciler', { waitUntil: 'networkidle' });
+  // ARAMA KUTUSU TEMİZLENİYOR. `goto` aynı adrese gidince HashRouter
+  // bileşeni yeniden kurmuyor; 2. gruptan kalan "Deneme" araması duruyor
+  // ve arama varken sınıf kutusu hiç çizilmiyor. İlk yazımda bu atlandı
+  // ve grup "düğme bulunamadı" diye kırmızı yandı — kusur üründe değil
+  // ölçümdeydi.
+  await p.fill('input[type="search"]', '');
+  await p.waitForTimeout(600);
   await p.evaluate(() => {
     window.__cagrilar.length = 0;
   });
-  await p.selectOption('select[aria-label="Sınıfa göre filtrele"]', 's9a');
-  await p.waitForTimeout(600);
+
+  // Sınıf kutusundaki 9A düğmesine dokun.
+  await p.evaluate(() => {
+    const d = [...document.querySelectorAll('button')].find((x) =>
+      x.textContent?.trim().startsWith('9A'),
+    );
+    d?.click();
+  });
+  await p.waitForTimeout(800);
 
   const govde = await p.evaluate(
-    () => window.__cagrilar.filter((c) => c.ad === 'ogrenciler_listesi').at(-1)?.govde ?? null,
+    () => window.__cagrilar.filter((c) => c.ad === 'sinif_ogrenci_ozeti').at(-1)?.govde ?? null,
   );
-  de(govde?.p_sirala === 'numara', `sınıf seçiliyken 'numara' isteniyor (${govde?.p_sirala})`);
-  de(govde?.p_sinif_id === 's9a', `süzgeç sınıfı taşıyor (${govde?.p_sinif_id})`);
+  de(govde !== null, 'sınıfa dokununca sinif_ogrenci_ozeti çağrıldı');
+  de(govde?.p_sinif_id === 's9a', `doğru sınıfla (${govde?.p_sinif_id})`);
 
-  // Ekran yine sunucunun sırasını bozmuyor.
   const adlar = await p.evaluate(() =>
     [...document.querySelectorAll('a[href*="/ogrenciler/"]')].map(
       (e) => e.textContent?.trim() ?? '',
@@ -256,6 +326,12 @@ console.log('3 — ÖĞRENCİLER: SINIF SEÇİLİNCE NUMARAYA GÖRE İSTENİYOR'
     JSON.stringify(adlar) === JSON.stringify(BEKLENEN),
     `liste sunucunun sırasında: ${JSON.stringify(adlar)}`,
   );
+
+  // ORTALAMA VE KONU EKRANDA (öğretmenin isteği).
+  const metin = await p.evaluate(() => document.body.innerText);
+  de(metin.includes('40,0'), 'ortalama ekranda ve Türkçe ondalıkla');
+  de(metin.includes('Turev'), 'en eksik konu ekranda');
+  de(metin.includes('—'), 'konusu olmayan öğrencide tire');
 }
 
 // ===========================================================================

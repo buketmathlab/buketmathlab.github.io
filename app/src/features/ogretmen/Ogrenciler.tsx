@@ -14,14 +14,17 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import type {
-  Kodlar,
-  KodYenileme,
-  OgrenciListesi,
-  OgrenciSatiri,
-  Sinif,
-  YeniOgrenci,
-} from '@/types/api';
+import {
+  GERI,
+  KONU_ACIKLAMASI,
+  SINIF_KUTUSU_ACIKLAMASI,
+  SINIF_KUTUSU_BASLIGI,
+  SINIF_YOK,
+  eksikKonuYazisi,
+  odevSayisiYazisi,
+  ortalamaYazisi,
+} from '@/lib/sinif-ozet-metni';
+import type { Kodlar, OgrenciListesi, Sinif, SinifOgrenciOzeti, YeniOgrenci } from '@/types/api';
 
 export function Ogrenciler() {
   const { oturum } = useOturum();
@@ -38,51 +41,49 @@ export function Ogrenciler() {
   const [yeniSinif, setYeniSinif] = useState('');
   const [kaydediyor, setKaydediyor] = useState(false);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
-  const [yeniKodlar, setYeniKodlar] = useState<{
-    id: string | null;
-    ad: string;
-    kodlar: Kodlar;
-  } | null>(null);
   /**
-   * YENİLEME ONAYI (0045). Geri alınamaz bir iş: onay olmadan yapılmaz.
-   * `id` null ise (yeni eklenen öğrencinin kodları gösteriliyor) yenileme
-   * düğmesi hiç çizilmiyor — zaten yeni üretilmiş bir kodu yenilemenin
-   * anlamı yok ve elimizde kimlik de olmazdı.
+   * YENİ EKLENEN ÖĞRENCİNİN KODLARI — bu ekranda kalan TEK kod yolu.
+   *
+   * Öğretmenin isteği: "Öğrenciler sekmesinin içinde kodlara gerek yok."
+   * Satırlardaki `Kodlar` düğmesi bu yüzden kalktı; kod listesinin yeri
+   * Ayarlar → Giriş kodları (`/ogretmen/kodlar`).
+   *
+   * Bu diyalog istisna ve bir kod listesi değil: `ogrenci_ekle`nin
+   * DÖNDÜRDÜĞÜ sonuç. Sunucu kodu bir kez üretip veriyor; burada
+   * göstermeseydik öğretmenin onu alabileceği başka bir an olmazdı.
+   * Kimlik tutulmuyor (`id` alanı yok) — yenileme artık Kodlar
+   * ekranının işi.
    */
-  const [yenilenecek, setYenilenecek] = useState<{ rol: 'ogrenci' | 'veli' } | null>(null);
-  const [yenileniyor, setYenileniyor] = useState(false);
-  const [silinecek, setSilinecek] = useState<OgrenciSatiri | null>(null);
+  const [yeniKodlar, setYeniKodlar] = useState<{ ad: string; kodlar: Kodlar } | null>(null);
+  /**
+   * ÇIKARILACAK ÖĞRENCİ — tip `OgrenciSatiri` DEĞİL, yalnız {id, ad}.
+   *
+   * 0051'de sınıf özeti satırları da bu düğmeleri kullanıyor ve o
+   * satırlarda `sinif` alanı yok (öğrenci zaten seçili sınıfın içinde).
+   * Akışın ihtiyacı olan tek şey kimlik ve ad; tipi daraltmak, özet
+   * satırını buraya sokmak için sahte bir `sinif` uydurmayı gerektirirdi.
+   */
+  const [silinecek, setSilinecek] = useState<{ id: string; ad: string } | null>(null);
 
   const siniflar = useVeri<Sinif[]>('siniflar_listesi', {
     p_token: oturum?.token,
     p_arsiv: false,
   });
 
-  const liste = useVeri<OgrenciListesi>(
-    'ogrenciler_listesi',
-    {
-      p_token: oturum?.token,
-      p_arama: arama.trim() || null,
-      p_sinif_id: sinifId || null,
-      p_sayfa: sayfa,
-      p_boyut: 25,
-      /**
-       * SINIF SEÇİLİYSE NUMARAYA GÖRE (0044).
-       *
-       * Karar "ekran" düzeyinde değil "sınıf seçili mi" düzeyinde
-       * veriliyor ve bunun sebebi ölçüldü: ilk yazımda bu ekranın tamamı
-       * ada göre bırakılmıştı, gerekçe "sınıf seçmeden bakarken farklı
-       * sınıfların aynı numaraları iç içe geçer" idi. Gerekçe doğru ama
-       * kural fazla kabaydı — öğretmen buradan 9A'yı seçip numara sırası
-       * bekledi ve haklıydı: sınıf seçiliyken o itiraz ortadan kalkıyor.
-       *
-       * Sınıf seçili DEĞİLKEN ada göre kalıyor; orada numara sıralaması
-       * iki farklı sınıfın 601'ini yan yana getirirdi.
-       */
-      p_sirala: sinifId ? 'numara' : 'ad',
-    },
-    (v) => v.kayitlar.length === 0,
-  );
+  const aranan = arama.trim();
+
+  /**
+   * TAZELEME SAYACI.
+   *
+   * Liste artık ebeveynde DEĞİL: arama sonuçları ve sınıf özeti ayrı
+   * bileşenlerde ve her biri kendi ucunu çağırıyor. Sebebi `useVeri`nin
+   * çağrıyı atlayamaması — hook ebeveynde dursaydı, sınıf kutusuna
+   * bakarken bile `ogrenciler_listesi` boş yere çağrılırdı.
+   *
+   * Öğrenci eklendiğinde ya da çıkarıldığında bu sayaç artıyor ve
+   * çocuklara `key` olarak geçtiği için yeniden kuruluyorlar.
+   */
+  const [tazele, setTazele] = useState(0);
 
   async function ekle() {
     if (!ad.trim()) {
@@ -106,59 +107,16 @@ export function Ogrenciler() {
       // Kodları hemen göster: öğretmenin bunları öğrenciye iletmesi gerek,
       // listeye dönüp aramak zorunda kalmasın.
       setYeniKodlar({
-        id: null,
         ad: ad.trim(),
         kodlar: { ogrenci: y.ogrenci_kodu, veli: y.veli_kodu },
       });
       setAd('');
-      liste.yenile();
+      setTazele((t) => t + 1);
       siniflar.yenile();
     } catch (e) {
       setFormHatasi(e instanceof Error ? e.message : 'Öğrenci eklenemedi.');
     } finally {
       setKaydediyor(false);
-    }
-  }
-
-  async function kodlariGoster(o: OgrenciSatiri) {
-    try {
-      const k = await rpc<Kodlar>('ogrenci_kodlari', { p_token: oturum?.token, p_id: o.id });
-      setYeniKodlar({ id: o.id, ad: o.ad, kodlar: k });
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Kodlar alınamadı.', 'hata');
-    }
-  }
-
-  /**
-   * KODU YENİLE (0045) — iptal ve yeniden verme.
-   *
-   * Sunucu eski kodu öldürüp yenisini üretiyor ve O ROLÜN açık oturumunu
-   * kapatıyor. Burada kritik olan şey yeni kodun EKRANDA KALMASI:
-   * öğretmen onu hemen yazacak ya da fişini basacak. Diyalog kapanıp
-   * kodun kaybolması, yenilemeyi kullanılamaz yapardı — kod bir daha
-   * hiçbir yerden okunamaz değil ama öğretmeni listeye geri gönderirdi.
-   */
-  async function kodYenile() {
-    if (!yenilenecek || !yeniKodlar?.id) return;
-    setYenileniyor(true);
-    try {
-      const y = await rpc<KodYenileme>('kod_yenile', {
-        p_token: oturum?.token,
-        p_id: yeniKodlar.id,
-        p_rol: yenilenecek.rol,
-      });
-      setYeniKodlar((o) => (o ? { ...o, kodlar: { ...o.kodlar, [y.rol]: y.kod } } : o));
-      bildir(
-        y.rol === 'veli'
-          ? 'Veli kodu yenilendi. Eski kod artık çalışmıyor; yeni fişi veliye ulaştırın.'
-          : 'Öğrenci kodu yenilendi. Eski kod artık çalışmıyor; yeni fişi öğrenciye verin.',
-        'basari',
-      );
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Kod yenilenemedi.', 'hata');
-    } finally {
-      setYenileniyor(false);
-      setYenilenecek(null);
     }
   }
 
@@ -168,7 +126,8 @@ export function Ogrenciler() {
       await rpc('ogrenci_pasiflestir', { p_token: oturum?.token, p_id: silinecek.id });
       bildir(`${silinecek.ad} listeden çıkarıldı`);
       setSilinecek(null);
-      liste.yenile();
+      setTazele((t) => t + 1);
+      siniflar.yenile();
     } catch (e) {
       bildir(e instanceof Error ? e.message : 'İşlem yapılamadı.', 'hata');
     }
@@ -193,119 +152,87 @@ export function Ogrenciler() {
       />
 
 
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-        <div className="flex-1">
-          <SearchInput
-            deger={arama}
-            onDegis={(v) => {
-              setArama(v);
-              setSayfa(1);
-            }}
-            etiket="Öğrenci ara"
-            yerTutucu="Ad ile ara…"
-          />
-        </div>
-        <select
-          value={sinifId}
-          onChange={(e) => {
-            setSinifId(e.target.value);
+      <div className="mb-4">
+        <SearchInput
+          deger={arama}
+          onDegis={(v) => {
+            setArama(v);
             setSayfa(1);
           }}
-          aria-label="Sınıfa göre filtrele"
-          className="min-h-[44px] rounded-sk-sm border border-line bg-surface px-3 text-[15px] text-ink sm:w-44"
-        >
-          <option value="">Tüm sınıflar</option>
-          {siniflar.veri?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.ad}
-            </option>
-          ))}
-        </select>
+          etiket="Öğrenci ara"
+          yerTutucu="Ad ile ara…"
+        />
       </div>
+
+      {/* SINIF KUTUSU — öğretmenin isteği (0051):
+          "sınıflar kategorize olmuş bir şekilde çıksın… sınıflara
+          tıkladığım zaman öğrencilerin listesi çıksın."
+
+          AÇILIR LİSTENİN YERİNE GELDİ. Eskiden sınıf bir `<select>`
+          süzgeciydi; on üç sınıfı görmek için açmak gerekiyordu. Kutu
+          hepsini birden gösteriyor ve dokunma hedefi 44 px.
+
+          ARAMA VARKEN KUTU ÇİZİLMİYOR: arama bütün sınıflar arasında
+          çalışıyor, yanında bir sınıf kutusu durması "hangisi geçerli"
+          sorusunu doğururdu. */}
+      {!aranan && !sinifId && (
+        <Card>
+          <p className="font-semibold text-ink">{SINIF_KUTUSU_BASLIGI}</p>
+          <p className="mt-1 text-[14px] text-muted">{SINIF_KUTUSU_ACIKLAMASI}</p>
+          {siniflar.veri && siniflar.veri.length === 0 ? (
+            <p className="mt-3 text-[14px] text-muted">{SINIF_YOK}</p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(siniflar.veri ?? []).map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    setSinifId(s.id);
+                    setSayfa(1);
+                  }}
+                  className="min-h-[44px] rounded-sk-sm border border-line bg-surface px-4 text-[15px] font-semibold text-ink hover:bg-line-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <span>{s.ad}</span>
+                  <span className="sk-sayi ml-2 text-[13px] font-normal text-muted">
+                    {s.ogrenci_sayisi}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Bir sınıf seçildiğinde karneye geçiş. Öğretmen bu sekmede de
           "sınıfa tıklayınca öğrenci listesi ve ödev karnesi" istedi;
           Sınıflar sekmesindeki AYNI ekrana gidiyor, ikinci bir kopya
           yazılmadı. */}
-      {sinifId && (
-        <div className="mb-4">
-          <Button tur="sade" onClick={() => git(`/ogretmen/siniflar/${sinifId}`)}>
-            {`${siniflar.veri?.find((s) => s.id === sinifId)?.ad ?? 'Sınıf'} karnesi — kim ne yaptı`}
-          </Button>
-        </div>
-      )}
+      {/* ÜÇ GÖRÜNÜM BİRBİRİNİ DIŞLIYOR (0051).
+          arama varsa       → bütün sınıflar arasında arama sonuçları
+          sınıf seçiliyse   → o sınıfın özeti (ortalama + en eksik konu)
+          hiçbiri yoksa     → sınıf kutusu (yukarıda)
 
-      <AsyncBoundary
-        durum={liste.durum}
-        bosBaslik={arama || sinifId ? 'Eşleşen öğrenci yok' : 'Henüz öğrenci yok'}
-        bosAciklama={
-          arama || sinifId
-            ? 'Aramayı veya sınıf filtresini değiştirmeyi deneyin.'
-            : 'İlk öğrencinizi ekleyin; kodları hemen göstereceğim.'
-        }
-        {...(arama || sinifId
-          ? {}
-          : { bosEylem: <Button onClick={() => setEkleAcik(true)}>Öğrenci ekle</Button> })}
-        {...(liste.hata ? { hataAciklama: liste.hata } : {})}
-        tekrarDene={liste.yenile}
-      >
-        {liste.veri && (
-          <>
-            <p className="mb-2 text-[13px] text-muted">
-              <span className="sk-sayi">{liste.veri.toplam}</span> öğrenci
-            </p>
-            <div className="space-y-2">
-              {liste.veri.kayitlar.map((o) => (
-                <Card key={o.id}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      {/* Ad artık detaya götürüyor: özel ders öğrencisinde
-                          ders ve ödeme takibi orada. Ödev kartı başlığının
-                          düzenlemeye gitmesiyle aynı desen. */}
-                      {/* 0042: okul numarası — yoksa hiç çizilmiyor. */}
-                      {o.ogrenci_no && (
-                        <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] font-semibold text-muted">
-                          {o.ogrenci_no}
-                        </span>
-                      )}
-                      <Link
-                        to={`/ogretmen/ogrenciler/${o.id}`}
-                        className="inline-flex min-h-[44px] items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
-                      >
-                        {o.ad}
-                      </Link>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        {/* Özel ders öğrencisinde sınıf adı zaten "Özel ders"
-                            (0012'den beri gerçek bir sınıf) — ikisini birden
-                            çizmek aynı etiketi iki kez göstermekti. */}
-                        {o.tur === 'ozel' ? (
-                          <Tag tur="uyari">Özel ders</Tag>
-                        ) : (
-                          o.sinif && <Tag>{o.sinif}</Tag>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button tur="sade" olcu="sm" onClick={() => kodlariGoster(o)}>
-                        Kodlar
-                      </Button>
-                      <Button tur="sade" olcu="sm" onClick={() => setSilinecek(o)}>
-                        Çıkar
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-            <Pagination
-              sayfa={liste.veri.sayfa}
-              toplamSayfa={liste.veri.toplam_sayfa}
-              onDegis={setSayfa}
-              etiket="Öğrenci listesi"
-            />
-          </>
-        )}
-      </AsyncBoundary>
+          Her biri AYRI BİLEŞEN, çünkü `useVeri` çağrıyı atlayamıyor:
+          hook'lar ebeveynde dursaydı sınıf kutusuna bakarken bile iki uç
+          birden çağrılırdı. */}
+      {aranan ? (
+        <AramaSonuclari
+          key={`arama-${tazele}`}
+          arama={aranan}
+          sayfa={sayfa}
+          onSayfa={setSayfa}
+          onCikar={setSilinecek}
+        />
+      ) : sinifId ? (
+        <SinifOzeti
+          key={`ozet-${sinifId}-${tazele}`}
+          sinifId={sinifId}
+          onGeri={() => setSinifId('')}
+          onKarne={() => git(`/ogretmen/siniflar/${sinifId}`)}
+          onCikar={setSilinecek}
+        />
+      ) : null}
 
       {/* --- Öğrenci ekleme --- */}
       <Dialog
@@ -352,7 +279,7 @@ export function Ogrenciler() {
         )}
       </Dialog>
 
-      {/* --- Kod gösterme --- */}
+      {/* --- Yeni eklenen öğrencinin kodları --- */}
       <Dialog
         acik={yeniKodlar !== null}
         onKapat={() => setYeniKodlar(null)}
@@ -361,59 +288,20 @@ export function Ogrenciler() {
       >
         <div className="flex flex-col gap-3">
           {yeniKodlar?.kodlar.ogrenci && (
-            <div className="flex items-center gap-2">
-              <KodKutusu etiket="Öğrenci kodu" kod={yeniKodlar.kodlar.ogrenci} />
-              {yeniKodlar.id && (
-                <Button
-                  tur="sade"
-                  olcu="sm"
-                  onClick={() => setYenilenecek({ rol: 'ogrenci' })}
-                >
-                  Yenile
-                </Button>
-              )}
-            </div>
+            <KodKutusu etiket="Öğrenci kodu" kod={yeniKodlar.kodlar.ogrenci} />
           )}
           {yeniKodlar?.kodlar.veli && (
-            <div className="flex items-center gap-2">
-              <KodKutusu etiket="Veli kodu" kod={yeniKodlar.kodlar.veli} />
-              {yeniKodlar.id && (
-                <Button tur="sade" olcu="sm" onClick={() => setYenilenecek({ rol: 'veli' })}>
-                  Yenile
-                </Button>
-              )}
-            </div>
+            <KodKutusu etiket="Veli kodu" kod={yeniKodlar.kodlar.veli} />
           )}
-          {yeniKodlar?.id && (
-            /* Yenilemenin ne anlama geldiği, düğmeye basmadan ÖNCE
-               burada yazıyor. Onay metni de aynısını söylüyor ama
-               öğretmen düğmeyi görür görmez ne olacağını bilmeli. */
-            <p className="text-[12px] text-muted">
-              Kod sızdıysa <strong>Yenile</strong> deyin: eski kod anında geçersiz olur ve o
-              kişinin açık oturumu kapanır. Yeni kodu içeren fişi kendisine ulaştırmanız gerekir.
-            </p>
-          )}
+          {/* Kodu sonradan bulmanın yolu BURADA yazıyor. Bu diyalog
+              kapandıktan sonra bu sekmede kod yok; öğretmen "kaybettim mi"
+              diye düşünmesin. */}
+          <p className="text-[12px] text-muted">
+            Bu kodlara sonradan <strong>Ayarlar → Giriş kodları</strong> bölümünden
+            ulaşabilirsiniz; kod yenileme de orada.
+          </p>
         </div>
       </Dialog>
-
-      {/* --- Kod yenileme onayı (0045) --- */}
-      <Dialog
-        acik={yenilenecek !== null}
-        onKapat={() => setYenilenecek(null)}
-        baslik={yenilenecek?.rol === 'veli' ? 'Veli kodu yenilensin mi?' : 'Öğrenci kodu yenilensin mi?'}
-        aciklama={
-          yenilenecek
-            ? `${yeniKodlar?.ad ?? ''} için yeni bir ${
-                yenilenecek.rol === 'veli' ? 'veli' : 'öğrenci'
-              } kodu üretilecek. Eski kod artık çalışmayacak ve açık oturum kapanacak. Bu işlem geri alınamaz; yeni fişi ${
-                yenilenecek.rol === 'veli' ? 'veliye' : 'öğrenciye'
-              } vermeniz gerekir.`
-            : ''
-        }
-        onayEtiketi={yenileniyor ? 'Yenileniyor…' : 'Evet, yenile'}
-        onayTuru="tehlike"
-        onOnay={kodYenile}
-      />
 
       {/* --- Pasifleştirme onayı --- */}
       <Dialog
@@ -450,3 +338,209 @@ export function Ogrenciler() {
  * bu sayfadaki giriş listesi kalktı. Mesajlar sekmesi oraya
  * yönlendiriyor.
  */
+
+/**
+ * ARAMA SONUÇLARI — bütün sınıflar arasında, ada göre.
+ *
+ * 0051'e kadar bu liste ekranın varsayılan görünümüydü ve sınıf bir
+ * açılır süzgeçti. Artık yalnız ARAMA yapıldığında çiziliyor: öğretmen
+ * sınıfa dokunarak geziyor, adını bildiği birini ararken buraya düşüyor.
+ *
+ * SIRA ADA GÖRE ve bu bilinçli: arama bütün sınıfları tarıyor, numaraya
+ * göre sıralamak iki farklı sınıfın 601'ini yan yana getirirdi. Sınıf
+ * içi numara sırası artık `SinifOzeti`'nin işi (sunucuda).
+ */
+function AramaSonuclari({
+  arama,
+  sayfa,
+  onSayfa,
+  onCikar,
+}: {
+  arama: string;
+  sayfa: number;
+  onSayfa: (s: number) => void;
+  onCikar: (o: { id: string; ad: string }) => void;
+}) {
+  const { oturum } = useOturum();
+  const liste = useVeri<OgrenciListesi>(
+    'ogrenciler_listesi',
+    {
+      p_token: oturum?.token,
+      p_arama: arama,
+      p_sinif_id: null,
+      p_sayfa: sayfa,
+      p_boyut: 25,
+      p_sirala: 'ad',
+    },
+    (v) => v.kayitlar.length === 0,
+  );
+
+  return (
+    <AsyncBoundary
+      durum={liste.durum}
+      bosBaslik="Eşleşen öğrenci yok"
+      bosAciklama="Aramayı değiştirmeyi deneyin."
+      {...(liste.hata ? { hataAciklama: liste.hata } : {})}
+      tekrarDene={liste.yenile}
+    >
+      {liste.veri && (
+        <>
+          <p className="mb-2 text-[13px] text-muted">
+            <span className="sk-sayi">{liste.veri.toplam}</span> öğrenci
+          </p>
+          <div className="space-y-2">
+            {liste.veri.kayitlar.map((o) => (
+              <Card key={o.id}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    {o.ogrenci_no && (
+                      <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] font-semibold text-muted">
+                        {o.ogrenci_no}
+                      </span>
+                    )}
+                    <Link
+                      to={`/ogretmen/ogrenciler/${o.id}`}
+                      className="inline-flex min-h-[44px] items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                    >
+                      {o.ad}
+                    </Link>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      {o.tur === 'ozel' ? (
+                        <Tag tur="uyari">Özel ders</Tag>
+                      ) : (
+                        o.sinif && <Tag>{o.sinif}</Tag>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button tur="sade" olcu="sm" onClick={() => onCikar(o)}>
+                      Çıkar
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <Pagination
+            sayfa={liste.veri.sayfa}
+            toplamSayfa={liste.veri.toplam_sayfa}
+            onDegis={onSayfa}
+            etiket="Öğrenci listesi"
+          />
+        </>
+      )}
+    </AsyncBoundary>
+  );
+}
+
+/**
+ * BİR SINIFIN ÖĞRENCİ ÖZETİ (0051).
+ *
+ * Öğretmenin isteği: "sınıflara tıkladığım zaman öğrencilerin listesi
+ * çıksın. Sınıf listesine göre listesi çıksın. Ve bireysel olarak ödev
+ * ortalamaları öğrenci isimlerinin karşısında yazsın. Aynı zamanda en
+ * çok eksik olduğu konunun adı da yazsın."
+ *
+ * SIRA SUNUCUDAN GELİYOR, BURADA YENİDEN SIRALANMIYOR. Uç okul
+ * numarasına göre diziyor, numarasızı sona koyuyor. İkinci bir `sort`
+ * yazmak iki yerin bir gün ayrışması demekti — ve sınıf listesi sırası
+ * öğretmenin yoklama alırken kullandığı sıra.
+ *
+ * SAYFALAMA YOK: bir sınıf en fazla otuz küçük satır. Sayfalama, bir
+ * ekranda görülebilecek bir listeyi ikiye bölerdi.
+ */
+function SinifOzeti({
+  sinifId,
+  onGeri,
+  onKarne,
+  onCikar,
+}: {
+  sinifId: string;
+  onGeri: () => void;
+  onKarne: () => void;
+  onCikar: (o: { id: string; ad: string }) => void;
+}) {
+  const { oturum } = useOturum();
+  const ozet = useVeri<SinifOgrenciOzeti>(
+    'sinif_ogrenci_ozeti',
+    { p_token: oturum?.token, p_sinif_id: sinifId },
+    (v) => v.ogrenciler.length === 0,
+  );
+
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Button tur="sade" olcu="sm" onClick={onGeri}>
+          {GERI}
+        </Button>
+        {ozet.veri && (
+          <Button tur="sade" olcu="sm" onClick={onKarne}>
+            {`${ozet.veri.sinif.ad} karnesi — kim ne yaptı`}
+          </Button>
+        )}
+      </div>
+
+      <AsyncBoundary
+        durum={ozet.durum}
+        bosBaslik="Bu sınıfta öğrenci yok"
+        bosAciklama="Öğrenci ekle ya da Toplu ekle ile bu sınıfa öğrenci ekleyebilirsiniz."
+        {...(ozet.hata ? { hataAciklama: ozet.hata } : {})}
+        tekrarDene={ozet.yenile}
+      >
+        {ozet.veri && (
+          <>
+            <h2 className="mb-3 font-display text-[20px] font-semibold text-ink">
+              {ozet.veri.sinif.ad}
+            </h2>
+            <div className="space-y-2">
+              {ozet.veri.ogrenciler.map((o) => (
+                <Card key={o.id}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      {o.ogrenci_no && (
+                        <span className="sk-sayi mr-2 rounded bg-line-soft px-1.5 py-0.5 text-[12px] font-semibold text-muted">
+                          {o.ogrenci_no}
+                        </span>
+                      )}
+                      <Link
+                        to={`/ogretmen/ogrenciler/${o.id}`}
+                        className="inline-flex min-h-[44px] items-center font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                      >
+                        {o.ad}
+                      </Link>
+                      {/* EN EKSİK KONU — adın altında, küçük.
+                          Boşsa tire; sebebi listenin altında yazılı. */}
+                      <p className="mt-1 text-[13px] text-muted">
+                        {eksikKonuYazisi(o.en_eksik_konu)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {/* ORTALAMA — adın KARŞISINDA (öğretmenin isteği). */}
+                      <p className="text-right">
+                        <span className="sk-sayi block text-[18px] font-semibold text-ink">
+                          {ortalamaYazisi(o.ortalama)}
+                        </span>
+                        {o.ortalama !== null && (
+                          <span className="sk-sayi block text-[12px] text-muted">
+                            {odevSayisiYazisi(o.odev_sayisi)}
+                          </span>
+                        )}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button tur="sade" olcu="sm" onClick={() => onCikar(o)}>
+                          Çıkar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <p className="mt-3 text-[13px] leading-snug text-muted">{KONU_ACIKLAMASI}</p>
+          </>
+        )}
+      </AsyncBoundary>
+    </>
+  );
+}

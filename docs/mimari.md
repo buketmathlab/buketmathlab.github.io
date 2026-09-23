@@ -4478,3 +4478,185 @@ Kusur provasında **ısırmadı**: pencere her açılışta zaten yeniden
 dolduruluyor, yani o satırın değiştirdiği hiçbir davranış yoktu.
 Bırakmak yerine sildim — hiçbir ölçümün kıramadığı bir satır güvence
 değil, süstür.
+
+## Öğrenciler sekmesi: sınıf kutusu, ortalama ve en eksik konu (0051)
+
+Öğretmenin isteği: *"Öğrenciler sekmesini tıkladığım zaman sınıflar
+kategorize olmuş bir şekilde çıksın… sınıflara tıkladığım zaman
+öğrencilerin listesi çıksın. Sınıf listesine göre listesi çıksın. Ve
+bireysel olarak ödev ortalamaları öğrenci isimlerinin karşısında yazsın.
+Aynı zamanda en çok eksik olduğu konunun adı da yazsın."*
+
+### Ölçüldü: isteğin yarısı zaten vardı
+
+`siniflar_listesi` sınıfları öğrenci sayısıyla zaten döndürüyordu ve
+sınıf seçilince liste zaten okul numarasına göre sıralanıyordu (0044).
+**Yeni uç yalnız iki sütun için yazıldı:** ortalama ve en eksik konu.
+Sınıf kutusu için sunucuya hiç dokunulmadı.
+
+### Öğretmenin dört kararı
+
+| Soru | Karar |
+| --- | --- |
+| Ortalama | **Süresi geçeni 0 say**; süresi devam eden ödev hesaba girmez |
+| En eksik konu | **Yanlış + boş sayısı en yüksek** konu |
+| Alt sınır | **En az 5 soru** çözülmüş konular aday |
+| Eski düzen | **Arama kalsın**, sınıf kutusu üstte |
+
+### Beşinci karar bana aitti ve gerekçesi onun dil kuralı
+
+**Hiç yanlışı olmayan öğrenciye konu yazılmıyor.** Bütün soruları doğru
+yapmış bir çocuğun karşısına *"en eksik konu: Türev"* yazmak, olmayan bir
+eksiği isimlendirmek olurdu — **ÖĞRENCİYİ ETİKETLEME**. Kodda
+`(toplam - dogru) > 0` koşulu bunu engelliyor, testin 6. grubu ölçüyor.
+
+### Konu ölçütü tek kaynaktan — ama iki ekran aynı cümleyi kurmuyor
+
+`_konu_analizi` yardımcısı ve süzgeçler `konu_karnesi` (0023) ile birebir
+aynı. **İkinci bir ölçüt yazılmadı** (0030'un dersi).
+
+Ama ikisi aynı şeyi söylemiyor ve bu bilinçli: `konu_karnesi` **alt
+sınırsız** — orada "Integral: 3 soruda 3 yanlış" satırını görmek işe
+yarıyor. Özet ekranı tek bir ad yazıyor ve öğretmenin kararıyla 5 soru
+alt sınırı var.
+
+**Test bunu yakaladı.** İlk yazımda iddia "iki ucun ilk konusu aynı"
+idi ve haklı olarak kırıldı: karne "Integral" diyordu, özet "Turev".
+İddia düzeltildi — özetin konusu, karnenin **alt sınırı geçen** ilk
+konusu olmalı. Böylece iki uç aynı veriyi ve aynı sıralamayı kullanmaya
+devam ediyor, yalnız özet listeyi daha erken kesiyor.
+
+### Boş konu sütununda cümle yok, tire var
+
+Sütunun boş kalmasının **iki ayrı sebebi** var ve ekran ikisini ayırt
+edemiyor: (a) 5 soruluk birikimi olan konusu yok, (b) yanlışı yok.
+"Yeterli veri yok" demek (b) için yanlış, "eksik yok" demek (a) için
+yanlış olurdu. Tire hiçbir şey iddia etmiyor ve listenin altındaki
+açıklama iki sebebi birden söylüyor.
+
+### Üç görünüm birbirini dışlıyor — ve bunun teknik bir sebebi var
+
+`useVeri` çağrıyı **atlayamıyor**: hook mount edildiği anda isteği
+gönderiyor. Hook'lar ebeveynde kalsaydı, sınıf kutusuna bakarken bile
+iki uç birden çağrılırdı. Bu yüzden arama sonuçları ve sınıf özeti ayrı
+bileşenlere alındı — `Mesajlar.tsx`'in (0048) kullandığı desenin aynısı.
+
+Denetim bunu ayrıca ölçüyor: *"sınıf kutusundayken öğrenci listesi
+çağrılmıyor (0)"*.
+
+### Sıralama güvencesi taşındı, kaybolmadı
+
+`ogrenci-sirasi-denetimi` 2. ve 3. grubu eski akışı ölçüyordu (açılır
+sınıf süzgeci). Öğretmenin bildirdiği eski kusur oradaydı: *9A seçiliyken
+liste ada göre geliyordu.*
+
+Güvence aynen duruyor, yeri değişti: sıralama artık `sinif_ogrenci_ozeti`
+işi (sunucuda, okul numarasına göre) ve denetim ekranın onu
+**bozmadığını** ölçüyor. Arama tarafındaki "ada göre" güvencesi de
+silinmedi, arama akışına taşındı.
+
+### Üç ölçüm bu turda da ölü çıktı
+
+1. **Test iki kez koşamıyordu.** `calistir.sh` her koşuda sıfır bir
+   veritabanı kurduğu için hiç fark edilmemişti. Kusur provalarında
+   ortaya çıktı: test arka arkaya koşunca sınıfta ödev ve öğrenci
+   birikiyor, Zeynep'in ortalaması 25,00 yerine 12,50 çıkıyor ve **üç
+   prova birden** "başka grup kırıldı" diyordu. Test artık dünyasını
+   önce temizliyor; iki kez üst üste koşulduğu ayrıca doğrulandı.
+2. **Tarayıcı denetimi arama kutusunu temizlemiyordu.** `goto` aynı
+   adrese gidince HashRouter bileşeni yeniden kurmuyor; önceki gruptan
+   kalan arama duruyor ve arama varken sınıf kutusu hiç çizilmiyor.
+   Grup "düğme bulunamadı" diye kırmızı yandı — kusur üründe değil
+   ölçümdeydi.
+3. **XSS denetiminin POZİTİF KONTROLÜ sessizce ölmüştü.**
+   `guvenlik-denetimi` "Öğretmen · öğrenci listesi (addaki yük)"
+   ekranında `/ogretmen/ogrenciler`e gidip yükün METİN olarak
+   göründüğünü sayıyor. Sekme artık sınıf kutusuyla açıldığı için
+   öğrenci satırı hiç çizilmiyordu: ölçüm `0/1` verdi. Asıl tehlike
+   kırmızı yanması değil — yük hiç çizilmeseydi yanındaki üç negatif
+   iddia (`alert() çalışmadı`, `__xss set edilmedi`, `düğüm oluşmadı`)
+   da **hiçbir şey kanıtlamadan yeşil kalırdı.** Denetime ölçümden önce
+   çalışan bir hazırlık adımı eklendi; artık sınıfa girip satırı
+   çizdiriyor ve `sinif_ogrenci_ozeti` de sahte sunucuda yükü taşıyor.
+
+### Kusur provaları — beşi de ısırdı
+
+| Prova | Kırılan |
+| --- | --- |
+| Gönderilmeyen ödev hesaba girmiyor | `1a: ortalama 50.00, 25.00 olmalı` |
+| Süre kapısı kalkıyor | `1a: ortalama 16.67, 25.00 olmalı` |
+| Alt sınır kalkıyor | `4a: en eksik konu Integral, Turev olmalı` |
+| Sıralama ada göre | `7: sıra {Ali, Berk, Zeynep}` |
+| Yanlışı olmayana da konu | `6a: hiç yanlışı olmayan öğrenciye konu yazıldı` |
+
+---
+
+## Kodlar Öğrenciler sekmesinden kalktı, yenileme Kodlar ekranına taşındı
+
+Öğretmenin isteği: *"Öğrenciler sekmesinin içinde kodlara gerek yok."*
+
+Öğrenciler sekmesindeki her satırın sağında bir **Kodlar** düğmesi
+duruyordu. Kodların kendi ekranı 0048'de Ayarlar'a taşınmıştı
+(**Ayarlar → Giriş kodları → "Kodları aç"**), yani bu düğme aynı şeye
+giden ikinci bir yoldu. Kalktı.
+
+### Silinen düğme yalnız düğme değildi
+
+Düğmeyi silmeden önce ölçtük: **`kod_yenile` (0045) ucunu çağıran tek
+ekran orasıydı.** Kodlar ekranı kodu gösteriyordu ama yenilemiyordu. Yani
+düğmeyi çıkarıp başka bir şey yapmasaydık, *"kod sızdı, iptal et"*
+yeteneği öğretmenin elinden tamamen çıkacaktı — sessizce, hiçbir
+ölçüm kırılmadan görünmeyecek şekilde değil: 24 denetimden biri
+(`kod-yenile-denetimi`) tam o düğmeden giriyordu ve ölçülemez hâle
+gelecekti.
+
+Yenileme **silinmedi, taşındı**: artık Kodlar ekranında, açık olan
+öğrencinin kod kutularının yanında. Yerin burası olmasının sebebi şu:
+yenileme kodu okumadan yapılamaz. Hangi kodun iptal edildiğini görmeden
+basılan bir düğme, öğretmenin elindeki fişin ölü olup olmadığını
+bilmemesi demekti. 0018'in "aynı anda tek öğrenci" kuralı bozulmuyor —
+yenileme zaten açık olan öğrencinin kutusunu tazeliyor.
+
+Öğrencinin/velinin kendi kodunu yenilemesi ayrı bir uç
+(`kendi_kodumu_yenile`, 0046) ve ona dokunulmadı.
+
+### Ekleme sonrası kod diyaloğu istisna ve kalıyor
+
+Öğrenci eklendiğinde kodların açıldığı pencere duruyor. O bir kod
+listesi değil, `ogrenci_ekle`nin **döndürdüğü sonuç**: sunucu kodu bir kez
+üretip veriyor, orada göstermeseydik öğretmenin onu alabileceği başka bir
+an olmazdı. Pencere artık öğrenci kimliği de tutmuyor; içindeki
+"Yenile" düğmeleri bu yüzden kendiliğinden düştü. Yerine kodun sonradan
+nereden bulunacağını söyleyen tek satır kondu.
+
+### Ölçüm yeni yerine nişanlandı, üstüne bir grup eklendi
+
+`kod-yenile-denetimi.mjs` artık `/ogretmen/kodlar/s9a` üzerinden koşuyor;
+dört vaat aynı (onaysız istek yok · yeni kod ekranda, eskisi DOM'da yok ·
+öteki rol etkilenmiyor · fiş hatırlatması) ve 360 px ölçümü duruyor.
+**6. grup yeni:** Öğrenciler sekmesinde `Kodlar` düğmesi yok, satırlar
+gerçekten çizildi (`Çıkar` sayılıyor — pozitif kontrol) ve o sekmede
+`ogrenci_kodlari` hiç çağrılmıyor.
+
+### Bu turda bir ölçüm yanlış yere basıyormuş
+
+Denetim taşındıktan sonra 1. grup kırmızı yandı ve suçlu ürün değildi:
+`getByRole('button', { name: 'Yenile' })` **adı alt dize olarak**
+eşliyor, deneğin adı ise "Yenileme Deneği". Tıklama öğrencinin satır
+düğmesine gidiyor, kodlar kapanıyordu. `exact: true` ile bağlandı.
+
+Eski ekranda bu çarpışma görünmüyordu çünkü orada öğrencinin adı bir
+düğme değil bir bağlantıydı. Ölçüm taşınınca zeminin de değiştiğinin
+kaydı olsun.
+
+### Kusur provaları — üçü de ısırdı
+
+| Prova | Kırılan |
+| --- | --- |
+| `Kodlar` düğmesi Öğrenciler'e geri konur | `6: "Kodlar" düğmesi yok (1)` |
+| Onay kapısı kalkar (doğrudan `kod_yenile`) | `1: onay öncesi kod_yenile isteği YOK` |
+| Yenilemeden sonra kutu tazelenmez | `2: yeni öğrenci kodu ekranda` |
+
+Her prova kusurun kaynağa **indiğini** ve derlemenin **geçtiğini** ayrıca
+doğrulayan takımla koştu; bu üçü olmadan "ısırmadı" sonucu güvenilmez
+(0047 dersi).

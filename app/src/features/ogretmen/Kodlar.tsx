@@ -4,13 +4,14 @@ import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
+import { Dialog } from '@/components/ui/Dialog';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { KodKutusu } from '@/components/ui/KodKutusu';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import type { Kodlar as KodlarTipi, OgrenciListesi, Sinif } from '@/types/api';
+import type { Kodlar as KodlarTipi, KodYenileme, OgrenciListesi, Sinif } from '@/types/api';
 
 /**
  * Kodlar sekmesi — SINIF LİSTESİ.
@@ -113,6 +114,59 @@ export function SinifKodlari() {
   const [acik, setAcik] = useState<{ id: string; kodlar: KodlarTipi } | null>(null);
   const [bekleyen, setBekleyen] = useState<string | null>(null);
 
+  /**
+   * KODU YENİLE (0045) — BU EKRANA TAŞINDI.
+   *
+   * Yenileme eskiden Öğrenciler sekmesindeki `Kodlar` düğmesinin
+   * arkasındaydı. Öğretmen o düğmeyi istemedi ("Öğrenciler sekmesinin
+   * içinde kodlara gerek yok") ve düğme kalktı. Yenileme SİLİNMEDİ,
+   * buraya geldi: `kod_yenile` ucunu çağıran tek yer burasıdır.
+   *
+   * Taşımanın yeri burası çünkü yenileme kodu okumadan yapılamaz — hangi
+   * kodun iptal edildiğini görmeden basılan düğme, öğretmenin elindeki
+   * fişin ölü olup olmadığını bilmemesi demekti.
+   *
+   * Geri alınamaz bir iş: onay olmadan sunucuya istek gitmiyor.
+   */
+  const [yenilenecek, setYenilenecek] = useState<{
+    id: string;
+    ad: string;
+    rol: 'ogrenci' | 'veli';
+  } | null>(null);
+  const [yenileniyor, setYenileniyor] = useState(false);
+
+  /**
+   * Sunucu eski kodu öldürüp yenisini üretiyor ve O ROLÜN açık oturumunu
+   * kapatıyor. Kritik olan şey yeni kodun EKRANDA KALMASI: öğretmen onu
+   * hemen yazacak ya da fişini basacak. Açık kutu tazeleniyor, öğrenci
+   * kapanmıyor — eski kod ekranda kalsaydı öğretmene ölü kodu yazdırırdı.
+   */
+  async function kodYenile() {
+    if (!yenilenecek) return;
+    setYenileniyor(true);
+    try {
+      const y = await rpc<KodYenileme>('kod_yenile', {
+        p_token: oturum?.token,
+        p_id: yenilenecek.id,
+        p_rol: yenilenecek.rol,
+      });
+      setAcik((a) =>
+        a && a.id === yenilenecek.id ? { ...a, kodlar: { ...a.kodlar, [y.rol]: y.kod } } : a,
+      );
+      bildir(
+        y.rol === 'veli'
+          ? 'Veli kodu yenilendi. Eski kod artık çalışmıyor; yeni fişi veliye ulaştırın.'
+          : 'Öğrenci kodu yenilendi. Eski kod artık çalışmıyor; yeni fişi öğrenciye verin.',
+        'basari',
+      );
+    } catch (e) {
+      bildir(e instanceof Error ? e.message : 'Kod yenilenemedi.', 'hata');
+    } finally {
+      setYenileniyor(false);
+      setYenilenecek(null);
+    }
+  }
+
   const { veri, durum, hata, yenile } = useVeri<OgrenciListesi>(
     'ogrenciler_listesi',
     {
@@ -213,17 +267,50 @@ export function SinifKodlari() {
                       </button>
 
                       {bu && (
-                        <div className="mb-2 flex flex-wrap gap-2">
-                          {acik.kodlar.ogrenci ? (
-                            <KodKutusu etiket="Öğrenci kodu" kod={acik.kodlar.ogrenci} />
-                          ) : (
-                            <Eksik etiket="Öğrenci kodu" />
-                          )}
-                          {acik.kodlar.veli ? (
-                            <KodKutusu etiket="Veli kodu" kod={acik.kodlar.veli} />
-                          ) : (
-                            <Eksik etiket="Veli kodu" />
-                          )}
+                        <div className="mb-2">
+                          <div className="flex flex-wrap gap-2">
+                            {acik.kodlar.ogrenci ? (
+                              <div className="flex items-center gap-2">
+                                <KodKutusu etiket="Öğrenci kodu" kod={acik.kodlar.ogrenci} />
+                                <Button
+                                  tur="sade"
+                                  olcu="sm"
+                                  onClick={() =>
+                                    setYenilenecek({ id: o.id, ad: o.ad, rol: 'ogrenci' })
+                                  }
+                                >
+                                  Yenile
+                                </Button>
+                              </div>
+                            ) : (
+                              <Eksik etiket="Öğrenci kodu" />
+                            )}
+                            {acik.kodlar.veli ? (
+                              <div className="flex items-center gap-2">
+                                <KodKutusu etiket="Veli kodu" kod={acik.kodlar.veli} />
+                                <Button
+                                  tur="sade"
+                                  olcu="sm"
+                                  onClick={() =>
+                                    setYenilenecek({ id: o.id, ad: o.ad, rol: 'veli' })
+                                  }
+                                >
+                                  Yenile
+                                </Button>
+                              </div>
+                            ) : (
+                              <Eksik etiket="Veli kodu" />
+                            )}
+                          </div>
+                          {/* Yenilemenin ne anlama geldiği, düğmeye basmadan
+                              ÖNCE burada yazıyor. Onay metni de aynısını
+                              söylüyor ama öğretmen düğmeyi görür görmez ne
+                              olacağını bilmeli. */}
+                          <p className="mt-2 text-[12px] text-muted">
+                            Kod sızdıysa <strong>Yenile</strong> deyin: eski kod anında
+                            geçersiz olur ve o kişinin açık oturumu kapanır. Yeni kodu içeren
+                            fişi kendisine ulaştırmanız gerekir.
+                          </p>
                         </div>
                       )}
                     </li>
@@ -239,6 +326,27 @@ export function SinifKodlari() {
           </>
         )}
       </AsyncBoundary>
+
+      {/* --- Kod yenileme onayı (0045) --- */}
+      <Dialog
+        acik={yenilenecek !== null}
+        onKapat={() => setYenilenecek(null)}
+        baslik={
+          yenilenecek?.rol === 'veli' ? 'Veli kodu yenilensin mi?' : 'Öğrenci kodu yenilensin mi?'
+        }
+        aciklama={
+          yenilenecek
+            ? `${yenilenecek.ad} için yeni bir ${
+                yenilenecek.rol === 'veli' ? 'veli' : 'öğrenci'
+              } kodu üretilecek. Eski kod artık çalışmayacak ve açık oturum kapanacak. Bu işlem geri alınamaz; yeni fişi ${
+                yenilenecek.rol === 'veli' ? 'veliye' : 'öğrenciye'
+              } vermeniz gerekir.`
+            : ''
+        }
+        onayEtiketi={yenileniyor ? 'Yenileniyor…' : 'Evet, yenile'}
+        onayTuru="tehlike"
+        onOnay={kodYenile}
+      />
     </>
   );
 }

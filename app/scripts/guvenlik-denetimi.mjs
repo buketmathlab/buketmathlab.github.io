@@ -108,6 +108,23 @@ const CEVAPLAR = {
     toplam_sayfa: 1,
     kayitlar: [{ id: 'o1', ad: AD_YUKU, tur: 'okul', sinif: '11Z' }],
   },
+  // 0051 sonrası Öğrenciler sekmesinin VARSAYILAN yüzeyi burası: sınıf
+  // kutusundan bir sınıfa girilince satırlar bu uçtan geliyor. Ad yükü
+  // bu listede de metin olarak kalmalı.
+  sinif_ogrenci_ozeti: {
+    sinif: { id: 's1', ad: '11Z', ozel: false },
+    ogrenciler: [
+      {
+        id: 'o1',
+        ad: AD_YUKU,
+        ogrenci_no: '601',
+        tur: 'okul',
+        ortalama: 62.5,
+        odev_sayisi: 3,
+        en_eksik_konu: AD_YUKU,
+      },
+    ],
+  },
   ogrenci_odevleri: {
     ogrenci: { id: 'o1', ad: 'Yük Denemesi', sinif: '11Z', tur: 'okul' },
     odevler: [],
@@ -119,7 +136,17 @@ const CEVAPLAR = {
 
 const tarayici = await chromium.launch();
 
-async function ekran(ad, yol, oturum, beklenenMetinler = YUKLER) {
+/**
+ * `hazirla`: ölçümden ÖNCE sayfada yapılacak iş.
+ *
+ * 0051'de gerekti: Öğrenciler sekmesi artık sınıf kutusuyla açılıyor,
+ * öğrenci satırları ancak bir sınıfa girilince çiziliyor. Bu adım
+ * olmadan "yük ekranda metin olarak görünüyor" ölçümü 0/1 veriyordu —
+ * yani XSS denetiminin POZİTİF KONTROLÜ ölmüştü: yük hiç çizilmediği
+ * için negatif iddialar (alert çalışmadı, düğüm oluşmadı) da hiçbir şey
+ * kanıtlamıyordu.
+ */
+async function ekran(ad, yol, oturum, beklenenMetinler = YUKLER, hazirla = null) {
   const sayfa = await tarayici.newPage({ viewport: { width: 390, height: 900 } });
 
   const alarmlar = [];
@@ -147,6 +174,11 @@ async function ekran(ad, yol, oturum, beklenenMetinler = YUKLER) {
 
   await sayfa.goto(KOK + '#' + yol, { waitUntil: 'networkidle' });
   await sayfa.waitForTimeout(1500);
+
+  if (hazirla) {
+    await hazirla(sayfa);
+    await sayfa.waitForTimeout(800);
+  }
 
   const sonuc = await sayfa.evaluate((yukler) => {
     // Uygulamanın kendi <script> etiketleri sayılmamalı: yalnız mesaj
@@ -198,7 +230,16 @@ await ekran('Öğretmen · veli yazışması', '/ogretmen/veliler/yazisma/o1', O
 await ekran('Öğrenci · mesajlar', '/ogrenci/mesajlar', OGRENCI);
 await ekran('Veli · mesajlar', '/veli/mesajlar', VELI);
 // Bu ekranda mesaj yok; yüzey ÖĞRENCİ ADI. Beklenen metin de o.
-await ekran('Öğretmen · öğrenci listesi (addaki yük)', '/ogretmen/ogrenciler', OGRETMEN, [AD_YUKU]);
+// 0051'den sonra satırlar sınıf kutusundan bir sınıfa girilince çiziliyor.
+await ekran(
+  'Öğretmen · öğrenci listesi (addaki yük)',
+  '/ogretmen/ogrenciler',
+  OGRETMEN,
+  [AD_YUKU],
+  async (s) => {
+    await s.getByRole('button', { name: /^11Z/ }).first().click();
+  },
+);
 
 await tarayici.close();
 
