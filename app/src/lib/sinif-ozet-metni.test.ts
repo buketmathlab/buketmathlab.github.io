@@ -84,4 +84,43 @@ describe('sinif-ozet-metni', () => {
     expect(KONU_ACIKLAMASI).toContain('yanlışı yoktur');
     expect(KONU_ACIKLAMASI).toContain(KONU_BOS);
   });
+
+  /**
+   * AÇIKLAMA KONUNUN NE İŞE YARADIĞINI SÖYLÜYOR.
+   *
+   * Öğretmenin düzeltmesi: *"'En eksik konular' cümlesini bu şekilde
+   * değil de daha pedagojik yaz."* İlk sürüm yalnız tireyi anlatan
+   * teknik bir dipnottu. Cümle artık satırdaki konuyu bir BAŞLANGIÇ
+   * NOKTASI olarak koyuyor; bu ölçüm olmadan bir sonraki turda sessizce
+   * eski hâline dönerdi.
+   */
+  it('açıklama bir sonraki adımı gösteriyor', () => {
+    expect(KONU_ACIKLAMASI).toMatch(/tekrara ihtiyaç/);
+    expect(KONU_ACIKLAMASI).toMatch(/başlanabilir/);
+  });
+
+  /**
+   * DAYATMIYOR. Çıkarım bir öneridir (Part XXVIII): cümle ne
+   * yapılacağını emretmiyor, nereden başlanabileceğini söylüyor.
+   */
+  it('açıklama emir kipinde değil', () => {
+    expect(KONU_ACIKLAMASI).not.toMatch(/başlayın|çalıştırın|vermelisiniz/);
+  });
+
+  /**
+   * GERÇEĞİ GİZLEMİYOR.
+   *
+   * Öğretmenin kuralı: *"Yanlış kelimesini her durumda daha yumuşak bir
+   * ifadeyle değiştirmeye çalışma."* Pedagojik yazmak, yanlışın nerede
+   * biriktiğini söylememek demek değil.
+   *
+   * ÖLÇÜM NEDEN BU KADAR DAR: ilk yazdığım hâli `toContain('yanlışı')`
+   * idi ve ISIRMIYORDU — cümlenin SONUNDAKİ "yanlışı yoktur" onu zaten
+   * karşılıyordu, yani ilk yarıyı "eksikleri" diye yumuşatmak ölçümü
+   * hiç kırmıyordu. Kırılabilen iddia şu: konunun neden seçildiği
+   * yanlış ve boş sayılarak söyleniyor.
+   */
+  it('yanlışın nerede biriktiği söyleniyor', () => {
+    expect(KONU_ACIKLAMASI).toMatch(/yanlışı ve boşu/);
+  });
 });

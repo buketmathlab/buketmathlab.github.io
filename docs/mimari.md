@@ -4660,3 +4660,28 @@ kaydı olsun.
 Her prova kusurun kaynağa **indiğini** ve derlemenin **geçtiğini** ayrıca
 doğrulayan takımla koştu; bu üçü olmadan "ısırmadı" sonucu güvenilmez
 (0047 dersi).
+
+### "En eksik konu" açıklaması pedagojik yazıldı
+
+Öğretmenin düzeltmesi: *"'En eksik konular' cümlesini bu şekilde değil de
+daha pedagojik yaz."*
+
+İlk sürüm yalnız tirenin ne anlama geldiğini anlatan teknik bir dipnottu
+ve satırdaki konunun **ne işe yaradığını** hiç söylemiyordu. Yeni cümle
+konuyu bir eksik etiketi değil, bir **başlangıç noktası** olarak koyuyor;
+gerçeği de gizlemiyor — yanlışın ve boşun nerede biriktiğini açıkça
+söylüyor, çünkü öğretmenin kuralı *"yanlış kelimesini her durumda daha
+yumuşak bir ifadeyle değiştirmeye çalışma"* diyor. Emir kipi yok:
+"başlanabilir" (Part XXVIII — çıkarım bir öneridir).
+
+**Bir ölçüm ölü doğdu ve düzeltildi.** Yumuşatmaya karşı yazdığım ilk
+iddia `toContain('yanlışı')` idi ve provada **ısırmadı**: cümlenin
+sonundaki "yanlışı yoktur" onu zaten karşılıyordu, yani ilk yarıyı
+"eksikleri" diye yumuşatmak ölçümü hiç kırmıyordu. İddia
+`/yanlışı ve boşu/` olarak daraltıldı; prova artık ısırıyor.
+
+| Prova | Kırılan |
+| --- | --- |
+| Eski teknik cümle geri konur | `açıklama bir sonraki adımı gösteriyor` |
+| Cümle emir kipine çevrilir | `açıklama emir kipinde değil` |
+| Yanlış kelimesi yumuşatılır | `yanlışın nerede biriktiği söyleniyor` |

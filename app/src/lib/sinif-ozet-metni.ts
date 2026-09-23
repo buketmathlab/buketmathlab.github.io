@@ -48,10 +48,33 @@ export function odevSayisiYazisi(odevSayisi: number): string {
  */
 export const KONU_BOS = '—';
 
-/** Liste altındaki açıklama — tirenin ne anlama geldiğini söylüyor. */
+/**
+ * Liste altındaki açıklama.
+ *
+ * ÖĞRETMENİN DÜZELTMESİ: *"'En eksik konular' cümlesini bu şekilde değil
+ * de daha pedagojik yaz."* İlk sürüm yalnız tirenin ne anlama geldiğini
+ * anlatan teknik bir dipnottu ("5 soruluk birikimi olan bir konusu
+ * yoktur") ve satırdaki konunun NE İŞE YARADIĞINI hiç söylemiyordu.
+ *
+ * Yeni cümle üç şeyi birden yapıyor:
+ *   1. Konuyu bir EKSİK ETİKETİ değil, bir BAŞLANGIÇ NOKTASI olarak
+ *      koyuyor — "şu sıralar en çok tekrara ihtiyaç duyduğu konu".
+ *   2. Gerçeği gizlemiyor: yanlışın ve boşun orada biriktiğini açıkça
+ *      söylüyor. Öğretmenin kuralı bunu şart koşuyor —
+ *      *"Yanlış kelimesini her durumda daha yumuşak bir ifadeyle
+ *      değiştirmeye çalışma."*
+ *   3. Dayatmıyor: "başlanabilir". Çıkarım bir öneridir; ne yapılacağına
+ *      öğretmen karar verir.
+ *
+ * Tirenin iki sebebi cümlenin sonunda aynen duruyor — o bilgi kayıp
+ * değil, ikinci sıraya geçti.
+ */
 export const KONU_ACIKLAMASI =
-  'Konu sütunundaki “—” iki şeyden birini gösterir: o öğrencinin henüz ' +
-  '5 soruluk birikimi olan bir konusu yoktur ya da yanlışı yoktur.';
+  'Adın altındaki konu, o öğrencinin şu sıralar en çok tekrara ihtiyaç ' +
+  'duyduğu konudur: yanlışı ve boşu en çok orada birikmiş. Bir sonraki ' +
+  'çalışmaya buradan başlanabilir. “—” ise iki şeyden birini söyler: ' +
+  'öğrenci henüz hiçbir konuda 5 soru çözmemiştir ya da çözdüklerinde ' +
+  'yanlışı yoktur.';
 
 export function eksikKonuYazisi(konu: string | null): string {
   return konu && konu.trim() !== '' ? konu : KONU_BOS;
