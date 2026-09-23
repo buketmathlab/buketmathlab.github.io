@@ -4267,3 +4267,53 @@ kilitlendi.
 Kaydı düşülen ders: **bir turun kaldırdığı şey, başka bir turun
 kilitlediği şey olabilir.** Ekran kaldırmak yalnız kodu değil, o koda
 bağlı güvenceleri de gözden geçirmeyi gerektiriyor.
+
+## Tanıtım metninde üç cümle (yeni SQL yok)
+
+Öğretmen tanıtım sayfasında üç cümleyi güncelletti. Üçü de daha önce
+**birebir kilitlenmiş** cümlelerdi; yani metni değiştirmek tek başına
+yetmiyordu, nöbetçileri de birlikte taşımak gerekti.
+
+### Değişenler
+
+| Nerede | Eski | Yeni |
+| --- | --- | --- |
+| 1. paragrafın sonu | "…karşılaştığı **doğrudan** ihtiyaçlara yanıt vermek üzere **sıfırdan** tasarlandı." | "…karşılaştığı ihtiyaçlara yanıt vermek üzere tasarlandı." |
+| 3. paragraf | "sabit bir **ürün** olarak tasarlanmadı" | "sabit bir **yazılım** olarak tasarlanmadı" |
+| Slogan | "**8'in** kesintisiz akışı, öğrenmenin bitmeyen doğası…" | "**SEKİZ'in** kesintisiz akışı, öğrenmenin bitmeyen doğası…" |
+
+### Daha önceki bir kaydın artık doğru olmayan yanı
+
+Slogan sayfaya girerken şu kaydedilmişti: *"Öğretmen brief'in iki
+cümlesini aynen istedi… kurulu ve ölçülen hâli korunuyor."* O kayıt
+kendi turunda doğruydu; **bu turda öğretmen cümlenin başını değiştirdi.**
+Kayıt silinmedi, üstüne yazıldı — hem kaynak dosyada hem burada. Bir yıl
+sonra bakan biri rakamın hiç olmadığını değil, **kaldırıldığını**
+görsün.
+
+Buna bağlı ikinci bir kayıt da eskidi: ölçüm listesinden
+`8 → sonsuzluk bağı 8 RAKAMI üzerinden kuruluyor` kaldırılırken gerekçe
+*"vurgu cümlesindeki '8'in kesintisiz akışı' zaten ayrı bir ölçümle
+kilitli"* diye yazılmıştı. O cümlede artık rakam yok. Ölçüm zaten
+kaldırılmıştı, yani kırılan bir şey yok; ama gerekçe artık geçerli
+değil ve öyle duruyor diye sanılmasın.
+
+Şekil yasakları (`8 şeklinden`, `yan yat`, `sonsuzluk işareti`)
+**olduğu gibi yürürlükte** — bu tur hiçbirini gevşetmedi.
+
+### Üç kilit de iki yönlü yapıldı
+
+Cümleleri değiştirirken yalnız yenisini aramak yetmezdi: eski hâl bir
+gün sessizce geri gelebilir. Bu yüzden her biri çift ölçüldü.
+
+- 1. paragraf: yeni cümle **var** ve "doğrudan" ile "sıfırdan" **geri
+  gelmemiş**
+- Slogan: yeni hâli sayfada **tam bir kez** ve eski başı **hiç yok**
+
+İkincisi önemliydi: biri eski satırı yenisinin *yanına* koyarsa sayaç
+yine 1 der ve sayfada iki slogan birden durur. Tek yönlü kilit tam
+burada sessiz kalırdı.
+
+Geri alma kanıtına üç yeni yama eklendi ve üçü de ısırdı; betik bu turdan
+sonra **41 yamanın 41'ini** yakalıyor. Tanıtım denetimi 143 ölçümle
+kusursuz.

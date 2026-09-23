@@ -170,9 +170,41 @@ const YAMALAR = [
     /* SLOGAN DÜŞERSE. Sayı TAM ölçülüyor; bu yama düşmeyi kanıtlıyor. */
     ad: 'Slogan birleşik bölümden çıkarsa',
     dosya: SAYFA,
-    eski: '          8’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık sonuçlara',
-    yeni: '          Öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık sonuçlara',
+    eski: '          SEKİZ’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık',
+    yeni: '          Öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık',
     bekleyen: 'slogan tam bir yerde',
+  },
+  {
+    /* SLOGANIN ESKİ BAŞI GERİ KONURSA — İKİ YÖNLÜ KİLİDİN ÖBÜR YARISI.
+       Cümle "8'in kesintisiz akışı…" diye başlıyordu; öğretmen rakamı
+       kaldırttı. Bu yama YENİSİNİ SİLMİYOR, eskisini yanına koyuyor:
+       sayaç yine 1 der, yani yalnız "geri gelmemiş" ölçümü ısırabilir.
+       Tek yönlü bir kilit tam burada sessiz kalırdı. */
+    ad: 'Sloganın eski hâli ("8’in kesintisiz akışı") yanına geri konursa',
+    dosya: SAYFA,
+    eski: '          SEKİZ’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık',
+    yeni:
+      '          8’in kesintisiz akışı. SEKİZ’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık',
+    bekleyen: 'sloganın eski hâli ("8’in kesintisiz akışı") geri gelmemiş',
+  },
+  {
+    /* 1. PARAGRAFIN SON CÜMLESİ DÜŞERSE. Öğretmen bu cümleyi bu turda
+       sadeleştirdi; kaybolursa sayfa SEKİZ'in kimin ihtiyacından
+       doğduğunu hiçbir yerde söylemez. */
+    ad: '1. paragrafın "ihtiyaçlara yanıt vermek üzere tasarlandı" cümlesi düşerse',
+    dosya: SAYFA,
+    eski: 'karşılaştığı ihtiyaçlara yanıt vermek üzere tasarlandı.',
+    yeni: 'karşılaştığı ihtiyaçlara göre kuruldu.',
+    bekleyen: 'birleşik bölüm 1. paragraf: ihtiyaçlara yanıt vermek üzere tasarlandı',
+  },
+  {
+    /* ATILAN İKİ KELİME GERİ KONURSA. "doğrudan" ve "sıfırdan" öğretmenin
+       kararıyla kalktı; eski hâl sessizce dönebilirdi. */
+    ad: '1. paragrafa "doğrudan" ve "sıfırdan" geri konursa',
+    dosya: SAYFA,
+    eski: 'karşılaştığı ihtiyaçlara yanıt vermek üzere tasarlandı.',
+    yeni: 'karşılaştığı doğrudan ihtiyaçlara yanıt vermek üzere sıfırdan tasarlandı.',
+    bekleyen: 'birleşik bölüm 1. paragraf: "doğrudan" ve "sıfırdan" geri gelmemiş',
   },
   {
     /* ŞEKİL YASAĞI — ÇAPA HERO SLOGANINA TAŞINDI. Yasak listesi aynen
@@ -188,8 +220,8 @@ const YAMALAR = [
        listesi gibi değil") silinen gövdedeydi. Yasak aynı yerde. */
     ad: 'Geri çekilen felsefe cümlesi sayfaya geri konursa',
     dosya: SAYFA,
-    eski: '          8’in kesintisiz akışı,',
-    yeni: '          Sonsuzluk bir varış değil, bir yöndür. 8’in kesintisiz akışı,',
+    eski: '          SEKİZ’in kesintisiz akışı,',
+    yeni: '          Sonsuzluk bir varış değil, bir yöndür. SEKİZ’in kesintisiz akışı,',
     bekleyen: 'geri çekilen felsefe cümlesi',
   },
   {

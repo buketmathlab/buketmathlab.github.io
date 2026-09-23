@@ -381,9 +381,21 @@ console.log('\n5. Metindeki iddialar');
     'birleşik bölüm başlığı öğretmenin yazdığı gibi',
     /Öğretmen Deneyimiyle Şekillenen, Sürekli Gelişen Platform/.test(metin),
   );
+  /* 1. PARAGRAFIN SONU SADELEŞTİ — ÖĞRETMENİN KARARI, İKİ YÖNLÜ KİLİT.
+   *
+   * Eski hâli: "…karşılaştığı DOĞRUDAN ihtiyaçlara yanıt vermek üzere
+   * SIFIRDAN tasarlandı." Öğretmen iki vurguyu da attırdı.
+   *
+   * Ölçüm iki yönlü: yeni cümle var VE atılan iki kelime geri gelmemiş.
+   * Yalnız yeniyi aramak yetmezdi — "sıfırdan" geri konsa bile eşleşme
+   * bozulur, ama bunu açıkça söyleyen bir satır olsun. */
   bak(
-    'birleşik bölüm 1. paragraf: sıfırdan tasarlandı',
-    /doğrudan ihtiyaçlara yanıt vermek üzere sıfırdan tasarlandı/.test(metin),
+    'birleşik bölüm 1. paragraf: ihtiyaçlara yanıt vermek üzere tasarlandı',
+    /karşılaştığı ihtiyaçlara yanıt vermek üzere tasarlandı/.test(metin),
+  );
+  bak(
+    'birleşik bölüm 1. paragraf: "doğrudan" ve "sıfırdan" geri gelmemiş',
+    !/doğrudan ihtiyaçlara/.test(metin) && !/sıfırdan tasarlandı/.test(metin),
   );
   bak(
     'birleşik bölüm 2. paragraf: kendi ritmiyle tamamlar',
@@ -881,7 +893,7 @@ console.log('\n5. Metindeki iddialar');
    * sayfa genelinde değil; yoksa slogan başka bir yere kaysa da geçerdi. */
   bak(
     'slogan birleşik bölümün altında',
-    /8’in kesintisiz akışı, öğrenmenin bitmeyen doğası/.test(birlesikMetni),
+    /SEKİZ’in kesintisiz akışı, öğrenmenin bitmeyen doğası/.test(birlesikMetni),
   );
 
   /* VELİ "DAHİL OLAN" TARAFTIR — iki yerde, ikisi de ölçülüyor.
@@ -931,9 +943,18 @@ console.log('\n5. Metindeki iddialar');
    * da sessizce olabilecek türden bir hata. Bu yüzden ölçüm marka
    * cümlesindeki desenin aynısına çevrildi: sayı TAM ölçülüyor, yani
    * slogan ne düşebilir ne çoğalabilir. */
-  const sloganAdet = (metin.match(/8’in kesintisiz akışı, öğrenmenin bitmeyen doğası/g) || [])
+  const sloganAdet = (metin.match(/SEKİZ’in kesintisiz akışı, öğrenmenin bitmeyen doğası/g) || [])
     .length;
   bak('slogan tam bir yerde', sloganAdet === 1, `${sloganAdet} kez`);
+
+  /* SLOGANIN ESKİ BAŞI GERİ GELMEMİŞ — İKİ YÖNLÜ KİLİDİN ÖBÜR YARISI.
+   *
+   * Cümle "8'in kesintisiz akışı…" diye başlıyordu; öğretmen rakamı
+   * kaldırıp "SEKİZ'in" yaptırdı. Yalnız yeni hâli saymak yetmez: biri
+   * eski satırı yanına geri koyarsa sayaç yine 1 der ve sayfada iki
+   * slogan birden durur. */
+  bak('sloganın eski hâli ("8’in kesintisiz akışı") geri gelmemiş',
+    !/8’in kesintisiz akışı/.test(metin));
 
   /* OKUL ADI ARTIK GÖRÜNÜR METİNDE DEĞİL — MÜHÜRÜN ALT METNİNDE.
    *

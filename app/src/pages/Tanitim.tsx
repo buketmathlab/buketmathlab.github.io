@@ -493,10 +493,15 @@ function SekizgenDoku() {
    üste gelirdi. İstenen şey "sade". SONUCU AÇIKÇA YAZIYORUM: sayfada
    artık orta yerde koyu bant yok, yalnız kapanış koyu.
 
-   SLOGAN BURAYA TAŞINDI. "8'in kesintisiz akışı…" bugüne kadar
-   felsefe bölümünün vurgusuydu; öğretmen "bu yazının hemen altına
-   slogan olarak gelsin" dedi. Tek kelimesi değişmedi ve sayfada TAM
-   BİR KEZ geçtiği ölçülüyor.
+   SLOGAN BURAYA TAŞINDI. Bugüne kadar felsefe bölümünün vurgusuydu;
+   öğretmen "bu yazının hemen altına slogan olarak gelsin" dedi. Sayfada
+   TAM BİR KEZ geçtiği ölçülüyor.
+
+   SLOGAN SONRADAN "SEKİZ'İN" OLDU. Taşındığı turda "8'in kesintisiz
+   akışı…" diye giriyordu ve o hâliyle kilitlenmişti; öğretmen sonraki
+   bir turda cümleyi "SEKİZ'in kesintisiz akışı…" olarak güncelletti.
+   Eski hâli burada kayıtlı kalsın: bir yıl sonra bakan biri rakamın
+   hiç olmadığını değil, DEĞİŞTİĞİNİ görsün.
    ============================================================ */
 
 function OgretmenDeneyimi() {
@@ -511,7 +516,7 @@ function OgretmenDeneyimi() {
           SEKİZ, bir yazılım ofisinde değil; bir matematik öğretmeninin, Buket Topuzoğlu’nun
           uzun yıllara dayanan sınıf deneyiminde şekillendi. Dışarıdan bakılarak kurgulanan
           bir uygulama olarak değil; öğrencilerin, öğretmenlerin ve velilerin eğitim
-          sürecinde karşılaştığı doğrudan ihtiyaçlara yanıt vermek üzere sıfırdan tasarlandı.
+          sürecinde karşılaştığı ihtiyaçlara yanıt vermek üzere tasarlandı.
         </P>
         <P>
           Platformun temelinde, öğrencinin günlük öğrenme yolculuğunu pürüzsüz kılma fikri
@@ -521,7 +526,7 @@ function OgretmenDeneyimi() {
         </P>
         <P>
           Eğitim durağan değil; yaşayan ve dönüşen bir süreçtir. Bu yüzden SEKİZ, tamamlanıp
-          kenara çekilen sabit bir ürün olarak tasarlanmadı. Sınıflardan gelen dönütlerle,
+          kenara çekilen sabit bir yazılım olarak tasarlanmadı. Sınıflardan gelen dönütlerle,
           yeni ihtiyaçlarla ve gelişen teknolojiyle birlikte sürekli gelişmeye, büyümeye
           devam edecek dinamik bir yapıdır.
         </P>
@@ -531,19 +536,21 @@ function OgretmenDeneyimi() {
         {/* SLOGAN — ÖĞRETMENİN CÜMLESİ, TAŞINDI.
             Bugüne kadar felsefe bölümünün vurgusuydu.
 
-            "8'İN KESİNTİSİZ AKIŞI" VE "SONSUZ BİR YOLCULUK" — ÖĞRETMENİN
+            "KESİNTİSİZ AKIŞ" VE "SONSUZ BİR YOLCULUK" — ÖĞRETMENİN
             AÇIK KARARI. İkisinin de bugüne kadarki kurallarla (şekil
             bilgisi verme, yolculuk klişesi) ruhen çakıştığını söylemiştim;
             "cümleler aynen girsin" dedi. Yasaklı DESENLERİ tek tek
             ölçtüm: hiçbiriyle eşleşmiyorlar, yani tek bir yasak bile
             gevşetilmedi. Denetim bunu ayrıca kanıtlıyor.
 
-            ÖĞRETMENİN BU TURDAKİ YAZIMI: "sekizin kesintisiz akışı…
-            sonsuz yolculuğa". Aynı cümleye işaret ettiği açık ve bir
-            düzeltme istemedi; kurulu ve ölçülen hâli korunuyor. */}
+            CÜMLENİN BAŞI SONRADAN DEĞİŞTİ. İlk hâli "8'in kesintisiz
+            akışı…" idi; bir sonraki turda öğretmen "SEKİZ'in kesintisiz
+            akışı…" olarak güncelletti. Rakam kalktı, cümlenin gerisi
+            aynı. Eski hâl burada kayıtlı: değişikliğin kendisi de bir
+            karar ve izi kalsın. */}
         <p className="text-center font-display text-[22px] font-semibold leading-[1.35] text-ink md:text-[24px]">
-          8’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık sonuçlara
-          değil, sonsuz bir yolculuğa dönüştürür.
+          SEKİZ’in kesintisiz akışı, öğrenmenin bitmeyen doğası: SEKİZ, gelişimi anlık
+          sonuçlara değil, sonsuz bir yolculuğa dönüştürür.
         </p>
       </div>
     </section>
