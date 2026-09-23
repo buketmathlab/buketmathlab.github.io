@@ -801,3 +801,38 @@ export type SurumDefteri = {
   /** Defterdeki en büyük numara; defter boşsa null. */
   son: string | null;
 };
+
+/**
+ * `sinif_ogrenci_ozeti` (0051) — Öğrenciler sekmesinde bir sınıfa
+ * dokunulduğunda açılan liste.
+ *
+ * Öğretmenin isteği: "bireysel olarak ödev ortalamaları öğrenci
+ * isimlerinin karşısında yazsın. Aynı zamanda en çok eksik olduğu
+ * konunun adı da yazsın."
+ *
+ * SIRA SUNUCUDAN GELİYOR: okul numarası (sınıf listesi sırası),
+ * numarasız öğrenci sonda. Arayüz yeniden sıralamıyor.
+ */
+export type SinifOgrenciOzeti = {
+  sinif: { id: string; ad: string; ozel: boolean };
+  ogrenciler: Array<{
+    id: string;
+    ad: string;
+    ogrenci_no: string | null;
+    tur: 'okul' | 'ozel';
+    /**
+     * Süresi DOLMUŞ ödevlerin ortalaması; gönderilmeyen 0 sayılır,
+     * süresi devam eden ödev hesaba girmez (öğretmenin kararı).
+     * Süresi dolmuş hiç ödev yoksa `null` — bu SIFIR DEĞİL.
+     */
+    ortalama: number | null;
+    /** Ortalamanın kaç ödev üzerinden hesaplandığı. */
+    odev_sayisi: number;
+    /**
+     * Yanlış + boş sayısı en yüksek konu; yalnız 5+ soru çözülmüş
+     * konular aday. Hiç yanlışı yoksa `null` — öğrenciyi etiketlememek
+     * için (bkz. 0051 başlığı).
+     */
+    en_eksik_konu: string | null;
+  }>;
+};
