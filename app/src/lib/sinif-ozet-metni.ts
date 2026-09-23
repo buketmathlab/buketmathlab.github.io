@@ -32,6 +32,25 @@ export function odevSayisiYazisi(odevSayisi: number): string {
 }
 
 /**
+ * YAPILAN / YAPILMAYAN (0052).
+ *
+ * Öğretmenin isteği: *"öğrencilerin verilen kaç tane ödevi yaptıklarını,
+ * kaç tanesini yapmadıkları… göstersin."*
+ *
+ * İKİ SAYI DA YAZILIYOR, BİRİ ÖTEKİNDEN ÇIKARILMIYOR. "8/10" yazmak daha
+ * kısa olurdu ama öğretmenin sorduğu şey iki ayrı sayı ve ikisi de aynı
+ * anda görünmeli. Sıfır olan taraf da yazılıyor: "0 yapılmadı" bir
+ * bilgidir, boşluk değil.
+ *
+ * Süresi dolmuş hiç ödev yoksa CÜMLE KURULMUYOR — "0 yapıldı · 0
+ * yapılmadı" hiçbir şey söylemez ve ortalama zaten "Henüz ödev yok" diyor.
+ */
+export function yapilanYazisi(yapilan: number, yapilmayan: number): string | null {
+  if (yapilan + yapilmayan === 0) return null;
+  return `${yapilan} yapıldı · ${yapilmayan} yapılmadı`;
+}
+
+/**
  * En eksik konu sütunu.
  *
  * BOŞ GELMESİNİN İKİ AYRI SEBEBİ VAR ve ekran ikisini AYIRT EDEMİYOR:
@@ -75,6 +94,19 @@ export const KONU_ACIKLAMASI =
   'çalışmaya buradan başlanabilir. “—” ise iki şeyden birini söyler: ' +
   'öğrenci henüz hiçbir konuda 5 soru çözmemiştir ya da çözdüklerinde ' +
   'yanlışı yoktur.';
+
+/**
+ * SAYILARIN HANGİ ÖDEVLERİ KAPSADIĞI (0052).
+ *
+ * Üç sayı da aynı kümeden geliyor: teslim süresi dolmuş ödevler. Bunu
+ * yazmasaydık öğretmen "bu hafta verdiğim ödev neden görünmüyor" diye
+ * haklı olarak sorardı. Süresi devam eden ödev "yapılmadı" sayılmıyor —
+ * teslim tarihi gelmemiş bir ödev yüzünden çocuk bugünden eksik
+ * görünmesin.
+ */
+export const KAPSAM_ACIKLAMASI =
+  'Sayılar ve ortalama, teslim süresi dolmuş ödevleri kapsar; süresi ' +
+  'devam eden ödev hiçbir sayıya girmez.';
 
 export function eksikKonuYazisi(konu: string | null): string {
   return konu && konu.trim() !== '' ? konu : KONU_BOS;

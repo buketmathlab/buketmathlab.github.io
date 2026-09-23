@@ -15,6 +15,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import {
   GERI,
+  KAPSAM_ACIKLAMASI,
   KONU_ACIKLAMASI,
   SINIF_KUTUSU_ACIKLAMASI,
   SINIF_KUTUSU_BASLIGI,
@@ -22,6 +23,7 @@ import {
   eksikKonuYazisi,
   odevSayisiYazisi,
   ortalamaYazisi,
+  yapilanYazisi,
 } from '@/lib/sinif-ozet-metni';
 import type { Kodlar, OgrenciListesi, Sinif, SinifOgrenciOzeti, YeniOgrenci } from '@/types/api';
 
@@ -165,32 +167,46 @@ export function Ogrenciler() {
           çalışıyor, yanında bir sınıf kutusu durması "hangisi geçerli"
           sorusunu doğururdu. */}
       {!aranan && !sinifId && (
-        <Card>
-          <p className="font-semibold text-ink">{SINIF_KUTUSU_BASLIGI}</p>
-          <p className="mt-1 text-[14px] text-muted">{SINIF_KUTUSU_ACIKLAMASI}</p>
+        <>
+          <div className="mb-3">
+            <p className="font-semibold text-ink">{SINIF_KUTUSU_BASLIGI}</p>
+            <p className="mt-1 text-[14px] text-muted">{SINIF_KUTUSU_ACIKLAMASI}</p>
+          </div>
           {siniflar.veri && siniflar.veri.length === 0 ? (
-            <p className="mt-3 text-[14px] text-muted">{SINIF_YOK}</p>
+            <p className="text-[14px] text-muted">{SINIF_YOK}</p>
           ) : (
-            <div className="mt-3 flex flex-wrap gap-2">
+            /* ÖLÇÜ SINIFLAR SEKMESİYLE AYNI (öğretmenin isteği):
+               "sınıflar kutularının büyüklüğü, sınıflar sekmesindeki
+               sınıflar kutularının büyüklüğü gibi olsun."
+
+               Izgara ve kart biçimi `Siniflar.tsx`'ten birebir alındı —
+               `grid gap-2 sm:grid-cols-2 lg:grid-cols-3`, `Card`, ad
+               `font-display text-[20px]`, altında "N öğrenci".
+               Küçük bir etiket kutusuydu; aynı sınıflar iki sekmede iki
+               ayrı boyda görünüyordu. */
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {(siniflar.veri ?? []).map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => {
-                    setSinifId(s.id);
-                    setSayfa(1);
-                  }}
-                  className="min-h-[44px] rounded-sk-sm border border-line bg-surface px-4 text-[15px] font-semibold text-ink hover:bg-line-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                >
-                  <span>{s.ad}</span>
-                  <span className="sk-sayi ml-2 text-[13px] font-normal text-muted">
-                    {s.ogrenci_sayisi}
-                  </span>
-                </button>
+                <Card key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSinifId(s.id);
+                      setSayfa(1);
+                    }}
+                    className="min-h-[44px] w-full text-left underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  >
+                    <span className="block font-display text-[20px] font-semibold text-ink">
+                      {s.ad}
+                    </span>
+                    <span className="block text-[13px] text-muted">
+                      <span className="sk-sayi">{s.ogrenci_sayisi}</span> öğrenci
+                    </span>
+                  </button>
+                </Card>
               ))}
             </div>
           )}
-        </Card>
+        </>
       )}
 
       {/* Bir sınıf seçildiğinde karneye geçiş. Öğretmen bu sekmede de
@@ -479,7 +495,9 @@ function SinifOzeti({
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {/* ORTALAMA — adın KARŞISINDA (öğretmenin isteği). */}
+                      {/* ORTALAMA — adın KARŞISINDA (öğretmenin isteği).
+                          Altında önce kaç ödev üzerinden hesaplandığı,
+                          sonra o ödevlerin kaçının yapıldığı (0052). */}
                       <p className="text-right">
                         <span className="sk-sayi block text-[18px] font-semibold text-ink">
                           {ortalamaYazisi(o.ortalama)}
@@ -489,6 +507,14 @@ function SinifOzeti({
                             {odevSayisiYazisi(o.odev_sayisi)}
                           </span>
                         )}
+                        {/* İKİ SAYI SUNUCUDAN GELİYOR, BURADA ÇIKARMA
+                            YAPILMIYOR: "yapılmamış ödev" bir ürün kavramı
+                            ve tanımı tek yerde durmalı (0030'un dersi). */}
+                        {yapilanYazisi(o.yapilan, o.yapilmayan) && (
+                          <span className="sk-sayi block text-[12px] text-muted">
+                            {yapilanYazisi(o.yapilan, o.yapilmayan)}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -496,6 +522,7 @@ function SinifOzeti({
               ))}
             </div>
             <p className="mt-3 text-[13px] leading-snug text-muted">{KONU_ACIKLAMASI}</p>
+            <p className="mt-2 text-[13px] leading-snug text-muted">{KAPSAM_ACIKLAMASI}</p>
           </>
         )}
       </AsyncBoundary>

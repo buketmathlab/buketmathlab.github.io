@@ -198,7 +198,7 @@ echo "==> Yazışma listesi testleri (0048)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/yazisma_listesi_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
-echo "==> Sınıf öğrenci özeti testleri (0051)"
+echo "==> Sınıf öğrenci özeti testleri (0051 + 0052)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/sinif_ogrenci_ozeti_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 

@@ -310,6 +310,92 @@ begin
     raise notice '8c OK — arşivdeki sınıf reddediliyor';
   end;
 
+  -- ---------------------------------------------------------------------------
+  -- 9. YAPILAN / YAPILMAYAN (0052)
+  --
+  -- Öğretmenin isteği: "verilen kaç tane ödevi yaptıklarını, kaç tanesini
+  -- yapmadıkları… göstersin."
+  --
+  -- Dünyada süresi dolmuş İKİ ödev var (Ö1, Ö2); Ö3 gelecekte ve hiçbir
+  -- sayıya girmemeli.
+  --   Zeynep: Ö1 gönderdi, Ö2 göndermedi  → 1 yapıldı / 1 yapılmadı
+  --   Ali:    Ö2 gönderdi, Ö1 göndermedi  → 1 yapıldı / 1 yapılmadı
+  --   Berk:   hiçbirini göndermedi        → 0 yapıldı / 2 yapılmadı
+  --
+  -- BERK BU GRUBUN AYIRT EDİCİ SATIRI: ikisi yer değiştirse (yapilan ile
+  -- yapilmayan karışsa) Zeynep ve Ali'de 1/1 olduğu için hiçbir şey
+  -- görünmezdi. 0/2 tersine dönerse görünür.
+  --
+  -- Zeynep'in Ö1 gönderimi 3. grupta öğretmen puanı aldı; SAYIM PUANA
+  -- BAKMIYOR — sıfır alan da ödevi yapmıştır.
+  -- ---------------------------------------------------------------------------
+  v := public.sinif_ogrenci_ozeti(jt, s_12z);
+
+  select e into satir from jsonb_array_elements(v->'ogrenciler') e
+   where e->>'id' = zeynep::text;
+  if (satir->>'yapilan')::int <> 1 or (satir->>'yapilmayan')::int <> 1 then
+    raise exception '9a: Zeynep % yaptı / % yapmadı, 1/1 olmalı',
+      satir->>'yapilan', satir->>'yapilmayan';
+  end if;
+
+  select e into satir from jsonb_array_elements(v->'ogrenciler') e
+   where e->>'id' = berk::text;
+  if (satir->>'yapilan')::int <> 0 or (satir->>'yapilmayan')::int <> 2 then
+    raise exception '9b: Berk % yaptı / % yapmadı, 0/2 olmalı',
+      satir->>'yapilan', satir->>'yapilmayan';
+  end if;
+  raise notice '9a OK — yapılan ve yapılmayan elle sayılanla aynı (1/1, 0/2)';
+
+  -- SIFIR ALAN DA ÖDEVİ YAPMIŞTIR — sayım PUANA BAKMIYOR.
+  --
+  -- BU SATIR BİR PROVA YÜZÜNDEN YAZILDI. "Sayım puana baksın" kusuru
+  -- ISIRMADI, çünkü dünyadaki iki gönderimin ikisi de sıfırdan büyük puan
+  -- almıştı (90 ve 100). Yani ürünün vaadi ölçülmüyordu: ölçüm ölüydü.
+  -- Ali'nin puanı sıfıra çekiliyor; gönderimi duruyor, sayısı değişmemeli.
+  --
+  -- Ölçmenin ötesinde bir ürün kararı da: sıfır alan çocuğa "yapmadın"
+  -- demek gerçeği çarpıtmak olurdu — yaptı, sonucu sıfır çıktı. İkisi
+  -- ayrı şey ve ekran ikisini ayrı gösteriyor.
+  update public.gonderimler set ogretmen_puan = 0
+   where odev_id = o2 and ogrenci_id = ali;
+
+  v := public.sinif_ogrenci_ozeti(jt, s_12z);
+  select e into satir from jsonb_array_elements(v->'ogrenciler') e
+   where e->>'id' = ali::text;
+  if (satir->>'yapilan')::int <> 1 or (satir->>'yapilmayan')::int <> 1 then
+    raise exception '9b: sıfır puan alan Ali % yaptı / % yapmadı, 1/1 olmalı',
+      satir->>'yapilan', satir->>'yapilmayan';
+  end if;
+  if (satir->>'ortalama')::numeric <> 0.00 then
+    raise exception '9b: Ali ortalaması %, 0.00 olmalı (sıfır aldı)', satir->>'ortalama';
+  end if;
+  raise notice '9b OK — sıfır alan öğrenci ödevi YAPMIŞ sayılıyor (1/1, ortalama 0)';
+
+  -- TOPLAM TUTUYOR. Ekran üç sayıyı yan yana gösteriyor; biri öbür ikisiyle
+  -- toplanmıyorsa öğretmen okuyamaz. Süre kapısı bir gün yalnız birinde
+  -- değişirse bu iddia kırılır — asıl işi o.
+  declare bozuk text;
+  begin
+    select string_agg(e->>'ad', ', ') into bozuk
+      from jsonb_array_elements(v->'ogrenciler') e
+     where (e->>'yapilan')::int + (e->>'yapilmayan')::int <> (e->>'odev_sayisi')::int;
+    if bozuk is not null then
+      raise exception '9c: yapilan + yapilmayan <> odev_sayisi — %', bozuk;
+    end if;
+  end;
+  raise notice '9c OK — her satırda yapılan + yapılmayan = ödev sayısı';
+
+  -- SÜRESİ DEVAM EDEN ÖDEV "YAPILMADI" SAYILMIYOR. Ö3 sayılsaydı Berk'in
+  -- yapılmayanı 3 olurdu ve teslim tarihi gelmemiş bir ödev yüzünden
+  -- çocuk bugünden eksik görünürdü.
+  select e into satir from jsonb_array_elements(v->'ogrenciler') e
+   where e->>'id' = berk::text;
+  if (satir->>'yapilmayan')::int <> (satir->>'odev_sayisi')::int then
+    raise exception '9d: hiç göndermeyende yapılmayan %, ödev sayısı % olmalı',
+      satir->>'yapilmayan', satir->>'odev_sayisi';
+  end if;
+  raise notice '9d OK — süresi devam eden ödev yapılmadı sayılmıyor';
+
   raise notice '';
-  raise notice 'SINIF ÖĞRENCİ ÖZETİ TESTLERİ: 8 GRUP GEÇTİ';
+  raise notice 'SINIF ÖĞRENCİ ÖZETİ TESTLERİ: 9 GRUP GEÇTİ';
 end $$;

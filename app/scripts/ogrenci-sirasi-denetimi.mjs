@@ -153,6 +153,11 @@ await s.addInitScript(
             tur: 'okul',
             ortalama: 40 + i,
             odev_sayisi: 3,
+            // 0052 — üç sayı BİRBİRİYLE TUTARLI: yapilan + yapilmayan =
+            // odev_sayisi. Sahte sunucu bu kuralı bozarsa ekranın
+            // ölçümü de anlamını yitirirdi.
+            yapilan: i === 0 ? 2 : 3,
+            yapilmayan: i === 0 ? 1 : 0,
             en_eksik_konu: i === 0 ? 'Turev' : null,
           })),
         });
@@ -332,6 +337,73 @@ console.log('3 — SINIFA DOKUNULUNCA: SUNUCUNUN SIRASI AYNEN ÇİZİLİYOR');
   de(metin.includes('40,0'), 'ortalama ekranda ve Türkçe ondalıkla');
   de(metin.includes('Turev'), 'en eksik konu ekranda');
   de(metin.includes('—'), 'konusu olmayan öğrencide tire');
+
+  // YAPILAN / YAPILMAYAN (0052 — öğretmenin isteği: "kaç tane ödevi
+  // yaptıklarını, kaç tanesini yapmadıkları").
+  de(metin.includes('2 yapıldı · 1 yapılmadı'), 'yapılan ve yapılmayan ekranda');
+  de(metin.includes('3 yapıldı · 0 yapılmadı'), 'sıfır olan taraf da yazılıyor');
+
+  // SAYILARIN KAPSAMI EKRANDA. Öğretmen "bu hafta verdiğim ödev neden
+  // görünmüyor" diye sorabilir; cevap ekranda olmalı.
+  de(/süresi dolmuş/.test(metin), 'sayıların hangi ödevleri kapsadığı yazılı');
+}
+
+// ===========================================================================
+console.log('3b — SINIF KUTUSU SINIFLAR SEKMESİYLE AYNI ÖLÇÜDE');
+// ===========================================================================
+// Öğretmenin isteği: "Öğrenciler sekmesinin içindeki sınıflar kutularının
+// büyüklüğü, sınıflar sekmesindeki sınıflar kutularının büyüklüğü gibi
+// olsun."
+//
+// ÖLÇÜM İKİ EKRANI KARŞILAŞTIRIYOR, SABİT BİR SAYIYA BAKMIYOR. Bir piksel
+// değeri yazsaydık, Sınıflar sekmesi bir gün değiştiğinde bu ölçüm yeşil
+// kalır ve iki sekme yine ayrışırdı. İddia "aynı" olmalı, "44 px" değil.
+{
+  const olc = async (yol) => {
+    await p.goto(KOK + yol, { waitUntil: 'networkidle' });
+    await p.waitForTimeout(700);
+    return p.evaluate(() => {
+      // ÇIPA: sınıf kutusu hem adı hem "N öğrenci" satırını taşıyor.
+      // Yalnız "9A" ile başlamak yetmiyor (yukarıdaki tuzak).
+      const d = [...document.querySelectorAll('button')].find(
+        (x) => x.textContent?.trim().startsWith('9A') && x.textContent.includes('öğrenci'),
+      );
+      if (!d) return null;
+      const r = d.getBoundingClientRect();
+      const ad = d.querySelector('span');
+      return {
+        g: Math.round(r.width),
+        y: Math.round(r.height),
+        punto: getComputedStyle(ad ?? d).fontSize,
+      };
+    });
+  };
+
+  await p.setViewportSize({ width: 1280, height: 900 });
+  // SIRA ÖNEMLİ: önce Sınıflar, sonra Öğrenciler. HashRouter aynı adrese
+  // `goto` edilince bileşeni yeniden kurmuyor; 3. gruptan kalan `sinifId`
+  // duruyor ve sınıf kutusu hiç çizilmiyordu. Araya Sınıflar girince
+  // Öğrenciler yeniden kuruluyor ve kutu çiziliyor.
+  //
+  // Bu sıra bir denemeyle bulunmadı: önce "pano'ya uğra" yazdım, pano
+  // sahte sunucuda boş yanıt aldığı için ekran tamamen boş kaldı ve
+  // ölçüm HİÇBİR DÜĞME bulamadı. Ölçümün kendi yolu da ürünün yolu kadar
+  // gerçek olmalı.
+  const siniflar = await olc('#/ogretmen/siniflar');
+  const ogrenciler = await olc('#/ogretmen/ogrenciler');
+
+  de(ogrenciler !== null && siniflar !== null, 'iki sekmede de 9A kutusu bulundu');
+  de(
+    ogrenciler?.punto === siniflar?.punto,
+    `sınıf adının puntosu aynı (${ogrenciler?.punto} / ${siniflar?.punto})`,
+  );
+  // Genişlik ızgaradan geliyor; Sınıflar'da kartın yanında Arşivle düğmesi
+  // var, o yüzden düğmenin kendi genişliği değil KARTIN genişliği aynı
+  // olmalı. Punto ve satır yüksekliği ise birebir karşılaştırılabilir.
+  de(
+    Math.abs((ogrenciler?.y ?? 0) - (siniflar?.y ?? 0)) <= 2,
+    `kutu yüksekliği aynı (${ogrenciler?.y} / ${siniflar?.y})`,
+  );
 }
 
 // ===========================================================================

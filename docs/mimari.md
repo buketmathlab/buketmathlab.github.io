@@ -4767,3 +4767,83 @@ Ayarlar'a taşınınca grup **kırmızı yandı** ve kusur üründe değildi.
 Ders: bir pozitif kontrol, ölçtüğü ekranın **en kalıcı** parçasına
 bağlanmalı. "Ekran yüklendi mi" sorusunun cevabı bir düğme olamaz —
 düğmeler taşınır. Çıpa artık öğrencinin adı.
+
+---
+
+## 0052 — kaç ödev yapıldı, kaç tanesi yapılmadı · sınıf kutusu aynı ölçüye geldi
+
+Öğretmenin isteği iki parçalı: *"Öğrenciler sekmesinin içindeki sınıflar
+kutularının büyüklüğü, sınıflar sekmesindeki sınıflar kutularının
+büyüklüğü gibi olsun. … sınıflara tıkladığım zaman öğrencilerin verilen
+kaç tane ödevi yaptıklarını, kaç tanesini yapmadıkları, tüm ödev
+sayısından aldıkları ortalamayı göstersin."*
+
+### Sınıf kutusu: iki sekme aynı sınıfları iki ayrı boyda gösteriyordu
+
+0051'de Öğrenciler sekmesine küçük etiket düğmeleri koymuştum; Sınıflar
+sekmesinde aynı sınıflar `Card` içinde, adı `font-display text-[20px]`
+ile duruyor. Izgara ve kart biçimi `Siniflar.tsx`'ten **birebir** alındı
+(`grid gap-2 sm:grid-cols-2 lg:grid-cols-3`).
+
+**Ölçüm iki ekranı karşılaştırıyor, sabit bir piksel değerine
+bakmıyor.** "44 px" yazsaydık Sınıflar sekmesi bir gün değiştiğinde ölçüm
+yeşil kalır ve iki sekme yine ayrışırdı. İddia *aynı* olmalı, *şu kadar*
+değil.
+
+### Yapılan / yapılmayan — sunucuda, ekranda çıkarma yok
+
+`sinif_ogrenci_ozeti` iki alan daha döndürüyor: `yapilan` ve
+`yapilmayan`. Ekranda `odev_sayisi - yapilan` yazmak bir satırlık işti;
+yazılmadı. "Yapılmamış ödev" bir **ürün kavramı** ve tanımı tek yerde
+durmalı — süre kapısı bir gün değişirse çıkarma işlemi sessizce yanlış
+cevap vermeye devam ederdi (0030'un dersi).
+
+**Sayılan küme ortalamanınkiyle aynı:** yayındaki ve teslim süresi
+**dolmuş** ödevler. Süresi devam eden bir ödev "yapılmadı" sayılsaydı,
+teslim tarihi gelmemiş bir ödev yüzünden çocuk bugünden eksik görünürdü —
+öğretmenin 0051'deki kararının ve dil kuralının (ÖĞRENCİYİ ETİKETLEME)
+aynı yöne bakan sonucu. Bunun okunabilirlik faydası da var:
+
+```
+yapilan + yapilmayan = odev_sayisi        (ve ortalama o sayı üzerinden)
+```
+
+Bu eşitlik testin 9c grubunda her satır için ayrı ayrı ölçülüyor.
+Ekran ayrıca kapsamı yazıyla söylüyor — öğretmen "bu hafta verdiğim ödev
+neden görünmüyor" diye sormadan cevabı görsün.
+
+**Sıfır alan öğrenci ödevi YAPMIŞ sayılıyor**: sayım puana bakmıyor.
+Yaptı, sonucu sıfır çıktı; ikisi ayrı şey.
+
+### Bir ölçüm ölü doğdu, prova söyledi
+
+"Sayım puana baksın" kusuru **ısırmadı**: test dünyasındaki iki
+gönderimin ikisi de sıfırdan büyük puan almıştı (90 ve 100), yani
+"sıfır alan da yapmıştır" vaadi hiç ölçülmüyordu. Dünyaya sıfır puanlı
+bir gönderim eklendi; prova artık ısırıyor.
+
+### Ölçümün kendi yolu da ürünün yolu kadar gerçek olmalı
+
+Sınıf kutusu ölçümü iki kez yanlış yere bastı:
+
+1. Öğrenciler sekmesine `goto` etmek bileşeni yeniden kurmuyor; önceki
+   gruptan kalan sınıf seçimi duruyordu ve ölçüm **"9A karnesi — kim ne
+   yaptı" düğmesini** yakaladı (ikisi de "9A" ile başlıyor). Çıpaya
+   *"ve içinde 'öğrenci' geçiyor"* koşulu eklendi.
+2. Yeniden kurulsun diye araya "pano'ya uğra" koydum; pano sahte
+   sunucuda boş yanıt alınca ekran tamamen boş kaldı ve ölçüm **hiçbir
+   düğme** bulamadı. Sıra değiştirildi: önce Sınıflar, sonra Öğrenciler —
+   her geçiş zaten farklı bir rota.
+
+### Kusur provaları — sekizi de ısırdı
+
+| Prova | Kırılan |
+| --- | --- |
+| `yapilan` gönderime bakmıyor | `9a: Zeynep 2 yaptı / 1 yapmadı` |
+| `yapilmayan` gönderime bakmıyor | `9a: Zeynep 1 yaptı / 2 yapmadı` |
+| Süre kapısı yalnız `yapilmayan`da kalkıyor | `9a: Zeynep 1 yaptı / 2 yapmadı` |
+| Sayım puana bakıyor | `9b: sıfır puan alan Ali 0 yaptı / 1 yapmadı` |
+| Sınıf kutusu küçük etikete dönüyor | `3b: puntosu aynı (15px / 20px)` |
+| Yapılmayan ekranda çıkarmayla hesaplanıyor | `3: yapılan ve yapılmayan ekranda` |
+| Sıfır olan taraf gizleniyor | `3: sıfır olan taraf da yazılıyor` |
+| Kapsam cümlesi süre kapısını söylemiyor | `3: kapsadığı yazılı` |

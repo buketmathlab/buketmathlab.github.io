@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   GERI,
+  KAPSAM_ACIKLAMASI,
   KONU_ACIKLAMASI,
   KONU_BOS,
   SINIF_KUTUSU_ACIKLAMASI,
@@ -9,6 +10,7 @@ import {
   eksikKonuYazisi,
   odevSayisiYazisi,
   ortalamaYazisi,
+  yapilanYazisi,
 } from './sinif-ozet-metni';
 import { yasakKaliplariBul } from './urun-dili';
 
@@ -122,5 +124,45 @@ describe('sinif-ozet-metni', () => {
    */
   it('yanlışın nerede biriktiği söyleniyor', () => {
     expect(KONU_ACIKLAMASI).toMatch(/yanlışı ve boşu/);
+  });
+
+  /**
+   * YAPILAN / YAPILMAYAN (0052) — öğretmenin isteği.
+   *
+   * İki sayı da yazılıyor; biri öbüründen çıkarılmıyor ve sıfır olan
+   * taraf gizlenmiyor.
+   */
+  it('iki sayı da yazılıyor', () => {
+    expect(yapilanYazisi(8, 2)).toBe('8 yapıldı · 2 yapılmadı');
+  });
+
+  /** Sıfır bir bilgidir, boşluk değil. */
+  it('sıfır olan taraf gizlenmiyor', () => {
+    expect(yapilanYazisi(0, 5)).toBe('0 yapıldı · 5 yapılmadı');
+    expect(yapilanYazisi(5, 0)).toBe('5 yapıldı · 0 yapılmadı');
+  });
+
+  /**
+   * SÜRESİ DOLMUŞ HİÇ ÖDEV YOKSA CÜMLE KURULMUYOR.
+   *
+   * "0 yapıldı · 0 yapılmadı" hiçbir şey söylemez; ortalama zaten "Henüz
+   * ödev yok" diyor. İkisini birden yazmak dönem başında her satırı
+   * anlamsız sıfırlarla doldururdu.
+   */
+  it('hiç ödev yokken cümle kurulmuyor', () => {
+    expect(yapilanYazisi(0, 0)).toBeNull();
+  });
+
+  /**
+   * SAYILARIN KAPSAMI YAZILI.
+   *
+   * Öğretmen "bu hafta verdiğim ödev neden görünmüyor" diye sorabilir;
+   * cevabı ekranda durmalı. Süresi devam eden ödevin "yapılmadı"
+   * sayılmadığı da burada söyleniyor.
+   */
+  it('kapsam açıklaması süre kapısını söylüyor', () => {
+    expect(KAPSAM_ACIKLAMASI).toMatch(/süresi dolmuş/);
+    expect(KAPSAM_ACIKLAMASI).toMatch(/devam eden ödev/);
+    expect(yasakKaliplariBul(KAPSAM_ACIKLAMASI)).toEqual([]);
   });
 });

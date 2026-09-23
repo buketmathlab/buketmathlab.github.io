@@ -829,6 +829,14 @@ export type SinifOgrenciOzeti = {
     /** Ortalamanın kaç ödev üzerinden hesaplandığı. */
     odev_sayisi: number;
     /**
+     * 0052 — o ödevlerin kaçında gönderim var. Puana bakmaz: sıfır alan
+     * da ödevi yapmıştır. `yapilan + yapilmayan = odev_sayisi` (sunucuda
+     * ölçülüyor).
+     */
+    yapilan: number;
+    /** 0052 — aynı kümenin geri kalanı; ekranda çıkarma yapılmıyor. */
+    yapilmayan: number;
+    /**
      * Yanlış + boş sayısı en yüksek konu; yalnız 5+ soru çözülmüş
      * konular aday. Hiç yanlışı yoksa `null` — öğrenciyi etiketlememek
      * için (bkz. 0051 başlığı).
