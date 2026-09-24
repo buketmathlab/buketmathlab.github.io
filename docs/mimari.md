@@ -4847,3 +4847,111 @@ Sınıf kutusu ölçümü iki kez yanlış yere bastı:
 | Yapılmayan ekranda çıkarmayla hesaplanıyor | `3: yapılan ve yapılmayan ekranda` |
 | Sıfır olan taraf gizleniyor | `3: sıfır olan taraf da yazılıyor` |
 | Kapsam cümlesi süre kapısını söylemiyor | `3: kapsadığı yazılı` |
+
+---
+
+## 0053 — sınıf çıktısı: sınıf listesi ve veli fişleri
+
+Öğretmenin isteği: *"Öğrenciler sekmesinde sınıflara tıkladığımda çıkan
+öğrenci listesi yazdırılabilir olsun istediğim zaman. Okulun adı
+Arnavutköy Korkmaz Yiğit Anadolu Lisesi olarak ve yazdırdığım tarih olsun
+çıktıda. Veli toplantı zamanlarında bu çıktıyı aldığında öğrencinin
+yaptığı yapmadığı ödevler ortaya nasıl gözüksün?"*
+
+Son cümle bir soruydu ve cevabı ona sordum. İki karar verdi:
+**ikisi de olsun** (sınıf listesi + veli fişi) ve fişte
+*"kaç ödev verildi, kaçını yaptı, kaçını yapmadı, toplam ödevin
+ortalaması, eksik olduğu konu başlıkları"* yazsın.
+
+### Neden iki ayrı çıktı
+
+Sınıf listesi HER öğrencinin ortalamasını taşıyor. Veli toplantısında o
+kâğıdı bir veliye uzatmak, öbür çocukların bilgisini de göstermek demek.
+Bu yüzden ikinci bir çıktı var: her öğrenci için kesilip verilebilen,
+**yalnız kendi çocuğunun** satırını taşıyan bir fiş. Deponun 0018'deki
+"aynı anda tek öğrenci" kuralının kâğıt hâli.
+
+Denetimin 4. grubu bunu doğrudan sayıyor: hiçbir fişin içinde başka bir
+öğrencinin adı geçmiyor. Provada fişe bütün sınıfın adları konuldu ve
+grup kırıldı.
+
+### "Konu başlıkları" çoğul — `en_eksik_konu` → `eksik_konular`
+
+Alan tekten listeye döndü (en fazla 3, en eksikten başlayarak). İki alan
+birden bırakılmadı: aynı hesabın iki yazımı bir gün ayrışır ve ekran bir
+konu, kâğıt başka bir konu söylerdi (0030'un dersi). Ekran listenin
+ilkini gösteriyor — bugünkü davranışın aynısı, test bunu ayrıca ölçüyor.
+
+Ölçüt ve 5 soru alt sınırı değişmedi. Üç sayısının gerekçesi kâğıdın
+kendisi: bir veliyle konuşma birkaç dakika, sekiz başlık okunmaz; tek
+başlık ise "başlıkları" isteğini karşılamıyor.
+
+### Kâğıdın kendi sorumluluğu
+
+Çıktı elden ele geçiyor, saklanıyor ve söylediği şey sonradan
+düzeltilemiyor. Bu yüzden:
+
+- **Künye yalnız kâğıtta**: okul adı, sınıf, tarih **ve saat**. Saat de
+  var çünkü sayılar gün içinde değişiyor; iki çıktıdan hangisinin yeni
+  olduğu kâğıttan okunabilmeli.
+- **Fiş kesildikten sonra da nereden geldiğini söylüyor**: okul, sınıf ve
+  tarih fişin kendi içinde de var.
+- **Ortalaması olmayana sıfır basılmıyor.** Ekranda da öyle ama kâğıtta
+  daha önemli: geri alınamıyor.
+- **Başlık çocuğu nitelemiyor**: "Üzerinde çalışılacak konular".
+- **Kapsam kâğıtta yazılı**: sayılar teslim süresi dolmuş ödevleri
+  kapsar. Yazılmasaydı toplantıda "bu hafta ödev vermedin mi?" diye
+  okunurdu.
+
+`OnamDokumu` ve `KodFisleri` deseni sürüyor: PDF kütüphanesi yok,
+tarayıcının yazdırma penceresi "PDF olarak kaydet" ile zaten üretiyor.
+
+### Denetim gerçekten yazdırma kipinde bakıyor
+
+Bu ekranın vaatlerinin çoğu yalnız kâğıtta geçerli. `emulateMedia({
+media: 'print' })` olmadan hiçbiri ölçülemezdi — 0038'de "Çıkış düğmesi
+kâğıda çıkıyor" kusuru tam böyle bulunmuştu.
+
+### Bu turda ürün bir, ölçüm üç kez yanlıştı
+
+1. **360 px'de tablo taşıyordu** (111 px) — gerçek kusur, denetim buldu.
+   Yedi sütun telefona sığmıyor; ekranda yatay kaydırma, kâğıtta normal.
+2. **"Okul adı ekranda geçmesin" iddiası** kırmızı yandı ama kusur üründe
+   değildi: okul adı veli fişinin alt notunda da var ve orada OLMASI
+   gerekiyor. İddia künyenin kendisine daraltıldı.
+3. **Türkçe büyük İ.** `Veli bilgi fişi` kâğıtta CSS ile büyük harfe
+   çevriliyor ve `innerText` çizilen hâli veriyor. Önce harfe duyarlı
+   arandı (tutmadı), sonra `/…/i` yazıldı — **o da tutmadı**: noktalı
+   büyük İ (U+0130) regex'in `i` bayrağındaki Unicode basit katlamada
+   küçük "i"ye katlanmıyor. Karşılaştırma `toLocaleLowerCase('tr')` ile
+   yapılıyor.
+4. **Künye ölçümü ölüydü** — prova söyledi. Künye tümden kaldırıldı,
+   hiçbir şey kırılmadı; çünkü okul adı ve tarih fişlerin alt notundan
+   da geliyordu. Artık künye öğesinin kendisi ölçülüyor.
+5. **Konu sıralaması ölçülmüyordu.** Test dünyasındaki konu adları
+   (Carpanlar/Denklem/Esitsizlik) alfabetik sırada da eksik sırasında da
+   aynı diziliyordu; "ada göre sırala" kusuru ısırmadı. Adlar bilerek
+   ters sıraya çevrildi (Yamuk Alani / Oran Oranti / Bolunebilme) —
+   7. gruptaki numara/alfabe ayrımının aynı gerekçesi.
+6. **Provanın kendisi de yanlış yere basmıştı:** iç `order by` SEÇİMİ,
+   dış `jsonb_agg(… order by …)` GÖSTERİM sırasını belirliyor. Yalnız
+   içtekini bozan kusur ısırmadı.
+
+### Kusur provaları — altısı da ısırdı
+
+| Prova | Kırılan |
+| --- | --- |
+| Fiş bütün sınıfın adlarını taşıyor | `4: hiçbir fişte başka öğrencinin adı yok (3)` |
+| Künye kâğıttan kalkıyor | `2: çıktının künyesi kâğıtta çiziliyor (false)` |
+| Seçilmeyen bölüm de kâğıda çıkıyor | `5: sınıf listesi tablosu kâğıttan düştü` |
+| Ortalaması olmayana sıfır basılıyor | `4: fişinde sıfır değil, cümle` |
+| Konu tavanı (3) kalkıyor | `10a: 5 konu döndü, 3 olmalı` |
+| Konular ada göre sıralanıyor | `10a: {Bolunebilme, Oran, Yamuk}` |
+
+### Açık kalan
+
+Okulun adı iki ayrı dize olarak duruyor: çıktıdaki
+`OKUL_ADI` ("Arnavutköy Korkmaz Yiğit Anadolu Lisesi", öğretmenin
+yazdığı hâl, giriş ekranıyla aynı) ve armanın erişilebilirlik metni
+`SchoolCrest.TAM_AD` ("Beşiktaş" ile başlıyor). İkisi BİLEREK ayrı —
+armaya dokunulmuyor (Kural 8) — ama bu bir gün karışabilir.

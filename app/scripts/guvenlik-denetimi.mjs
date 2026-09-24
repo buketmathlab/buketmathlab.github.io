@@ -121,7 +121,7 @@ const CEVAPLAR = {
         tur: 'okul',
         ortalama: 62.5,
         odev_sayisi: 3,
-        en_eksik_konu: AD_YUKU,
+        eksik_konular: [AD_YUKU],
       },
     ],
   },

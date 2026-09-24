@@ -234,6 +234,7 @@ export function Ogrenciler() {
           sinifId={sinifId}
           onGeri={() => setSinifId('')}
           onKarne={() => git(`/ogretmen/siniflar/${sinifId}`)}
+          onYazdir={() => git(`/ogretmen/ogrenciler/yazdir/${sinifId}`)}
         />
       ) : null}
 
@@ -434,10 +435,12 @@ function SinifOzeti({
   sinifId,
   onGeri,
   onKarne,
+  onYazdir,
 }: {
   sinifId: string;
   onGeri: () => void;
   onKarne: () => void;
+  onYazdir: () => void;
 }) {
   const { oturum } = useOturum();
   const ozet = useVeri<SinifOgrenciOzeti>(
@@ -457,6 +460,13 @@ function SinifOzeti({
             {`${ozet.veri.sinif.ad} karnesi — kim ne yaptı`}
           </Button>
         )}
+        {/* ÇIKTI (öğretmenin isteği): "sınıflara tıkladığımda çıkan
+            öğrenci listesi yazdırılabilir olsun istediğim zaman."
+            Ayrı ekran, çünkü kâğıdın kendi künyesi (okul adı, tarih) ve
+            veli fişleri var; bu listeye sığmazdı. */}
+        <Button tur="sade" olcu="sm" onClick={onYazdir}>
+          Yazdır
+        </Button>
       </div>
 
       <AsyncBoundary
@@ -490,7 +500,7 @@ function SinifOzeti({
                       {/* EN EKSİK KONU — adın altında, küçük.
                           Boşsa tire; sebebi listenin altında yazılı. */}
                       <p className="mt-1 text-[13px] text-muted">
-                        {eksikKonuYazisi(o.en_eksik_konu)}
+                        {eksikKonuYazisi(o.eksik_konular)}
                       </p>
                     </div>
 

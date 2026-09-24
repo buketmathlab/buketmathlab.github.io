@@ -253,4 +253,30 @@
   .sk-fis {
     border-color: #999;
   }
+
+  /* SINIF ÇIKTISI (0053).
+     Tablo satırı sayfa ortasından bölünmüyor; başlık satırı her
+     sayfada tekrar ediyor. Otuz kişilik bir sınıf iki sayfaya
+     taşıyor ve ikinci sayfada sütunun ne olduğu bilinmeli. */
+  .sk-yazdirma-tablo {
+    border-collapse: collapse;
+  }
+  .sk-yazdirma-tablo thead {
+    display: table-header-group;
+  }
+  .sk-yazdirma-tablo tr {
+    break-inside: avoid;
+  }
+
+  /* VELİ FİŞLERİ (0053).
+     Fiş kesilip veliye veriliyor: sayfa ortasından bölünen bir fiş
+     kullanılamaz. Kenarlık kâğıtta görünür kalıyor — kesme çizgisi o. */
+  .sk-veli-fis {
+    break-inside: avoid;
+    border-color: #999;
+  }
+  .sk-fis-izgara {
+    /* Ekranda 360 px'de tek sütun; kâğıtta A4 iki sütunu rahat taşıyor. */
+    grid-template-columns: 1fr 1fr;
+  }
 }

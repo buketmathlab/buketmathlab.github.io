@@ -24,6 +24,7 @@ import { Ayarlar } from '@/features/ogretmen/Ayarlar';
 import { Ogretmenler } from '@/features/ogretmen/Ogretmenler';
 import { EwaluMesajlari } from '@/features/ogretmen/EwaluMesajlari';
 import { OgrenciCikar } from '@/features/ogretmen/OgrenciCikar';
+import { SinifYazdirma } from '@/features/ogretmen/SinifYazdirma';
 import { OgrenciDetay } from '@/features/ogretmen/OgrenciDetay';
 import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
@@ -144,6 +145,10 @@ function Yonlendirme() {
             ZORUNDA — sonra gelseydi `:id = "cikar"` olarak eşleşir ve
             ekran hiç açılmazdı. Giriş kapısı Ayarlar'daki kart. */}
         <Route path="ogrenciler/cikar" element={<OgrenciCikar />} />
+        {/* SINIF ÇIKTISI (öğretmenin isteği: "sınıflara tıkladığımda çıkan
+            öğrenci listesi yazdırılabilir olsun"). Yol İKİ PARÇALI, o
+            yüzden tek parçalı `ogrenciler/:id` ile çakışmıyor. */}
+        <Route path="ogrenciler/yazdir/:id" element={<SinifYazdirma />} />
         {/* Öğrenci yazışması da `:id`'den ÖNCE — aynı tuzak: sonra
             gelseydi `:id = "yazisma"` olarak eşleşirdi. */}
         <Route path="ogrenciler/yazisma/:id" element={<OgrenciYazismasi />} />

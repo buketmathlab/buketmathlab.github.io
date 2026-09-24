@@ -841,6 +841,11 @@ export type SinifOgrenciOzeti = {
      * konular aday. Hiç yanlışı yoksa `null` — öğrenciyi etiketlememek
      * için (bkz. 0051 başlığı).
      */
-    en_eksik_konu: string | null;
+    /**
+     * 0053 — en eksikten başlayarak EN FAZLA 3 konu adı. Ekran ilkini
+     * gösteriyor, çıktı hepsini. Hiç yanlışı yoksa BOŞ DİZİ (`null`
+     * değil) — öğrenciyi etiketlememek için (bkz. 0051).
+     */
+    eksik_konular: string[];
   }>;
 };

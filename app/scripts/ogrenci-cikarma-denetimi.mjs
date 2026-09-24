@@ -111,7 +111,7 @@ await s.addInitScript(
               tur: k.tur,
               ortalama: 60,
               odev_sayisi: 3,
-              en_eksik_konu: 'Köklü Sayılar',
+              eksik_konular: ['Köklü Sayılar'],
             })),
         });
       if (m[1] === 'ogrenci_pasiflestir') {

@@ -108,8 +108,16 @@ export const KAPSAM_ACIKLAMASI =
   'Sayılar ve ortalama, teslim süresi dolmuş ödevleri kapsar; süresi ' +
   'devam eden ödev hiçbir sayıya girmez.';
 
-export function eksikKonuYazisi(konu: string | null): string {
-  return konu && konu.trim() !== '' ? konu : KONU_BOS;
+/**
+ * 0053: alan artık bir DİZİ ve ekran İLK elemanı gösteriyor.
+ *
+ * Ekranda tek konu yazmak bilinçli: satır dar ve öğretmen listeye göz
+ * gezdiriyor. Üç konunun tamamı YAZDIRILAN kâğıtta — orada okumak için
+ * yer ve zaman var.
+ */
+export function eksikKonuYazisi(konular: readonly string[] | null): string {
+  const ilk = konular?.[0];
+  return ilk && ilk.trim() !== '' ? ilk : KONU_BOS;
 }
 
 /** Sınıf kutusunun başlığı ve boş durumu. */

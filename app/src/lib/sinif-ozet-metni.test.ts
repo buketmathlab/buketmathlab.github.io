@@ -70,14 +70,15 @@ describe('sinif-ozet-metni', () => {
    * kısmı için yanlış olurdu; tire hiçbir şey iddia etmiyor.
    */
   it('konu boşken tire, cümle değil', () => {
+    expect(eksikKonuYazisi([])).toBe(KONU_BOS);
     expect(eksikKonuYazisi(null)).toBe(KONU_BOS);
-    expect(eksikKonuYazisi('')).toBe(KONU_BOS);
-    expect(eksikKonuYazisi('   ')).toBe(KONU_BOS);
+    expect(eksikKonuYazisi([''])).toBe(KONU_BOS);
+    expect(eksikKonuYazisi(['   '])).toBe(KONU_BOS);
     expect(KONU_BOS).not.toMatch(/[a-zçğıöşü]/i);
   });
 
   it('konu varsa olduğu gibi yazılıyor', () => {
-    expect(eksikKonuYazisi('Köklü Sayılar')).toBe('Köklü Sayılar');
+    expect(eksikKonuYazisi(['Köklü Sayılar', 'Üslü İfadeler'])).toBe('Köklü Sayılar');
   });
 
   /** Tirenin ne anlama geldiği listenin altında yazılı olmalı. */

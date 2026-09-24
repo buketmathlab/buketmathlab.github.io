@@ -179,8 +179,10 @@ begin
   -- İki ölçüt ayrışırsa öğretmen aynı öğrenci için iki ekranda iki konu
   -- görür. 0030'un dersi.
   -- ---------------------------------------------------------------------------
-  if (satir->>'en_eksik_konu') <> 'Turev' then
-    raise exception '4a: en eksik konu %, Turev olmalı', satir->>'en_eksik_konu';
+  -- 0053: alan artık bir DİZİ. Ekran ilkini gösteriyor, kâğıt hepsini;
+  -- bu grup ilk elemanı ölçüyor, yani 0052'nin davranışı korunuyor mu.
+  if (satir->'eksik_konular'->>0) <> 'Turev' then
+    raise exception '4a: ilk eksik konu %, Turev olmalı', satir->'eksik_konular'->>0;
   end if;
 
   -- İKİ EKRAN AYNI VERİYİ OKUYOR AMA AYNI CÜMLEYİ KURMUYOR — ve bu
@@ -201,13 +203,13 @@ begin
      where (k->>'toplam')::int >= 5
      order by ord
      limit 1;
-    if karne_ilk is distinct from (satir->>'en_eksik_konu') then
+    if karne_ilk is distinct from (satir->'eksik_konular'->>0) then
       raise exception '4b: karnenin alt sınırı geçen ilk konusu %, özet % diyor',
-        karne_ilk, satir->>'en_eksik_konu';
+        karne_ilk, satir->'eksik_konular'->>0;
     end if;
   end;
   raise notice '4 OK — özet, karnenin alt sınırı geçen ilk konusuyla aynı (%)',
-    satir->>'en_eksik_konu';
+    satir->'eksik_konular'->>0;
 
   -- ---------------------------------------------------------------------------
   -- 5. ALT SINIR ISIRIYOR (öğretmenin 3. kararı: en az 5 soru)
@@ -243,16 +245,19 @@ begin
   -- ---------------------------------------------------------------------------
   select e into satir from jsonb_array_elements(v->'ogrenciler') e
    where e->>'id' = ali::text;
-  if satir->>'en_eksik_konu' is not null then
+  -- 0053: "konu yok" artık BOŞ DİZİ, null değil. `jsonb_array_length`
+  -- ile sayılıyor — `is not null` yazsaydık boş dizi de "var" sayılır ve
+  -- ölçüm ölürdü.
+  if jsonb_array_length(satir->'eksik_konular') <> 0 then
     raise exception '6a: hiç yanlışı olmayan öğrenciye konu yazıldı (%)',
-      satir->>'en_eksik_konu';
+      satir->>'eksik_konular';
   end if;
 
   select e into satir from jsonb_array_elements(v->'ogrenciler') e
    where e->>'id' = berk::text;
-  if satir->>'en_eksik_konu' is not null then
+  if jsonb_array_length(satir->'eksik_konular') <> 0 then
     raise exception '6b: hiç göndermeyen öğrenciye konu yazıldı (%)',
-      satir->>'en_eksik_konu';
+      satir->>'eksik_konular';
   end if;
   raise notice '6 OK — yanlışı olmayan ve hiç göndermeyen öğrencide konu boş';
 
@@ -396,6 +401,81 @@ begin
   end if;
   raise notice '9d OK — süresi devam eden ödev yapılmadı sayılmıyor';
 
+  -- ---------------------------------------------------------------------------
+  -- 10. EKSİK KONULAR LİSTESİ (0053): sıra doğru, tavan 3
+  --
+  -- Öğretmenin isteği (yazdırma turu): veliye verilen fişte "eksik olduğu
+  -- konu BAŞLIKLARI" yazsın — çoğul.
+  --
+  -- DÜNYAYA DÖRDÜNCÜ BİR ÖDEV EKLENİYOR. Sebebi ölçülebilirlik: o ana
+  -- kadar Zeynep'in alt sınırı geçen TEK konusu var (Turev). Tek elemanlı
+  -- bir listeyle ne sıralama ne de "en fazla 3" ölçülebilirdi — iddia
+  -- kırılamazdı, yani hiçbir şey kanıtlamazdı.
+  --
+  -- Ö4: 20 soru, dört konu, her konuda 5 soru. Zeynep'in yanlışları
+  -- bilerek kademeli:
+  --   Yamuk Alani  5 yanlış    Oran Oranti   4 yanlış
+  --   Bolunebilme  3 yanlış    Asal Sayilar  2 yanlış
+  -- Turev zaten 2 eksikte. Sıra: Yamuk(5) > Oran(4) > Bolunebilme(3)
+  -- > {Asal, Turev}(2). Tavan 3 çalışıyorsa ilk üçü gelir.
+  --
+  -- KONU ADLARI BİLEREK ALFABETİK SIRAYA TERS. İlk yazımda adlar
+  -- Carpanlar/Denklem/Esitsizlik idi ve eksik sırası ile alfabetik sıra
+  -- AYNI düşüyordu; "sıralama ada göre yapılsın" kusuru ISIRMADI, yani
+  -- sıralama hiç ölçülmüyordu. 7. gruptaki numara/alfabe ayrımının
+  -- aynı gerekçesi.
+  -- ---------------------------------------------------------------------------
+  declare o4 uuid; konular text[]; aday integer;
+  begin
+    o4 := (public.odev_olustur(jt, 'Ozet Odev Dort', null, s_12z, 'test',
+            (current_date + 30), 20,
+            ('{' || (select string_agg(format('"%s":"A"', i), ',')
+                       from generate_series(1, 20) i) || '}')::jsonb,
+            null, null, true, 5::smallint,
+            '{"1":"Yamuk Alani","2":"Yamuk Alani","3":"Yamuk Alani","4":"Yamuk Alani","5":"Yamuk Alani",
+              "6":"Oran Oranti","7":"Oran Oranti","8":"Oran Oranti","9":"Oran Oranti","10":"Oran Oranti",
+              "11":"Bolunebilme","12":"Bolunebilme","13":"Bolunebilme","14":"Bolunebilme","15":"Bolunebilme",
+              "16":"Asal Sayilar","17":"Asal Sayilar","18":"Asal Sayilar","19":"Asal Sayilar","20":"Asal Sayilar"}'::jsonb
+          ))->>'id';
+    perform public.odev_yayinla(jt, o4);
+
+    -- Önce gönder, sonra süreyi doldur (dünyanın kurulumundaki gerekçe).
+    perform public.odev_gonder(jz, o4, 'cozum/' || o4 || '/' || zeynep || '.jpg',
+      '{"1":"B","2":"B","3":"B","4":"B","5":"B",
+        "6":"B","7":"B","8":"B","9":"B","10":"A",
+        "11":"B","12":"B","13":"B","14":"A","15":"A",
+        "16":"B","17":"B","18":"A","19":"A","20":"A"}'::jsonb);
+    update public.odevler set son_tarih = current_date - 3 where id = o4;
+
+    v := public.sinif_ogrenci_ozeti(jt, s_12z);
+    select e into satir from jsonb_array_elements(v->'ogrenciler') e
+     where e->>'id' = zeynep::text;
+
+    select array_agg(k #>> '{}' order by ord) into konular
+      from jsonb_array_elements(satir->'eksik_konular') with ordinality t(k, ord);
+
+    -- Alfabetik sıra bunun TERSİ olurdu (Asal, Bolunebilme, Oran) — iddia
+    -- hem seçimi hem sırayı ölçüyor.
+    if konular <> array['Yamuk Alani', 'Oran Oranti', 'Bolunebilme'] then
+      raise exception '10a: eksik konular %, {Yamuk Alani,Oran Oranti,Bolunebilme} olmalı', konular;
+    end if;
+    raise notice '10a OK — konular en eksikten sıralı (%)', array_to_string(konular, ', ');
+
+    -- TAVANIN GERÇEKTEN ISIRDIĞININ KANITI: alt sınırı geçen ve yanlışı
+    -- olan konu sayısı 3'ten FAZLA olmalı. Olmasaydı "3 tane döndü"
+    -- sonucu tavandan değil, adayların azlığından gelirdi ve ölçüm boş
+    -- geçerdi (5. grubun deseninin aynısı).
+    karne := public.konu_karnesi(jt, null, zeynep);
+    select count(*) into aday
+      from jsonb_array_elements(karne->'konular') k
+     where (k->>'toplam')::int >= 5
+       and ((k->>'toplam')::int - (k->>'dogru')::int) > 0;
+    if aday <= 3 then
+      raise exception '10b: ölçüm boş — aday konu sayısı %, 3''ten fazla olmalıydı', aday;
+    end if;
+    raise notice '10b OK — % aday konu var, liste 3''te kesiliyor', aday;
+  end;
+
   raise notice '';
-  raise notice 'SINIF ÖĞRENCİ ÖZETİ TESTLERİ: 9 GRUP GEÇTİ';
+  raise notice 'SINIF ÖĞRENCİ ÖZETİ TESTLERİ: 10 GRUP GEÇTİ';
 end $$;

@@ -158,7 +158,7 @@ await s.addInitScript(
             // ölçümü de anlamını yitirirdi.
             yapilan: i === 0 ? 2 : 3,
             yapilmayan: i === 0 ? 1 : 0,
-            en_eksik_konu: i === 0 ? 'Turev' : null,
+            eksik_konular: i === 0 ? ['Turev'] : [],
           })),
         });
       }

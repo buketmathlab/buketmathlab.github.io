@@ -98,7 +98,7 @@ await s.addInitScript(
               tur: ogrenci.tur,
               ortalama: 62.5,
               odev_sayisi: 4,
-              en_eksik_konu: 'Köklü Sayılar',
+              eksik_konular: ['Köklü Sayılar'],
             },
           ],
         });
