@@ -109,9 +109,16 @@ export const KAPSAM_NOTU =
   'Sayılar ve ortalama, teslim süresi dolmuş ödevleri kapsar; süresi devam eden ' +
   'ödev hiçbir sayıya girmez.';
 
-/** Fişin altındaki tek satır — kesildikten sonra da nereden geldiği belli olsun. */
+/**
+ * Fişin altındaki tek satır.
+ *
+ * OKUL ADI BURADA YOK, çünkü fişin KENDİ ANTETİNDE var (mühürle
+ * birlikte). İkisi bir aradayken aynı ad fişte iki kez geçiyordu.
+ * Kesildikten sonra da nereden geldiğinin belli olması güvencesi
+ * duruyor — yalnız yeri değişti.
+ */
 export function fisAltNotu(sinifAdi: string, an: Date): string {
-  return `${OKUL_ADI} · ${sinifAdi} · ${tarihYazisi(an)}`;
+  return `${sinifAdi} · ${tarihYazisi(an)}`;
 }
 
 export const BOS_SINIF = 'Bu sınıfta öğrenci yok; yazdırılacak bir şey de yok.';

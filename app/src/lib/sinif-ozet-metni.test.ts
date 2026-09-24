@@ -78,7 +78,20 @@ describe('sinif-ozet-metni', () => {
   });
 
   it('konu varsa olduğu gibi yazılıyor', () => {
-    expect(eksikKonuYazisi(['Köklü Sayılar', 'Üslü İfadeler'])).toBe('Köklü Sayılar');
+    expect(eksikKonuYazisi(['Köklü Sayılar'])).toBe('Köklü Sayılar');
+  });
+
+  /**
+   * EKRANDA DA BAŞLIKLARIN HEPSİ (öğretmenin düzeltmesi).
+   *
+   * Önce yalnız ilki yazılıyordu; öğretmen ekranın da kâğıtla aynı şeyi
+   * söylemesini istedi. Bu ölçüm olmadan bir sonraki turda sessizce
+   * tekile dönerdi.
+   */
+  it('konuların hepsi ekranda', () => {
+    expect(eksikKonuYazisi(['Köklü Sayılar', 'Üslü İfadeler', 'Denklemler'])).toBe(
+      'Köklü Sayılar · Üslü İfadeler · Denklemler',
+    );
   });
 
   /** Tirenin ne anlama geldiği listenin altında yazılı olmalı. */

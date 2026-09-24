@@ -109,15 +109,21 @@ export const KAPSAM_ACIKLAMASI =
   'devam eden ödev hiçbir sayıya girmez.';
 
 /**
- * 0053: alan artık bir DİZİ ve ekran İLK elemanı gösteriyor.
+ * KONU BAŞLIKLARININ HEPSİ — EKRANDA DA (öğretmenin düzeltmesi).
  *
- * Ekranda tek konu yazmak bilinçli: satır dar ve öğretmen listeye göz
- * gezdiriyor. Üç konunun tamamı YAZDIRILAN kâğıtta — orada okumak için
- * yer ve zaman var.
+ * 0053'te alan bir diziye döndü ama ekran yalnız ilkini gösteriyordu;
+ * öğretmen *"ekranda da en çok eksik olduğu konu başlıkları yazılsın"*
+ * dedi. Artık ekran da kâğıtla aynı şeyi söylüyor — iki yüzey aynı
+ * veriden aynı cümleyi kuruyor.
+ *
+ * Ayırıcı orta nokta: virgül, konu adının içindeki virgülle karışırdı
+ * ("Oran, Orantı" tek bir konudur).
+ *
+ * Boş dizide tire; sebebi `KONU_BOS`'un başındaki notta.
  */
 export function eksikKonuYazisi(konular: readonly string[] | null): string {
-  const ilk = konular?.[0];
-  return ilk && ilk.trim() !== '' ? ilk : KONU_BOS;
+  const temiz = (konular ?? []).map((k) => k.trim()).filter((k) => k !== '');
+  return temiz.length > 0 ? temiz.join(' · ') : KONU_BOS;
 }
 
 /** Sınıf kutusunun başlığı ve boş durumu. */

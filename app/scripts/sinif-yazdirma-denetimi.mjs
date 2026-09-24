@@ -120,6 +120,23 @@ await s.addInitScript(
 
 const p = await s.newPage();
 
+/**
+ * TÜRKÇE HARF DUYARSIZ İÇERME.
+ *
+ * Okul adı hem sayfa künyesinde hem fiş antetinde CSS ile BÜYÜK HARFE
+ * çevriliyor ve `innerText` çizilen hâli veriyor. Düz `includes` bunu
+ * bulamaz; `/…/i` de bulamaz, çünkü noktalı büyük İ (U+0130) regex'in
+ * Unicode basit katlamasında küçük "i"ye katlanmıyor. Tek doğru yol
+ * Türkçe yerelle küçültmek.
+ *
+ * BU ÖLÇÜM BİR KEZ YANLIŞ YEŞİL VERDİ: okul adını fişin alt notundan
+ * kaldırdığımda (antette zaten vardı) denetimi YENİDEN DERLEMEDEN
+ * koştum. Eski paket hâlâ küçük harfli adı taşıyordu ve üç iddia da
+ * geçti. Kusurları provalar ortaya çıkardı.
+ */
+const icerir = (metin, aranan) =>
+  metin.toLocaleLowerCase('tr').includes(aranan.toLocaleLowerCase('tr'));
+
 /** Kâğıda GERÇEKTEN çıkan metin: yazdırma kipinde okunuyor. */
 const kagit = async () => {
   await p.emulateMedia({ media: 'print' });
@@ -150,7 +167,7 @@ console.log('2 — KÂĞITTA KÜNYE VAR, KABUK YOK');
 // ===========================================================================
 {
   const k = await kagit();
-  de(k.includes(OKUL), 'okul adı kâğıtta');
+  de(icerir(k, OKUL), 'okul adı kâğıtta');
   de(/\b9A\b/.test(k), 'sınıf adı kâğıtta');
   de(/20\d\d/.test(k) && /\d{2}:\d{2}/.test(k), 'tarih ve saat kâğıtta');
 
@@ -166,6 +183,35 @@ console.log('2 — KÂĞITTA KÜNYE VAR, KABUK YOK');
   });
   await p.emulateMedia({ media: 'screen' });
   de(kunyeKagitta === true, `çıktının künyesi kâğıtta çiziliyor (${kunyeKagitta})`);
+
+  // OKUL MÜHRÜ KÂĞITTA (öğretmenin düzeltmesi: "logoyu kullan").
+  // Kaynağa değil, GERÇEKTEN ÇİZİLDİĞİNE bakılıyor: `naturalWidth`
+  // sıfırsa dosya yüklenmemiştir ve kâğıtta boş bir kutu çıkar.
+  await p.emulateMedia({ media: 'print' });
+  await p.waitForTimeout(400);
+  const muhur = await p.evaluate(() => {
+    const d = document.querySelector('.sk-cikti-kunye img');
+    if (!d) return null;
+    const r = d.getBoundingClientRect();
+    return { yuklendi: d.naturalWidth > 0, g: Math.round(r.width) };
+  });
+  de(muhur?.yuklendi === true, `okul mührü kâğıtta ve yüklendi (${muhur?.g}px)`);
+
+  // OKUL ADI ORTALI (öğretmenin düzeltmesi: "okul adını sayfaya ortala").
+  // Ölçüm CSS sınıfına değil, kutunun sayfadaki YERİNE bakıyor: metnin
+  // merkezi ile kapsayıcının merkezi örtüşmeli. `text-align: center`
+  // yazıp kutuyu sola yapıştırmak da mümkün — o zaman sınıf adı "ortalı"
+  // der ama kâğıtta ortada durmaz.
+  const ortali = await p.evaluate(() => {
+    const ad = document.querySelector('.sk-cikti-okul');
+    const kap = document.querySelector('.sk-cikti-kunye');
+    if (!ad || !kap) return null;
+    const a = ad.getBoundingClientRect();
+    const k = kap.getBoundingClientRect();
+    return Math.round(Math.abs(a.left + a.width / 2 - (k.left + k.width / 2)));
+  });
+  await p.emulateMedia({ media: 'screen' });
+  de(ortali !== null && ortali <= 2, `okul adı sayfaya ortalı (merkez farkı ${ortali}px)`);
 
   // Kabuk ve ekranın kendi düğmeleri kâğıda çıkmamalı.
   de(!k.includes('Çıkış'), 'kabuk kâğıtta YOK (Çıkış düğmesi basılmıyor)');
@@ -222,7 +268,22 @@ console.log('4 — VELİ FİŞİ TEK ÖĞRENCİ TAŞIYOR');
     berk.includes('Uslu Ifadeler') && berk.includes('Denklemler'),
     'fişte konu BAŞLIKLARI (çoğul)',
   );
-  de(berk.includes(OKUL), 'fiş kesildikten sonra da okul adını taşıyor');
+  de(icerir(berk, OKUL), 'fiş kesildikten sonra da okul adını taşıyor');
+
+  // OKUL ADI FİŞTE BİR KEZ. Antet ve alt not bir zamanlar ikisi birden
+  // yazıyordu; aynı ad kesilen küçük bir kâğıtta iki kez geçiyordu.
+  const kacKez = (
+    berk.toLocaleLowerCase('tr').match(new RegExp(OKUL.toLocaleLowerCase('tr'), 'g')) ?? []
+  ).length;
+  de(kacKez === 1, `okul adı fişte bir kez geçiyor (${kacKez})`);
+
+  // FİŞİN KENDİ MÜHRÜ — kesildiğinde tek başına da resmî bir kâğıt.
+  const fisMuhurleri = await p.evaluate(
+    () =>
+      [...document.querySelectorAll('.sk-veli-fis img')].filter((d) => d.naturalWidth > 0)
+        .length,
+  );
+  de(fisMuhurleri === 3, `her fişte okul mührü var (${fisMuhurleri})`);
 
   // ORTALAMASI OLMAYANIN FİŞİNE SIFIR BASILMIYOR.
   const ceren = fisler.find((f) => f.includes('Ceren Yazdirma')) ?? '';
@@ -248,7 +309,7 @@ console.log('5 — SEÇİLMEYEN BÖLÜM KÂĞITTAN DÜŞÜYOR');
   // (U+0130). Regex'in `i` bayrağı Unicode basit katlama kullanıyor ve
   // U+0130 orada küçük "i"ye katlanmıyor. Karşılaştırma TÜRKÇE YERELLE
   // küçültülerek yapılıyor.
-  const fisVarMi = (metin) => metin.toLocaleLowerCase('tr').includes('veli bilgi fişi');
+  const fisVarMi = (metin) => icerir(metin, 'Veli bilgi fişi');
 
   let k = await kagit();
   de(k.includes('Ada Yazdirma'), 'sınıf listesi kâğıtta duruyor');

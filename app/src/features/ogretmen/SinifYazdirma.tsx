@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
+import { SchoolCrest } from '@/components/brand/SchoolCrest';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import {
@@ -183,12 +184,25 @@ export function SinifYazdirma() {
                   return (
                     <div
                       key={o.id}
-                      className="sk-veli-fis rounded-sk-sm border border-line p-3"
+                      className="sk-veli-fis rounded-sk-sm border border-line p-4"
                     >
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
-                        {FIS_BASLIGI}
-                      </p>
-                      <p className="mt-1 font-display text-[18px] font-semibold text-ink">
+                      {/* FİŞİN KENDİ ANTETİ. Fiş kesilip veliye gidiyor;
+                          sayfa künyesi onunla birlikte gitmiyor. Bu
+                          yüzden mühür ve okul adı fişin kendi üstünde —
+                          tek başına kaldığında da resmî bir kâğıt. */}
+                      <div className="flex items-center gap-3 border-b border-ink/20 pb-2">
+                        <SchoolCrest boyut={96} dekoratif className="sk-fis-muhru shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-display text-[11px] font-semibold uppercase leading-tight tracking-[0.06em] text-ink">
+                            {OKUL_ADI}
+                          </p>
+                          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
+                            {FIS_BASLIGI}
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="mt-2 font-display text-[18px] font-semibold text-ink">
                         {o.ad}
                       </p>
                       <p className="text-[13px] text-muted">
@@ -204,7 +218,7 @@ export function SinifYazdirma() {
                       </p>
                       {konu && <p className="mt-1 text-[13px] text-ink">{konu}</p>}
 
-                      <p className="mt-2 text-[10px] leading-snug text-muted">
+                      <p className="mt-3 border-t border-line pt-1 text-[10px] leading-snug text-muted">
                         {fisAltNotu(sinifAdi, an)}
                       </p>
                       <p className="text-[10px] leading-snug text-muted">{KAPSAM_NOTU}</p>
@@ -225,16 +239,42 @@ export function SinifYazdirma() {
  *
  * Ekranda zaten sınıf adı ve başlık var; künyeyi ekranda da göstermek
  * aynı bilgiyi iki kez yazmak olurdu. Kâğıtta ise zorunlu: öğretmenin
- * isteği okul adının ve tarihin çıktıda olması.
+ * isteği okul adının, mührün ve tarihin çıktıda olması.
+ *
+ * -----------------------------------------------------------------------------
+ * RESMÎ BELGE DÜZENİ (öğretmenin düzeltmesi: *"okul adını sayfaya
+ * ortala, logoyu kullan… Okul resmiyetini yansıtmalı."*)
+ *
+ * Bir okul yazısının üstü ortalanır: mühür ortada, altında okul adı,
+ * altında belgenin ne olduğu, en altta tarih ve ince bir çizgi. Sol
+ * hizalı bir başlık, kurumsal bir yazıdan çok bir ekran çıktısına
+ * benzer.
+ *
+ * MÜHÜR YENİDEN ÇİZİLMİYOR, ÖLÇÜSÜ DE KÜÇÜLTÜLMÜYOR (Kural 8).
+ * `SchoolCrest` 96 pikselin altını tip olarak kabul etmiyor; sebebi
+ * dosyasında yazılı — dış halkadaki okul adı ve içerideki çizim o
+ * boyutun altında okunmaz hâle geliyor. Burada en küçük izinli ölçü
+ * kullanılıyor: A4'te yaklaşık 25 mm, bir antetli kâğıdın mührü kadar.
+ *
+ * `dekoratif` VERİLİYOR: okul adı mührün hemen altında GÖRÜNÜR METİN
+ * olarak duruyor. Verilmeseydi ekran okuyucu okulun adını iki kez
+ * okurdu (bileşenin kendi notu).
  */
 function Kunye({ baslik, sinif, an }: { baslik: string; sinif: string; an: Date }) {
   return (
     <div className="sk-cikti-kunye hidden print:block">
-      <p className="text-[15px] font-semibold text-ink">{OKUL_ADI}</p>
-      <p className="text-[13px] text-ink">
-        {sinif} — {baslik}
-      </p>
-      <p className="text-[12px] text-muted">{tarihYazisi(an)}</p>
+      <div className="flex flex-col items-center text-center">
+        <SchoolCrest boyut={96} dekoratif />
+        <p className="sk-cikti-okul mt-2 font-display text-[16px] font-semibold uppercase tracking-[0.08em] text-ink">
+          {OKUL_ADI}
+        </p>
+        <p className="mt-1 text-[14px] font-semibold text-ink">
+          {sinif} — {baslik}
+        </p>
+        <p className="text-[12px] text-muted">{tarihYazisi(an)}</p>
+      </div>
+      {/* İnce çizgi: künyeyi belgenin gövdesinden ayırıyor. */}
+      <div className="mt-3 border-b border-ink/30" />
     </div>
   );
 }

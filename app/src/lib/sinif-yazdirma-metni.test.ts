@@ -135,13 +135,15 @@ describe('sinif-yazdirma-metni', () => {
   /**
    * FİŞ KESİLDİKTEN SONRA DA NEREDEN GELDİĞİNİ SÖYLÜYOR.
    *
-   * Sayfa başlığı kesilince gidiyor; okul, sınıf ve tarih fişin kendi
-   * içinde de duruyor.
+   * Sayfa künyesi kesilince gidiyor; sınıf ve tarih fişin kendi içinde
+   * duruyor. OKUL ADI ALT NOTTA DEĞİL — fişin kendi antetinde, mührün
+   * yanında. Bir zamanlar ikisinde birden vardı ve aynı ad fişte iki kez
+   * geçiyordu; bu iddia tekrarın geri gelmesini de engelliyor.
    */
-  it('fiş alt notu okul, sınıf ve tarihi taşıyor', () => {
+  it('fiş alt notu sınıf ve tarihi taşıyor, okul adını tekrarlamıyor', () => {
     const y = fisAltNotu('9A', AN);
-    expect(y).toContain(OKUL_ADI);
     expect(y).toContain('9A');
     expect(y).toMatch(/2026/);
+    expect(y).not.toContain(OKUL_ADI);
   });
 });

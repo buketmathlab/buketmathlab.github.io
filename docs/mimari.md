@@ -4955,3 +4955,62 @@ Okulun adı iki ayrı dize olarak duruyor: çıktıdaki
 yazdığı hâl, giriş ekranıyla aynı) ve armanın erişilebilirlik metni
 `SchoolCrest.TAM_AD` ("Beşiktaş" ile başlıyor). İkisi BİLEREK ayrı —
 armaya dokunulmuyor (Kural 8) — ama bu bir gün karışabilir.
+
+### Düzeltme turu: ekranda da başlıklar, kâğıtta mühür ve ortalı ad
+
+Öğretmenin düzeltmesi: *"Ekranda da en çok eksik olduğu konu başlıkları
+yazılsın. Okul adını sayfaya ortala, logoyu kullan, kâğıtta uygun bir
+yere okul logosunu kullan… Daha şık profesyonel bir sayfa olmalı. Okul
+resmiyetini yansıtmalı."*
+
+- **Ekran da kâğıtla aynı şeyi söylüyor**: satırda artık başlıkların
+  hepsi, orta noktayla ayrılmış. (Virgül seçilmedi — "Oran, Orantı" tek
+  bir konu adı olabilir.)
+- **Sayfa künyesi ortalı**: mühür ortada, altında okul adı, belgenin ne
+  olduğu, tarih ve ince bir çizgi. Bir okul yazısının üstü ortalanır;
+  sol hizalı başlık kurumsal bir belgeden çok ekran çıktısına benzer.
+- **Mühür kâğıtta** — `SchoolCrest`, **Kural 8**: çizime dokunulmadı.
+  Bileşen 96 pikselin altını tip olarak kabul etmiyor ve bu kısıt
+  yerinde kaldı; fişlerde yalnız **baskı ölçüsü** CSS ile 14 mm'ye
+  ayarlandı. Gerekçesi ortam farkı: 300 dpi baskıda 14 mm, ekrandaki 96
+  pikselden daha fazla detay taşıyor.
+- **Her fişin kendi anteti var**: mühür + okul adı + "Veli bilgi fişi".
+  Fiş kesilip veliye gidiyor; sayfa künyesi onunla birlikte gitmiyor.
+- Okul adı fişin alt notundan **çıkarıldı**: antet zaten söylüyordu, aynı
+  ad küçük bir kâğıtta iki kez geçiyordu. Denetim artık **bir kez**
+  geçtiğini sayıyor.
+
+#### Ölçüm bir kez YANLIŞ YEŞİL verdi
+
+Okul adını fişin alt notundan kaldırdıktan sonra denetimi **yeniden
+derlemeden** koştum. Tarayıcı eski paketi açtı, o pakette ad hâlâ küçük
+harfle alt notta duruyordu ve üç iddia da geçti. Oysa yeni kâğıtta adın
+tek geçtiği yerler **büyük harfe çevrilmiş** anteti ve künyesi;
+`includes` onları bulamazdı.
+
+Kusuru provalar ortaya çıkardı: prova her seferinde yeniden derliyor ve
+birbiriyle ilgisiz dört prova birden "okul adı kâğıtta" satırını kırdı.
+Ders iki katlı — **derlemeden koşulan bir tarayıcı denetimi, ölçtüğünü
+sandığın şeyi ölçmez** ve Türkçe büyük İ tuzağı bu turda ikinci kez
+karşıya çıktı. Karşılaştırmalar tek bir `icerir()` yardımcısında
+toplandı (`toLocaleLowerCase('tr')`).
+
+#### İki prova da bozuktu
+
+- *"Fiş bütün sınıfın adlarını taşıyor"* provasının çıpası, fişe antet
+  eklenince eskimişti — "kusur inmedi" diyordu.
+- *"Ekranda yalnız ilk konu"* provası hiç çalışmıyordu: `python3 -`
+  betiği stdin'den okur ve o satırda **heredoc yoktu**; boş program
+  sessizce başarıyla bitiyor, hiçbir kusur inmiyor ve prova "ısırmadı"
+  diye rapor veriyordu. Ortak `yama` işlevine bağlandı.
+
+#### Kusur provaları — onu da ısırdı
+
+| Prova | Kırılan |
+| --- | --- |
+| Okul mührü kâğıttan kalkıyor | `2: okul mührü kâğıtta ve yüklendi` |
+| Okul adı sola yaslanıyor | `2: merkez farkı 380px` |
+| Fişin anteti kalkıyor | `4: fiş kesildikten sonra da okul adını taşıyor` |
+| Ekranda yalnız ilk konu yazılıyor | `konuların hepsi ekranda` |
+
+(Önceki altı prova da yeniden koşuldu ve ısırdı.)

@@ -279,4 +279,16 @@
     /* Ekranda 360 px'de tek sütun; kâğıtta A4 iki sütunu rahat taşıyor. */
     grid-template-columns: 1fr 1fr;
   }
+
+  /* FİŞİN MÜHRÜ KÂĞITTA KÜÇÜLÜYOR — ama ÇİZİM DEĞİŞMİYOR (Kural 8).
+     `SchoolCrest` 96 pikselin altını tip olarak kabul etmiyor ve bu
+     doğru: ekranda 96'nın altında detay okunmaz. KÂĞIT BAŞKA BİR ORTAM.
+     A4'te 96 px ≈ 25 mm ve iki sütunlu bir fişin üçte biri demek; 300
+     dpi baskıda 14 mm'lik bir mühür ekrandaki 96 pikselden çok daha
+     fazla detay taşıyor. Kısıt bileşende yerinde duruyor, burada
+     yalnız BASKI ÖLÇÜSÜ ayarlanıyor. */
+  .sk-fis-muhru {
+    width: 14mm !important;
+    height: 14mm !important;
+  }
 }
