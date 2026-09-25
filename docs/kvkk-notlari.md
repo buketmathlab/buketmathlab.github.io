@@ -267,3 +267,26 @@ canlıda da doğrulandı: 401/42501), ama yeniden açılsalar hiçbir test
 yakalamayacaktı. Süpürme artık katalogdan sayıyor: yeni bir dahili
 fonksiyon ya da tablo eklemek onu kendiliğinden nöbete sokuyor. Kapsam
 15 → 31 fonksiyon, 17 → 18 tablo.
+
+## Bildirimler (0054) — yeni kişisel veri toplanmıyor
+
+Bildirim listesi **türetiliyor**: satırlar zaten var olan `mesajlar`,
+`odevler` ve `gonderimler` kayıtlarından okunuyor. Yeni bir kişisel veri
+alanı açılmadı, hiçbir yerden telefon numarası ya da e-posta istenmedi —
+şemada o sütunlar hiç yok ve bu turda da eklenmedi.
+
+İki yapı eklendi, ikisi de kişisel veri taşımıyor:
+
+- `odevler.yayin_zamani` — ödevin yayınlandığı an. Ödeve ait, öğrenciye
+  değil.
+- `bildirim_gorulme (ogrenci_id, rol, zaman)` — kimin bildirimleri en son
+  ne zaman **gördüğü**. Tek bir zaman damgası; hangi satırın okunduğu
+  tutulmuyor, içerik tutulmuyor.
+
+`bildirim_gorulme` öğrenci silindiğinde `on delete cascade` ile birlikte
+gidiyor.
+
+**Telefona bildirim gönderilmiyor** ve bu ekranda açıkça yazıyor. Web
+push bir sonraki tura kalıyor; geldiğinde **her öğrencinin tek tek izni**
+gerekecek (tarayıcı izni) ve abonelik kaydı yeni bir kişisel veri olacak
+— o tur bu notu ayrıca güncelleyecek.

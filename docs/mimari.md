@@ -5014,3 +5014,169 @@ toplandı (`toLocaleLowerCase('tr')`).
 | Ekranda yalnız ilk konu yazılıyor | `konuların hepsi ekranda` |
 
 (Önceki altı prova da yeniden koşuldu ve ısırdı.)
+
+## Bildirimler — uygulama içi bildirim merkezi (0054)
+
+Öğretmenin isteği: *"her mesajda, ödev verildiğinde, ödev teslimi
+yaklaştığında, ödev sonucu açıklandığında öğrenciye bildirim gitsin."*
+
+O güne kadar öğrenci ve veli **yalnız mesaj için** bir işaret görüyordu
+(0025'in `okunmamis_mesaj` rozeti). Öbür üç olay hiçbir yerde haber
+verilmiyordu: yeni ödev ancak Ödevler sekmesi açılırsa, teslim ancak
+tarihe bakılırsa, puan ancak o ödeve girilirse görülüyordu.
+
+### Öğretmenin dört kararı
+
+| Soru | Karar |
+| --- | --- |
+| Kanal | **Önce uygulama içi** (zil + liste + rozet); telefon bildirimi ayrı tur |
+| Kim alsın | **Öğrenci dördünü, veli üçünü** — veliye "teslim yaklaşıyor" gitmiyor |
+| Teslim hatırlatması | **Son günden 1 gün önce** |
+| Sonuç bildirimi | **Öğretmen puanı verince** (test ödevinde gitmiyor) |
+
+`teslim` yalnız öğrenciye: o hatırlatma çocuğa **yapılacak işi** söylüyor;
+veliye gitse aynı cümle baskı aracına dönüşebilir. `sonuc` yalnız açık
+uçlu ödevde: test ödevinde puan gönderim anında hesaplanıp aynı ekranda
+görünüyor, ikinci haber gürültü.
+
+### DEFTER YOK — bildirimler türetiliyor
+
+En beklenen tasarım bir `bildirimler` tablosu yazıp dört ucun içine satır
+eklemekti. Yapılmadı: **defter yalan söyleyebilir, türetme söyleyemez.**
+
+- Öğretmen ödevi yayından kaldırırsa defterdeki "Yeni ödev: Köklü
+  Sayılar" satırı orada kalır ve öğrenci var olmayan bir ödevin
+  bildirimini görür. Türetilen liste o ödevi **aynı anda** bırakır.
+- Öğrenci ödevini gönderirse "teslimi yarın" kendiliğinden kaybolur;
+  defterde onu silmek için **ikinci bir yazıcı** gerekirdi.
+- Dört ayrı ucun gövdesine dokunmak gerekmiyor (0022'nin kuralı).
+- **Zamanlayıcıya hiç gerek kalmıyor** — "teslimi yarın" satırı o gün
+  geldiğinde sorgunun sonucunda var oluyor. (pg_cron zaten kurulu değil.)
+
+Bedeli dürüstçe: türetme *"bu bildirimi gönderdik"* kaydı tutmuyor.
+Telefon bildirimi turunda o kayıt gerekecek (aynı bildirimi iki kez
+itmemek için) ve **bu sorgunun üstüne** gelecek.
+
+### `odevler.yayin_zamani` neden gerekti
+
+`updated_at` **kullanılamaz**: `odevler_updated_at` tetikleyicisi her
+düzenlemede ileri atıyor; bir ay önce yayınlanmış bir ödevin başlığı
+bugün düzeltilse "yeni ödev" bildirimi dirilirdi.
+
+`odev_yayinla` aynı imzayla yeniden kuruldu (0007 tuzağı yok) ve damgayı
+`coalesce(yayin_zamani, now())` ile yazıyor: ödev yayından kaldırılıp
+tekrar yayınlanırsa damga **değişmiyor**, yoksa eski bir ödev ikinci kez
+"yeni" olurdu.
+
+Geriye dönük doldurma 0041'in çıpalı deseni: `denetim_izi`'nden
+`odev_yayinlandi` kaydının `min(zaman)`'ı, kaydı olmayanda `created_at`.
+Migration **kaç ödevin hangi kaynaktan** damgalandığını `raise notice` ile
+bildiriyor. (Yerel test dünyasında ikisi de sıfırdı; canlıda sayı
+panelin çıktısında görünecek.)
+
+### `okundu` tablosu paylaşılmadı
+
+`bildirim_gorulme` ayrı bir tablo. `okundu`'ya yeni bir `kanal` değeri
+olarak eklemek, onun `rol`/`kanal` kısıtlarını genişletmek ve kullanan üç
+ucu (mesaj rozeti, `ogretmen_okudu`, `yazisma_listesi`) aynı anda riske
+atmak demekti — 0019'un dosyada yazılı uyarısı o tablonun
+paylaşılmasının zaten kafa karıştırdığını söylüyor. Ayrı tablo, aynı
+şekil.
+
+### Rozet ile liste ayrışmıyor
+
+`bildirim_sayim` ayrı bir uç (0022'nin gerekçesi: rozet her ekranda
+duruyor, sekme açılmadan bildirim metinlerini indirmenin sebebi yok) —
+**ama aynı sorguyu çağırıyor**, `_bildirimlerim`'i. İkinci bir sayma
+sorgusu yazılmadı: 0030'un dersi, iki yol bir gün ayrışır ve rozet "3"
+derken listede 2 satır çıkar. Eşitlik 14. grupta ölçülüyor ve kusur
+provası onu kırıyor.
+
+### Zil sekme değil — ve bu ölçümle karar verildi
+
+Plan "360 px'de üst satır zaten sıkışık; zil eklendiğinde ad kesiliyorsa
+**geri adım beşinci sekme**" diye yazmıştı. Ölçüm:
+
+| Durum | Ada düşen genişlik | Başlık yüksekliği | Yatay taşma |
+| --- | --- | --- | --- |
+| Zilsiz (bugünkü) | 128 px | 73,75 px | 0 |
+| Zilli | 84 px | 73,75 px | 0 |
+
+21 harflik bir ad **iki durumda da iki satıra** iniyor, başlık yüksekliği
+değişmiyor. Yani zilin bedeli yok; beşinci sekmeye gerek kalmadı.
+
+**`truncate` denendi ve geri alındı.** İlk yazımda adı `truncate`
+yapmıştım ve denetim bunu kırmızıya çevirdi (148 gereken / 84 olan): ad
+"Abdurrahman Şah…" diye kesiliyordu. Ortak bir tablette öğrencinin doğru
+hesapta olduğunu görmesi kritik — kesilmiş bir ad bunu yapamaz. Sarmak
+çirkin, **kesmek yanlış**. Karar masa başında değil ölçüyle verildi ve
+ölçüm hâlâ nöbette: `truncate` geri gelirse 1. grup kırılıyor.
+
+### Veliye "teslimi yarın" gitmemesi arayüz süzgeci DEĞİL
+
+`_bildirimlerim` o satırı `p_rol = 'ogrenci'` koşuluyla üretiyor; veli
+jetonuyla satır **hiç doğmuyor** (Part XXI: göstermediğini gönderme).
+`BildirimListesi` hiçbir şey süzmüyor. Denetimin 4. grubu bunu iki yönlü
+ölçüyor: **4a** veli ekranında satır yok (üç türün çizildiği pozitif
+kontrolle birlikte), **4b negatif kontrol** sunucu gönderirse arayüzün
+onu **çizeceği**. İkincisi olmadan 4a, arayüze sessizce eklenmiş bir
+süzgeci sunucunun güvencesi sanardı — ve kusur provası tam bunu deneyip
+4b'yi kırıyor.
+
+### Dürüst sınır ekranda yazılı
+
+*"Bildirimler uygulamayı açtığınızda görünür; telefona ayrıca bildirim
+gönderilmez."* Bunu yazmamak, öğrencinin "bana haber gelir" diye
+beklemesine yol açardı. Boş listede de yazıyor: "bana haber gelmiyor mu?"
+sorusu tam o anda doğuyor.
+
+Telefon bildiriminin ölçülmüş gereksinimleri (ayrı tur): servis çalışanı
+(bugün bilerek yok, `pwa-denetimi.mjs` her koşuda **yokluğunu** ölçüyor) ·
+VAPID anahtarları · abonelik tablosu · gönderici Edge Function ·
+iPhone'da yalnız ana ekrana eklenmiş uygulamada · her öğrencinin tek tek
+izni.
+
+### Bilinen davranış
+
+Öğretmen puanı sonradan düzeltirse `sonuc` satırı yeniden "yeni" oluyor
+(`gonderimler.updated_at` ilerliyor). Yanlış değil: yeniden değerlendirme
+gerçekten haberdir.
+
+### Test dosyası adı 0022'nin süitini ezdi
+
+Bu turun asıl dersi burada. 14 gruplu yeni süiti `bildirim_testleri.sql`
+diye yazdım — **o ad zaten vardı**, 0022'nin rozet sayıları süiti. Dosya
+sessizce üzerine yazıldı, `calistir.sh` aynı dosyayı iki kez çağırmaya
+başladı ve **zincir yeşil kaldı**: yerine geçen süit de geçiyordu. 0022'nin
+altı grubu koşmuyordu ve hiçbir ölçüm bunu söylemedi.
+
+Zincirin çıktısını satır satır okurken görüldü: "Bildirim sayıları
+testleri (0022)" başlığının altında "BİLDİRİM **TESTLERİ**: 14 GRUP
+GEÇTİ" yazıyordu. Süit `bildirim_merkezi_testleri.sql`'e taşındı, 0022'nin
+dosyası geri alındı, bitiş satırları ayrıldı. **Yeşil bir zincir, koşan
+her testin koştuğunu kanıtlamaz** — kaybolan bir test de sessizdir.
+
+### Kusur provaları — on ikisi de ısırdı
+
+| SQL provası | Kırılan |
+| --- | --- |
+| `yeni` her zaman `true` | `3b` işaretlemeden sonra yeni sayısı |
+| `teslim` her gün doğuyor | `4b` teslimi uzak ödeve hatırlatma |
+| `teslim` veliye de gidiyor | `5a` veliye hatırlatma gitti |
+| `tur='acik'` süzgeci kalkıyor | `6a` test ödevi sonuç doğurdu |
+| Kanal süzgeci kalkıyor | `7a` öğrencinin mesaj sayısı |
+| `yayinda` süzgeci kalkıyor | `8b` kaldırılan ödevin bildirimi duruyor |
+| Damga her yayınlamada güncelleniyor | `12b` ikinci yayın damgayı değiştirdi |
+| Rozet kendi sorgusunu yazıyor | `14a` rozet 3, liste 6 |
+
+| Arayüz provası | Kırılan |
+| --- | --- |
+| Liste ters çevriliyor | `2: en üstteki en yeni` |
+| Görüldü damgası başka uca gidiyor | `3: bildirim_goruldu bir kez çağrıldı (0)` |
+| Arayüze teslim süzgeci ekleniyor | `4b negatif kontrol` |
+| Ad yeniden kırpılıyor | `1: 360 px'de ad kesilmiyor` |
+
+Arayüz provalarının ilkinde bir prova **derlenmedi** (gövdeyi silmek `rpc`
+içe aktarmasını kullanılmaz yapıyordu) ve "geçersiz" sayıldı: derlenmeyen
+bir kusur hiçbir şey kanıtlamaz. Uç adını yanlış yazan — hem gerçekçi hem
+derlenebilir — bir kusurla değiştirildi.

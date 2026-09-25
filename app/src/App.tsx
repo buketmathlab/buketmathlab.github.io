@@ -19,6 +19,7 @@ import { OgrenciKarnem } from '@/features/ogrenci/OgrenciKarnem';
 import { Odevlerim } from '@/features/ogrenci/Odevlerim';
 import { OgrenciMesajlar } from '@/features/ogrenci/OgrenciMesajlar';
 import { OdevTeslim } from '@/features/ogrenci/OdevTeslim';
+import { BildirimListesi } from '@/features/paylasilan/BildirimListesi';
 import { Pano } from '@/features/ogretmen/Pano';
 import { Ayarlar } from '@/features/ogretmen/Ayarlar';
 import { Ogretmenler } from '@/features/ogretmen/Ogretmenler';
@@ -88,6 +89,8 @@ function Yonlendirme() {
           <Route path="odevler" element={<Odevlerim />} />
           <Route path="konularim" element={<OgrenciKarnem />} />
           <Route path="mesajlar" element={<OgrenciMesajlar />} />
+          {/* 0054 — BİLDİRİMLER SEKME DEĞİL, üst satırdaki zilin hedefi. */}
+          <Route path="bildirimler" element={<BildirimListesi rol="ogrenci" />} />
           {/* Teslim ekranı SEKME DEĞİL: bir ödevin içi. Sekme çubuğu
               üstte duruyor, öğrenci Ödevler'e tek dokunuşla dönüyor. */}
           <Route path="odev/:id" element={<OdevTeslim />} />
@@ -111,6 +114,11 @@ function Yonlendirme() {
               zaten sunucuda: okul öğrencisinde `odemeler` boş geliyor. */}
           <Route path="odemeler" element={<VeliOdemeler />} />
           <Route path="mesajlar" element={<VeliMesajlar />} />
+          {/* 0054 — AYNI BİLEŞEN, yalnız `rol` farklı. İki kopya bir gün
+              ayrışırdı. "Teslimi yarın" satırının veliye gelmemesi burada
+              değil sunucuda: `_bildirimlerim` onu `p_rol = 'ogrenci'`
+              koşuluyla üretiyor. */}
+          <Route path="bildirimler" element={<BildirimListesi rol="veli" />} />
         </Route>
         <Route path="*" element={<Navigate to="/veli" replace />} />
       </Routes>

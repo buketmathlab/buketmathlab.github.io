@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { SekizWordmark } from '@/components/brand/SekizWordmark';
+import { BildirimZili } from '@/components/layout/BildirimZili';
 import { Button } from '@/components/ui/Button';
 import { SekmeCubugu, type SekmeTanim } from '@/components/layout/SekmeCubugu';
 import { SEKME_IKON } from '@/components/layout/sekme-ikonlari';
@@ -51,13 +52,32 @@ export function OgrenciKabuk() {
               burada kritik olan HANGİ ÖĞRENCİ olduğu — ortak bir tablette
               yanlış hesapla gönderilen ödev geri alınamaz. */}
           <SekizWordmark boyut="sm" bicim="sade" />
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2">
             {ogrenci && (
               <p className="min-w-0 text-right text-[13px] leading-tight">
                 <span className="block font-semibold text-ink">{ogrenci.ad}</span>
-                {ogrenci.sinif && <span className="block text-muted">{ogrenci.sinif}</span>}
+                {ogrenci.sinif && (
+                  <span className="block text-muted">{ogrenci.sinif}</span>
+                )}
               </p>
             )}
+            {/* 0054 — ZİL SEKME DEĞİL, üst satırda.
+
+                360 px'DE ÖLÇÜLDÜ, masa başında karar verilmedi:
+                  • zilsiz hâlde ada 128 px düşüyordu,
+                  • zil eklenince 84 px,
+                  • ama uzun bir ad (21 harf) İKİ SATIRA ZATEN İNİYORDU;
+                    başlık yüksekliği iki durumda da 73,75 px ve yatay
+                    taşma ikisinde de sıfır.
+                Yani zilin bedeli yok — ad kırpılmıyor, yalnız daha erken
+                sarıyor.
+
+                `truncate` DENENDİ VE GERİ ALINDI: adı "Abdurrahman Şah…"
+                diye kesiyordu. Ortak bir tablette öğrencinin doğru
+                hesapta olduğunu görmesi kritik (bu dosyanın kendi
+                gerekçesi); kesilmiş ad bunu yapamaz. Sarmak çirkin,
+                kesmek yanlış. */}
+            <BildirimZili yol="/ogrenci/bildirimler" />
             <Button tur="sade" olcu="sm" onClick={cikisYap}>
               Çıkış
             </Button>

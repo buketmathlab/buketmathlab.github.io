@@ -849,3 +849,31 @@ export type SinifOgrenciOzeti = {
     eksik_konular: string[];
   }>;
 };
+
+/**
+ * `bildirimlerim` (0054) — öğrenci ve veli bildirim listesi.
+ *
+ * DEFTER YOK: satırlar dört kaynaktan TÜRETİLİYOR. Öğretmen ödevi
+ * yayından kaldırırsa `odev` satırı aynı anda kayboluyor; öğrenci ödevi
+ * gönderirse `teslim` satırı kendiliğinden düşüyor. Bir `bildirimler`
+ * tablosu bunu ikinci bir yazıcı olmadan yapamazdı.
+ */
+export type BildirimSatiri = {
+  tur: 'mesaj' | 'odev' | 'teslim' | 'sonuc';
+  /** `mesaj`ta mesajın, `odev`de yayının, `sonuc`ta puanlamanın zamanı. */
+  zaman: string;
+  /** Ödevin başlığı; `mesaj` satırlarında `null`. */
+  baslik: string | null;
+  odev_id: string | null;
+  /**
+   * Son `bildirim_goruldu` damgasından SONRA doğdu mu. Rozetin saydığı
+   * şey bu — okunma kaydı satır satır değil, tek bir damga.
+   */
+  yeni: boolean;
+};
+
+export type Bildirimlerim = {
+  bildirimler: BildirimSatiri[];
+  /** `bildirim_sayim`ın döndürdüğü sayının aynısı — sunucuda ölçülüyor. */
+  toplam_yeni: number;
+};

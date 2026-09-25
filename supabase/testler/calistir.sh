@@ -202,6 +202,10 @@ echo "==> Sınıf öğrenci özeti testleri (0051 + 0052 + 0053)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/sinif_ogrenci_ozeti_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Bildirim merkezi testleri (0054)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/bildirim_merkezi_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Öğretmen sınıfları testleri (0050)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/ogretmen_siniflari_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

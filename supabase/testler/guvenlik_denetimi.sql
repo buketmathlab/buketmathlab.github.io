@@ -124,6 +124,23 @@ begin
                -- `ewalu_mesaj_yaz` listede YOK, yani öğretmene özel olduğu
                -- burada ölçülmeye devam ediyor.
                'ewalu_mesajlari',
+               -- 0054: bildirim merkezinin üç ucu ÖĞRENCİ VE VELİNİN KENDİ
+               -- uçları — kişi kendi bildirimlerini okuyor, kendi görülme
+               -- işaretini koyuyor, kendi rozet sayısını alıyor. Başka bir
+               -- öğrenci seçilemiyor: hangi öğrencinin bildirimleri
+               -- döneceği ARGÜMANDAN DEĞİL, jetonun kendisinden geliyor
+               -- (`_oturum` → `o.ogrenci_id`).
+               --
+               -- MUAFİYET "KAPI AÇILDI" DEMEK DEĞİL; ters yön ayrıca
+               -- ölçülüyor: `bildirim_testleri.sql` 11. grup ÖĞRETMEN
+               -- jetonunun 42501 ile reddedildiğini ve onamsız velinin
+               -- giremediğini, 10. grup da başka öğrencinin bildiriminin
+               -- sızmadığını sınıyor.
+               --
+               -- `_bildirimlerim` LİSTEDE YOK ve olmamalı: o dahili ve
+               -- anon'a hiç açık değil — 0054 kendi denetiminde bunu da
+               -- ayrıca ölçüyor.
+               'bildirimlerim', 'bildirim_goruldu', 'bildirim_sayim',
                -- rol şartı taşımayan üçlü (1c ayrıca sayıyor)
                'giris', 'cikis', 'pin_ayarla'
              )

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { SekizWordmark } from '@/components/brand/SekizWordmark';
+import { BildirimZili } from '@/components/layout/BildirimZili';
 import { Button } from '@/components/ui/Button';
 import { SekmeCubugu, type SekmeTanim } from '@/components/layout/SekmeCubugu';
 import { SEKME_IKON } from '@/components/layout/sekme-ikonlari';
@@ -62,7 +63,7 @@ export function VeliKabuk() {
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex w-full max-w-[880px] items-center justify-between gap-3 px-4 py-3">
           <SekizWordmark boyut="sm" bicim="sade" />
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2">
             {ogrenci && (
               <p className="min-w-0 text-right text-[13px] leading-tight">
                 <span className="block font-semibold text-ink">{ogrenci.ad}</span>
@@ -71,6 +72,11 @@ export function VeliKabuk() {
                 </span>
               </p>
             )}
+            {/* ZİL ONAM BEKLERKEN ÇİZİLMİYOR (0034'ün kapısı). Kapalı bir
+                kapının önünde zil göstermek, dokunulduğunda 42501 veren
+                bir ekrana götürürdü: `bildirimlerim` de `_onam_kapisi`'nden
+                geçiyor. */}
+            {!onamBekliyor && <BildirimZili yol="/veli/bildirimler" />}
             <Button tur="sade" olcu="sm" onClick={cikisYap}>
               Çıkış
             </Button>
