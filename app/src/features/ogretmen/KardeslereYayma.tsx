@@ -160,7 +160,7 @@ export function KardeslereYayma({ odevId, kaynakSinif, kardesler, onYayildi }: P
         onOnay={() => void yay()}
         onayYukleniyor={yayiyor}
       >
-        <p className="text-[14px] text-ink">Taşınacaklar: başlık, açıklama, cevap anahtarı, soru ve şık sayısı, konular, iki PDF.</p>
+        <p className="text-[14px] text-ink">Taşınacaklar: başlık, açıklama, cevap anahtarı, soru ve şık sayısı, sayfa sınırı, konular, iki PDF.</p>
         <p className="mt-2 text-[14px] text-muted">
           <strong>Taşınmayacaklar:</strong> son tarih, geç teslim izni ve yayında olma
           durumu. Her sınıfın kendi programı korunuyor.

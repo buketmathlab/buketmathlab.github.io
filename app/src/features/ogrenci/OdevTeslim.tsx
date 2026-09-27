@@ -14,24 +14,28 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import { dosyaAdresi, dosyaYukle } from '@/services/dosya';
+import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
 import { sureDurumu } from '@/lib/son-tarih';
+import {
+  cozumSayfaYolu,
+  oncedenYuklenenMetni,
+  sahnedenCikar,
+  sahneyeEkle,
+  sayfaSiniriniOku,
+  tasmaMetni,
+  yarimKalanMetni,
+} from '@/lib/cozum-sayfalari';
+import { SayfaSahnesi, type Sayfa } from './SayfaSahnesi';
 import type { OdevKiyasi, OgrenciOdev, OgrenciOdevleri } from '@/types/api';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-/**
- * Çözüm fotoğrafının yolu HESAPLANIR, uydurulmaz.
- *
- * Sunucu (`_cozum_yolu_gecerli`, migration 0009) tam olarak bu kalıbı
- * bekliyor: yol öğrencinin ve ödevin kimliğini taşıdığı için başkasının
- * yoluna yükleme yapılamıyor. Rastgele bir yol üretirsek sunucu haklı
- * olarak reddeder.
- */
-function cozumYolu(odevId: string, ogrenciId: string): string {
-  return `cozum/${odevId}/${ogrenciId}.jpg`;
-}
+// Çözüm fotoğrafının yolu HESAPLANIR, uydurulmaz: `cozumSayfaYolu`
+// (lib/cozum-sayfalari.ts). Sunucu (`_cozum_yolu_gecerli`, 0009 ve 0054)
+// tam o kalıbı bekliyor — yol öğrencinin ve ödevin kimliğini taşıdığı için
+// başkasının yoluna yükleme yapılamıyor. 1. sayfanın yolu 0009'dan beri
+// aynı; ek sayfalar `-n` ekiyle.
 
 /**
  * Öğrencinin ödev ekranı: soruları aç, cevapla, gönder, puanını gör.
@@ -55,10 +59,30 @@ export function OdevTeslim() {
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoHatasi, setFotoHatasi] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  // Çok sayfalı yol (0054) — yalnız sınır > 1 iken kullanılıyor.
+  const [sayfalar, setSayfalar] = useState<Sayfa[]>([]);
+  const [isliyor, setIsliyor] = useState(false);
 
   const { veri, durum, hata, yenile } = useVeri<OgrenciOdevleri>('ogrenci_odevleri', {
     p_token: oturum?.token,
   });
+
+  /**
+   * SAYFA SINIRI (0054) — ayrı uç, `ogrenci_odevleri`'ne EKLENMEDİ (aşağıdaki
+   * iki ucun gerekçesiyle aynı: 300 satırlık gövdeyi kopyalamamak).
+   *
+   * HATASI YUTULUYOR ve sınır 1 sayılıyor: uç kurulmamışsa ya da o an
+   * ulaşılamıyorsa öğrenci bugünkü tek alanı görür. 1 her ödevde geçerli;
+   * bir ayarın okunamaması ödev göndermeyi engellememeli (Part VIII).
+   */
+  const { veri: hamSinir, durum: sinirDurumu } = useVeri<number>('odev_sayfa_siniri', {
+    p_token: oturum?.token,
+    p_odev_id: id,
+  });
+  const sinir = sayfaSiniriniOku(hamSinir);
+  // Sınır gelmeden alan çizilmiyor: önce tek alan gösterip sonra çok sayfalıya
+  // geçmek, öğrencinin o arada seçtiği fotoğrafı ortada bırakırdı.
+  const sinirHazir = sinirDurumu !== 'yukleniyor';
 
   /**
    * Öğretmenin yazdığı Ewalu cümleleri (0032).
@@ -119,28 +143,99 @@ export function OdevTeslim() {
     }
   }
 
+  /**
+   * Çok sayfalı seçim (0054). Sıkıştırma SEÇİM ANINDA — tek alanlı yolla
+   * aynı gerekçe: "Gönder"de beklenen süre kısalsın, okunamayan dosya
+   * gönderimden önce anlaşılsın. Sınırı aşanlar hiç sıkıştırılmıyor.
+   */
+  async function sayfaEkle(dosyalar: File[]) {
+    setFotoHatasi(null);
+    const yer = Math.max(0, sinir - sayfalar.length);
+    const alinacak = dosyalar.slice(0, yer);
+    const hazir: Sayfa[] = [];
+    const okunamayan: string[] = [];
+
+    setIsliyor(true);
+    try {
+      for (const d of alinacak) {
+        try {
+          hazir.push({ id: crypto.randomUUID(), dosya: await gorseliSikistir(d) });
+        } catch {
+          okunamayan.push(d.name);
+        }
+      }
+    } finally {
+      setIsliyor(false);
+    }
+
+    // Ekleme `isliyor` süresince kapalı, yani `sayfalar` bu arada değişmedi.
+    const { liste, tasan } = sahneyeEkle(sayfalar, hazir, sinir);
+    setSayfalar(liste);
+
+    const sorunlar: string[] = [];
+    const disarida = tasan + (dosyalar.length - alinacak.length);
+    if (disarida > 0) sorunlar.push(tasmaMetni(sinir, disarida));
+    if (okunamayan.length > 0) {
+      sorunlar.push(`Okunamayan görsel: ${okunamayan.join(', ')}. Başka bir fotoğraf seçebilirsin.`);
+    }
+    if (sorunlar.length > 0) setFotoHatasi(sorunlar.join(' '));
+  }
+
   async function gonder() {
     if (!odev || !oturum?.ogrenci) return;
-    if (!foto) return setFotoHatasi('Çözüm fotoğrafı olmadan ödev gönderilemez.');
+    // Sınır 1'de bugünkü tek alan; üstünde seçilen sayfalar, sırayla.
+    const dosyalar = sinir > 1 ? sayfalar.map((s) => s.dosya) : foto ? [foto] : [];
+    if (dosyalar.length === 0) {
+      return setFotoHatasi('Çözüm fotoğrafı olmadan ödev gönderilemez.');
+    }
 
     setGonderiyor(true);
+    const yollar: string[] = [];
+    const onceden: number[] = [];
     try {
-      const yol = cozumYolu(odev.id, oturum.ogrenci.id);
-      bildir('Fotoğraf yükleniyor…');
-      await dosyaYukle(foto, yol);
+      // SIRALI, paralel değil: yarıda kalırsa kaçıncı sayfada kaldığı belli
+      // olsun ve telefonun zayıf bağlantısı sekiz eşzamanlı yüklemeyle
+      // boğulmasın. Hepsi yüklenmeden `odev_gonder` ÇAĞRILMIYOR — yarım
+      // gönderim oluşamaz.
+      for (let i = 0; i < dosyalar.length; i++) {
+        const no = i + 1;
+        bildir(
+          dosyalar.length === 1
+            ? 'Fotoğraf yükleniyor…'
+            : `Sayfalar yükleniyor… ${no}/${dosyalar.length}`,
+        );
+        // "ZATEN VAR" HATA DEĞİL: önceki denemede yüklenmiş sayfa, olduğu
+        // gibi kullanılıyor (`cozumSayfasiYukle`). Bu, tek sayfada da
+        // geçerli — fotoğraf yüklenip gönderim ağ hatasıyla düşerse öğrenci
+        // artık tekrar deneyebiliyor.
+        const s = await cozumSayfasiYukle(
+          dosyalar[i]!,
+          cozumSayfaYolu(odev.id, oturum.ogrenci.id, no),
+        ).catch((e: unknown) => {
+          if (dosyalar.length > 1) throw new Error(yarimKalanMetni(i, dosyalar.length));
+          throw e;
+        });
+        yollar.push(s.yol);
+        if (s.oncedenVardi) onceden.push(no);
+      }
 
       await rpc('odev_gonder', {
         p_token: oturum.token,
         p_odev: odev.id,
-        p_foto_yolu: yol,
+        p_foto_yolu: yollar[0],
         p_cevaplar: odev.tur === 'test' ? cevaplar : null,
+        // YALNIZ EK SAYFA VARSA. Tek sayfada çağrı 0054 öncesiyle birebir
+        // aynı; 0054 çalıştırılmamış bir veritabanında da çalışıyor.
+        ...(yollar.length > 1 ? { p_ek_sayfa_yollari: yollar.slice(1) } : {}),
       });
 
       // Puanı ve cevap anahtarını sunucudan yeniden okuyoruz. Ekranda kendi
       // hesabımızı göstermiyoruz: puanı hesaplayan yer sunucu, gösterilen
       // sayı da oradan gelmeli.
       yenile();
-      bildir('Ödevin gönderildi', 'basari');
+      setSayfalar([]);
+      const not = oncedenYuklenenMetni(onceden);
+      bildir(not ? `Ödevin gönderildi. ${not}` : 'Ödevin gönderildi', 'basari');
     } catch (e) {
       bildir(e instanceof Error ? e.message : 'Gönderilemedi.', 'hata');
     } finally {
@@ -182,6 +277,15 @@ export function OdevTeslim() {
             })
           }
           onFoto={fotoSecildi}
+          sinir={sinir}
+          sinirHazir={sinirHazir}
+          sayfalar={sayfalar}
+          isliyor={isliyor}
+          onSayfaEkle={(d) => void sayfaEkle(d)}
+          onSayfaCikar={(i) => {
+            setFotoHatasi(null);
+            setSayfalar((s) => sahnedenCikar(s, i));
+          }}
           onGonder={gonder}
           onPdf={pdfAc}
           onGeri={() => git('/ogrenci')}
@@ -201,6 +305,14 @@ type IcerikProps = {
   gonderiyor: boolean;
   onCevap: (no: number, sik: string | null) => void;
   onFoto: (d: File) => void;
+  /** Öğretmenin seçtiği sayfa sınırı (0054); okunamazsa 1. */
+  sinir: number;
+  /** Sınır yanıtı geldi mi (başarılı ya da hatalı). */
+  sinirHazir: boolean;
+  sayfalar: readonly Sayfa[];
+  isliyor: boolean;
+  onSayfaEkle: (d: File[]) => void;
+  onSayfaCikar: (sira: number) => void;
   onGonder: () => void;
   onPdf: (yol: string) => void;
   onGeri: () => void;
@@ -218,6 +330,12 @@ function OdevIcerigi({
   gonderiyor,
   onCevap,
   onFoto,
+  sinir,
+  sinirHazir,
+  sayfalar,
+  isliyor,
+  onSayfaEkle,
+  onSayfaCikar,
   onGonder,
   onPdf,
   onGeri,
@@ -330,33 +448,50 @@ function OdevIcerigi({
             </div>
           )}
 
-          <Field
-            etiket="Çözüm fotoğrafı"
-            ipucu="Zorunlu. Çözüm kâğıdının fotoğrafını çek; okunaklı olsun yeter."
-            zorunlu
-            {...(fotoHatasi ? { hata: fotoHatasi } : {})}
-          >
-            {(k) => (
-              <Input
-                {...k}
-                type="file"
-                // `capture` BİLİNÇLİ OLARAK YOK: iOS'ta bu öznitelik doğrudan
-                // kamerayı açar ve galeriyi seçenek olmaktan çıkarır. Öğrenci
-                // çözümünü çoktan fotoğraflamış olabilir; onu yeniden çekmeye
-                // zorlamak gereksiz bir engel.
-                accept="image/*"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void onFoto(f);
-                }}
-              />
-            )}
-          </Field>
-          {foto && (
-            <p className="mb-4 text-[13px] text-success">
-              Fotoğraf hazır{' '}
-              <span className="sk-sayi">({Math.round(foto.size / 1024)} KB)</span>
-            </p>
+          {/* SINIR 1 → BUGÜNKÜ TEK ALAN, DOKUNULMADAN (0054). Çok sayfalı
+              seçim yalnız öğretmen sınırı yükselttiğinde çiziliyor. */}
+          {!sinirHazir ? (
+            <p className="mb-4 text-[13px] text-muted">Hazırlanıyor…</p>
+          ) : sinir > 1 ? (
+            <SayfaSahnesi
+              sayfalar={sayfalar}
+              sinir={sinir}
+              isliyor={isliyor}
+              hata={fotoHatasi}
+              onEkle={onSayfaEkle}
+              onCikar={onSayfaCikar}
+            />
+          ) : (
+            <>
+              <Field
+                etiket="Çözüm fotoğrafı"
+                ipucu="Zorunlu. Çözüm kâğıdının fotoğrafını çek; okunaklı olsun yeter."
+                zorunlu
+                {...(fotoHatasi ? { hata: fotoHatasi } : {})}
+              >
+                {(k) => (
+                  <Input
+                    {...k}
+                    type="file"
+                    // `capture` BİLİNÇLİ OLARAK YOK: iOS'ta bu öznitelik doğrudan
+                    // kamerayı açar ve galeriyi seçenek olmaktan çıkarır. Öğrenci
+                    // çözümünü çoktan fotoğraflamış olabilir; onu yeniden çekmeye
+                    // zorlamak gereksiz bir engel.
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void onFoto(f);
+                    }}
+                  />
+                )}
+              </Field>
+              {foto && (
+                <p className="mb-4 text-[13px] text-success">
+                  Fotoğraf hazır{' '}
+                  <span className="sk-sayi">({Math.round(foto.size / 1024)} KB)</span>
+                </p>
+              )}
+            </>
           )}
 
           <p className="mb-4 rounded-sk-sm bg-line-soft p-3 text-[13px] text-muted">

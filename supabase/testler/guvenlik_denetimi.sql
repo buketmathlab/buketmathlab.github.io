@@ -109,6 +109,15 @@ begin
                -- kimliğinin 42501 ile reddedildiğini, 12. grup ÖĞRETMEN
                -- jetonunun reddedildiğini sınıyor.
                'odev_kiyasi',
+               -- 0054: `odev_sayfa_siniri` ÖĞRENCİNİN kendi ucu — öğrenci
+               -- teslim ekranında KENDİ ödevinin kaç sayfa kabul ettiğini
+               -- okuyor. Bu liste sahte bir ödev kimliğiyle çağırdığı için
+               -- P0002 ("ödev bulunamadı") dönüyor; muafiyet o yüzden gerekli.
+               --
+               -- MUAFİYET "KAPI AÇILDI" DEMEK DEĞİL, tersi ayrıca ölçülüyor:
+               -- `sayfa_siniri_testleri.sql` BAŞKA SINIFIN ödevinin 42501,
+               -- VELİ ve ÖĞRETMEN jetonunun 42501 ile reddedildiğini sınıyor.
+               'odev_sayfa_siniri',
                -- 0034: `onam_ver` VELİNİN kendi ucu — onamı veli verir,
                -- başkası onun adına veremez. Öğrenci jetonunu 42501 ile
                -- reddediyor (bu listenin ölçtüğü şey), veli jetonunda ise

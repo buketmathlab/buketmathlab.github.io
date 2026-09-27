@@ -18,6 +18,7 @@ import { KunyePaneli } from './KunyePaneli';
 import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { SikSayisiSecimi } from './SikSayisiSecimi';
+import { SayfaSiniriSecimi } from './SayfaSiniriSecimi';
 import { sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
 import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
 import type { CokluOdevSonucu, Sinif } from '@/types/api';
@@ -61,6 +62,9 @@ export function OdevOlustur() {
   // kabul etmiyorum. Nadiren bu seçimi işaretlerim." Varsayılan, sık olanı
   // temsil etmeli; nadir olanı her ödevde elle kapatmak zorunda kalmasın.
   const [gecTeslim, setGecTeslim] = useState(false);
+  // VARSAYILAN 1 (0054). Öğretmen: öğrenciler sayfalarını birleştirip tek
+  // görsel gönderiyor; sınırı yalnız istediği ödevde yükseltiyor.
+  const [sayfaSiniri, setSayfaSiniri] = useState(1);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
 
   // 2. adım
@@ -189,6 +193,11 @@ export function OdevOlustur() {
         // Açık uçlu ödevde konu analizi yapılamaz: anahtar yok, hangi sorunun
         // yanlış olduğu bilinmiyor. Konu alanı da o yüzden yalnız testte var.
         p_konular: tur === 'test' ? sunucuyaHazirla(konular, n) : null,
+        // YALNIZ 1'DEN FARKLIYSA GÖNDERİLİYOR (0054). PostgREST uçları
+        // parametre ADLARIYLA eşliyor: 0054 panelde henüz çalıştırılmadıysa
+        // bilinmeyen bir `p_sayfa_limiti` HER ödev oluşturmayı "could not
+        // find the function" ile düşürürdü. Göndermemek = sunucuda 1.
+        ...(sayfaSiniri !== 1 ? { p_sayfa_limiti: sayfaSiniri } : {}),
       };
 
       try {
@@ -211,6 +220,15 @@ export function OdevOlustur() {
         const ucYok =
           e instanceof Error && /could not find the function|schema cache/i.test(e.message);
         if (!ucYok) throw e;
+        // Sınır gönderildiyse "uç yok" büyük olasılıkla 0054'ün eksikliği.
+        // Tek sınıflık yola düşmek aynı hatayı tekrar verirdi; ne olduğunu
+        // ve ne yapılacağını söylüyoruz.
+        if (sayfaSiniri !== 1) {
+          throw new Error(
+            'Birden fazla sayfa bu sistemde henüz açılmadı. ' +
+              'Sayfa sınırını 1 yaparak kaydedebilirsiniz.',
+          );
+        }
         if (sinifIdler.length > 1) {
           throw new Error(
             'Birden çok sınıfa ödev verme bu sistemde henüz açılmadı. ' +
@@ -391,6 +409,8 @@ export function OdevOlustur() {
                 <SikSayisiSecimi deger={sonSecenek} onDegis={setSonSecenek} />
               </>
             )}
+
+            <SayfaSiniriSecimi deger={sayfaSiniri} onDegis={setSayfaSiniri} />
 
             <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 

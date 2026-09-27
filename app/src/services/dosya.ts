@@ -25,9 +25,28 @@
  * ödevin yayında ve öğrencinin sınıfına ait olması da ayrıca aranıyor.
  * `odev_gonder` kayda yazılan yolu aynı denetimden geçiriyor, yani geçerli
  * bir yola yükleyip kayda başka bir yol yazdırmak da mümkün değil.
+ *
+ * 0054'ten beri ek sayfalar da aynı kalıpta: `<ogrenci_id>-<n>.<uzanti>`,
+ * n = 2…8 ve ödevin sayfa sınırını aşamaz (`lib/cozum-sayfalari.ts`).
  */
 
 import { oturumOku } from './supabase';
+import { depoZatenVarMi } from '@/lib/cozum-sayfalari';
+
+/**
+ * Depo "bu yolda dosya zaten var" dedi (0054).
+ *
+ * Ayrı bir tür, çünkü çözüm sayfasında bu HATA DEĞİL: yarım kalmış bir
+ * gönderimin yeniden denemesinde sayfa zaten yüklenmiş demek
+ * (`cozumSayfasiYukle`). Öğretmenin PDF yollarında hiç oluşmaz — yolları
+ * rastgele — oluşsa da mesajı olan sıradan bir `Error` gibi davranır.
+ */
+export class DosyaZatenVarHatasi extends Error {
+  constructor() {
+    super('Bu dosya zaten yüklenmiş.');
+    this.name = 'DosyaZatenVarHatasi';
+  }
+}
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -106,12 +125,16 @@ async function fonksiyonuCagir<T>(govde: Record<string, unknown>): Promise<T> {
   }
 
   if (!yanit.ok) {
-    let hata: { hata?: string } = {};
+    let hata: { hata?: string; mevcut?: boolean } = {};
     try {
-      hata = (await yanit.json()) as { hata?: string };
+      hata = (await yanit.json()) as { hata?: string; mevcut?: boolean };
     } catch {
       /* gövde okunamadı */
     }
+    // Edge Function "zaten var"ı 409 + `mevcut: true` ile söylüyor (0054).
+    // İKİSİ BİRDEN aranıyor: başka bir sebeple dönen 409'u "dosya yüklü"
+    // sanmak, dosyası hiç yüklenmemiş bir gönderimi kabul ettirirdi.
+    if (yanit.status === 409 && hata.mevcut === true) throw new DosyaZatenVarHatasi();
     console.error('Dosya servisi hatası:', yanit.status, hata);
     throw new Error(hata.hata || 'Dosya işlemi tamamlanamadı. Tekrar deneyin.');
   }
@@ -142,11 +165,44 @@ export async function dosyaYukle(dosya: File, yol: string): Promise<string> {
   }
 
   if (!yanit.ok) {
-    console.error('Yükleme reddedildi:', yanit.status, await yanit.text().catch(() => ''));
+    const govde = await yanit.text().catch(() => '');
+    // Adres alınabildi ama nesne o arada oluşmuş olabilir: depo bu durumda
+    // yüklemeyi reddediyor. Edge Function'daki denetimle aynı dar kural.
+    if (depoZatenVarMi(yanit.status, govde)) throw new DosyaZatenVarHatasi();
+    console.error('Yükleme reddedildi:', yanit.status, govde);
     throw new Error('Dosya yüklenemedi. Tekrar deneyin.');
   }
 
   return yol;
+}
+
+/**
+ * Öğrencinin çözüm sayfasını yükler (0054).
+ *
+ * `dosyaYukle`'den tek farkı: "zaten var" HATA SAYILMIYOR. Fotoğraf
+ * yüklenip `odev_gonder` ağ hatasıyla düşerse, tekrar denemede aynı yol
+ * dolu olduğu için yükleme reddediliyordu ve öğrenci o ödevi bir daha hiç
+ * gönderemiyordu.
+ *
+ * Mevcut dosya olduğu gibi kullanılıyor, çünkü:
+ *   - yol öğrencinin KENDİ kimliğini taşıyor (sunucu denetliyor), yani o
+ *     dosya başkasına ait olamaz;
+ *   - üzerine yazmak açılamaz (bkz. dosya-url Edge Function): gönderimden
+ *     sonra fotoğrafın değiştirilmesine kapı açardı.
+ * Bedeli: öğrenci iki deneme arasında fotoğrafı değiştirdiyse ilk yüklenen
+ * kalır. `oncedenVardi` ekranın bunu öğrenciye SÖYLEYEBİLMESİ için dönüyor.
+ */
+export async function cozumSayfasiYukle(
+  dosya: File,
+  yol: string,
+): Promise<{ yol: string; oncedenVardi: boolean }> {
+  try {
+    await dosyaYukle(dosya, yol);
+    return { yol, oncedenVardi: false };
+  } catch (e) {
+    if (e instanceof DosyaZatenVarHatasi) return { yol, oncedenVardi: true };
+    throw e;
+  }
 }
 
 /**

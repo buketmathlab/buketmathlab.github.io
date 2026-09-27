@@ -29,6 +29,23 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+/**
+ * Storage'ın "bu yolda nesne zaten var" hatası mı?
+ *
+ * DAR tutuluyor: yalnız açık 409 / "Duplicate" / "already exists"
+ * işaretleri. Başka bir hatayı "zaten var" sanmak, dosyası HİÇ
+ * yüklenmemiş bir gönderimin kabul edilmesi demek olurdu.
+ */
+function dosyaZatenVar(hata: unknown): boolean {
+  const h = hata as { statusCode?: unknown; status?: unknown; error?: unknown; message?: unknown };
+  return (
+    String(h.statusCode) === '409' ||
+    h.status === 409 ||
+    h.error === 'Duplicate' ||
+    (typeof h.message === 'string' && /already exists/i.test(h.message))
+  );
+}
+
 function json(govde: unknown, durum = 200): Response {
   return new Response(JSON.stringify(govde), {
     status: durum,
@@ -91,8 +108,22 @@ Deno.serve(async (istek: Request) => {
 
   // 2) YÜKLEME veya OKUMA için imzalı URL üret
   if (islem === 'yukle') {
+    // ÜZERİNE YAZMA BİLEREK KAPALI (`upsert` verilmiyor).
+    //
+    // "Gönderim değiştirilemez" kuralı depoda buna dayanıyor. Yeniden
+    // denemede işe yarayacağı düşünülüp açılması değerlendirildi (0054) ve
+    // reddedildi: imzalı yükleme adresi saatlerce geçerli, öğrenci
+    // gönderimden ÖNCE aldığı bir adresle gönderimden SONRA fotoğrafının
+    // üzerine yazabilirdi.
     const { data, error } = await sb.storage.from(BUCKET).createSignedUploadUrl(yol);
     if (error) {
+      // "ZATEN VAR" AYRI SÖYLENİYOR (0054). Yarım kalmış bir gönderimin
+      // yeniden denemesinde istemci bunu başarı sayıp mevcut dosyayı
+      // kullanıyor. Genel 500 dönseydi öğrenci o ödevi bir daha hiç
+      // gönderemezdi. Dosya zaten izin verilen yolda — başkasına ait olamaz.
+      if (dosyaZatenVar(error)) {
+        return json({ hata: 'Bu dosya zaten yüklenmiş.', mevcut: true }, 409);
+      }
       console.error('İmzalı yükleme URL hatası:', error);
       return json({ hata: 'Yükleme bağlantısı oluşturulamadı.' }, 500);
     }

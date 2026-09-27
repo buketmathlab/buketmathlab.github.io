@@ -5014,3 +5014,99 @@ toplandı (`toLocaleLowerCase('tr')`).
 | Ekranda yalnız ilk konu yazılıyor | `konuların hepsi ekranda` |
 
 (Önceki altı prova da yeniden koşuldu ve ısırdı.)
+
+## 0054 — ödev başına sayfa sınırı (varsayılan 1)
+
+İstek *"öğrenciler 8 görsel yükleyebilsin"* olarak geldi. Öğretmen,
+depolama maliyeti konuşulunca daralttı: öğrenciler sayfalarını zaten
+birleştirip tek görsel gönderiyor; **varsayılan 1 kalsın, sınırı ben
+seçeyim**. Kardeş ödevlere yayılsın; yarım kalan gönderim yeniden
+denenebilsin.
+
+**Temel ilke: sınır 1'de hiçbir şey değişmiyor.** Yol, kayıt, ekran ve
+ağa giden çağrı 0054 öncesiyle birebir. Yeni kod yalnız öğretmen sınırı
+bilerek yükselttiğinde çalışıyor.
+
+### Karar: tam liste değil, EK SAYFA dizisi
+
+`gonderimler.ek_sayfa_yollari text[]` yalnız 2. ve sonraki sayfaları
+tutuyor; 1. sayfa `foto_yolu` olarak kaldı. Aynı bilgi iki yerde durmadığı
+için sapamaz; `foto_yolu`'nu okuyan her yer (`foto_var`, veli erişimi,
+eski arayüz) dokunulmadan çalışıyor; eski kayıtlarda ve yedeklerde NULL
+zaten "ek sayfa yok" demek. Boş dizi tabloda yasak — "yok"un tek yazımı var.
+
+Yol hâlâ hesaplanıyor (0009'un güvencesi): `cozum/<odev>/<ogrenci>.jpg`,
+ek sayfalar `-2 … -8`. Sınır **yükleme anında** da aranıyor
+(`_cozum_yolu_gecerli`): sınırı 2 olan ödevde 3. sayfanın adresi bile
+alınamıyor. `odev_gonder` ek sayfaları **boşluksuz ve sıralı** istiyor;
+1. sayfanın eksiz olduğu artık `like` ile değil kalıpla denetleniyor —
+yoksa `-2` yolu 1. sayfa diye yazılabilirdi.
+
+Öğrencinin sınırı ayrı uçtan (`odev_sayfa_siniri`) geliyor; 300 satırlık
+`ogrenci_odevleri` kopyalanmadı (0032/0047 ile aynı gerekçe). Uç
+okunamazsa ekran 1 sayıyor — en kötü sonuç bugünkü davranış.
+
+### Karar: üzerine yazma AÇILMADI
+
+Tasarımda "yeniden deneme" için `cozum/` yollarında üzerine yazmayı açıp
+gönderimden sonra yükleme iznini kapatmak önerilmiş ve onaylanmıştı.
+Uygulamada reddedildi: **imzalı yükleme adresi saatlerce geçerli.**
+Öğrenci gönderimden önce bir adres alıp saklar, gönderir, sonra o adresle
+gönderilmiş fotoğrafın üzerine yazardı. "Gönderim değiştirilemez" kuralı
+depoda bugün yalnız üzerine yazmanın kapalı olmasına dayanıyor.
+
+Yerine: depo "zaten var" derse (Edge Function 409 `{mevcut:true}`, ya da
+PUT'ta 409 / 400+`Duplicate`) bu **başarı** sayılıyor ve mevcut dosya
+kullanılıyor — yol öğrencinin kendi kimliğini taşıdığı için başkasına ait
+olamaz. Öğrenciye söyleniyor: *"2. sayfa önceki denemende yüklenmişti; o
+hâliyle gönderildi."* Tanıma **dar**: başka bir hatayı "zaten var" sanmak,
+dosyası hiç yüklenmemiş gönderimi kabul ettirirdi. Bu, tek sayfada da
+bugüne kadar kalan bir kilidi açıyor: fotoğraf yüklenip `odev_gonder` ağ
+hatasıyla düşerse öğrenci o ödevi bir daha gönderemiyordu.
+
+**Canlıda bir kez doğrulanmalı:** Storage'ın "zaten var" yanıtının gerçek
+biçimi. İki bilinen biçim de tanınıyor, ama yerel ortamda Storage yok.
+
+### Bulgu: 0054 öncesi yedekler geri yüklenemeyecekti
+
+`geri-yukle.sql` `jsonb_populate_recordset` kullanıyor; eksik anahtar
+NULL oluyor, DEFAULT uygulanmıyor. `sayfa_limiti` `not null` olduğu için
+0054 çalıştırıldığı gün öğretmenin elindeki **bütün** yedekler felaket günü
+reddedilecekti. Felaket provasına 4c eklendi, düzeltmeden **önce** koşuldu
+ve kırmızı yandı (`null value in column "sayfa_limiti"`); 0033 yamasıyla
+aynı kalıpta düzeltildi, yeşil. Tohum artık 3 sayfalık bir gönderim
+taşıyor — ek sayfa dizisinin yedekten gidip geldiği de ölçülüyor.
+
+### Gövdeler mekanik olarak üretildi
+
+Dokuz fonksiyon yeniden tanımlandı (~700 satır). Her gövde en son
+tanımlandığı migration'dan alınıp **25 listelenmiş değişimle** üretildi;
+her değişim gövdede tam bir kez eşleşmek zorunda. Aynı liste
+`sayfa-siniri-denetimi.mjs` A bölümünde duruyor: gövdeleri yeniden üretip
+depodakiyle birebir karşılaştırıyor. 0054'te puanlamaya ya da yetkiye elle
+dokunulursa denetim düşer.
+
+### Kusur provaları — ısırdı
+
+SQL (`sayfa_siniri_testleri.sql`, 19 grup), her koruma tek tek bozuldu:
+
+| Bozulan | Yakalayan |
+| --- | --- |
+| Sınır yüklemede aranmıyor | 2. grup (sınır 1'de `-2` açık) — beklenenden erken |
+| Ek sayfa sırası denetlenmiyor | 8. grup |
+| 1. sayfa yine `like` ile | 8. grup |
+| Sayfa sayısı denetlenmiyor | 9. grup — yol denetimi yine durdurdu ama öğrenci "Geçersiz dosya yolu" görürdü |
+| Veli ek sayfayı göremiyor | 11. grup |
+| Güncelleme NULL'da sınırı eziyor | 16. grup |
+| Kardeş yayma sınırı taşımıyor | 17. grup |
+| Öğrenci ucu başka sınıfa açık | 14. grup |
+| Arayüz varsayılan 1'i hep gönderiyor | denetim B6 |
+
+Güvenlik denetimi yeni öğrenci ucunu (`odev_sayfa_siniri`) kendiliğinden
+yakaladı; muafiyet gerekçesiyle eklendi, tersi 14. grupta ölçülüyor.
+
+### Kapsam dışı — görüldü
+
+`dosya_erisim_izni` öğretmene **her yol için** `true` döndürüyor; 0033'ün
+öğretmen kapsamı burada uygulanmamış. Yollar UUID taşıdığı için tahmini
+zor, ama ayrı bir iş olarak ele alınmalı.

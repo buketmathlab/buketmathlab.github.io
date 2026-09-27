@@ -17,6 +17,8 @@ import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { KonuAtama } from './KonuAtama';
 import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
+import { SayfaSiniriSecimi } from './SayfaSiniriSecimi';
+import { sayfaSiniriniOku } from '@/lib/cozum-sayfalari';
 import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
 import { KardeslereYayma } from './KardeslereYayma';
 import { sunucudanOku, sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
@@ -51,6 +53,8 @@ type OdevDetay = {
    * yayma kartı hiç çizilmez.
    */
   kardes_detay?: KardesDetay[] | null;
+  /** Öğrencinin yükleyebileceği görsel sayısı (0054). 0054 çalıştırılmadıysa gelmez → 1. */
+  sayfa_limiti?: number;
 };
 
 type PuanDegisimi = { ogrenci: string; eski_puan: number | null; yeni_puan: number };
@@ -81,6 +85,7 @@ export function OdevDuzenle() {
     sonSecenek: 'E',
   });
   const [gecTeslim, setGecTeslim] = useState(true);
+  const [sayfaSiniri, setSayfaSiniri] = useState(1);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
   const [konular, setKonular] = useState<Konular>({});
   const [pdfOzet, setPdfOzet] = useState<PdfOzeti | null>(null);
@@ -122,6 +127,7 @@ export function OdevDuzenle() {
       sonSecenek: detay.sik_sayisi === 4 ? 'D' : 'E',
     });
     setGecTeslim(detay.gec_teslim);
+    setSayfaSiniri(sayfaSiniriniOku(detay.sayfa_limiti));
     const a: Record<number, string> = {};
     for (const [k, v] of Object.entries(detay.cevap_anahtari ?? {})) {
       const n = Number(k);
@@ -186,6 +192,7 @@ export function OdevDuzenle() {
         anahtarYolu = await dosyaYukle(yeniAnahtarPdf, odevDosyaYolu('anahtar', yeniAnahtarPdf.name));
       }
 
+      const sinirDegisti = sayfaSiniri !== sayfaSiniriniOku(detay.sayfa_limiti);
       const sonuc = await rpc<{ yeniden_puanlanan: PuanDegisimi[] }>('odev_guncelle', {
         p_token: oturum?.token,
         p_id: detay.id,
@@ -202,6 +209,22 @@ export function OdevDuzenle() {
         // BOŞ NESNE GÖNDERİLİYOR, null DEĞİL: sunucuda null "değiştirme"
         // demek. Öğretmen bütün konuları sildiyse silme kaydedilsin.
         p_konular: testMi ? sunucuyaHazirla(konular, n) : null,
+        // YALNIZ DEĞİŞTİYSE (0054). Sunucuda null "dokunma" demek; ayrıca
+        // 0054 çalıştırılmamış bir veritabanı bilinmeyen parametreyi
+        // tanımaz ve HER kaydetme düşerdi. Değişmeyen sınır hiç gitmiyor.
+        ...(sinirDegisti ? { p_sayfa_limiti: sayfaSiniri } : {}),
+      }).catch((e: unknown) => {
+        if (
+          sinirDegisti &&
+          e instanceof Error &&
+          /could not find the function|schema cache/i.test(e.message)
+        ) {
+          throw new Error(
+            'Birden fazla sayfa bu sistemde henüz açılmadı. ' +
+              'Sayfa sınırını 1 bırakarak kaydedebilirsiniz.',
+          );
+        }
+        throw e;
       });
 
       const degisti = sonuc.yeniden_puanlanan ?? [];
@@ -332,6 +355,13 @@ export function OdevDuzenle() {
                 tur={detay.tur}
               />
 
+              <SayfaSiniriSecimi deger={sayfaSiniri} onDegis={setSayfaSiniri} />
+              {sayfaSiniri < sayfaSiniriniOku(detay.sayfa_limiti) && detay.gonderim_sayisi > 0 && (
+                <p className="-mt-2 mb-4 text-[13px] text-muted">
+                  Sınırı düşürmek yapılmış gönderimleri değiştirmez; yalnız bundan sonra
+                  gönderenleri bağlar.
+                </p>
+              )}
               <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 
               <Field
