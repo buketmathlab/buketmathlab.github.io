@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { useBenKimim } from '@/hooks/useBenKimim';
 import { Yedek } from './Yedek';
+import { CozumDugmesi } from './CozumDugmesi';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
@@ -152,7 +153,21 @@ export function Pano() {
                   <Card key={i}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-semibold text-ink">{g.ogrenci}</p>
+                        {/* AD + SINIF, ADA TIKLAYINCA ÇÖZÜM (0055). Öğretmenin
+                            isteği. Alanlar 0055 öncesinde gelmiyor: o zaman ad
+                            bugünkü gibi düz metin kalıyor. */}
+                        {g.gonderim_id ? (
+                          <CozumDugmesi
+                            gonderimId={g.gonderim_id}
+                            etiket={g.ogrenci}
+                            erisilebilirAd={`${g.ogrenci} — çözümü aç`}
+                          />
+                        ) : (
+                          <p className="font-semibold text-ink">{g.ogrenci}</p>
+                        )}
+                        {g.sinif && (
+                          <span className="ml-2 text-[13px] text-muted">{g.sinif}</span>
+                        )}
                         <p className="truncate text-[13px] text-muted">{g.odev}</p>
                       </div>
                       <div className="flex flex-wrap justify-end gap-1">

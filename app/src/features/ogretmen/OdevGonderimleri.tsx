@@ -10,7 +10,10 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import { dosyaAdresi } from '@/services/dosya';
+import { CozumDugmesi } from './CozumDugmesi';
+import { YoneticiPuanDuzeltme } from './YoneticiPuanDuzeltme';
+import { useBenKimim } from '@/hooks/useBenKimim';
+import { duzeltmeIsareti } from '@/lib/puan-duzeltme';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OdevGonderimleri as Veri, GonderimSatiri } from '@/types/api';
 
@@ -40,6 +43,11 @@ export function OdevGonderimleri() {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
   const git = useNavigate();
+  // PUAN DÜZELTME YALNIZ SAHİPTE (0055) — kendi oturumunda ya da bir
+  // öğretmenin hesabına vekâletle geçmişken (`vekil` hep sahiptir). Bu
+  // yalnız düğmenin görünürlüğü; yetki `puan_duzelt`'te, sunucuda.
+  const { ben } = useBenKimim();
+  const yoneticiMi = !!ben && (ben.sahip || ben.vekil !== null);
 
   const { veri, durum, hata, yenile } = useVeri<Veri>('odev_gonderimleri', {
     p_token: oturum?.token,
@@ -181,11 +189,28 @@ export function OdevGonderimleri() {
                               {`${s.ogretmen_puan ?? s.puan ?? '—'} puan`}
                             </span>
                           </Tag>
+                          {s.duzeltildi && <Tag tur="bilgi">Yönetici düzeltti</Tag>}
                         </div>
                       </div>
+                      {/* İŞARET + SEBEP (0055): öğretmen puanın neden
+                          değiştiğini bilsin. Öğrenci ve veli görmüyor. */}
+                      {s.duzeltildi && (
+                        <p className="mt-2 text-[13px] text-muted">
+                          {duzeltmeIsareti(s.duzeltme_nedeni)}
+                        </p>
+                      )}
                       {s.gonderim_id && s.foto_var && (
                         <div className="mt-3">
                           <CozumDugmesi gonderimId={s.gonderim_id} />
+                        </div>
+                      )}
+                      {yoneticiMi && s.gonderim_id && (
+                        <div className="mt-2">
+                          <YoneticiPuanDuzeltme
+                            gonderimId={s.gonderim_id}
+                            mevcutPuan={s.ogretmen_puan ?? s.puan}
+                            onKaydedildi={yenile}
+                          />
                         </div>
                       )}
                     </Card>
@@ -216,68 +241,6 @@ function Bolum({
       {!aciklama && <div className="mb-3" />}
       {children}
     </section>
-  );
-}
-
-/**
- * "Çözümü aç" — tek ya da çok sayfalı (0054).
- *
- * TEK SAYFADA BUGÜNKÜ DAVRANIŞ: tıklayınca doğrudan açılır. Birden fazla
- * sayfada düğmeler açılır — "1. sayfa · 2. sayfa · 3. sayfa" — öğretmen
- * öğrencinin gönderdiği sırayla görür. Sekmeler TOPLU açılmıyor: tarayıcının
- * açılır pencere engelleyicisi ilkinden sonrakileri sessizce yutar.
- *
- * Yol istemcide tutulmuyor; imzalı adres (60 sn) her tıklamada yeniden
- * alınıyor. Tutulan yalnız yolların LİSTESİ — adres değil.
- */
-function CozumDugmesi({ gonderimId }: { gonderimId: string }) {
-  const { oturum } = useOturum();
-  const { bildir } = useToast();
-  const [yollar, setYollar] = useState<string[] | null>(null);
-
-  async function ac(yol: string) {
-    try {
-      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Fotoğraf açılamadı.', 'hata');
-    }
-  }
-
-  async function cozumuAc() {
-    try {
-      const r = await rpc<{ yol: string | null; yollar?: string[] }>('gonderim_foto_yolu', {
-        p_token: oturum?.token,
-        p_gonderim: gonderimId,
-      });
-      // `yollar` 0054'le geldi. Gelmiyorsa 0054 henüz çalıştırılmamış: tek `yol`.
-      const liste = r.yollar && r.yollar.length > 0 ? r.yollar : r.yol ? [r.yol] : [];
-      if (liste.length === 0) return bildir('Bu gönderimde fotoğraf yok.', 'hata');
-      if (liste.length === 1) return await ac(liste[0]!);
-      setYollar(liste);
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Fotoğraf açılamadı.', 'hata');
-    }
-  }
-
-  if (yollar) {
-    return (
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Çözüm sayfaları">
-        <span className="text-[13px] text-muted">
-          <span className="sk-sayi">{yollar.length}</span> sayfa:
-        </span>
-        {yollar.map((y, i) => (
-          <Button key={y} tur="sade" olcu="sm" onClick={() => void ac(y)}>
-            {`${i + 1}. sayfa`}
-          </Button>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <Button tur="sade" olcu="sm" onClick={() => void cozumuAc()}>
-      Çözümü aç
-    </Button>
   );
 }
 

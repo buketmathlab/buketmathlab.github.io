@@ -367,8 +367,10 @@ console.log('--- A1. Kaynaklar gerçekten EN SON tanımlar mı ---');
   for (const [fn, kaynak] of Object.entries(KAYNAK)) {
     const sonra = dosyalar.filter(
       (d) =>
+        // Yalnız kaynak ile 0054 ARASI: 0054'ten SONRAKİ migration'ların
+        // (ör. 0055) bu gövdeleri yeniden tanımlaması beklenen bir şey.
         d > kaynak &&
-        !d.startsWith('0054') &&
+        d < '0054' &&
         readFileSync(resolve(MIG, d), 'utf8').includes(`function public.${fn}(`),
     );
     if (sonra.length) {

@@ -226,6 +226,10 @@ echo "==> Sayfa sınırı testleri (0054)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/sayfa_siniri_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Yöneticinin ödevi + puan düzeltme testleri (0055)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/ortak_odev_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Anon izolasyon testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/anon_izolasyon.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
