@@ -28,6 +28,11 @@ https://supabase.com/dashboard/project/oymueccauhprkgdrbqtv/functions
 2. `index.ts` içeriğini yapıştırın — dosya bu klasörde
 3. Deploy
 
+**0054'te değişti — aynı adımlarla yeniden yükleyin** (mevcut fonksiyonu
+açıp `index.ts`'i güncel hâliyle değiştirin). Yüklenmezse sistem çalışmaya
+devam eder; yalnız yarım kalmış bir gönderimin yeniden denemesi, yükleme
+adresi aşamasında "zaten var" hatasıyla düşebilir.
+
 ### Ortam değişkenleri
 
 `SUPABASE_URL` ve `SUPABASE_SERVICE_ROLE_KEY` Supabase tarafından Edge
@@ -74,3 +79,11 @@ kullanılmıyor — yani kurulumu Faz 2B'ye kadar erteleyebilirsiniz. Kurmadan
 - Yetkisiz istekte dosyanın var olup olmadığı **sızdırılmaz** — hem yok hem
   yetkisiz durumda aynı cevap döner.
 - Hata ayrıntıları yalnız sunucu günlüğüne yazılır, kullanıcıya gitmez.
+- **Üzerine yazma kapalı** (`upsert` yok). "Gönderim değiştirilemez" kuralı
+  depoda buna dayanıyor: imzalı yükleme adresi saatlerce geçerli olduğu
+  için üzerine yazma açılsaydı, gönderimden önce alınmış bir adresle
+  gönderilmiş fotoğraf değiştirilebilirdi (0054'te değerlendirilip reddedildi).
+- **"Zaten var" ayrı söylenir** (0054): 409 `{ hata, mevcut: true }`. İstemci
+  bunu yalnız öğrenci çözüm sayfasında başarı sayıp mevcut dosyayı kullanıyor
+  (`cozumSayfasiYukle`). Tanıma dar tutuldu — başka hataları "zaten var"
+  saymak, dosyası yüklenmemiş gönderimi kabul ettirirdi.

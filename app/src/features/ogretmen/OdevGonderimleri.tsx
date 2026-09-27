@@ -39,27 +39,12 @@ const TARIH = new Intl.DateTimeFormat('tr-TR', {
 export function OdevGonderimleri() {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
-  const { bildir } = useToast();
   const git = useNavigate();
 
   const { veri, durum, hata, yenile } = useVeri<Veri>('odev_gonderimleri', {
     p_token: oturum?.token,
     p_id: id,
   });
-
-  async function fotoAc(gonderimId: string) {
-    try {
-      // Yol istemcide tutulmuyor; imzalı adres her seferinde yeniden alınır.
-      const { yol } = await rpc<{ yol: string | null }>('gonderim_foto_yolu', {
-        p_token: oturum?.token,
-        p_gonderim: gonderimId,
-      });
-      if (!yol) return bildir('Bu gönderimde fotoğraf yok.', 'hata');
-      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Fotoğraf açılamadı.', 'hata');
-    }
-  }
 
   const satirlar = veri?.satirlar ?? [];
   const bekleyen = satirlar.filter((s) => s.gonderdi && s.durum === 'incelemede');
@@ -127,7 +112,6 @@ export function OdevGonderimleri() {
                   <Puanlama
                     key={s.ogrenci_id}
                     satir={s}
-                    onFoto={fotoAc}
                     onKaydedildi={yenile}
                     token={oturum?.token ?? ''}
                   />
@@ -201,9 +185,7 @@ export function OdevGonderimleri() {
                       </div>
                       {s.gonderim_id && s.foto_var && (
                         <div className="mt-3">
-                          <Button tur="sade" olcu="sm" onClick={() => fotoAc(s.gonderim_id!)}>
-                            Çözümü aç
-                          </Button>
+                          <CozumDugmesi gonderimId={s.gonderim_id} />
                         </div>
                       )}
                     </Card>
@@ -237,16 +219,76 @@ function Bolum({
   );
 }
 
+/**
+ * "Çözümü aç" — tek ya da çok sayfalı (0054).
+ *
+ * TEK SAYFADA BUGÜNKÜ DAVRANIŞ: tıklayınca doğrudan açılır. Birden fazla
+ * sayfada düğmeler açılır — "1. sayfa · 2. sayfa · 3. sayfa" — öğretmen
+ * öğrencinin gönderdiği sırayla görür. Sekmeler TOPLU açılmıyor: tarayıcının
+ * açılır pencere engelleyicisi ilkinden sonrakileri sessizce yutar.
+ *
+ * Yol istemcide tutulmuyor; imzalı adres (60 sn) her tıklamada yeniden
+ * alınıyor. Tutulan yalnız yolların LİSTESİ — adres değil.
+ */
+function CozumDugmesi({ gonderimId }: { gonderimId: string }) {
+  const { oturum } = useOturum();
+  const { bildir } = useToast();
+  const [yollar, setYollar] = useState<string[] | null>(null);
+
+  async function ac(yol: string) {
+    try {
+      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
+    } catch (e) {
+      bildir(e instanceof Error ? e.message : 'Fotoğraf açılamadı.', 'hata');
+    }
+  }
+
+  async function cozumuAc() {
+    try {
+      const r = await rpc<{ yol: string | null; yollar?: string[] }>('gonderim_foto_yolu', {
+        p_token: oturum?.token,
+        p_gonderim: gonderimId,
+      });
+      // `yollar` 0054'le geldi. Gelmiyorsa 0054 henüz çalıştırılmamış: tek `yol`.
+      const liste = r.yollar && r.yollar.length > 0 ? r.yollar : r.yol ? [r.yol] : [];
+      if (liste.length === 0) return bildir('Bu gönderimde fotoğraf yok.', 'hata');
+      if (liste.length === 1) return await ac(liste[0]!);
+      setYollar(liste);
+    } catch (e) {
+      bildir(e instanceof Error ? e.message : 'Fotoğraf açılamadı.', 'hata');
+    }
+  }
+
+  if (yollar) {
+    return (
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Çözüm sayfaları">
+        <span className="text-[13px] text-muted">
+          <span className="sk-sayi">{yollar.length}</span> sayfa:
+        </span>
+        {yollar.map((y, i) => (
+          <Button key={y} tur="sade" olcu="sm" onClick={() => void ac(y)}>
+            {`${i + 1}. sayfa`}
+          </Button>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <Button tur="sade" olcu="sm" onClick={() => void cozumuAc()}>
+      Çözümü aç
+    </Button>
+  );
+}
+
 /** Tek bir açık uçlu gönderimin puanlama kartı. */
 function Puanlama({
   satir,
   token,
-  onFoto,
   onKaydedildi,
 }: {
   satir: GonderimSatiri;
   token: string;
-  onFoto: (gonderimId: string) => void;
   onKaydedildi: () => void;
 }) {
   const { bildir } = useToast();
@@ -294,9 +336,7 @@ function Puanlama({
 
       {satir.gonderim_id && satir.foto_var && (
         <div className="mb-3">
-          <Button tur="sade" olcu="sm" onClick={() => onFoto(satir.gonderim_id!)}>
-            Çözümü aç
-          </Button>
+          <CozumDugmesi gonderimId={satir.gonderim_id} />
         </div>
       )}
 

@@ -75,12 +75,18 @@ begin
   v_o := (public.odev_olustur(jt, 'Üslü Sayılar "1. Test"', 'Açıklama: <b>kalın</b> & tırnak''lı',
       v_s, 'test', (current_date + 5)::date, 3,
       '{"1":"A","2":"B","3":"C"}'::jsonb, 'odev/anahtar.pdf', 'odev/soru.pdf',
-      true, 5::smallint, '{"1":"Üslü","2":"Üslü","3":"Köklü"}'::jsonb))->>'id';
+      true, 5::smallint, '{"1":"Üslü","2":"Üslü","3":"Köklü"}'::jsonb,
+      -- 0054: SAYFA SINIRI VE EK SAYFALAR DA TOHUMDA. Varsayılan 1 ile
+      -- kurulsaydı prova, sınır ya da ek sayfa dizisi yedekten düşse bile
+      -- yeşil kalırdı — 1 zaten varsayılan, boş dizi zaten "ek sayfa yok".
+      3::smallint))->>'id';
   perform public.odev_yayinla(jt, v_o);
   jo := (public.giris((select kod from public.giris_kodlari
                         where ogrenci_id = v_a and rol = 'ogrenci')))->>'token';
   perform public.odev_gonder(jo, v_o,
-    'cozum/' || v_o::text || '/' || v_a::text || '.jpg', '{"1":"A","2":"D"}'::jsonb);
+    'cozum/' || v_o::text || '/' || v_a::text || '.jpg', '{"1":"A","2":"D"}'::jsonb,
+    array['cozum/' || v_o::text || '/' || v_a::text || '-2.jpg',
+          'cozum/' || v_o::text || '/' || v_a::text || '-3.jpg']);
   perform public.mesaj_gonder(jt, 'Merhaba, Ayşe''nin ödevi güzeldi.', v_a);
 
   -- 0034: VELİ ONAMI DA YEDEĞİN İÇİNDE OLMALI.
@@ -122,7 +128,10 @@ PARMAK="select 'siniflar='||count(*) from public.siniflar
  union all select 'odemeler='||count(*) from public.odemeler
  union all select 'ewalu='||count(*) from public.ewalu_mesajlari
  union all select 'ewalu_cumle='||cumle from public.ewalu_mesajlari
- union all select 'ad='||ad from public.ogrenciler order by 1"
+ union all select 'ad='||ad from public.ogrenciler
+ union all select 'sayfa_limiti='||sayfa_limiti from public.odevler
+ union all select 'ek_sayfa='||cardinality(ek_sayfa_yollari) from public.gonderimler
+            where ek_sayfa_yollari is not null order by 1"
 psql_ -t -A -d "$CANLI" -c "$PARMAK" > "$IS/once.txt"
 
 echo "==> 2. GERÇEK yedek alınıyor (disa_aktar)"
@@ -150,6 +159,13 @@ yaz(f'{is_}/eksik.sql', {k: v for k, v in d.items() if k != 'mesajlar'})
 # 0032 ÖNCESİ bir yedek: `ewalu_mesajlari` anahtarı hiç yok. Öğretmenin
 # ELİNDEKİ MEVCUT yedek tam olarak böyle. Reddedilmemeli.
 yaz(f'{is_}/eski.sql', {k: v for k, v in d.items() if k != 'ewalu_mesajlari'})
+# 0054 ÖNCESİ bir yedek: ödevlerde `sayfa_limiti`, gönderimlerde
+# `ek_sayfa_yollari` anahtarı hiç yok. 0054 çalıştırıldığı gün öğretmenin
+# elinde duran bütün yedekler böyle.
+e = dict(d)
+e['odevler'] = [{k: v for k, v in x.items() if k != 'sayfa_limiti'} for x in d['odevler']]
+e['gonderimler'] = [{k: v for k, v in x.items() if k != 'ek_sayfa_yollari'} for x in d['gonderimler']]
+yaz(f'{is_}/eski0054.sql', e)
 PY
 
 if psql_ -q -d "$YENI" -f "$IS/eksik.sql" 2>"$IS/hata.txt"; then
@@ -174,6 +190,21 @@ n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.ewalu_mesajlari")
 n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.ogrenciler")
 [ "$n" != "0" ] || { echo "    HATA: eski yedek kabul edildi ama hiçbir şey yazılmadı"; exit 1; }
 echo "    kabul edildi, Ewalu cümlesi boş (varsayılana düşecek): OK"
+
+echo "==> 4c. ESKİ yedek (0054 öncesi) KABUL edilmeli"
+# `sayfa_limiti` NOT NULL. `jsonb_populate_recordset` eksik anahtarı NULL
+# yapar, sütunun DEFAULT'unu UYGULAMAZ — yama olmadan 0054 öncesi her
+# yedek tam felaket günü reddedilirdi.
+if ! psql_ -q -d "$YENI" -f "$IS/eski0054.sql" 2>"$IS/eski0054-hata.txt"; then
+  echo "    HATA: 0054 öncesi yedek reddedildi!"; cat "$IS/eski0054-hata.txt"; exit 1
+fi
+n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.odevler where sayfa_limiti <> 1")
+[ "$n" = "0" ] || { echo "    HATA: eski yedekte sınır 1 olmalıydı ($n ödev farklı)"; exit 1; }
+n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.gonderimler where ek_sayfa_yollari is not null")
+[ "$n" = "0" ] || { echo "    HATA: eski yedekten ek sayfa geldi ($n)"; exit 1; }
+n=$(psql_ -t -A -d "$YENI" -c "select count(*) from public.gonderimler")
+[ "$n" != "0" ] || { echo "    HATA: eski yedek kabul edildi ama gönderim yazılmadı"; exit 1; }
+echo "    kabul edildi, sınır 1, ek sayfa yok: OK"
 
 echo "==> 5. Geri yükleme"
 psql_ -q -d "$YENI" -f "$IS/iyi.sql" 2>&1 | sed 's/^psql[^:]*: NOTICE:  /    /'
@@ -238,7 +269,14 @@ begin
     raise exception 'pano çalışmıyor';
   end if;
 
-  raise notice 'öğrenci girişi, puan, anahtar, konu analizi, veli mesajı, ödeme, pano: OK';
+  -- 0054: öğretmen üç sayfayı da SIRAYLA açabiliyor mu?
+  v := public.gonderim_foto_yolu(jt, (select id from public.gonderimler limit 1));
+  if jsonb_array_length(v->'yollar') <> 3
+     or v->'yollar'->>2 not like '%-3.jpg' then
+    raise exception 'ek sayfalar geri gelmedi: %', v;
+  end if;
+
+  raise notice 'öğrenci girişi, puan, anahtar, konu analizi, veli mesajı, ödeme, pano, ek sayfalar: OK';
 end $$;
 SQL
 

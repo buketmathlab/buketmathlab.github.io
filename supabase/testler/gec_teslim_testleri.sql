@@ -305,14 +305,15 @@ begin
   ------------------------------------------------------------------
   raise notice '--- 9. Yeni imzalar anon''a açık, öğrenciye kapalı ---';
   if not has_function_privilege('anon',
-      -- İmza 0020'de bir kez daha büyüdü (p_konular). Test GÜNCEL imzayı
-      -- yokluyor; eski imzanın düştüğü yukarıda ayrıca ölçülüyor.
-      'public.odev_olustur(text,text,text,uuid,text,date,integer,jsonb,text,text,boolean,smallint,jsonb)',
+      -- İmza 0020'de bir kez daha büyüdü (p_konular), 0054'te bir kez daha
+      -- (p_sayfa_limiti). Test GÜNCEL imzayı yokluyor; eski imzanın düştüğü
+      -- yukarıda ve `sayfa_siniri_testleri.sql`'de ayrıca ölçülüyor.
+      'public.odev_olustur(text,text,text,uuid,text,date,integer,jsonb,text,text,boolean,smallint,jsonb,smallint)',
       'execute') then
     raise exception 'HATA: yeni odev_olustur imzası anon''a kapalı — istemci çağıramaz!';
   end if;
   if not has_function_privilege('anon',
-      'public.odev_guncelle(text,uuid,text,text,uuid,date,integer,jsonb,text,text,boolean,smallint,jsonb)',
+      'public.odev_guncelle(text,uuid,text,text,uuid,date,integer,jsonb,text,text,boolean,smallint,jsonb,smallint)',
       'execute') then
     raise exception 'HATA: yeni odev_guncelle imzası anon''a kapalı!';
   end if;

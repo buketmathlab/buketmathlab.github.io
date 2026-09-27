@@ -172,6 +172,28 @@ begin
                  'PIN''i ve öğretmen adını siteye girip yeniden belirleyin.';
   end if;
 
+  -- 0054 ÖNCESİ YEDEK: ödevlerde `sayfa_limiti` anahtarı yok.
+  --
+  -- Sütun `not null default 1`, ama `jsonb_populate_recordset` eksik
+  -- anahtarı NULL yapar, DEFAULT'u UYGULAMAZ — dosya "null value in column
+  -- sayfa_limiti" ile düşüyordu (felaket provası 4c'de ölçüldü). 0054
+  -- çalıştırıldığı gün öğretmenin elindeki BÜTÜN yedekler böyle.
+  --
+  -- 1 yazılıyor çünkü 0054 öncesinde her ödev fiilen tek sayfalıydı.
+  -- Anahtarı TAŞIYAN satıra dokunulmuyor. `ek_sayfa_yollari` için yama
+  -- gerekmiyor: boş bırakılabilir ve NULL zaten "ek sayfa yok" demek.
+  --
+  -- Sütun bu projede yoksa (0054 çalıştırılmamış) yama atlanıyor; fazladan
+  -- anahtar zaten yok sayılıyor.
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'odevler'
+                and column_name = 'sayfa_limiti') then
+    yedek := jsonb_set(yedek, '{odevler}', coalesce((
+      select jsonb_agg(case when x ? 'sayfa_limiti' then x
+                            else x || jsonb_build_object('sayfa_limiti', 1) end)
+        from jsonb_array_elements(yedek->'odevler') x), '[]'::jsonb));
+  end if;
+
   if not onayliyorum then
     raise exception E'ONAY GEREKİYOR.\n'
       '  Bu script şu tabloların TAMAMINI siler ve yedekten yazar:\n'
