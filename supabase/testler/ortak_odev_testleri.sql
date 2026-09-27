@@ -312,14 +312,35 @@ begin
   raise notice '    vekâlette düzeltme, düzelten = sahip, iz vekâleti taşıyor: OK';
 
   ------------------------------------------------------------------
-  raise notice '--- 14. Öğretmen yeniden puanlarsa işaret KALKIYOR ---';
-  perform public.puan_duzelt(js, g_acik, 70, 'Sınav günü düzeltme');
-  perform public.acik_puanla(jx, g_acik, 85);
-  select * into r from public.gonderimler where id = g_acik;
-  if r.ogretmen_puan <> 85 or r.duzelten_yonetici is not null or r.duzeltme_nedeni is not null then
-    raise exception 'HATA: öğretmenin puanından sonra işaret kalmadı mı? %', row_to_json(r);
+  raise notice '--- 14. SONRADAN PUAN DEĞİŞTİRME YALNIZ SAHİPTE (puan_duzelt) ---';
+  -- X, 4. grupta ilk puanı (80) verdi. Aynı gönderimi yeniden puanlayamaz.
+  begin perform public.acik_puanla(jx, g_acik, 90);
+        raise exception 'HATA: X VERİLMİŞ PUANI DEĞİŞTİRDİ!';
+  exception when insufficient_privilege then null; end;
+  -- Sistemin puanladığı TEST gönderimini ezemez (önceden API'yle ezebiliyordu).
+  begin perform public.acik_puanla(jx, g_x, 5);
+        raise exception 'HATA: X SİSTEMİN TEST PUANINI EZDİ!';
+  exception when insufficient_privilege then null; end;
+  -- Sahip de bu uçtan geçemez — sonradan her değişiklik sebebiyle, puan_duzelt'ten.
+  begin perform public.acik_puanla(js, g_acik, 90);
+        raise exception 'HATA: sahip acik_puanla ile sebepsiz yeniden puanladı!';
+  exception when insufficient_privilege then null; end;
+  begin perform public.acik_puanla(jv, g_acik, 90);
+        raise exception 'HATA: vekâletle acik_puanla yeniden puanladı!';
+  exception when insufficient_privilege then null; end;
+  if (select ogretmen_puan from public.gonderimler where id = g_acik) <> 80 then
+    raise exception 'HATA: reddedilen yeniden puanlama yine de notu değiştirdi!';
   end if;
-  raise notice '    85 öğretmenin, işaret temizlendi: OK';
+  -- Sahip puan_duzelt ile değiştirir; öğretmen işaretin üstüne yazamaz.
+  perform public.puan_duzelt(js, g_acik, 70, 'Sınav günü düzeltme');
+  begin perform public.acik_puanla(jx, g_acik, 85);
+        raise exception 'HATA: X YÖNETİCİ DÜZELTMESİNİN ÜSTÜNE YAZDI!';
+  exception when insufficient_privilege then null; end;
+  select * into r from public.gonderimler where id = g_acik;
+  if r.ogretmen_puan <> 70 or r.duzelten_yonetici is distinct from s_id then
+    raise exception 'HATA: düzeltme korunmadı: %', row_to_json(r);
+  end if;
+  raise notice '    X yeniden puanlayamaz, testi ezemez; sahip yalnız puan_duzelt ile: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 15. Anahtar düzeltilince DÜZELTME ÜSTÜN kalıyor ---';

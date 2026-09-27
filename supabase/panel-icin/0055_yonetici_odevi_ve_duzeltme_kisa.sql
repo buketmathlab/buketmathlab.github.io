@@ -14,6 +14,9 @@
 --  2. Panodaki son gönderimlerde adın yanında sınıf yazar; ada tıklayınca çözüm açılır.
 --  3. Yalnız size özel "Puanı düzelt": sebep zorunlu, denetim izine yazılır;
 --     öğretmen puanın yanında "Yönetici düzeltti" ve sebebi görür.
+--  4. Sonradan / elle puan değiştirmek YALNIZ SİZDE: diğer öğretmenler açık
+--     uçlu ödevin yalnız İLK puanını verebilir; verilmiş puanı ve testin
+--     sistem puanını değiştiremez.
 --
 -- AYRICA DÜZELTİLEN HATA: Öğrenciler sekmesinde, sizin ödev verdiğiniz bir
 -- sınıfta öğretmenin ekranında "yapmadığı ödev" eksi çıkabiliyordu.
@@ -429,6 +432,17 @@ begin
     raise exception 'Gönderim bulunamadı.' using errcode = 'P0002';
   end if;
 
+  -- 0055: bu uç YALNIZ İLK puanı verir — açık uçlu, henüz puanlanmamış
+  -- (`incelemede`) gönderim. Sistemin puanladığı test (`puanlandi`) ve daha
+  -- önce puanlanmış gönderim (`onaylandi`) buradan DEĞİŞTİRİLEMEZ: sonradan
+  -- ya da sistemden farklı puan yazmak yalnız platform sahibinin işi ve
+  -- `puan_duzelt` ile, sebebiyle, denetim izine yazılarak yapılır. Sahip de
+  -- bu uçtan geçemez — her sonradan değişikliğin bir sebebi olsun.
+  if eski.durum <> 'incelemede' then
+    raise exception 'Verilmiş puanı yalnız platformun sahibi değiştirebilir.'
+      using errcode = '42501';
+  end if;
+
   if p_puan < 0 or p_puan > 100 then
     raise exception 'Puan 0 ile 100 arasında olmalı.' using errcode = '22023';
   end if;
@@ -436,12 +450,7 @@ begin
   update public.gonderimler
      set ogretmen_puan = p_puan,
          ogretmen_yorum = nullif(btrim(coalesce(p_yorum, '')), ''),
-         durum = 'onaylandi',
-         -- 0055: öğretmen yeniden puanlarsa son puan ONUN — "Yönetici
-         -- düzeltti" etiketi artık doğru olmazdı. Geçmiş denetim izinde.
-         duzelten_yonetici = null,
-         duzeltme_nedeni = null,
-         duzeltme_zamani = null
+         durum = 'onaylandi'
    where id = p_gonderim;
 
   perform public._denetim(
@@ -1032,6 +1041,16 @@ begin
       raise exception '0055: % erişim kuralına bağlanmamış', f;
     end if;
   end loop;
+
+  -- Sonradan puan değiştirme yalnız `puan_duzelt`te: `acik_puanla` yalnız
+  -- `incelemede` gönderimi puanlıyor.
+  if not exists (
+    select 1 from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
+     where ns.nspname = 'public' and p.proname = 'acik_puanla'
+       and pg_get_functiondef(p.oid) like '%eski.durum <> ''incelemede''%'
+  ) then
+    raise exception '0055: acik_puanla verilmiş puanı değiştirmeye açık';
+  end if;
 
   if has_function_privilege('anon', 'public._odeve_erisir(uuid, uuid, uuid)', 'execute') then
     raise exception '0055: _odeve_erisir anon''a açık';

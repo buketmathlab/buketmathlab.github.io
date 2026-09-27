@@ -177,16 +177,21 @@ const DEGISIMLER = [
   },
   {
     fn: 'acik_puanla',
-    eski: `         durum = 'onaylandi'
-   where id = p_gonderim;
+    // Sonradan puan değiştirme YALNIZ SAHİPTE: bu uç yalnız ilk puanı verir.
+    eski: `  if p_puan < 0 or p_puan > 100 then
 `,
-    yeni: `         durum = 'onaylandi',
-         -- 0055: öğretmen yeniden puanlarsa son puan ONUN — "Yönetici
-         -- düzeltti" etiketi artık doğru olmazdı. Geçmiş denetim izinde.
-         duzelten_yonetici = null,
-         duzeltme_nedeni = null,
-         duzeltme_zamani = null
-   where id = p_gonderim;
+    yeni: `  -- 0055: bu uç YALNIZ İLK puanı verir — açık uçlu, henüz puanlanmamış
+  -- (\`incelemede\`) gönderim. Sistemin puanladığı test (\`puanlandi\`) ve daha
+  -- önce puanlanmış gönderim (\`onaylandi\`) buradan DEĞİŞTİRİLEMEZ: sonradan
+  -- ya da sistemden farklı puan yazmak yalnız platform sahibinin işi ve
+  -- \`puan_duzelt\` ile, sebebiyle, denetim izine yazılarak yapılır. Sahip de
+  -- bu uçtan geçemez — her sonradan değişikliğin bir sebebi olsun.
+  if eski.durum <> 'incelemede' then
+    raise exception 'Verilmiş puanı yalnız platformun sahibi değiştirebilir.'
+      using errcode = '42501';
+  end if;
+
+  if p_puan < 0 or p_puan > 100 then
 `,
     adet: 1,
   },

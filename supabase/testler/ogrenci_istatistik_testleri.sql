@@ -49,10 +49,13 @@ begin
   perform public.odev_gonder(t_ali, d1, 'cozum/'||d1||'/'||v_ali||'.jpg', '{"1":"A","2":"B"}'::jsonb);
   perform public.odev_gonder(t_ali, d2, 'cozum/'||d2||'/'||v_ali||'.jpg', '{"1":"A","2":"X"}'::jsonb);
   perform public.odev_gonder(t_ali, d3, 'cozum/'||d3||'/'||v_ali||'.jpg', '{"1":"X","2":"Y"}'::jsonb);
-  -- Ayşe: yalnız d1, açık uçlu gibi öğretmen puanı verilecek → 90
+  -- Ayşe: yalnız d1, öğretmen puanı verilecek → 90. Test gönderiminin
+  -- puanını sonradan değiştirmek 0055'ten beri yalnız sahibin `puan_duzelt`i
+  -- (bu öğretmen sahip).
   perform public.odev_gonder(t_ayse, d1, 'cozum/'||d1||'/'||v_ayse||'.jpg', '{"1":"A","2":"B"}'::jsonb);
-  perform public.acik_puanla(t_ogretmen,
-    (select id from public.gonderimler where odev_id = d1 and ogrenci_id = v_ayse), 90);
+  perform public.puan_duzelt(t_ogretmen,
+    (select id from public.gonderimler where odev_id = d1 and ogrenci_id = v_ayse), 90,
+    'Öğretmen puanı önceliği denemesi');
   -- Mehmet: hiç göndermedi.
 
   ------------------------------------------------------------------
@@ -96,7 +99,7 @@ begin
   if (e ->> 'ortalama_tum')::numeric <> 30.0 then
     raise exception 'HATA: Ayşe tüm ortalaması % (30 olmalı)', e ->> 'ortalama_tum';
   end if;
-  -- Öğretmen puanı ham puanın önüne geçmeli (acik_puanla ile 90 verildi).
+  -- Öğretmen puanı ham puanın önüne geçmeli (puan_duzelt ile 90 verildi).
   raise notice '    yapan 90.0, tüm 30.0 — ayrışıyor ve öğretmen puanı öncelikli: OK';
 
   ------------------------------------------------------------------

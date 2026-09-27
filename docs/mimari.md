@@ -5171,14 +5171,25 @@ Puan `ogretmen_puan`'a yazılıyor: ortalama, karne, veli ve kıyas uçlarının
 yok) — düzeltme her yere kendiliğinden yansıyor. Öğretmende "Yönetici
 düzeltti" + sebep; öğrenci ve veli yalnız yeni puanı görüyor.
 
-- Öğretmen sonra yeniden puanlarsa işaret kalkıyor: son puan onun.
+- **Sonradan puan değiştirme yalnız sahipte** (öğretmenin sonradan eklediği
+  kural). `acik_puanla` artık yalnız İLK puanı veriyor: açık uçlu ve
+  `incelemede` gönderim. Test (`puanlandi`) ya da puanlanmış (`onaylandi`)
+  gönderim 42501 ile reddediliyor — sahipte bile; sonradan her değişiklik
+  `puan_duzelt`ten, sebebiyle. Önceden bir öğretmen API'yle testin sistem
+  puanını ezebiliyor, verdiği notu değiştirebiliyordu (arayüz göstermiyordu,
+  sunucu engellemiyordu). Yönetici düzeltmesinin üstüne de artık kimse
+  `acik_puanla` ile yazamıyor. Test anahtarıyla gelen otomatik yeniden
+  hesaplama (`_puanla`) bu kuralın dışında: sistem puanı, elle yazılan değil.
+  Eski testlerde test puanını `acik_puanla` ile değiştiren kurulumlar
+  (`genel_ortalama`, `ogrenci_istatistik`, `gonderim_takibi` 6. grup)
+  `puan_duzelt`e taşındı.
 - Test anahtarı sonradan düzeltilirse otomatik puan yeniden hesaplanıyor ama
   **düzeltme üstün kalıyor** (test 15. grup).
 
 ### Kusur provaları — ısırdı
 
-`ortak_odev_testleri.sql` (16 grup), her koruma tek tek bozuldu; 12'nin
-12'si beklenen grupta yakalandı:
+`ortak_odev_testleri.sql` (16 grup), her koruma tek tek bozuldu; 13'ün
+13'ü beklenen grupta yakalandı:
 
 | Bozulan | Yakalayan |
 | --- | --- |
@@ -5188,7 +5199,7 @@ düzeltti" + sebep; öğrenci ve veli yalnız yeni puanı görüyor.
 | Kardeş yayma şartı yok / kardeş bilgisi herkese | 8 |
 | Sınıf taşıma denetimi yok | 5 |
 | `puan_duzelt` yetki / sebep şartı yok | 11 |
-| Öğretmen puanı işareti temizlemiyor | 14 |
+| `acik_puanla` verilmiş puanı değiştirebiliyor | 14 |
 | Sınıf özeti eski hata | 10 |
 | Panoda sınıf yok | 3 |
 | Arayüz: düzeltme düğmesi herkese (`ortak-odev-denetimi`) | B3 |

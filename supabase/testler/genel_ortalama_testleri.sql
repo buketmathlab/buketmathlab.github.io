@@ -121,7 +121,9 @@ begin
   raise notice '--- 2. Öğretmen puanı önceliği ---';
   -- ===========================================================================
   -- d2'nin gönderimine öğretmen 90 veriyor → ortalama (100+90)/2 = 95.0
-  perform public.acik_puanla(jt,
+  -- Test puanını sonradan değiştirmek 0055'ten beri yalnız sahibin
+  -- `puan_duzelt`i (jt sahip).
+  perform public.puan_duzelt(jt,
     (select id from public.gonderimler where odev_id = d2 and ogrenci_id = v_ada),
     90, 'Elle düzeltildi.');
   n := ((public.kendi_karnem(jo))->>'genel_ortalama')::numeric;
@@ -153,9 +155,9 @@ begin
     (public.giris((select kod from public.giris_kodlari
                    where ogrenci_id = v_efe and rol = 'ogrenci')))->>'token',
     d1, 'cozum/' || d1 || '/' || v_efe || '.jpg', '{"1":"A","2":"X"}'::jsonb);
-  perform public.acik_puanla(jt,
+  perform public.puan_duzelt(jt,
     (select id from public.gonderimler where odev_id = d1 and ogrenci_id = v_efe),
-    c_efe_puan, null);
+    c_efe_puan, 'Kıyas sızıntısı denemesi');
 
   v  := public.kendi_karnem(jo);
   vv := public.veli_paneli(jv);
