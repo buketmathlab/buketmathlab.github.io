@@ -25,6 +25,10 @@ export type Pano = {
     puan: number | null;
     zaman: string;
     gecikmeli: boolean;
+    /** Öğrencinin sınıfı, ör. "10U" (0055). 0055 çalıştırılmadıysa gelmez. */
+    sinif?: string | null;
+    /** Ada tıklayınca çözüm açılsın diye (0055). Gelmezse ad düz metin. */
+    gonderim_id?: string | null;
   }>;
 };
 
@@ -313,6 +317,10 @@ export type GonderimSatiri = {
   bos_sorular: number[];
   /** Dosyanın kendisi değil, varlığı. Yol `gonderim_foto_yolu` ile istenir. */
   foto_var: boolean;
+  /** Puanı platformun sahibi elle düzeltti mi (0055). 0055 öncesinde gelmez. */
+  duzeltildi?: boolean;
+  /** Düzeltmenin sebebi — öğretmen puanın neden değiştiğini bilsin. */
+  duzeltme_nedeni?: string | null;
 };
 
 export type OdevGonderimleri = {

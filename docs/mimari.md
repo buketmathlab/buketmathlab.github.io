@@ -5110,3 +5110,101 @@ yakaladı; muafiyet gerekçesiyle eklendi, tersi 14. grupta ölçülüyor.
 `dosya_erisim_izni` öğretmene **her yol için** `true` döndürüyor; 0033'ün
 öğretmen kapsamı burada uygulanmamış. Yollar UUID taşıdığı için tahmini
 zor, ama ayrı bir iş olarak ele alınmalı.
+
+## 0055 — yöneticinin verdiği ödev sınıf öğretmeninde · pano · puan düzeltme
+
+Öğretmenin (platform sahibi) üç isteği:
+
+1. *"Diğer öğretmen arkadaşlarımın sınıflarına ben ödev gönderdim. Onlar
+   kendi hesaplarıyla girdiklerinde göremiyorlar. Kendileri göndermiş gibi
+   görsünler — ödevi de, öğrencilerin sonuçlarını da."*
+2. Panodaki son gönderimlerde adın yanında **sınıf**; ada tıklayınca **çözüm**.
+3. Yalnız sahibe özel **elle puan düzeltme**.
+
+### Kök neden
+
+Ödev uçları sahipliği `odevler.ogretmen_id = oturumdaki öğretmen` ile
+süzüyordu. Yöneticinin verdiği ödevin sahibi yönetici; sınıfın öğretmeni
+hiçbir listede görmüyordu. Sınıf analizi ve sınıf özeti ise **zaten sınıfa
+göre** çalışıyordu — tutarsızlık buradan.
+
+### Karar: kural tek yerde — `_odeve_erisir`
+
+*Ödevi veren sensin **ya da** ödevi yönetici verdi ve sen o sınıfa
+atanmışsın.* `_odev_sahibi` bu yardımcıyı kullanıyor; detay, gönderimler,
+güncelle, sil, yayınla, dosya yolu kendiliğinden açıldı. Listeleme, pano,
+sınıf öğrencileri, bildirim sayısı, çözüm yolu ve açık uçlu puanlama aynı
+kurala bağlandı.
+
+Öğretmenin seçimleri:
+
+- **Tam yetki** — görür, puanlar, düzenler, yayınlar, siler.
+- **Yalnız yöneticinin ödevleri.** "Sınıfa atanan herkes sınıfın bütün
+  ödevlerini görür" daha basit bir kuraldı ve önerilmişti; öğretmen
+  reddetti. İki sıradan öğretmen aynı sınıfta olsa da birbirinin ödevini
+  görmüyor; sahip de öğretmenlerin kendi ödevlerini vekâletle görüyor.
+
+Bilerek istisnalar:
+
+- **Özel ders asla** (0033: "özel ders tamamen sahipte"). `ogretmen_sinif_ata`
+  özel grubu başkasına atamıyor; yardımcıdaki şart onun **yedeği** —
+  tabloya elle bir satır yazılsa da açılmıyor (test 9. grup bunu elle yazarak ölçüyor).
+- **Kardeşlere yayma yalnız ödevi verene.** Yöneticinin birden çok sınıfa
+  verdiği ödevin kardeşleri başka öğretmenlerin sınıflarında; yayabilseydi
+  onların öğrencilerinin notunu değiştirirdi. Kardeş bilgisi de yalnız ona.
+- **`odev_guncelle` ödevi yalnız kendi sınıfına taşıyor** — önceden hiç
+  denetlenmiyordu; sınıf öğretmeni yöneticinin ödevini düzenleyebildiği için artık gerekli.
+
+### Bulgu: "yapmadı" eksiye düşüyordu
+
+`sinif_ogrencileri`'nde "yaptı" sınıfın **bütün** ödevlerinden, "verilen
+ödev" yalnız öğretmenin **kendi** ödevlerinden sayılıyordu. Yönetici bir
+sınıfa ödev verince o sınıfın öğretmeninin ekranında *yapmadı = −3* gibi
+değerler ve bozuk ortalamalar çıkıyordu. İkisi aynı kümeye bağlandı; test
+10. grup ve mutasyon ("eski hata") bunu ölçüyor.
+
+### Puan düzeltme — `puan_duzelt`
+
+Yalnız sahip; vekâletteyken de (gerçek kişi = vekil). Sebep zorunlu (3–500).
+Puan `ogretmen_puan`'a yazılıyor: ortalama, karne, veli ve kıyas uçlarının
+**hepsi** `coalesce(ogretmen_puan, puan)` kullanıyor (ölçüldü; çıplak toplam
+yok) — düzeltme her yere kendiliğinden yansıyor. Öğretmende "Yönetici
+düzeltti" + sebep; öğrenci ve veli yalnız yeni puanı görüyor.
+
+- **Sonradan puan değiştirme yalnız sahipte** (öğretmenin sonradan eklediği
+  kural). `acik_puanla` artık yalnız İLK puanı veriyor: açık uçlu ve
+  `incelemede` gönderim. Test (`puanlandi`) ya da puanlanmış (`onaylandi`)
+  gönderim 42501 ile reddediliyor — sahipte bile; sonradan her değişiklik
+  `puan_duzelt`ten, sebebiyle. Önceden bir öğretmen API'yle testin sistem
+  puanını ezebiliyor, verdiği notu değiştirebiliyordu (arayüz göstermiyordu,
+  sunucu engellemiyordu). Yönetici düzeltmesinin üstüne de artık kimse
+  `acik_puanla` ile yazamıyor. Test anahtarıyla gelen otomatik yeniden
+  hesaplama (`_puanla`) bu kuralın dışında: sistem puanı, elle yazılan değil.
+  Eski testlerde test puanını `acik_puanla` ile değiştiren kurulumlar
+  (`genel_ortalama`, `ogrenci_istatistik`, `gonderim_takibi` 6. grup)
+  `puan_duzelt`e taşındı.
+- Test anahtarı sonradan düzeltilirse otomatik puan yeniden hesaplanıyor ama
+  **düzeltme üstün kalıyor** (test 15. grup).
+
+### Kusur provaları — ısırdı
+
+`ortak_odev_testleri.sql` (16 grup), her koruma tek tek bozuldu; 13'ün
+13'ü beklenen grupta yakalandı:
+
+| Bozulan | Yakalayan |
+| --- | --- |
+| Kural herkese açık (yönetici şartı yok) | 7 |
+| Özel ders istisnası yok | 9 |
+| `_odev_sahibi` / liste eski hâlinde | 1 |
+| Kardeş yayma şartı yok / kardeş bilgisi herkese | 8 |
+| Sınıf taşıma denetimi yok | 5 |
+| `puan_duzelt` yetki / sebep şartı yok | 11 |
+| `acik_puanla` verilmiş puanı değiştirebiliyor | 14 |
+| Sınıf özeti eski hata | 10 |
+| Panoda sınıf yok | 3 |
+| Arayüz: düzeltme düğmesi herkese (`ortak-odev-denetimi`) | B3 |
+
+Gövdeler 0054'teki gibi mekanik üretildi (11 gövde, 18 değişim);
+`ortak-odev-denetimi.mjs` A bölümü yeniden üretip karşılaştırıyor.
+`sayfa-siniri-denetimi.mjs` A1 artık yalnız 0054 öncesine bakıyor — 0055'in
+aynı gövdeleri yeniden tanımlaması beklenen bir şey.

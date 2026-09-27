@@ -25,6 +25,7 @@ declare
   liste      jsonb;
   satir      jsonb;
   g_ali      uuid;
+  g_ayse     uuid;
   n          integer;
   bugun_tr   date := (now() at time zone 'Europe/Istanbul')::date;
 begin
@@ -162,24 +163,37 @@ begin
 
   ------------------------------------------------------------------
   raise notice '--- 6. Puan sınırları zorlanıyor ---';
+  -- Sınırlar Ayşe'nin HENÜZ PUANLANMAMIŞ gönderiminde ölçülüyor: 0055'ten
+  -- beri `acik_puanla` yalnız ilk puanı veriyor (Ali'ninki artık puanlı).
+  select id into g_ayse from public.gonderimler
+   where odev_id = v_acik and ogrenci_id = v_ayse;
   begin
-    perform public.acik_puanla(t_ogretmen, g_ali, 101);
+    perform public.acik_puanla(t_ogretmen, g_ayse, 101);
     raise exception 'HATA: 101 puan kabul edildi!';
   exception when others then
     if sqlstate = '22023' then raise notice '    101 reddedildi: OK';
     else raise; end if;
   end;
   begin
-    perform public.acik_puanla(t_ogretmen, g_ali, -1);
+    perform public.acik_puanla(t_ogretmen, g_ayse, -1);
     raise exception 'HATA: negatif puan kabul edildi!';
   exception when others then
     if sqlstate = '22023' then raise notice '    -1 reddedildi: OK';
     else raise; end if;
   end;
-  -- Sınır değerler GEÇERLİ olmalı; kısıt fazla dar olmasın.
-  perform public.acik_puanla(t_ogretmen, g_ali, 0);
-  perform public.acik_puanla(t_ogretmen, g_ali, 100);
+  -- Sınır değerler GEÇERLİ olmalı; kısıt fazla dar olmasın. 100, sonradan
+  -- değiştirmenin tek yolu olan `puan_duzelt` ile (bu öğretmen sahip).
+  perform public.acik_puanla(t_ogretmen, g_ayse, 0);
+  perform public.puan_duzelt(t_ogretmen, g_ayse, 100, 'Sınır değer denemesi');
   raise notice '    0 ve 100 kabul: OK';
+
+  -- 0055: verilmiş puan `acik_puanla` ile DEĞİŞMİYOR — sahipte bile.
+  begin
+    perform public.acik_puanla(t_ogretmen, g_ali, 50);
+    raise exception 'HATA: verilmiş puan acik_puanla ile değişti!';
+  exception when insufficient_privilege then
+    raise notice '    verilmiş puan yeniden puanlanamıyor: OK';
+  end;
 
   ------------------------------------------------------------------
   raise notice '--- 7. Fotoğraf yolu tek tek veriliyor ---';
@@ -233,7 +247,8 @@ begin
   if not exists (
     select 1 from jsonb_array_elements(public.ogrenci_odevleri(t_ali) -> 'odevler') e
     where (e ->> 'id')::uuid = v_acik
-      and (e -> 'gonderim' ->> 'ogretmen_puan')::numeric = 100
+      -- 85: Ali'nin ilk puanı; 6. gruptaki yeniden puanlama reddedildi (0055).
+      and (e -> 'gonderim' ->> 'ogretmen_puan')::numeric = 85
   ) then
     raise exception 'HATA: öğretmenin verdiği puan öğrenciye görünmüyor!';
   end if;
