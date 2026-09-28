@@ -34,6 +34,7 @@
     "sayfa-denetim": "node scripts/sayfa-siniri-denetimi.mjs",
     "ortak-denetim": "node scripts/ortak-odev-denetimi.mjs",
     "anahtar-denetim": "node scripts/anahtar-okuma-denetimi.mjs",
+    "acma-denetim": "node scripts/yeniden-acma-denetimi.mjs",
     "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
     "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"
   },

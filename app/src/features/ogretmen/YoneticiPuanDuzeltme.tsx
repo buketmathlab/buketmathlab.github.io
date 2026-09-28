@@ -75,7 +75,7 @@ export function YoneticiPuanDuzeltme({ gonderimId, mevcutPuan, onKaydedildi }: P
   }
 
   return (
-    <div className="mt-3 rounded-sk-sm border border-line bg-line-soft p-3">
+    <div className="mt-1 w-full rounded-sk-sm border border-line bg-line-soft p-3">
       <p className="mb-3 text-[13px] text-muted">
         Şu anki puan: <span className="sk-sayi font-semibold text-ink">{mevcutPuan ?? '—'}</span>.
         Düzeltme denetim izine yazılır; ödevin öğretmeni puanın yanında{' '}
