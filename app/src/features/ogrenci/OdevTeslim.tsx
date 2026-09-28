@@ -18,6 +18,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
+import { birlesimNotu, pdfMi } from '@/lib/pdf-cozum';
 import { sureDurumu } from '@/lib/son-tarih';
 import {
   cozumSayfaYolu,
@@ -60,6 +61,9 @@ export function OdevTeslim() {
   const [cevaplar, setCevaplar] = useState<Record<number, string>>({});
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoHatasi, setFotoHatasi] = useState<string | null>(null);
+  // PDF birleştirildiyse "3 sayfa tek görsele birleştirildi" notu.
+  const [fotoNotu, setFotoNotu] = useState<string | null>(null);
+  const [fotoHazirlaniyor, setFotoHazirlaniyor] = useState(false);
   const [gonderiyor, setGonderiyor] = useState(false);
   // Çok sayfalı yol (0054) — yalnız sınır > 1 iken kullanılıyor.
   const [sayfalar, setSayfalar] = useState<Sayfa[]>([]);
@@ -136,7 +140,18 @@ export function OdevTeslim() {
 
   async function fotoSecildi(dosya: File) {
     setFotoHatasi(null);
+    setFotoNotu(null);
     try {
+      if (pdfMi(dosya)) {
+        // PDF (öğretmenin isteği): cihazda görsele çevriliyor; sayfalar
+        // alt alta TEK görsel. Sunucu yine yalnız görsel görüyor.
+        setFotoHazirlaniyor(true);
+        const { pdfiTekGorsele } = await import('@/services/pdf-gorsel');
+        const { dosya: gorsel, sayfaSayisi } = await pdfiTekGorsele(dosya);
+        setFoto(gorsel);
+        setFotoNotu(birlesimNotu(sayfaSayisi));
+        return;
+      }
       // Sıkıştırma seçim anında yapılıyor: öğrenci "Gönder"e bastığında
       // bekleyeceği süre kısalsın ve dosyanın gerçekten okunabildiği
       // gönderimden önce anlaşılsın.
@@ -144,6 +159,8 @@ export function OdevTeslim() {
     } catch (e) {
       setFoto(null);
       setFotoHatasi(e instanceof Error ? e.message : 'Fotoğraf işlenemedi.');
+    } finally {
+      setFotoHazirlaniyor(false);
     }
   }
 
@@ -159,10 +176,22 @@ export function OdevTeslim() {
     const hazir: Sayfa[] = [];
     const okunamayan: string[] = [];
 
+    // PDF'in fazladan sayfaları: sınıra sığmayanlar hiç çizilmiyor.
+    let pdfTasan = 0;
+
     setIsliyor(true);
     try {
       for (const d of alinacak) {
         try {
+          if (pdfMi(d)) {
+            // PDF: her sayfası ayrı çözüm sayfası (öğretmenin isteği).
+            const { pdfSayfalariniGorsele } = await import('@/services/pdf-gorsel');
+            const kalan = yer - hazir.length;
+            const { dosyalar: gorseller, toplam } = await pdfSayfalariniGorsele(d, kalan);
+            for (const g of gorseller) hazir.push({ id: crypto.randomUUID(), dosya: g });
+            pdfTasan += toplam - gorseller.length;
+            continue;
+          }
           hazir.push({ id: crypto.randomUUID(), dosya: await gorseliSikistir(d) });
         } catch {
           okunamayan.push(d.name);
@@ -177,7 +206,7 @@ export function OdevTeslim() {
     setSayfalar(liste);
 
     const sorunlar: string[] = [];
-    const disarida = tasan + (dosyalar.length - alinacak.length);
+    const disarida = tasan + pdfTasan + (dosyalar.length - alinacak.length);
     if (disarida > 0) sorunlar.push(tasmaMetni(sinir, disarida));
     if (okunamayan.length > 0) {
       sorunlar.push(`Okunamayan görsel: ${okunamayan.join(', ')}. Başka bir fotoğraf seçebilirsin.`);
@@ -288,6 +317,8 @@ export function OdevTeslim() {
           cevaplar={cevaplar}
           foto={foto}
           fotoHatasi={fotoHatasi}
+          fotoNotu={fotoNotu}
+          fotoHazirlaniyor={fotoHazirlaniyor}
           gonderiyor={gonderiyor}
           onCevap={(no, sik) =>
             setCevaplar((c) => {
@@ -323,6 +354,8 @@ type IcerikProps = {
   cevaplar: Record<number, string>;
   foto: File | null;
   fotoHatasi: string | null;
+  fotoNotu: string | null;
+  fotoHazirlaniyor: boolean;
   gonderiyor: boolean;
   onCevap: (no: number, sik: string | null) => void;
   onFoto: (d: File) => void;
@@ -348,6 +381,8 @@ function OdevIcerigi({
   cevaplar,
   foto,
   fotoHatasi,
+  fotoNotu,
+  fotoHazirlaniyor,
   gonderiyor,
   onCevap,
   onFoto,
@@ -485,8 +520,8 @@ function OdevIcerigi({
           ) : (
             <>
               <Field
-                etiket="Çözüm fotoğrafı"
-                ipucu="Zorunlu. Çözüm kâğıdının fotoğrafını çek; okunaklı olsun yeter."
+                etiket="Çözüm fotoğrafı ya da PDF"
+                ipucu="Zorunlu. Çözüm kâğıdının fotoğrafını çek ya da PDF seç; okunaklı olsun yeter. PDF birden fazla sayfaysa sayfalar tek görselde birleştirilir."
                 zorunlu
                 {...(fotoHatasi ? { hata: fotoHatasi } : {})}
               >
@@ -498,7 +533,8 @@ function OdevIcerigi({
                     // kamerayı açar ve galeriyi seçenek olmaktan çıkarır. Öğrenci
                     // çözümünü çoktan fotoğraflamış olabilir; onu yeniden çekmeye
                     // zorlamak gereksiz bir engel.
-                    accept="image/*"
+                    accept="image/*,application/pdf,.pdf"
+                    disabled={fotoHazirlaniyor}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
                       if (f) void onFoto(f);
@@ -506,10 +542,16 @@ function OdevIcerigi({
                   />
                 )}
               </Field>
-              {foto && (
+              {fotoHazirlaniyor && (
+                <p className="mb-4 text-[13px] text-muted" role="status">
+                  PDF hazırlanıyor…
+                </p>
+              )}
+              {foto && !fotoHazirlaniyor && (
                 <p className="mb-4 text-[13px] text-success">
-                  Fotoğraf hazır{' '}
+                  {fotoNotu ? 'Çözüm hazır' : 'Fotoğraf hazır'}{' '}
                   <span className="sk-sayi">({Math.round(foto.size / 1024)} KB)</span>
+                  {fotoNotu && <span className="block text-ink">{fotoNotu}</span>}
                 </p>
               )}
             </>

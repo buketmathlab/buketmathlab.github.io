@@ -75,7 +75,7 @@ export function SayfaSahnesi({ sayfalar, sinir, isliyor, hata, onEkle, onCikar }
       ) : (
         <Field
           etiket={sayfalar.length === 0 ? 'Çözüm sayfaları' : 'Sayfa ekle'}
-          ipucu={`Zorunlu, en az bir sayfa. Bu ödevde en fazla ${sinir} sayfa gönderebilirsin — sırayla ekle, öğretmenin bu sırayla görecek.`}
+          ipucu={`Zorunlu, en az bir sayfa. Fotoğraf ya da PDF ekleyebilirsin; PDF'in her sayfası ayrı sayfa olur. Bu ödevde en fazla ${sinir} sayfa gönderebilirsin — sırayla ekle, öğretmenin bu sırayla görecek.`}
           zorunlu={sayfalar.length === 0}
           {...(hata ? { hata } : {})}
         >
@@ -83,7 +83,7 @@ export function SayfaSahnesi({ sayfalar, sinir, isliyor, hata, onEkle, onCikar }
             <Input
               {...k}
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf,.pdf"
               multiple
               disabled={isliyor}
               onChange={(e) => {

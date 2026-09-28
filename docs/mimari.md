@@ -5332,3 +5332,26 @@ kabul ediyordu (toplu ekleme testi 12); eksik olan formdaki alandı.
   (`ogrenciler_listesi`) diyalog "Bu sınıfta 601 numarası zaten var: …"
   diyor, düğme "Yine de ekle"ye dönüyor. Liste okunamazsa uyarısız devam.
 - `lib/ogrenci-numarasi.ts` (+test), `ogrenci-numarasi-denetimi.mjs`.
+
+## Öğrenci çözümü olarak PDF (istemci)
+
+Öğretmenin isteği: "PDF de gönderebilsinler." Öğrenciler çözümü PDF
+olarak seçiyor, çözüm alanı yalnız görsel kabul ettiği için "Fotoğraf
+işlenemedi" görüyorlardı.
+
+PDF ÖĞRENCİNİN CİHAZINDA GÖRSELE ÇEVRİLİYOR; depoya JPEG gidiyor. Sunucu
+(`odev_gonder` yol kuralı `.jpg/.png/.webp`), depo, Edge Function,
+öğretmen ve veli görüntüleyicileri değişmedi; SQL adımı yok.
+
+- Sayfa sınırı 1: bütün sayfalar 1400 px genişlikte ALT ALTA TEK görsel,
+  aralarında gri çizgi (öğrencilerin elle yaptığı birleştirmenin aynısı).
+  En fazla 8 sayfa; toplam alan 16 M pikseli aşarsa genişlik küçülüyor
+  (iOS Safari daha büyük tuvali boş çiziyor). `lib/pdf-cozum.ts`.
+- Sınır > 1: her PDF sayfası ayrı sayfa; sınıra sığmayanlar çizilmiyor,
+  taşma uyarısı mevcut metinle.
+- JPEG 0.72 (fotoğrafla aynı); 10 MB'ı aşarsa 0.6 / 0.5.
+- `services/pdf-gorsel.ts` tembel: PDF seçmeyen öğrenci indirmiyor.
+- Ölçüm: öğretmenin 2 sayfalık gerçek PDF'i 1400×3966, 541 KB, ~4 sn.
+  `pdf-cozum-denetimi.mjs`: tek görsel (her sayfa bandında içerik),
+  3+taşma, 9 sayfa hatası, bozuk PDF, fotoğraf değişmedi. Kusur provası:
+  sayfa çizimi atlanınca "içerik yok" ile kırmızı.
