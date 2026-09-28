@@ -4,15 +4,16 @@ import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Field, Input } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
+import { dosyaAdresi, dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
-import { anahtariCikar, type Cikarim } from '@/lib/cevap-anahtari';
+import { anahtarOku } from '@/services/anahtar-oku';
+import { anahtarFarki, anahtarlariBirlestir, type Cikarim } from '@/lib/cevap-anahtari';
+import { YukluDosya } from './YukluDosya';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { KonuAtama } from './KonuAtama';
 import { PdfOnerileri } from './PdfOnerileri';
@@ -94,6 +95,9 @@ export function OdevDuzenle() {
   const [yeniAnahtarPdf, setYeniAnahtarPdf] = useState<File | null>(null);
   const [yeniOdevPdf, setYeniOdevPdf] = useState<File | null>(null);
   const [okuyor, setOkuyor] = useState(false);
+  const [ilerleme, setIlerleme] = useState<string | null>(null);
+  // Yeni anahtar PDF'i okunmadan önceki cevaplar: "Vazgeç" bunlara döner.
+  const [anahtarOncesi, setAnahtarOncesi] = useState<Record<number, string> | null>(null);
   const [okumaHatasi, setOkumaHatasi] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
   const [degisenler, setDegisenler] = useState<PuanDegisimi[] | null>(null);
@@ -156,24 +160,63 @@ export function OdevDuzenle() {
     }
   }
 
-  async function anahtarPdfSecildi(dosya: File) {
+  /**
+   * Yeni anahtar PDF'i: okunan cevaplar MEVCUT CEVAPLARIN ÜSTÜNE yazılır,
+   * yerine DEĞİL. Önceden `setAnahtar(sonuc.anahtar)` okunamayan bir PDF'te
+   * kayıtlı 51 cevabın hepsini siliyordu; öğretmen hepsini yeniden
+   * işaretliyordu. Artık PDF'in bulamadığı soru eski cevabını korur ve
+   * değişen her cevap ekranda listelenir.
+   */
+  async function anahtarPdfSecildi(dosya: File | null) {
+    if (!dosya) {
+      // "Vazgeç": dosya da, PDF'ten gelen cevaplar da geri alınır.
+      setYeniAnahtarPdf(null);
+      if (anahtarOncesi) setAnahtar(anahtarOncesi);
+      setAnahtarOncesi(null);
+      setCikarim(null);
+      setOkumaHatasi(null);
+      return;
+    }
     const sorun = dosyayiDenetle(dosya);
     if (sorun) return setOkumaHatasi(sorun);
     setYeniAnahtarPdf(dosya);
     setOkumaHatasi(null);
     setOkuyor(true);
+    const onceki = anahtarOncesi ?? anahtar;
     try {
-      const satirlar = await pdfSatirlariniOku(dosya);
-      const sonuc = anahtariCikar(satirlar, { soruSayisi: n, sonSecenek: form.sonSecenek });
+      const sonuc = await anahtarOku(dosya, {
+        soruSayisi: n,
+        sonSecenek: form.sonSecenek,
+        ilerleme: (bitti, toplam) => setIlerleme(`Sayfa ${bitti}/${toplam}`),
+      });
       setCikarim(sonuc);
-      setAnahtar(sonuc.anahtar);
+      setAnahtarOncesi(onceki);
+      setAnahtar(anahtarlariBirlestir(onceki, sonuc.anahtar));
     } catch (e) {
       setOkumaHatasi(e instanceof Error ? e.message : 'PDF okunamadı.');
       setCikarim(null);
     } finally {
       setOkuyor(false);
+      setIlerleme(null);
     }
   }
+
+  /** Yüklü dosyayı açar. Yol istemcide tutulmuyor; imzalı adres her seferinde. */
+  async function yukluDosyayiAc(tur: 'odev' | 'anahtar') {
+    try {
+      const { yol } = await rpc<{ yol: string | null }>('odev_dosya_yolu', {
+        p_token: oturum?.token,
+        p_id: id,
+        p_tur: tur,
+      });
+      if (!yol) return bildir('Bu ödevde o dosya yok.', 'hata');
+      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
+    } catch (e) {
+      bildir(e instanceof Error ? e.message : 'Dosya açılamadı.', 'hata');
+    }
+  }
+
+  const degisenCevaplar = anahtarOncesi ? anahtarFarki(anahtarOncesi, anahtar) : [];
 
   async function kaydet() {
     if (!detay) return;
@@ -265,6 +308,13 @@ export function OdevDuzenle() {
             : 'Taslak ödev. Yayınlamadan istediğiniz kadar değiştirebilirsiniz.'
         }
       />
+      {/* ÖĞRETMENİN İSTEĞİ: "Neyi düzenlemek istiyorsam yalnız onu
+          değiştirebilmeliyim." Ekran bunu zaten yapıyordu (bütün alanlar
+          kayıttan dolu geliyor) ama bunu SÖYLEMİYORDU; boş dosya alanları
+          tersini düşündürüyordu. */}
+      <p className="-mt-2 mb-4 text-[14px] text-ink">
+        Yalnız değiştirmek istediğiniz alanı değiştirin; diğer her şey olduğu gibi kalır.
+      </p>
 
       <AsyncBoundary
         durum={durum}
@@ -364,28 +414,17 @@ export function OdevDuzenle() {
               )}
               <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 
-              <Field
+              <YukluDosya
                 etiket="Ödev PDF’i (sorular)"
-                ipucu={
-                  detay.odev_yolu
-                    ? 'Yüklü bir dosya var. Yenisini seçerseniz onun yerini alır.'
-                    : 'Henüz dosya yok.'
-                }
-              >
-                {(k) => (
-                  <Input
-                    {...k}
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0] ?? null;
-                      setYeniOdevPdf(f);
-                      if (f) void odevPdfiniOku(f);
-                      else setPdfOzet(null);
-                    }}
-                  />
-                )}
-              </Field>
+                yuklu={!!detay.odev_yolu}
+                onAc={() => void yukluDosyayiAc('odev')}
+                secilen={yeniOdevPdf}
+                onSec={(f) => {
+                  setYeniOdevPdf(f);
+                  if (f) void odevPdfiniOku(f);
+                  else setPdfOzet(null);
+                }}
+              />
 
               {pdfOzet && (
                 <PdfOnerileri
@@ -400,30 +439,57 @@ export function OdevDuzenle() {
               )}
 
               {testMi && (
-                <Field
+                <YukluDosya
                   etiket="Cevap anahtarı PDF’i"
+                  yuklu={!!detay.anahtar_yolu}
+                  onAc={() => void yukluDosyayiAc('anahtar')}
+                  secilen={yeniAnahtarPdf}
+                  onSec={(f) => void anahtarPdfSecildi(f)}
+                  kilitli={okuyor}
                   ipucu={
-                    detay.gonderim_sayisi > 0
-                      ? 'Anahtar değişirse gönderen öğrenciler yeniden puanlanır.'
-                      : 'Yeni bir PDF seçerseniz cevaplar yeniden okunur.'
+                    'Yeni PDF’ten okunan cevaplar mevcut cevapların üstüne yazılır; ' +
+                    'PDF’te bulunamayan sorular olduğu gibi kalır.' +
+                    (detay.gonderim_sayisi > 0
+                      ? ' Anahtar değişirse gönderen öğrenciler yeniden puanlanır.'
+                      : '')
                   }
                   {...(okumaHatasi ? { hata: okumaHatasi } : {})}
-                >
-                  {(k) => (
-                    <Input
-                      {...k}
-                      type="file"
-                      accept="application/pdf"
-                      disabled={okuyor}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) void anahtarPdfSecildi(f);
-                      }}
-                    />
-                  )}
-                </Field>
+                />
               )}
-              {okuyor && <p className="mb-4 text-[13px] text-muted">PDF okunuyor…</p>}
+              {okuyor && (
+                <p className="mb-4 text-[13px] text-muted" role="status">
+                  {ilerleme ? `PDF okunuyor… ${ilerleme}` : 'PDF okunuyor…'}
+                </p>
+              )}
+
+              {/* DEĞİŞEN CEVAPLAR GÖRÜNÜR. Yeni PDF yalnız bulduğu soruları
+                  değiştiriyor; hangileri değişti, kaydetmeden önce burada. */}
+              {anahtarOncesi && !okuyor && (
+                <Card vurgu={degisenCevaplar.length > 0 ? 'uyari' : 'yok'} className="mb-4">
+                  <p className="mb-1 text-[14px] text-ink">
+                    {cikarim && cikarim.bulunan.length > 0
+                      ? `PDF’ten ${cikarim.bulunan.length} sorunun cevabı okundu.`
+                      : 'Bu PDF’ten cevap okunamadı; kayıtlı cevaplar olduğu gibi duruyor.'}
+                  </p>
+                  {degisenCevaplar.length === 0 ? (
+                    <p className="text-[14px] text-ink">Kayıtlı cevaplardan farklı cevap yok.</p>
+                  ) : (
+                    <>
+                      <p className="mb-1 text-[14px] font-semibold text-ink">
+                        {`${degisenCevaplar.length} soruda cevap değişti`}
+                      </p>
+                      <p className="text-[14px] text-ink">
+                        {degisenCevaplar
+                          .map((d) => `${d.no}. soru: ${d.eski ?? '—'} → ${d.yeni ?? '—'}`)
+                          .join(' · ')}
+                      </p>
+                    </>
+                  )}
+                  <p className="mt-1 text-[13px] text-muted">
+                    Kaydetmeden hiçbir şey değişmez. Vazgeçerseniz eski cevaplar geri gelir.
+                  </p>
+                </Card>
+              )}
 
               {testMi && n > 0 && (
                 <div className="mb-4">

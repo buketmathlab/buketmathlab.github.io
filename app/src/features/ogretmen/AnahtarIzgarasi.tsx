@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
 import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
@@ -43,6 +43,13 @@ export function AnahtarIzgarasi({ soruSayisi, sonSecenek, anahtar, cikarim, onDe
   const dikkatGerek = eksikler.length > 0 || celiskili.size > 0;
   const [acik, setAcik] = useState(dikkatGerek || soruSayisi <= 30);
 
+  // Düzenlemede ızgara kayıtlı cevaplarla (tam) KAPALI açılıyor; sonra
+  // okunan bir PDF eksik ya da şüpheli soru bırakırsa kendiliğinden açılsın.
+  // Yoksa kapalı kutu "cevaplar tamam" derken aşağıda boş sorular kalırdı.
+  useEffect(() => {
+    if (dikkatGerek) setAcik(true);
+  }, [dikkatGerek]);
+
   return (
     <div>
       {/* Durum özeti — öğretmen "kaç tanesi tamam" sorusunu tek bakışta görsün.
@@ -72,6 +79,12 @@ export function AnahtarIzgarasi({ soruSayisi, sonSecenek, anahtar, cikarim, onDe
           yöntem yanılabilir — lütfen cevapları tek tek doğrulayın.
         </p>
       )}
+      {cikarim?.yontem === 'isaretli-sik' && (
+        <p className="mb-3 rounded-sk-sm bg-warning-bg p-3 text-[13px] text-warning">
+          Cevaplar PDF’teki <strong>işaretli şıklardan</strong> okundu. Lütfen göz gezdirin;
+          kesin okunamayan sorular boş bırakıldı ya da işaretlendi.
+        </p>
+      )}
       {cikarim?.yontem === 'bulunamadi' && (
         <p className="mb-3 rounded-sk-sm bg-warning-bg p-3 text-[13px] text-warning">
           PDF'ten cevap çıkarılamadı. Cevapları aşağıdan elle girebilirsiniz.
@@ -79,15 +92,15 @@ export function AnahtarIzgarasi({ soruSayisi, sonSecenek, anahtar, cikarim, onDe
       )}
       {celiskili.size > 0 && (
         <p className="mb-3 rounded-sk-sm bg-danger-bg p-3 text-[13px] text-danger">
-          <strong>{[...celiskili].join(', ')}</strong> numaralı sorularda PDF'te birden fazla farklı
-          cevap görüldü. İlk bulunan yazıldı; bunları mutlaka kontrol edin.
+          <strong>{[...celiskili].join(', ')}</strong> numaralı sorularda PDF’ten kesin bir cevap
+          okunamadı (farklı cevaplar görüldü ya da işaret net değil). Bunları mutlaka kontrol edin.
         </p>
       )}
 
       {!acik && (
         <div className="rounded-sk-sm border border-line bg-line-soft p-4">
           <p className="mb-1 text-[14px] font-semibold text-ink">
-            Cevapların tamamı PDF’ten okundu.
+            Bütün soruların cevabı girili.
           </p>
           <p className="mb-3 text-[13px] text-muted">
             Kontrol etmek isterseniz açabilirsiniz; gerek görmüyorsanız doğrudan kaydedebilirsiniz.

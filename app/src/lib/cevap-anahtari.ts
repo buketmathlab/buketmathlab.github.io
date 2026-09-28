@@ -52,9 +52,11 @@ export type Cikarim = {
    * `numarali`  — soru numaralarıyla eşleşti, güvenilir.
    * `harf-dizisi` — numara bulunamadı, harfler sırayla eşlendi. ZAYIF:
    *                 arayüz bunu açıkça uyarı olarak göstermeli.
+   * `isaretli-sik` — en az bir cevap PDF'teki işaretli şıktan (pembe kutu)
+   *                 okundu (`lib/isaretli-sik.ts`). Arayüz "kontrol edin" der.
    * `bulunamadi` — hiçbir şey çıkarılamadı.
    */
-  yontem: 'numarali' | 'harf-dizisi' | 'bulunamadi';
+  yontem: 'numarali' | 'harf-dizisi' | 'isaretli-sik' | 'bulunamadi';
 };
 
 /**
@@ -68,22 +70,41 @@ function bosluksuzUzunluk(s: string): number {
   return s.replace(/\s+/g, '').length;
 }
 
+/**
+ * Şık satırı: "A) 25 B) 30 C) 35 D) 36 E) 40". Sayılar ve harfler art arda
+ * geldiği için %60 kapsama eşiğini GEÇİYOR ve "25 → B, 30 → C" üretiyordu —
+ * 25'ten fazla sorulu bir testte anahtarı sessizce bozan ölçülmüş bir kusur
+ * (öğretmenin "Çözüm.pdf"inde). Üç ya da daha fazla "X)" şık etiketi olan
+ * satır anahtar satırı sayılmıyor. Anahtar satırlarında harf ")" ile
+ * bitmiyor ("1) A" — parantez numarada).
+ */
+function sikSatiriMi(satir: string, sonSecenek: SonSecenek): boolean {
+  const desen = new RegExp(`(?:^|[^A-Za-z])[A-${sonSecenek}]\\)`, 'g');
+  return (satir.match(desen)?.length ?? 0) >= 3;
+}
+
 /** Satırdaki "numara → şık" çiftleri. Kapsama oranı da hesaplanır. */
 function satirdakiCiftler(satir: string, sonSecenek: SonSecenek) {
   // Ayraç isteğe bağlı: "1A", "1.A", "1) A", "1 - A" hepsi geçerli.
   const desen = new RegExp(
-    `(\\d{1,3})\\s*[-–—.:)\\]]?\\s*([A-${sonSecenek}a-${sonSecenek.toLowerCase()}])` +
+    `(\\d{1,3})\\s*([-–—.:)\\]]?)\\s*([A-${sonSecenek}a-${sonSecenek.toLowerCase()}])` +
       // Şıkkın peşinden harf gelmemeli: "12 Bir" ya da "3 CEVAP" eşleşmesin.
       `(?![A-Za-zÇĞİIÖŞÜçğıöşü])`,
     'g',
   );
 
-  const ciftler: Array<{ no: number; sik: string }> = [];
+  const ciftler: Array<{ no: number; sik: string; guclu: boolean }> = [];
   let kapsanan = 0;
   let m: RegExpExecArray | null;
   while ((m = desen.exec(satir)) !== null) {
     kapsanan += bosluksuzUzunluk(m[0]!);
-    ciftler.push({ no: Number.parseInt(m[1]!, 10), sik: m[2]!.toUpperCase() });
+    ciftler.push({
+      no: Number.parseInt(m[1]!, 10),
+      sik: m[3]!.toUpperCase(),
+      // AYRAÇLI çift ("4 -C", "1) A") yazılmış bir anahtardır; ayraçsız
+      // çift ("4 E") şekil etiketlerinden de doğabilir ("D 4 E 4 C A").
+      guclu: m[2] !== '',
+    });
   }
 
   const toplam = bosluksuzUzunluk(satir);
@@ -195,18 +216,31 @@ export function anahtariCikar(
 
   const anahtar: Record<number, string> = {};
   const celiskili = new Set<number>();
+  // Sorunun cevabı ayraçlı bir çiftten mi geldi.
+  const gucluden = new Set<number>();
 
   for (const satir of satirlar) {
+    if (sikSatiriMi(satir, sonSecenek)) continue;
     const { ciftler, oran } = satirdakiCiftler(satir, sonSecenek);
     // Düzyazı satırı: eşleşmeler satırın küçük bir bölümünü kaplıyor.
     // Soru metnindeki şıklar buradan eleniyor.
     if (oran < EN_AZ_KAPSAMA) continue;
 
-    for (const { no, sik } of ciftler) {
+    for (const { no, sik, guclu } of ciftler) {
       if (no < 1 || no > soruSayisi) continue;
       const mevcut = anahtar[no];
       if (mevcut === undefined) {
         anahtar[no] = sik;
+        if (guclu) gucluden.add(no);
+      } else if (guclu && !gucluden.has(no)) {
+        // AYRAÇLI ÇİFT AYRAÇSIZI EZER, çelişki sayılmaz. Öğretmenin
+        // "Çözüm.pdf"inde şekil etiketi satırı ("D 4 E 4 C A") özet
+        // satırından ("4 -C") önce okunuyor ve 4. soruya E yazılıyordu.
+        anahtar[no] = sik;
+        gucluden.add(no);
+        celiskili.delete(no);
+      } else if (!guclu && gucluden.has(no)) {
+        // Ayraçsız çift, ayraçlı bir cevabı değiştiremez.
       } else if (mevcut !== sik) {
         celiskili.add(no);
       }
@@ -243,4 +277,72 @@ export function anahtariCikar(
     celiskili: [...celiskili].sort((a, b) => a - b),
     yontem,
   };
+}
+
+/**
+ * Metin çıkarımı ile işaretli şık çıkarımını birleştirir.
+ *
+ * Metin daha kesin: bulduğu cevap değişmez, işaretler yalnız BOŞLUKLARI
+ * doldurur. İkisi farklı derse soru çelişkili; emin olunamayan işaret
+ * (metin de bulmadıysa) soruyu boş bırakır ve çelişkili listesine koyar.
+ */
+export function cikarimlariBirlestir(
+  metin: Cikarim,
+  isaret: { anahtar: Record<number, string>; eminDegil: number[] },
+  soruSayisi: number,
+): Cikarim {
+  const anahtar: Record<number, string> = { ...metin.anahtar };
+  const celiskili = new Set(metin.celiskili);
+  let isaretten = 0;
+
+  for (const [k, sik] of Object.entries(isaret.anahtar)) {
+    const no = Number(k);
+    const mevcut = anahtar[no];
+    if (mevcut === undefined) {
+      anahtar[no] = sik;
+      isaretten++;
+    } else if (mevcut !== sik) {
+      celiskili.add(no);
+    }
+  }
+  // Emin olunamayan işaretler: metin de bulmadıysa soru boş kalır ve
+  // öğretmene "buraya bakın" denir.
+  for (const no of isaret.eminDegil) {
+    if (anahtar[no] === undefined) celiskili.add(no);
+  }
+
+  const bulunan: number[] = [];
+  const eksik: number[] = [];
+  for (let i = 1; i <= soruSayisi; i++) (anahtar[i] === undefined ? eksik : bulunan).push(i);
+
+  return {
+    anahtar,
+    bulunan,
+    eksik,
+    celiskili: [...celiskili].sort((a, z) => a - z),
+    yontem: isaretten > 0 ? 'isaretli-sik' : bulunan.length > 0 ? metin.yontem : 'bulunamadi',
+  };
+}
+
+/**
+ * Okunan cevapları mevcut cevapların ÜSTÜNE yazar. Okunmayan soru mevcut
+ * cevabını korur — okunamayan bir PDF hiçbir cevabı silemez.
+ */
+export function anahtarlariBirlestir(
+  mevcut: Record<number, string>,
+  okunan: Record<number, string>,
+): Record<number, string> {
+  return { ...mevcut, ...okunan };
+}
+
+/** İki anahtar arasında cevabı farklı sorular, artan sırada. */
+export function anahtarFarki(
+  eski: Record<number, string>,
+  yeni: Record<number, string>,
+): Array<{ no: number; eski: string | null; yeni: string | null }> {
+  const numaralar = new Set([...Object.keys(eski), ...Object.keys(yeni)].map(Number));
+  return [...numaralar]
+    .filter((no) => (eski[no] ?? null) !== (yeni[no] ?? null))
+    .sort((a, z) => a - z)
+    .map((no) => ({ no, eski: eski[no] ?? null, yeni: yeni[no] ?? null }));
 }
