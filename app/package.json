@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "varliklar": "node scripts/varliklari-isle.mjs",
     "migration-listesi": "node scripts/migration-listesi.mjs",
+    "sik-sablonlari": "node scripts/sik-sablonlari.mjs",
     "pdf-denetim": "node scripts/pdf-uyumluluk-denetimi.mjs",
     "pwa-denetim": "node scripts/pwa-denetimi.mjs",
     "karne-denetim": "node scripts/konu-karnesi-denetimi.mjs",
@@ -32,6 +33,7 @@
     "kok-denetim": "node scripts/kok-denetimi.mjs",
     "sayfa-denetim": "node scripts/sayfa-siniri-denetimi.mjs",
     "ortak-denetim": "node scripts/ortak-odev-denetimi.mjs",
+    "anahtar-denetim": "node scripts/anahtar-okuma-denetimi.mjs",
     "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
     "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"
   },

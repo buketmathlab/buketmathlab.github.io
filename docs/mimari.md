@@ -5208,3 +5208,66 @@ Gövdeler 0054'teki gibi mekanik üretildi (11 gövde, 18 değişim);
 `ortak-odev-denetimi.mjs` A bölümü yeniden üretip karşılaştırıyor.
 `sayfa-siniri-denetimi.mjs` A1 artık yalnız 0054 öncesine bakıyor — 0055'in
 aynı gövdeleri yeniden tanımlaması beklenen bir şey.
+
+## Düzenlemede yalnız değişen · işaretli şıktan cevap anahtarı (istemci)
+
+Öğretmenin isteği: "Bir sınıfta yalnız teslim süresini uzatmak istiyorum;
+neyi düzenlemek istiyorsam yalnız onu değiştirebilmeliyim." ve "Eklediğim
+cevap anahtarında doğru şıkları sistem göremiyor, 51 soruyu tek tek
+işaretliyorum."
+
+Sunucu değişmedi, migration yok.
+
+### Düzenleme
+
+Ölçüldü: Düzenle ekranı bütün alanları kayıttan dolu açıyordu; yalnız
+tarihi değiştirip kaydetmek diğer her şeyi aynen gönderiyordu. İki kusur:
+
+- **Boş dosya alanları.** İki `<input type=file>` "Dosya seçilmedi"
+  diyordu; öğretmen soruları ve anahtarı yeniden yüklemesi gerektiğini
+  sandı (kendisi söyledi). Artık `YukluDosya`: "Yüklü · Aç · Değiştir";
+  dosya alanı ancak "Değiştir"le çıkıyor, "Vazgeç" geri alıyor.
+- **Anahtar PDF'i cevapları siliyordu.** `setAnahtar(sonuc.anahtar)`:
+  okunamayan bir PDF kayıtlı 51 cevabın hepsini sildi. Artık okunan
+  cevaplar mevcutların ÜSTÜNE yazılıyor (`anahtarlariBirlestir`), değişen
+  her cevap listeleniyor (`anahtarFarki`), "Vazgeç" eski cevapları geri
+  getiriyor. Oluşturma ekranında da aynı birleştirme.
+
+### Cevap anahtarı okuma (`services/anahtar-oku.ts`)
+
+Önce metin (`lib/cevap-anahtari.ts`); bütün sorular bulunamadıysa
+işaretli şıklar (`services/pdf-isaret.ts` → `lib/isaretli-sik.ts`,
+tembel yükleniyor). Metin daha kesin: işaretler yalnız boşlukları
+dolduruyor, ikisi farklı derse soru çelişkili. PDF cihazdan çıkmıyor,
+yapay zekâ yok.
+
+- **Metin çıkarımında iki ölçülmüş kusur** (öğretmenin eski biçimi
+  "Çözüm.pdf"): şekil etiketi satırı `D 4 E 4 C A` 4. soruya E yazıyordu
+  (doğrusu C, özet satırında `4 -C`); şık satırı `A) 25 B) 30 C) 35`
+  %60 eşiğini geçip 25+ sorulu testte "25 → B" üretirdi. Düzeltme:
+  ≥3 "X)" etiketli satır anahtar değil; ayraçlı çift (`4 -C`) ayraçsızı
+  (`4 E`) ezer, çelişki sayılmaz.
+- **İşaretli şık** (yeni biçim: sorular görsel, doğru şık pembe kutuda,
+  metinde cevap yok): sayfa ≈3 ölçekte çiziliyor → pembe bağlı bileşenler
+  (7×6 – 260×60 pt, doluluk > 0.2) → kutudaki en soldaki harf 20×24
+  ızgaraya → A–E şablonlarıyla kosinüs (`sik-sablonlari.ts`, `npm run
+  sik-sablonlari` üretir; 8 yazı tipi, düz/kalın; çalışma anında çizilmez
+  ki her cihazda aynı olsun). Benzerlik < 0.55 ya da fark < 0.05 → soru
+  BOŞ. Kutu, okuma sırasında (sayfa → sütun → y) kendinden önce gelen soru
+  numarasına ait; numaralar metin katmanında aynı yazı tipi/boydaki en
+  kalabalık sayı grubundan.
+- Ölçüm, öğretmenin gerçek PDF'i (51 soru, 9 sayfa, ~5 sn): **49 doğru,
+  0 yanlış**; 14 işaretsiz, 42'de harfin üstüne el yazısı binmiş
+  (benzerlik 0.42) → ikisi boş, öğretmen işaretliyor. Doğruların en
+  düşük benzerliği 0.88, en düşük farkı 0.083. Eski biçim 9/9.
+
+### Doğrulama
+
+`lib/isaretli-sik.test.ts` (gerçek PDF'ten 14 kutu kesiti; soru metni
+yok), `cevap-anahtari.test.ts` (eski biçimin cevap satırları),
+`app/scripts/anahtar-okuma-denetimi.mjs` (`npm run anahtar-denetim`;
+gerçek PDF'ler depoda yok, `ANAHTAR_PDF_ISARETLI` / `ANAHTAR_PDF_METIN`
+ile verilirse uçtan uca okunuyor). Kusur provaları: birleştirme yerine
+`setAnahtar(sonuc.anahtar)` → A3/A4 kırmızı; eşikler 0 → 42. soru "B"
+dolar, denetim ve birim testi kırmızı; ayraç kuralı yok → eski biçim
+4. soru kırmızı.

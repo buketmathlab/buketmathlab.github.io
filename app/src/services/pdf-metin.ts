@@ -104,12 +104,19 @@ export function parcalariSatirlaraBol(parcalar: readonly MetinParcasi[]): string
   });
 }
 
+/** pdf.js'in açtığı belge — tipini paketten türetiyoruz, elle yazmıyoruz. */
+export type PdfBelgesi = Awaited<ReturnType<typeof import('pdfjs-dist')['getDocument']>['promise']>;
+
 /**
- * PDF dosyasını satırlara çevirir.
+ * PDF'i açar, `isle`'yi belgeyle çağırır ve ne olursa olsun kapatır.
+ *
+ * Metin okuma (`pdfSatirlariniOku`) ve işaretli şık okuma
+ * (`services/anahtar-oku.ts`) aynı belgeyi paylaşıyor: 9 MB'lık bir anahtarı
+ * iki kez ayrıştırmamak için.
  *
  * @throws Okunamayan, şifreli ya da bozuk dosyada Türkçe, eyleme dönük hata.
  */
-export async function pdfSatirlariniOku(dosya: File): Promise<string[]> {
+export async function pdfIleCalis<T>(dosya: File, isle: (belge: PdfBelgesi) => Promise<T>): Promise<T> {
   // pdf.js YÜKLENMEDEN ÖNCE. Aksi hâlde Safari 17.4 öncesinde modülün
   // kendisi değerlendirilirken çöküyor (bkz. lib/promise-polyfill.ts).
   withResolversKur();
@@ -136,7 +143,7 @@ export async function pdfSatirlariniOku(dosya: File): Promise<string[]> {
   const gorev = pdfjs.getDocument({ data: new Uint8Array(await dosya.arrayBuffer()) });
 
   try {
-    let belge;
+    let belge: PdfBelgesi;
     try {
       belge = await gorev.promise;
     } catch {
@@ -145,40 +152,60 @@ export async function pdfSatirlariniOku(dosya: File): Promise<string[]> {
           'Başka bir dosya deneyin veya cevapları elle girin.',
       );
     }
-
-    const tumSatirlar: string[] = [];
-    for (let i = 1; i <= belge.numPages; i++) {
-      const sayfa = await belge.getPage(i);
-      const icerik = await sayfa.getTextContent();
-      // `items` metin parçaları ve işaretleme düğümleri karışık gelir;
-      // yalnız `str` taşıyanlar bizi ilgilendiriyor.
-      const parcalar: MetinParcasi[] = [];
-      for (const x of icerik.items) {
-        if ('str' in x && 'transform' in x) {
-          // `width` ŞART: boşlukların nereye gireceği buna bakılarak
-          // kararlaştırılıyor. Geçirilmediği sürece okuyucu "K ı z" üretir
-          // (gerçek bir sınıf listesinde ölçüldü).
-          parcalar.push({
-            str: x.str,
-            transform: x.transform,
-            ...(typeof x.width === 'number' ? { width: x.width } : {}),
-          });
-        }
-      }
-      tumSatirlar.push(...parcalariSatirlaraBol(parcalar));
-    }
-
-    if (tumSatirlar.length === 0) {
-      throw new Error(
-        'Bu PDF metin içermiyor — büyük olasılıkla taranmış bir görüntü. ' +
-          'Cevapları elle girebilirsiniz.',
-      );
-    }
-
-    return tumSatirlar;
+    return await isle(belge);
   } finally {
     // Görevi ve worker'ı birlikte serbest bırak: her çağrıda yeni bir
     // worker açıldığı için kapatılmazsa birikir.
     await gorev.destroy();
   }
+}
+
+/** Bir sayfanın metin parçaları (yalnız `str` taşıyanlar). */
+export async function sayfaParcalari(
+  sayfa: Awaited<ReturnType<PdfBelgesi['getPage']>>,
+): Promise<Array<MetinParcasi & { fontName?: string; height?: number }>> {
+  const icerik = await sayfa.getTextContent();
+  // `items` metin parçaları ve işaretleme düğümleri karışık gelir;
+  // yalnız `str` taşıyanlar bizi ilgilendiriyor.
+  const parcalar: Array<MetinParcasi & { fontName?: string; height?: number }> = [];
+  for (const x of icerik.items) {
+    if ('str' in x && 'transform' in x) {
+      // `width` ŞART: boşlukların nereye gireceği buna bakılarak
+      // kararlaştırılıyor. Geçirilmediği sürece okuyucu "K ı z" üretir
+      // (gerçek bir sınıf listesinde ölçüldü).
+      parcalar.push({
+        str: x.str,
+        transform: x.transform,
+        ...(typeof x.width === 'number' ? { width: x.width } : {}),
+        ...(typeof x.height === 'number' ? { height: x.height } : {}),
+        ...(typeof x.fontName === 'string' ? { fontName: x.fontName } : {}),
+      });
+    }
+  }
+  return parcalar;
+}
+
+/** Açık bir belgenin bütün sayfalarındaki satırlar. */
+export async function belgeSatirlari(belge: PdfBelgesi): Promise<string[]> {
+  const tumSatirlar: string[] = [];
+  for (let i = 1; i <= belge.numPages; i++) {
+    tumSatirlar.push(...parcalariSatirlaraBol(await sayfaParcalari(await belge.getPage(i))));
+  }
+  return tumSatirlar;
+}
+
+/**
+ * PDF dosyasını satırlara çevirir.
+ *
+ * @throws Okunamayan, şifreli ya da bozuk dosyada Türkçe, eyleme dönük hata.
+ */
+export async function pdfSatirlariniOku(dosya: File): Promise<string[]> {
+  const tumSatirlar = await pdfIleCalis(dosya, belgeSatirlari);
+  if (tumSatirlar.length === 0) {
+    throw new Error(
+      'Bu PDF metin içermiyor — büyük olasılıkla taranmış bir görüntü. ' +
+        'Cevapları elle girebilirsiniz.',
+    );
+  }
+  return tumSatirlar;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anahtariCikar } from './cevap-anahtari';
+import { anahtariCikar, cikarimlariBirlestir } from './cevap-anahtari';
 
 describe('anahtariCikar', () => {
   it('tek satırda numaralı çiftleri okur', () => {
@@ -223,5 +223,85 @@ describe('öğretmenin gerçek biçimi — çözümlü anahtar', () => {
     // Karışık bir dosyada ana desen daha kesin; öncelik onda kalmalı.
     const s = anahtariCikar(['1A 2B 3C'], { soruSayisi: 3 });
     expect(s.anahtar).toEqual({ 1: 'A', 2: 'B', 3: 'C' });
+  });
+});
+
+describe('öğretmenin "Çözüm.pdf" biçimi — soru altında (X), sonda özet', () => {
+  // Gerçek PDF'ten `parcalariSatirlaraBol` ile okunan satırların cevapla
+  // ilgili olanları (soru metinleri çıkarıldı; depo herkese açık).
+  const SATIRLAR = [
+    '(D) G noktası ABC üçgeninin, G noktası ADE üçgeninin',
+    'A) 8 B) 9 C) 10 D) 12 E) 18 ağırlık merkezi ve |KF| = 12 birimdir.',
+    '(C)',
+    'A) 4 B) 6 C) 8 D) 9 E) 12',
+    '(E)',
+    'A) 40 B) 44 C) 45 D) 48 E) 52',
+    '(C) (45)',
+    'A) 5 B) 6 C) 8 D) 9 E) 10',
+    '(B) okula gidiyor.',
+    'A) 800 B) 1000 C) 1200 D) 1500 E) 1800',
+    '(E)',
+    'A) 5,6 B) 6 C) 6,8 D) 8 E) 8,5',
+    // Şeklin köşe etiketleri: "4 E" bir cevap DEĞİL.
+    '7. D 4 E 4 C ABCD bir 9. ABC bir üçgen',
+    '(B) (D)',
+    'A) 4 B) 5 C) 6 D) 8 E) 10 A) 25 B) 30 C) 35 D) 36 E) 40',
+    '1-D 2-E 3-C 4-C 5-C 6-B',
+    '7-B 8-E 9-D',
+  ];
+
+  it('dokuz sorunun dokuzunu da DOĞRU okur, çelişki yok', () => {
+    const s = anahtariCikar(SATIRLAR, { soruSayisi: 9 });
+    expect(s.anahtar).toEqual({ 1: 'D', 2: 'E', 3: 'C', 4: 'C', 5: 'C', 6: 'B', 7: 'B', 8: 'E', 9: 'D' });
+    expect(s.eksik).toEqual([]);
+    expect(s.celiskili).toEqual([]);
+  });
+
+  it('ŞIK SATIRI anahtar sanılmaz (25+ sorulu testte "25 → B" olmazdı)', () => {
+    const s = anahtariCikar(['A) 4 B) 5 C) 6 D) 8 E) 10 A) 25 B) 30 C) 35 D) 36 E) 40'], {
+      soruSayisi: 40,
+    });
+    expect(s.anahtar).toEqual({});
+  });
+
+  it('ayraçlı çift ("4-C") ayraçsızı ("4 E") ezer, önce gelse bile', () => {
+    const s = anahtariCikar(['D 4 E 4 C A', '4-C'], { soruSayisi: 5 });
+    expect(s.anahtar[4]).toBe('C');
+    expect(s.celiskili).toEqual([]);
+  });
+
+  it('ayraçsız çift ayraçlı cevabı değiştiremez', () => {
+    const s = anahtariCikar(['1-A 2-B', '1 C 2 D'], { soruSayisi: 2 });
+    expect(s.anahtar).toEqual({ 1: 'A', 2: 'B' });
+    expect(s.celiskili).toEqual([]);
+  });
+
+  it('iki AYRAÇLI çift çelişirse çelişki bildirilir', () => {
+    const s = anahtariCikar(['1-A', '1-C'], { soruSayisi: 1 });
+    expect(s.celiskili).toEqual([1]);
+  });
+});
+
+describe('cikarimlariBirlestir — metin + işaretli şık', () => {
+  const metin = anahtariCikar('1-A 2-B', { soruSayisi: 4 });
+
+  it('işaretler yalnız BOŞLUKLARI doldurur; metnin cevabı değişmez', () => {
+    const s = cikarimlariBirlestir(metin, { anahtar: { 1: 'C', 3: 'D' }, eminDegil: [] }, 4);
+    expect(s.anahtar).toEqual({ 1: 'A', 2: 'B', 3: 'D' });
+    expect(s.celiskili).toEqual([1]); // metin A, işaret C
+    expect(s.eksik).toEqual([4]);
+    expect(s.yontem).toBe('isaretli-sik');
+  });
+
+  it('emin olunamayan işaret: soru boş kalır, çelişkili listesinde', () => {
+    const s = cikarimlariBirlestir(metin, { anahtar: {}, eminDegil: [2, 4] }, 4);
+    expect(s.anahtar[4]).toBeUndefined();
+    expect(s.celiskili).toEqual([4]); // 2'yi metin zaten buldu
+    expect(s.yontem).toBe('numarali');
+  });
+
+  it('hiçbiri bulamazsa bulunamadı', () => {
+    const bos = anahtariCikar('', { soruSayisi: 2 });
+    expect(cikarimlariBirlestir(bos, { anahtar: {}, eminDegil: [] }, 2).yontem).toBe('bulunamadi');
   });
 });

@@ -11,7 +11,8 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
-import { anahtariCikar, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
+import { anahtarlariBirlestir, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
+import { anahtarOku } from '@/services/anahtar-oku';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { KonuAtama } from './KonuAtama';
 import { KunyePaneli } from './KunyePaneli';
@@ -71,6 +72,7 @@ export function OdevOlustur() {
   const [odevPdf, setOdevPdf] = useState<File | null>(null);
   const [anahtarPdf, setAnahtarPdf] = useState<File | null>(null);
   const [okuyor, setOkuyor] = useState(false);
+  const [ilerleme, setIlerleme] = useState<string | null>(null);
   const [okumaHatasi, setOkumaHatasi] = useState<string | null>(null);
   const [cikarim, setCikarim] = useState<Cikarim | null>(null);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
@@ -134,10 +136,15 @@ export function OdevOlustur() {
     setOkumaHatasi(null);
     setOkuyor(true);
     try {
-      const satirlar = await pdfSatirlariniOku(dosya);
-      const sonuc = anahtariCikar(satirlar, { soruSayisi: n, sonSecenek });
+      const sonuc = await anahtarOku(dosya, {
+        soruSayisi: n,
+        sonSecenek,
+        ilerleme: (bitti, toplam) => setIlerleme(`Sayfa ${bitti}/${toplam}`),
+      });
       setCikarim(sonuc);
-      setAnahtar(sonuc.anahtar);
+      // ÜSTÜNE yazılır, yerine değil: elle girilmiş bir cevabı, onu
+      // bulamayan bir PDF silemez.
+      setAnahtar((a) => anahtarlariBirlestir(a, sonuc.anahtar));
       setAdim(3);
     } catch (e) {
       // Okunamayan PDF ödev oluşturmayı bitirmez: elle girmeye devam.
@@ -145,6 +152,7 @@ export function OdevOlustur() {
       setCikarim(null);
     } finally {
       setOkuyor(false);
+      setIlerleme(null);
     }
   }
 
@@ -484,7 +492,11 @@ export function OdevOlustur() {
             )}
           </Field>
 
-          {okuyor && <p className="mb-4 text-[13px] text-muted">PDF okunuyor…</p>}
+          {okuyor && (
+            <p className="mb-4 text-[13px] text-muted" role="status">
+              {ilerleme ? `PDF okunuyor… ${ilerleme}` : 'PDF okunuyor…'}
+            </p>
+          )}
 
           <p className="mb-4 rounded-sk-sm bg-line-soft p-3 text-[13px] text-muted">
             PDF’ler cihazınızda okunur; cevap çıkarımı için hiçbir yere gönderilmez.
