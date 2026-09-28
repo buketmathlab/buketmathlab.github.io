@@ -5,6 +5,10 @@ import { Field, Input } from '@/components/ui/Field';
 
 type Props = {
   etiket: string;
+  /** Kartın başlığı: "Soru dosyası", "Cevap anahtarı". */
+  baslik: string;
+  /** Başlığın altındaki ayrıntı: "Ödevin soruları", "51 sorunun cevabı kayıtlı". */
+  ayrinti: string;
   /** Ödevde bu dosya zaten yüklü mü (kayıtta yol var mı). */
   yuklu: boolean;
   /** Yüklü dosyayı yeni sekmede açar. */
@@ -19,6 +23,32 @@ type Props = {
   kilitli?: boolean;
 };
 
+/** Belge simgesi — köşesi kıvrık sayfa, üstünde "PDF". Süs; metin zaten yazıyor. */
+function BelgeSimgesi() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 40 48"
+      className="h-12 w-10 shrink-0 text-danger"
+      fill="none"
+    >
+      <path d="M4 3h22l10 10v32H4z" className="fill-surface" stroke="currentColor" strokeWidth="2" />
+      <path d="M26 3v10h10" stroke="currentColor" strokeWidth="2" />
+      <rect x="4" y="27" width="26" height="12" rx="2" fill="currentColor" />
+      <text x="17" y="36.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="#fff" fontFamily="sans-serif">
+        PDF
+      </text>
+    </svg>
+  );
+}
+
+/** Yeni seçilen dosyanın boyutu, okunur biçimde. */
+function boyut(bayt: number): string {
+  return bayt >= 1024 * 1024
+    ? `${(bayt / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
+    : `${Math.max(1, Math.round(bayt / 1024))} KB`;
+}
+
 /**
  * Düzenlemede dosya alanı: yüklü dosya GÖRÜNÜR, değiştirmek isteğe bağlı.
  *
@@ -31,41 +61,67 @@ type Props = {
  * gerektiğini sandı (kendisi söyledi). Sunucu dosyayı zaten koruyordu;
  * eksik olan bunun GÖRÜNMESİYDİ.
  *
- * Artık: "Yüklü" etiketi + "Aç" + "Değiştir". Dosya alanı ancak
- * "Değiştir"e basılınca çıkıyor; "Vazgeç" seçimi geri alıyor ve yüklü
- * dosya olduğu gibi kalıyor.
+ * Artık bir belge kartı: simge, başlık, "Kayıtlı", ne olduğu (ör. "51
+ * sorunun cevabı kayıtlı"), "Görüntüle" ve "Yenisiyle değiştir". Dosya alanı
+ * ancak "Yenisiyle değiştir"e basılınca çıkıyor; "Vazgeç" seçimi geri alıyor
+ * ve kayıtlı dosya olduğu gibi kalıyor.
  */
-export function YukluDosya({ etiket, yuklu, onAc, onSec, secilen, ipucu, hata, kilitli }: Props) {
+export function YukluDosya({
+  etiket,
+  baslik,
+  ayrinti,
+  yuklu,
+  onAc,
+  onSec,
+  secilen,
+  ipucu,
+  hata,
+  kilitli,
+}: Props) {
   const [degistiriyor, setDegistiriyor] = useState(!yuklu);
 
   if (yuklu && !degistiriyor) {
     return (
-      <div className="mb-4">
+      <div className="mb-5">
         <p className="mb-1 block text-[13px] font-bold text-muted">{etiket}</p>
-        <div className="flex flex-wrap items-center gap-2 rounded-sk-sm border border-line bg-line-soft p-3">
-          <Tag tur="basari">Yüklü</Tag>
-          <span className="text-[14px] text-ink">Değiştirmezseniz bu dosya aynen kalır.</span>
-          <span className="ml-auto flex gap-2">
-            <Button tur="sade" olcu="sm" onClick={onAc} aria-label={`${etiket} — yüklü dosyayı aç`}>
-              Aç
-            </Button>
-            <Button
-              tur="sade"
-              olcu="sm"
-              onClick={() => setDegistiriyor(true)}
-              aria-label={`${etiket} — değiştir`}
-              disabled={kilitli}
-            >
-              Değiştir
-            </Button>
-          </span>
+        <div className="flex gap-3 rounded-sk-md border border-line bg-surface p-4">
+          <BelgeSimgesi />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[15px] font-semibold text-ink">{baslik}</p>
+              <Tag tur="basari">Kayıtlı</Tag>
+            </div>
+            <p className="mt-0.5 text-[13px] text-muted">{`PDF belgesi · ${ayrinti}`}</p>
+            <p className="mt-2 text-[13px] text-ink">
+              Değiştirmediğiniz sürece bu dosya ödevde aynen kalır; yeniden yüklemenize gerek yok.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button tur="sade" olcu="sm" onClick={onAc} aria-label={`${etiket} — dosyayı görüntüle`}>
+                Görüntüle
+              </Button>
+              <Button
+                tur="sade"
+                olcu="sm"
+                onClick={() => setDegistiriyor(true)}
+                aria-label={`${etiket} — yenisiyle değiştir`}
+                disabled={kilitli}
+              >
+                Yenisiyle değiştir
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <>
+    <div className="mb-5">
+      {yuklu && (
+        <p className="mb-2 rounded-sk-sm bg-line-soft p-3 text-[13px] text-ink">
+          Yeni bir PDF seçin. Seçmezseniz ya da vazgeçerseniz kayıtlı dosya kullanılmaya devam eder.
+        </p>
+      )}
       <Field etiket={etiket} {...(ipucu ? { ipucu } : {})} {...(hata ? { hata } : {})}>
         {(k) => (
           <Input
@@ -78,11 +134,12 @@ export function YukluDosya({ etiket, yuklu, onAc, onSec, secilen, ipucu, hata, k
         )}
       </Field>
       {(secilen || yuklu) && (
-        <div className="-mt-2 mb-4 flex flex-wrap items-center gap-2">
+        <div className="-mt-2 flex flex-wrap items-center gap-2">
           {secilen && (
             <p className="text-[13px] text-ink">
-              Yeni dosya: <strong>{secilen.name}</strong>
-              {yuklu ? ' — kaydedince yüklü dosyanın yerini alır.' : ''}
+              Seçilen dosya: <strong>{secilen.name}</strong>
+              {` (${boyut(secilen.size)})`}
+              {yuklu ? ' — kaydettiğinizde kayıtlı dosyanın yerini alır.' : ''}
             </p>
           )}
           {yuklu && (
@@ -94,11 +151,11 @@ export function YukluDosya({ etiket, yuklu, onAc, onSec, secilen, ipucu, hata, k
                 setDegistiriyor(false);
               }}
             >
-              Vazgeç — yüklü dosya kalsın
+              Vazgeç — kayıtlı dosya kalsın
             </Button>
           )}
         </div>
       )}
-    </>
+    </div>
   );
 }

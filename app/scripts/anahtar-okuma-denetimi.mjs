@@ -5,8 +5,9 @@
  * değiştirebilmeliyim" ve "işaretli şıklı cevap anahtarını sistem okusun".
  *
  * A. DÜZENLEME EKRANI (Chromium, taklit RPC, yayındaki derleme `yeni/`)
- *    A1. Yüklü dosyalar GÖRÜNÜR ("Yüklü" + Aç + Değiştir); boş dosya alanı
- *        yok. "Aç" imzalı adresi açıyor.
+ *    A1. Yüklü dosyalar GÖRÜNÜR (belge kartı: "Kayıtlı", Görüntüle, Yenisiyle
+ *        değiştir, ayrıntı); boş dosya alanı yok. "Görüntüle" imzalı adresi
+ *        açıyor.
  *    A2. Yalnız son tarih değişince kayıt yükünde her şey aynen: 51 cevap,
  *        konular, iki dosya yolu, geç teslim.
  *    A3. CEVAP İÇERMEYEN bir anahtar PDF'i kayıtlı 51 cevabı SİLMİYOR
@@ -115,7 +116,7 @@ const guncelleme = async (p) => (await p.evaluate(() => window.__cagrilar)).filt
 const kaydet = async (p) => { await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click(); await p.waitForTimeout(500); };
 
 async function anahtarYukle(p, ad, veri) {
-  await p.getByRole('button', { name: 'Cevap anahtarı PDF’i — değiştir' }).click();
+  await p.getByRole('button', { name: 'Cevap anahtarı PDF’i — yenisiyle değiştir' }).click();
   await p.locator('input[type=file]').setInputFiles({ name: ad, mimeType: 'application/pdf', buffer: veri });
   // Okuma bitene kadar ("PDF okunuyor…") bekle.
   await p.waitForFunction(() => !document.body.innerText.includes('PDF okunuyor'), null, { timeout: 120000 });
@@ -127,18 +128,20 @@ console.log('--- A1. Yüklü dosyalar görünür, boş dosya alanı yok ---');
 {
   const { b, p } = await kur(DETAY(51));
   const m = await metin(p);
-  const yuklu = (m.match(/Değiştirmezseniz bu dosya aynen kalır/g) ?? []).length;
+  const yuklu = (m.match(/Değiştirmediğiniz sürece bu dosya ödevde aynen kalır/g) ?? []).length;
   if (yuklu !== 2) bozuk(`iki dosya da "Yüklü" görünmeli, görünen ${yuklu}`);
-  else tamam('sorular ve anahtar "Yüklü · Aç · Değiştir"');
+  else tamam('sorular ve anahtar: belge kartı, "Kayıtlı", Görüntüle, Yenisiyle değiştir');
   if ((await p.locator('input[type=file]').count()) !== 0) bozuk('boş dosya alanı hâlâ görünüyor');
   else tamam('"Dosya seçilmedi" diyen boş alan yok');
+  if (!m.includes('51 sorunun cevabı kayıtlı') || !m.includes('Öğrencilerin çözeceği sorular')) bozuk('kart ayrıntısı yok');
+  else tamam('ayrıntı: "51 sorunun cevabı kayıtlı", "Öğrencilerin çözeceği sorular"');
   if (!m.includes('Yalnız değiştirmek istediğiniz alanı değiştirin')) bozuk('yönlendirme cümlesi yok');
   else tamam('"Yalnız değiştirmek istediğiniz alanı değiştirin" yazıyor');
-  await p.getByRole('button', { name: 'Ödev PDF’i (sorular) — yüklü dosyayı aç' }).click();
+  await p.getByRole('button', { name: 'Ödev PDF’i (sorular) — dosyayı görüntüle' }).click();
   await p.waitForTimeout(300);
   const acilan = await p.evaluate(() => window.__acilan);
   if (acilan[0] !== 'https://depo.sahte/oku/odev/sorular/eski.pdf') bozuk(`"Aç" yanlış adres: ${acilan}`);
-  else tamam('"Aç" yüklü soruları imzalı adresle açıyor');
+  else tamam('"Görüntüle" kayıtlı soruları imzalı adresle açıyor');
   await b.close();
 }
 
@@ -186,7 +189,7 @@ console.log('--- A4. Yeni PDF yalnız bulduğunu değiştirir; değişen listele
   else tamam('"1 soruda cevap değişti — 2. soru: B → C"');
   if (!m.includes('5/5 cevap girildi')) bozuk('bulunamayan sorular (3–5) silindi');
   else tamam('PDF\'te olmayan 3, 4, 5 eski cevabını korudu');
-  await p.getByRole('button', { name: 'Vazgeç — yüklü dosya kalsın' }).click();
+  await p.getByRole('button', { name: 'Vazgeç — kayıtlı dosya kalsın' }).click();
   await p.waitForTimeout(200);
   m = await metin(p);
   if (m.includes('soruda cevap değişti')) bozuk('Vazgeç sonrası değişiklik kartı duruyor');

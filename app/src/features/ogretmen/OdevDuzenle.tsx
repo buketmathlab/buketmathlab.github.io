@@ -416,6 +416,8 @@ export function OdevDuzenle() {
 
               <YukluDosya
                 etiket="Ödev PDF’i (sorular)"
+                baslik="Soru dosyası"
+                ayrinti="Öğrencilerin çözeceği sorular"
                 yuklu={!!detay.odev_yolu}
                 onAc={() => void yukluDosyayiAc('odev')}
                 secilen={yeniOdevPdf}
@@ -441,6 +443,12 @@ export function OdevDuzenle() {
               {testMi && (
                 <YukluDosya
                   etiket="Cevap anahtarı PDF’i"
+                  baslik="Cevap anahtarı"
+                  ayrinti={
+                    Object.keys(detay.cevap_anahtari ?? {}).length > 0
+                      ? `${Object.keys(detay.cevap_anahtari ?? {}).length} sorunun cevabı kayıtlı`
+                      : 'Çözümler ve doğru şıklar'
+                  }
                   yuklu={!!detay.anahtar_yolu}
                   onAc={() => void yukluDosyayiAc('anahtar')}
                   secilen={yeniAnahtarPdf}
