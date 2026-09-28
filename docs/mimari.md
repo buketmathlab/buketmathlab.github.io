@@ -5271,3 +5271,64 @@ ile verilirse uçtan uca okunuyor). Kusur provaları: birleştirme yerine
 `setAnahtar(sonuc.anahtar)` → A3/A4 kırmızı; eşikler 0 → 42. soru "B"
 dolar, denetim ve birim testi kırmızı; ayraç kuralı yok → eski biçim
 4. soru kırmızı.
+
+## 0056 — gönderimi yeniden açma · boş cevap uyarısı · alt çubuk kusuru
+
+Olay: bir öğrenci (9C) cevaplarını işaretledi, gönderim BOŞ kaydedildi
+(51 sorudan 51'i boş, 0 puan). "Gönderim değiştirilemez" kuralı yüzünden
+öğrencinin elinde yol yoktu. Öğretmen iki şey istedi: gönderirken boş
+cevap uyarısı ve kendisine özel "Gönderimi yeniden aç".
+
+### Muhtemel kök neden — ölçüldü ve düzeltildi
+
+Öğrenci ve veli kabuğunda `<main>` hem `sk-alt-guvenli` (padding-bottom:
+env(safe-area-inset-bottom)) hem `pb-28` taşıyordu. `sk-alt-guvenli`
+utilities katmanında sonra geldiği için `pb-28`'i EZİYORDU: alt boşluk
+0 px (hesaplanan stil ölçüldü). Sayfanın son 57 px'i sabit alt çubuğun
+altında kalıyordu; ödev sayfasında orada **"Ödevi gönder"** var. 390 px
+genişlikte düğmenin ortasındaki öğe alt çubuğun bağlantısıydı: düğmeye
+basan öğrenci "Ödevler/Konularım"a gidip sayfadan çıkıyor, işaretlediği
+cevaplar (yalnız bileşen durumunda) kayboluyor, döndüğünde boş ızgarayla
+fotoğrafı yükleyip gönderiyordu. Artık `pb-[calc(7rem+env(...))]`, tek
+hesap; öğretmen kabuğu zaten doğruydu. `yeniden-acma-denetimi` B0 düğmenin
+üç noktasında `elementFromPoint` ile ölçüyor.
+
+### Boş cevap uyarısı (istemci)
+
+Test ödevinde boş soru varken "Ödevi gönder": "51 sorudan 51'i boş. Yine
+de gönderilsin mi?" (`lib/bos-cevap-uyarisi.ts`, Türkçe iyelik eki
+dahil). Hepsi boşsa metin "sayfa yenilenmiş olabilir" diyor ve onay düğmesi
+kırmızı. Onaysız hiçbir yükleme ve `odev_gonder` yok.
+
+### `gonderimi_yeniden_ac(token, gönderim, sebep)` (0056)
+
+- Yalnız platform sahibi (kendi oturumu ya da vekâlet) — `puan_duzelt`
+  kuralı. Sebep 3–500 karakter.
+- Önce `_denetim('gonderim_yeniden_acildi', …, eski = to_jsonb(satır))`,
+  sonra satır siliniyor; aynı işlemde. Eski gönderimin tamamı izde.
+- `odev_gonder` (gövde 0054, tek değişim): geç teslim kapalı ve süre
+  dolmuşsa bile, gönderimi yeniden açılmış öğrenci gönderebilir
+  (`_gonderim_yeniden_acildi`). Başka öğrenciye istisna yok (test 5).
+- Fotoğraf: depodaki eski dosya SQL'den silinemiyor; öğrenci yeniden
+  gönderirken istemci aynı yoldaki ESKİ fotoğrafı kullanıyor ve bunu
+  söylüyor (0054 davranışı). Fotoğrafı da değiştirilebilir yapmak Edge
+  Function değişikliği ister — yapılmadı.
+- Yedek denetim izini taşımıyor: geri yüklenen sistemde istisna taşınmaz.
+
+Kusur provaları: sahip şartı yok → test 1 kırmızı; `odev_gonder` istisnası
+yok → test 5 kırmızı; kabuk eski hâlinde → B0 kırmızı; uyarı kapalı → B1
+kırmızı.
+
+## Tek öğrenci eklerken okul numarası (istemci)
+
+Öğretmenin isteği: "Manuel öğrenci eklerken öğrenci numarasını da
+ekleyebilmeliyim." Sunucu `ogrenci_ekle(p_ogrenci_no)`'yu 0042'den beri
+kabul ediyordu (toplu ekleme testi 12); eksik olan formdaki alandı.
+
+- "Öğrenci numarası" alanı yalnız okul öğrencisinde (özel dersin okul
+  numarası yok), isteğe bağlı, en fazla 20 karakter, METİN ("0601").
+- Numarasız eklemede parametre hiç gönderilmiyor: çağrı eskisiyle aynı.
+- 0042 kararı "uyar, engelleme": sınıfta aynı numara varsa
+  (`ogrenciler_listesi`) diyalog "Bu sınıfta 601 numarası zaten var: …"
+  diyor, düğme "Yine de ekle"ye dönüyor. Liste okunamazsa uyarısız devam.
+- `lib/ogrenci-numarasi.ts` (+test), `ogrenci-numarasi-denetimi.mjs`.

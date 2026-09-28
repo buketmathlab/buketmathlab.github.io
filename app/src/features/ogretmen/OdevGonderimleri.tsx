@@ -12,6 +12,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import { CozumDugmesi } from './CozumDugmesi';
 import { YoneticiPuanDuzeltme } from './YoneticiPuanDuzeltme';
+import { GonderimiYenidenAc } from './GonderimiYenidenAc';
 import { useBenKimim } from '@/hooks/useBenKimim';
 import { duzeltmeIsareti } from '@/lib/puan-duzeltme';
 import { sureDurumu } from '@/lib/son-tarih';
@@ -205,11 +206,24 @@ export function OdevGonderimleri() {
                         </div>
                       )}
                       {yoneticiMi && s.gonderim_id && (
-                        <div className="mt-2">
+                        <div className="mt-2 flex flex-wrap items-start gap-2">
                           <YoneticiPuanDuzeltme
                             gonderimId={s.gonderim_id}
                             mevcutPuan={s.ogretmen_puan ?? s.puan}
                             onKaydedildi={yenile}
+                          />
+                          {/* YENİDEN AÇMA (0056) — puan düzeltme gibi yalnız
+                              sahipte. Cevaplar boş kaydedilmiş bir öğrenci
+                              mağdur olmasın: ödevi baştan gönderebilsin. */}
+                          <GonderimiYenidenAc
+                            gonderimId={s.gonderim_id}
+                            ogrenci={s.ogrenci}
+                            puan={s.ogretmen_puan ?? s.puan}
+                            dogru={s.dogru}
+                            yanlis={s.yanlis}
+                            bos={s.bos}
+                            zaman={s.zaman}
+                            onAcildi={yenile}
                           />
                         </div>
                       )}

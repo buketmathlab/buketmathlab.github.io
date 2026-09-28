@@ -73,7 +73,15 @@ export function OgrenciKabuk() {
         <SekmeCubugu sekmeler={sekmeler} bicim="yatay" />
       </div>
 
-      <main className="sk-alt-guvenli mx-auto w-full max-w-[880px] px-4 pb-28 pt-6 lg:pb-10">
+      {/* ALT BOŞLUK = ALT ÇUBUK + GÜVENLİ ALAN. Önceden `sk-alt-guvenli`
+          (padding-bottom: env(safe-area-inset-bottom)) ile `pb-28` aynı
+          öğedeydi ve utilities katmanında sonra geldiği için `pb-28`'i
+          EZİYORDU: alt boşluk 0 px oldu, sayfanın son 57 px'i alt çubuğun
+          altında kaldı. Ödev sayfasında orada "Ödevi gönder" duruyor —
+          öğrenci düğmeye basarken alt çubuğa dokunup sayfadan çıkabiliyor,
+          işaretlediği cevaplar kayboluyordu (ölçüldü; bir öğrencinin
+          cevapları boş gitti). İkisi tek hesapta. */}
+      <main className="mx-auto w-full max-w-[880px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-6 lg:pb-10">
         <Outlet />
       </main>
 

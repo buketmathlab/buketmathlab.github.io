@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
+import { Dialog } from '@/components/ui/Dialog';
+import { bosCevapUyarisi, type BosCevapUyarisi } from '@/lib/bos-cevap-uyarisi';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { Field, Input } from '@/components/ui/Field';
@@ -62,6 +64,8 @@ export function OdevTeslim() {
   // Çok sayfalı yol (0054) — yalnız sınır > 1 iken kullanılıyor.
   const [sayfalar, setSayfalar] = useState<Sayfa[]>([]);
   const [isliyor, setIsliyor] = useState(false);
+  // Boş cevap uyarısı açıkken dolu; "Yine de gönder" onu onaylıyor.
+  const [bosUyari, setBosUyari] = useState<BosCevapUyarisi | null>(null);
 
   const { veri, durum, hata, yenile } = useVeri<OgrenciOdevleri>('ogrenci_odevleri', {
     p_token: oturum?.token,
@@ -181,13 +185,20 @@ export function OdevTeslim() {
     if (sorunlar.length > 0) setFotoHatasi(sorunlar.join(' '));
   }
 
-  async function gonder() {
+  async function gonder(bosOnaylandi = false) {
     if (!odev || !oturum?.ogrenci) return;
     // Sınır 1'de bugünkü tek alan; üstünde seçilen sayfalar, sırayla.
     const dosyalar = sinir > 1 ? sayfalar.map((s) => s.dosya) : foto ? [foto] : [];
     if (dosyalar.length === 0) {
       return setFotoHatasi('Çözüm fotoğrafı olmadan ödev gönderilemez.');
     }
+    // BOŞ SORU VARSA ÖNCE SOR. Gönderim sonradan değiştirilemiyor; bir
+    // öğrencinin cevapları boş gitti ve 0 aldı (51 sorudan 51'i boş).
+    if (odev.tur === 'test' && !bosOnaylandi) {
+      const uyari = bosCevapUyarisi(odev.soru_sayisi ?? 0, cevaplar);
+      if (uyari) return setBosUyari(uyari);
+    }
+    setBosUyari(null);
 
     setGonderiyor(true);
     const yollar: string[] = [];
@@ -251,6 +262,16 @@ export function OdevTeslim() {
       {...(hata ? { hataAciklama: hata } : {})}
       tekrarDene={yenile}
     >
+      <Dialog
+        acik={bosUyari !== null}
+        onKapat={() => setBosUyari(null)}
+        baslik={bosUyari ? `${bosUyari.baslik}. Yine de gönderilsin mi?` : ''}
+        {...(bosUyari ? { aciklama: bosUyari.metin } : {})}
+        kapatEtiketi="Geri dön, işaretleyeyim"
+        onayEtiketi="Yine de gönder"
+        onayTuru={bosUyari?.hepsiBos ? 'tehlike' : 'birincil'}
+        onOnay={() => void gonder(true)}
+      />
       {!odev ? (
         <Card>
           <p className="mb-3 text-[15px] text-ink">Bu ödevi bulamadım.</p>
@@ -286,7 +307,7 @@ export function OdevTeslim() {
             setFotoHatasi(null);
             setSayfalar((s) => sahnedenCikar(s, i));
           }}
-          onGonder={gonder}
+          onGonder={() => void gonder()}
           onPdf={pdfAc}
           onGeri={() => git('/ogrenci')}
           ozelCumleler={ozelCumleler}
