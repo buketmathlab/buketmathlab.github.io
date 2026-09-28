@@ -5318,3 +5318,17 @@ kırmızı. Onaysız hiçbir yükleme ve `odev_gonder` yok.
 Kusur provaları: sahip şartı yok → test 1 kırmızı; `odev_gonder` istisnası
 yok → test 5 kırmızı; kabuk eski hâlinde → B0 kırmızı; uyarı kapalı → B1
 kırmızı.
+
+## Tek öğrenci eklerken okul numarası (istemci)
+
+Öğretmenin isteği: "Manuel öğrenci eklerken öğrenci numarasını da
+ekleyebilmeliyim." Sunucu `ogrenci_ekle(p_ogrenci_no)`'yu 0042'den beri
+kabul ediyordu (toplu ekleme testi 12); eksik olan formdaki alandı.
+
+- "Öğrenci numarası" alanı yalnız okul öğrencisinde (özel dersin okul
+  numarası yok), isteğe bağlı, en fazla 20 karakter, METİN ("0601").
+- Numarasız eklemede parametre hiç gönderilmiyor: çağrı eskisiyle aynı.
+- 0042 kararı "uyar, engelleme": sınıfta aynı numara varsa
+  (`ogrenciler_listesi`) diyalog "Bu sınıfta 601 numarası zaten var: …"
+  diyor, düğme "Yine de ekle"ye dönüyor. Liste okunamazsa uyarısız devam.
+- `lib/ogrenci-numarasi.ts` (+test), `ogrenci-numarasi-denetimi.mjs`.

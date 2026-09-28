@@ -26,6 +26,12 @@ import {
   yapilanYazisi,
 } from '@/lib/sinif-ozet-metni';
 import type { Kodlar, OgrenciListesi, Sinif, SinifOgrenciOzeti, YeniOgrenci } from '@/types/api';
+import {
+  NUMARA_EN_FAZLA,
+  ayniNumaralilar,
+  numarayiDenetle,
+  tekrarUyarisi,
+} from '@/lib/ogrenci-numarasi';
 
 export function Ogrenciler() {
   const { oturum } = useOturum();
@@ -37,6 +43,11 @@ export function Ogrenciler() {
 
   const [ekleAcik, setEkleAcik] = useState(false);
   const [ad, setAd] = useState('');
+  const [numara, setNumara] = useState('');
+  const [numaraHatasi, setNumaraHatasi] = useState<string | null>(null);
+  // Sınıfta aynı numara varsa uyarı (0042 kararı: UYAR, ENGELLEME). Dolu
+  // iken ikinci basış "Yine de ekle" anlamına geliyor.
+  const [tekrarUyari, setTekrarUyari] = useState<string | null>(null);
   const [tur, setTur] = useState<'okul' | 'ozel'>('okul');
   const [yeniSinif, setYeniSinif] = useState('');
   const [kaydediyor, setKaydediyor] = useState(false);
@@ -76,6 +87,13 @@ export function Ogrenciler() {
    */
   const [tazele, setTazele] = useState(0);
 
+  function formuSifirla() {
+    setAd('');
+    setNumara('');
+    setNumaraHatasi(null);
+    setTekrarUyari(null);
+  }
+
   async function ekle() {
     if (!ad.trim()) {
       setFormHatasi('Ad soyad yazın.');
@@ -85,14 +103,45 @@ export function Ogrenciler() {
       setFormHatasi('Okul öğrencisi için sınıf seçin.');
       return;
     }
+    // Özel ders öğrencisinin okul numarası yok: alan gizli, değer gitmiyor.
+    const n = tur === 'okul' ? numarayiDenetle(numara) : { no: null };
+    if ('hata' in n) {
+      setNumaraHatasi(n.hata);
+      return;
+    }
     setFormHatasi(null);
+    setNumaraHatasi(null);
     setKaydediyor(true);
     try {
+      // AYNI NUMARA SINIFTA VAR MI — yalnız ilk basışta bakılıyor; uyarı
+      // gösterildiyse ikinci basış öğretmenin "yine de" kararı. Liste
+      // okunamazsa uyarısız devam (bir uyarının eksikliği eklemeyi
+      // engellememeli).
+      if (n.no && tekrarUyari === null) {
+        try {
+          const v = await rpc<OgrenciListesi>('ogrenciler_listesi', {
+            p_token: oturum?.token,
+            p_arama: null,
+            p_sinif_id: yeniSinif,
+            p_sayfa: 1,
+            p_boyut: 100,
+          });
+          const adlar = ayniNumaralilar(n.no, v.kayitlar);
+          if (adlar.length > 0) {
+            setTekrarUyari(tekrarUyarisi(n.no, adlar));
+            return;
+          }
+        } catch {
+          /* uyarısız devam */
+        }
+      }
       const y = await rpc<YeniOgrenci>('ogrenci_ekle', {
         p_token: oturum?.token,
         p_ad: ad.trim(),
         p_tur: tur,
         p_sinif_id: tur === 'okul' ? yeniSinif : null,
+        // Numarasızsa parametre HİÇ gitmiyor: çağrı bugünküyle birebir.
+        ...(n.no ? { p_ogrenci_no: n.no } : {}),
       });
       setEkleAcik(false);
       // Kodları hemen göster: öğretmenin bunları öğrenciye iletmesi gerek,
@@ -101,7 +150,7 @@ export function Ogrenciler() {
         ad: ad.trim(),
         kodlar: { ogrenci: y.ogrenci_kodu, veli: y.veli_kodu },
       });
-      setAd('');
+      formuSifirla();
       setTazele((t) => t + 1);
       siniflar.yenile();
     } catch (e) {
@@ -241,9 +290,12 @@ export function Ogrenciler() {
       {/* --- Öğrenci ekleme --- */}
       <Dialog
         acik={ekleAcik}
-        onKapat={() => setEkleAcik(false)}
+        onKapat={() => {
+          setEkleAcik(false);
+          setTekrarUyari(null);
+        }}
         baslik="Öğrenci ekle"
-        onayEtiketi="Ekle"
+        onayEtiketi={tekrarUyari ? 'Yine de ekle' : 'Ekle'}
         onOnay={ekle}
         onayYukleniyor={kaydediyor}
       >
@@ -265,7 +317,14 @@ export function Ogrenciler() {
         {tur === 'okul' && (
           <Field etiket="Sınıf" zorunlu {...(formHatasi ? { hata: formHatasi } : {})}>
             {(k) => (
-              <Select {...k} value={yeniSinif} onChange={(e) => setYeniSinif(e.target.value)}>
+              <Select
+                {...k}
+                value={yeniSinif}
+                onChange={(e) => {
+                  setYeniSinif(e.target.value);
+                  setTekrarUyari(null);
+                }}
+              >
                 <option value="">Seçin…</option>
                 {siniflar.veri?.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -275,6 +334,35 @@ export function Ogrenciler() {
               </Select>
             )}
           </Field>
+        )}
+        {/* ÖĞRENCİ NUMARASI — öğretmenin isteği. İsteğe bağlı; yalnız okul
+            öğrencisinde (özel dersin okul numarası yok). `inputMode`
+            sayısal klavye açıyor ama değer METİN: "0601"in sıfırı kalır. */}
+        {tur === 'okul' && (
+          <Field
+            etiket="Öğrenci numarası"
+            ipucu="İsteğe bağlı. Okul numarası; öğrenci listelerinde görünür."
+            {...(numaraHatasi ? { hata: numaraHatasi } : {})}
+          >
+            {(k) => (
+              <Input
+                {...k}
+                inputMode="numeric"
+                maxLength={NUMARA_EN_FAZLA}
+                value={numara}
+                onChange={(e) => {
+                  setNumara(e.target.value);
+                  setTekrarUyari(null);
+                }}
+                placeholder="Örn. 601"
+              />
+            )}
+          </Field>
+        )}
+        {tekrarUyari && (
+          <p role="alert" className="mb-2 rounded-sk-sm bg-warning-bg p-3 text-[13px] text-warning">
+            {tekrarUyari}
+          </p>
         )}
         {tur === 'ozel' && formHatasi && (
           <p role="alert" className="text-[12px] font-semibold text-danger">
