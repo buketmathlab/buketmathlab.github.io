@@ -5355,3 +5355,29 @@ PDF ÖĞRENCİNİN CİHAZINDA GÖRSELE ÇEVRİLİYOR; depoya JPEG gidiyor. Sunuc
   `pdf-cozum-denetimi.mjs`: tek görsel (her sayfa bandında içerik),
   3+taşma, 9 sayfa hatası, bozuk PDF, fotoğraf değişmedi. Kusur provası:
   sayfa çizimi atlanınca "içerik yok" ile kırmızı.
+
+## Öğrenci cevabını değiştiremedi — çift dokunma yakınlaştırması (istemci)
+
+Olay: 51 soruluk testte bir öğrenci 8. soruya yanlışlıkla D işaretledi,
+B'ye çeviremedi ve yanlış cevapla gönderdi. Öğretmen sordu: göndermeden
+önce değiştirilemiyor mu?
+
+Ölçüldü (yayındaki derleme, iPhone 13 öykünmesi, dokunma): değiştirilebiliyor
+— `SikSatiri`'nde başka şık = değiştir, aynı şık = kaldır; 8 sayfa yüklüyken
+ve boş-cevap uyarısından sonra da. Muhtemel sebep: şık düğmelerinde (ve
+depoda hiçbir yerde) `touch-action: manipulation` yoktu; iPhone Safari'de
+bitişik iki şıkka hızlı art arda dokunuş çift dokunma yakınlaştırması
+sayılabiliyor ve ikinci dokunuş düğmeye gitmiyor.
+
+- `SikSatiri` düğmelerine `touch-manipulation`; `index.css` base katmanında
+  dokunulan bütün denetimlere `touch-action: manipulation` (iki parmakla
+  yakınlaştırma açık kalıyor).
+- Izgaranın üstünde: "Cevabını değiştirmek için başka bir şıkka dokunman
+  yeterli. Boş bırakmak için işaretli şıkka yeniden dokun." Gönder notu:
+  "Gönderene kadar … istediğin kadar değiştirebilirsin; gönderdikten sonra
+  değiştiremezsin." (eski "Gönderdikten sonra değiştiremezsin" yanlış
+  anlaşılmaya açıktı).
+- `sik-degistirme-denetimi.mjs`: hesaplanan `touch-action`, D → B → boş →
+  D, uyarı sonrası değiştirme, yönlendirme. Öykünücü Safari'nin
+  yakınlaştırmasını taklit etmediği için davranışın kaynağı olan stil
+  ölçülüyor. Kusur provası: sınıf ve genel kural kaldırılınca kırmızı.

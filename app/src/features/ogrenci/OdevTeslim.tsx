@@ -487,6 +487,12 @@ function OdevIcerigi({
                   <span className="sk-sayi">{`${soruSayisi - bosSayisi}/${soruSayisi} soru işaretlendi`}</span>
                 </Tag>
               </div>
+              {/* NASIL DEĞİŞTİRİLİR — ekranda yazmıyordu. Bir öğrenci işaretini
+                  değiştiremeyeceğini sandı ve yanlış cevapla gönderdi. */}
+              <p className="mb-3 text-[13px] text-ink">
+                Cevabını değiştirmek için başka bir şıkka dokunman yeterli. Boş bırakmak için
+                işaretli şıkka yeniden dokun.
+              </p>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {Array.from({ length: soruSayisi }, (_, i) => i + 1).map((no) => (
                   <SikSatiri
@@ -558,8 +564,8 @@ function OdevIcerigi({
           )}
 
           <p className="mb-4 rounded-sk-sm bg-line-soft p-3 text-[13px] text-muted">
-            Gönderdikten sonra <strong>değiştiremezsin</strong>. Cevaplarını bir kez daha
-            gözden geçir.
+            Gönderene kadar cevaplarını istediğin kadar değiştirebilirsin; gönderdikten sonra{' '}
+            <strong>değiştiremezsin</strong>. Göndermeden önce bir kez daha gözden geçir.
           </p>
 
           <Button

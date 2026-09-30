@@ -47,7 +47,13 @@ export function SikSatiri({ no, siklar, secili, vurgu = 'yok', onDegis }: Props)
               // öğrenci bir testte bu düğmeye onlarca kez basıyor, en çok
               // dokunulan öğede kuralı esnetmek yanlış yerde tasarruftu.
               className={
-                'min-h-[44px] min-w-[44px] rounded-sk-sm border text-[14px] font-semibold ' +
+                // `touch-manipulation`: iPhone'da iki bitişik şıkka hızlı art
+                // arda dokunmak (D'den hemen sonra B) ÇİFT DOKUNMA
+                // YAKINLAŞTIRMASI sayılıyordu; ikinci dokunuş düğmeye
+                // gitmiyor, sayfa yakınlaşıyordu. Bir öğrenci 8. soruyu D'den
+                // B'ye çeviremeyip yanlış cevapla gönderdi. İki parmakla
+                // yakınlaştırma bundan etkilenmiyor.
+                'touch-manipulation min-h-[44px] min-w-[44px] rounded-sk-sm border text-[14px] font-semibold ' +
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ' +
                 'focus-visible:outline-ink ' +
                 (aktif
