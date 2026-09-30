@@ -5355,3 +5355,21 @@ PDF ÖĞRENCİNİN CİHAZINDA GÖRSELE ÇEVRİLİYOR; depoya JPEG gidiyor. Sunuc
   `pdf-cozum-denetimi.mjs`: tek görsel (her sayfa bandında içerik),
   3+taşma, 9 sayfa hatası, bozuk PDF, fotoğraf değişmedi. Kusur provası:
   sayfa çizimi atlanınca "içerik yok" ile kırmızı.
+
+## "Konular" sayfasında süresi dolmamış gönderilmiş ödev (istemci)
+
+Olay: bir veli çocuğunun eksik konularının görünmediğini yazdı. Ölçülen:
+ödev gönderildiği anda ödev BAŞINA konu dökümü `veli_paneli` /
+`ogrenci_odevleri` ile geliyor (Veli → Ödevler kartı, öğrencinin ödev
+sonucu). Ama Konular / Konularım sayfaları `kendi_karnem` ile yalnız
+süresi dolmuş ödevleri sayıyor ve o arada "Henüz değerlendirilmiş ödev
+yok" diyordu — çocuk ödevi göndermişken yanıltıcı.
+
+- `lib/bekleyen-degerlendirme.ts`: gönderilmiş + `sureDurumu().gecti ===
+  false` (sunucunun `son_tarih < bugün` sınırıyla aynı; bugün son günse
+  bekliyor) sayısı ve metin.
+- `VeliKarne` `veli_paneli`, `OgrenciKarnem` `ogrenci_odevleri` okuyor
+  (hata yutuluyor: ek bilgi). Değerlendirilmiş ödev yoksa özet cümle
+  yerine açıklama + "Ödevlere git"; varsa özetin altında ek kart.
+- Öğretmenin kararı: kalıcı; SQL yok. `konular-bekleyen-denetimi.mjs`
+  K1–K5; kusur provası: sayaç 0 → kırmızı.

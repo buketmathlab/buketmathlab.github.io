@@ -5,7 +5,9 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { karneSozu } from '@/lib/karne-sozu';
-import type { KendiKarnem } from '@/types/api';
+import { bekleyenMetni, bekleyenSayisi } from '@/lib/bekleyen-degerlendirme';
+import { OdevlereGit } from '@/components/BekleyenDegerlendirme';
+import type { KendiKarnem, VeliPaneli } from '@/types/api';
 
 /**
  * Velinin gördüğü konu karnesi (0026).
@@ -32,6 +34,13 @@ export function VeliKarne() {
   const { veri, durum, hata, yenile } = useVeri<KendiKarnem>('kendi_karnem', {
     p_token: oturum?.token,
   });
+
+  // SÜRESİ DOLMAMIŞ GÖNDERİLMİŞ ÖDEVLER. Bu sayfa yalnız süresi dolmuşları
+  // sayıyor; o arada "Henüz değerlendirilmiş ödev yok" demek, çocuk ödevi
+  // göndermişken yanıltıcıydı (bir veli "eksik konular görünmüyor" yazdı).
+  // Hata YUTULUYOR: bu bir ek bilgi, sayfayı bozmamalı.
+  const { veri: panel } = useVeri<VeliPaneli>('veli_paneli', { p_token: oturum?.token });
+  const bekleyen = bekleyenSayisi(panel?.odevler ?? []);
 
   const ucYok = hata !== null && /could not find the function|schema cache/i.test(hata);
   const soz = veri ? karneSozu(veri.konular, veri.odev_sayisi) : null;
@@ -61,8 +70,21 @@ export function VeliKarne() {
           {veri && soz && (
             <>
               <Card className="mb-6">
-                <p className="text-[15px] text-ink">{soz.veli}</p>
+                {/* Değerlendirilmiş ödev yokken bekleyen varsa özet cümle
+                    ("Henüz değerlendirilmiş ödev yok…") YERİNE açıklama. */}
+                <p className="text-[15px] text-ink">
+                  {bekleyen > 0 && veri.odev_sayisi === 0 ? bekleyenMetni(bekleyen, 'veli') : soz.veli}
+                </p>
+                {bekleyen > 0 && veri.odev_sayisi === 0 && (
+                  <OdevlereGit hedef="/veli/odevler" etiket="Ödevlere git" />
+                )}
               </Card>
+              {bekleyen > 0 && veri.odev_sayisi > 0 && (
+                <Card className="mb-6">
+                  <p className="text-[14px] text-ink">{bekleyenMetni(bekleyen, 'veli')}</p>
+                  <OdevlereGit hedef="/veli/odevler" etiket="Ödevlere git" />
+                </Card>
+              )}
 
               {/* GENEL ORTALAMA (0029). Öğrencinin ekranındakiyle AYNI
                   sayı, aynı uçtan — iki yerde iki farklı ortalama
