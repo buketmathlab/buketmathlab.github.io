@@ -16,6 +16,7 @@ import {
   zamanYazisi,
   type MesajKanali,
 } from '@/lib/mesaj-listesi-metni';
+import { veliSatiri } from '@/lib/veli-adi';
 import type { OgrenciListesi, YazismaListesi } from '@/types/api';
 
 /**
@@ -156,6 +157,13 @@ function Gruplar({ veri, kanal }: { veri: YazismaListesi; kanal: MesajKanali }) 
                   >
                     <span className="min-w-0">
                       <span className="block font-semibold text-ink">{s.ad}</span>
+                      {/* 0057: yalnız Veliler kanalında; öğrenci kanalında
+                          sunucu zaten null döndürüyor. */}
+                      {kanal === 'veli' && veliSatiri(s.veli_adi) && (
+                        <span className="block text-[14px] text-ink">
+                          {veliSatiri(s.veli_adi)}
+                        </span>
+                      )}
                       <span className="block text-[13px] text-muted">
                         {zamanYazisi(s.son_mesaj)}
                       </span>

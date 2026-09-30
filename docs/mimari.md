@@ -5373,3 +5373,24 @@ yok" diyordu — çocuk ödevi göndermişken yanıltıcı.
   yerine açıklama + "Ödevlere git"; varsa özetin altında ek kart.
 - Öğretmenin kararı: kalıcı; SQL yok. `konular-bekleyen-denetimi.mjs`
   K1–K5; kusur provası: sayaç 0 → kırmızı.
+
+## 0057 — Veli adı Veliler ve Mesajlar listelerinde
+
+Öğretmenin isteği: Veliler → sınıf listesinde ve Mesajlar'da öğrencinin
+yanında velinin adı; ad, velinin onam verirken kendi yazdığı ad.
+
+- Veri 0038'den beri vardı (`veli_onaylari.veli_adi`); yalnız onam dökümü
+  okuyordu. Tablo ve yedek biçimi değişmedi.
+- `_veli_adi(ogrenci)` (dahili, istemciye kapalı): adın yazıldığı EN SON
+  onay satırı, sürüm şartı yok — metin yükselip veli henüz yeniden
+  onaylamadıysa eski ad görünür, "Onam bekliyor" etiketi ayrıca durur.
+- `sinif_velileri` (0049), `yazisma_listesi` (0048, yalnız veli kanalı),
+  `mesajlar_ogretmen` (0033, `ogrenci.veli_adi`, yalnız veli kanalı)
+  gövdeleri mekanik kopya + `veli_adi`. Kapsam kuralları aynen.
+- İstemci: `lib/veli-adi.ts`. Listelerde öğrenci adının altında
+  "Veli: …"; yazışma alt başlığı "velisi … ile yazışma", balonda ad. Ad
+  yoksa (onam yok ya da 0057 çalışmamış) hiçbir şey uydurulmuyor.
+- Kapsam dışı: Mesajlar arama kutusu veli adıyla aramıyor.
+- `veli_adi_testleri.sql` (7 grup; kusur provası: yardımcı null →
+  kırmızı), `veli-adi-denetimi.mjs` V1–V4 (kusur provası: satır
+  çizilmeyince kırmızı).

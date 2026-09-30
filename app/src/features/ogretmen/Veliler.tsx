@@ -9,6 +9,7 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { Yazisma as YazismaKutusu } from '@/components/ui/Yazisma';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { veliAdi, veliSatiri, veliYazismasiEtiketi } from '@/lib/veli-adi';
 import { rpc } from '@/services/supabase';
 import type { Kanal, SinifVelileri, VelilerListesi, Yazisma } from '@/types/api';
 
@@ -156,6 +157,13 @@ export function SinifVelileriEkrani() {
                     >
                       <span className="min-w-0">
                         <span className="block font-semibold text-ink">{v.ad}</span>
+                        {/* 0057: velinin onamda kendi yazdığı ad. Yoksa satır
+                            yok — "Onam bekliyor" etiketi durumu anlatıyor. */}
+                        {veliSatiri(v.veli_adi) && (
+                          <span className="block text-[14px] text-ink">
+                            {veliSatiri(v.veli_adi)}
+                          </span>
+                        )}
                         <span className="block text-[13px] text-muted">
                           {v.mesaj_sayisi === 0
                             ? 'Henüz yazışma yok'
@@ -263,7 +271,7 @@ export function Yazismasi({ kanal }: { kanal: Kanal }) {
               </h1>
               <p className="mt-1 text-[14px] text-muted">
                 {veri.ogrenci.sinif ?? 'Sınıfsız'} ·{' '}
-                {veli ? 'velisiyle yazışma' : 'öğrenciyle yazışma'}
+                {veli ? veliYazismasiEtiketi(veri.ogrenci.veli_adi) : 'öğrenciyle yazışma'}
               </p>
             </div>
 
@@ -282,15 +290,17 @@ export function Yazismasi({ kanal }: { kanal: Kanal }) {
             )}
 
             {/* ÖĞRENCİNİN GERÇEK ADI (öğretmenin isteği). Ad zaten
-                `mesajlar_ogretmen`'den geliyor; yeni SQL gerekmedi.
+                `mesajlar_ogretmen`'den geliyor.
 
-                VELİ TARAFINDA AD YOK ve uydurulmuyor: şemada veli adı diye
-                bir alan yok, yalnız veli KODU var. Olmayan bir veriyi
-                varmış gibi göstermektense "Veli" yazıyor. */}
+                VELİNİN ADI 0057'DEN BERİ GELİYOR: velinin onam verirken
+                kendi yazdığı ad (0038, `veli_onaylari.veli_adi`). Buradaki
+                eski not "şemada veli adı yok" diyordu; 0038'den beri doğru
+                değildi. Ad yoksa (onam yok ya da 0057 çalışmamış) yine
+                uydurulmuyor, "Veli" yazıyor. */}
             <YazismaKutusu
               mesajlar={veri.mesajlar}
               benKimim="ogretmen"
-              adlar={{ veli: 'Veli', ogrenci: veri.ogrenci.ad }}
+              adlar={{ veli: veliAdi(veri.ogrenci.veli_adi) ?? 'Veli', ogrenci: veri.ogrenci.ad }}
               yazmaEtiketi="Yeni mesaj"
               yerTutucu={
                 veli

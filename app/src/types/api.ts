@@ -116,6 +116,13 @@ export type YazismaListesi = {
     satirlar: Array<{
       ogrenci_id: string;
       ad: string;
+      /**
+       * 0057 — velinin onam verirken KENDİ yazdığı ad (en son yazılan).
+       * Onam vermemiş velide null. 0057 çalıştırılmamış panelde alan hiç
+       * gelmiyor; o yüzden isteğe bağlı ve yoksa satır çizilmiyor.
+       * Öğrenci kanalında hep null.
+       */
+      veli_adi?: string | null;
       /** Son mesajın zamanı; listede yalnız mesajı olanlar var, yani dolu. */
       son_mesaj: string;
       okunmamis: number;
@@ -481,6 +488,12 @@ export type SinifVelisi = {
    * isteğe bağlı ve `undefined` hâlinde etiket çizilmiyor.
    */
   onam_var?: boolean;
+  /**
+   * 0057 — velinin onam verirken KENDİ yazdığı ad (en son yazılan).
+   * Onam vermemiş velide null. 0057 çalıştırılmamış panelde alan hiç
+   * gelmiyor; o yüzden isteğe bağlı ve yoksa satır çizilmiyor.
+   */
+  veli_adi?: string | null;
   mesaj_sayisi: number;
   son_mesaj: string | null;
   okunmamis: number;
@@ -598,7 +611,8 @@ export type Mesaj = {
 };
 
 export type Yazisma = {
-  ogrenci: { id: string; ad: string; sinif: string | null };
+  /** `veli_adi`: 0057, yalnız veli kanalında dolu (bkz. `SinifVelisi`). */
+  ogrenci: { id: string; ad: string; sinif: string | null; veli_adi?: string | null };
   kanal: Kanal;
   /**
    * O KANALIN karşı tarafının kodu var mı: veli kanalında veli kodu,
