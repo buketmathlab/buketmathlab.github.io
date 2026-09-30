@@ -6,7 +6,9 @@ import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { karneSozu } from '@/lib/karne-sozu';
-import type { KendiKarnem } from '@/types/api';
+import { bekleyenMetni, bekleyenSayisi } from '@/lib/bekleyen-degerlendirme';
+import { OdevlereGit } from '@/components/BekleyenDegerlendirme';
+import type { KendiKarnem, OgrenciOdevleri } from '@/types/api';
 
 /**
  * Öğrencinin kendi konu karnesi (0026).
@@ -33,6 +35,13 @@ export function OgrenciKarnem() {
   const { veri, durum, hata, yenile } = useVeri<KendiKarnem>('kendi_karnem', {
     p_token: oturum?.token,
   });
+
+  // SÜRESİ DOLMAMIŞ GÖNDERİLMİŞ ÖDEVLER — `VeliKarne` ile aynı gerekçe.
+  // Hata yutuluyor: ek bilgi, sayfayı bozmamalı.
+  const { veri: odevler } = useVeri<OgrenciOdevleri>('ogrenci_odevleri', { p_token: oturum?.token });
+  const bekleyen = bekleyenSayisi(
+    (odevler?.odevler ?? []).map((o) => ({ gonderildi: o.gonderim !== null, son_tarih: o.son_tarih })),
+  );
 
   // 0026 HENÜZ PANELDE ÇALIŞTIRILMADIYSA. PostgREST'in cevabı İngilizce ve
   // teknik; onu bir çocuğa göstermek ekranı bozuk gösterirdi. Gerçekte
@@ -68,9 +77,24 @@ export function OgrenciKarnem() {
               <Card className="mb-6">
                 <div className="flex items-start gap-3">
                   <EwaluFigure poz="calisma" boyut={56} dekoratif className="shrink-0" />
-                  <p className="text-[15px] text-ink">{soz.ogrenci}</p>
+                  <div>
+                    <p className="text-[15px] text-ink">
+                      {bekleyen > 0 && veri.odev_sayisi === 0
+                        ? bekleyenMetni(bekleyen, 'ogrenci')
+                        : soz.ogrenci}
+                    </p>
+                    {bekleyen > 0 && veri.odev_sayisi === 0 && (
+                      <OdevlereGit hedef="/ogrenci/odevler" etiket="Ödevlerime git" />
+                    )}
+                  </div>
                 </div>
               </Card>
+              {bekleyen > 0 && veri.odev_sayisi > 0 && (
+                <Card className="mb-6">
+                  <p className="text-[14px] text-ink">{bekleyenMetni(bekleyen, 'ogrenci')}</p>
+                  <OdevlereGit hedef="/ogrenci/odevler" etiket="Ödevlerime git" />
+                </Card>
+              )}
 
               {/* KAÇ ÖDEV ÜZERİNDEN konuşuyoruz. Bu sayı olmadan iki konu
                   arasındaki fark yorumlanamaz — tek soruluk bir konunun ne
