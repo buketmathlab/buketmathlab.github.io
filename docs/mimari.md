@@ -5394,3 +5394,47 @@ yanında velinin adı; ad, velinin onam verirken kendi yazdığı ad.
 - `veli_adi_testleri.sql` (7 grup; kusur provası: yardımcı null →
   kırmızı), `veli-adi-denetimi.mjs` V1–V4 (kusur provası: satır
   çizilmeyince kırmızı).
+
+## 0058 — Veli ve öğrenci mesajında öğretmen seçimi
+
+Canlı olay: başka öğretmenin sınıfındaki veli mesaj gönderemedi ("Birden
+çok öğretmeniniz var…"). Sebep: platform sahibi her sınıfa bağlı (0033 +
+`sinif_ekle`); sınıf bir meslektaşa atanınca öğrencinin iki öğretmeni
+oluyor ve `_ogrencinin_ogretmeni` bilerek hata veriyordu. Aynı hata
+öğrencinin mesajını ve okundu işaretini de engelliyordu (ekran hatayı
+yuttuğu için rozet düşmüyordu).
+
+- `_ogrencinin_ogretmenleri` (dahili): aktif öğretmenler, sınıf öğretmeni
+  önce, sahip sonra; kural `_ogretmenin_ogrencisi` (özel ders yalnız
+  sahipte).
+- `mesaj_gonder(..., p_ogretmen_id)`: veli/öğrenci seçiyor; listede
+  olmayan öğretmen 42501; seçimsiz + tek öğretmen = eski davranış;
+  seçimsiz + çok öğretmen = "Mesajın hangi öğretmene gideceğini seçin."
+  Öğretmen rolünde yok sayılıyor. Eski 4 parametreli imza düştü
+  (varsayılanlı iki imza PostgREST'te belirsizlik doğururdu).
+- `veli_paneli`, `ogrenci_mesajlari`: mesajda `ogretmen_id` + `ogretmen`,
+  ayrıca `ogretmenler`. `okundu_isaretle` artık hata vermiyor.
+- İstemci `OgretmenliYazisma` + `lib/mesaj-ogretmenleri.ts`: öğretmen
+  düğmeleri, yazışma öğretmen öğretmen AYRI (öğretmen tarafı zaten
+  yalnız kendi mesajını görüyor), "Kime: …", öğretmen değişince taslak
+  siliniyor. Liste gelmezse (0058 öncesi) bugünkü ekran ve yükte
+  `p_ogretmen_id` yok.
+- Testler: `mesaj_ogretmen_secimi_testleri.sql` 12 grup (kusur provası:
+  alıcı seçimi yok sayılınca kırmızı); `mesaj-ogretmen-secimi-denetimi.mjs`
+  S1–S7 (kusur provası: yükte kimlik yokken kırmızı).
+
+## Puan görünürlüğü (istemci)
+
+Veli şikâyeti: Samsung telefonda puan ancak sağa kaydırınca görünüyordu.
+Ölçülen: Pano'daki "Son puanı" kartında başlık `truncate` ile tek satıra
+zorlanıyor, kart bir grid'de duruyordu; grid öğesi içeriğinden dar
+olamadığı için uzun ödev adı sayfayı 419 px'e açıyordu (412 px telefonda
+bile). Öğrenci panosunda aynısı vardı.
+
+- `components/SonPuanKarti.tsx`: puan kartın en büyük yazısı (40 px),
+  kendi satırında; başlık altında ve sarıyor. Panoların listelerine
+  `[&>li]:min-w-0`.
+- Veli Ödevler kartında puan küçük etiketten başlığın altına, büyük
+  satıra taşındı.
+- `puan-gorunurluk-denetimi.mjs`: 280/320/360/412 px × yazı 1/1,3 —
+  taşma yok ve puan ekranda (kusur provası: eski kodla 509 px taşma).

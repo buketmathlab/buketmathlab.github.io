@@ -452,7 +452,8 @@ begin
   end if;
 
   -- Yenileri gerçekten var mı
-  if to_regprocedure('public.mesaj_gonder(text, text, uuid, text)') is null then
+  -- 0058: imzaya `p_ogretmen_id` eklendi (veli/öğrenci öğretmen seçiyor).
+  if to_regprocedure('public.mesaj_gonder(text, text, uuid, text, uuid)') is null then
     raise exception '11d: yeni mesaj_gonder yok';
   end if;
   if to_regprocedure('public.ogrenci_mesajlari(text)') is null then

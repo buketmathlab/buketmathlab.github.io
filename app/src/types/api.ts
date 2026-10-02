@@ -608,7 +608,20 @@ export type Mesaj = {
   kimden: 'ogretmen' | 'veli' | 'ogrenci';
   metin: string;
   zaman: string;
+  /**
+   * 0058 — mesajın ait olduğu öğretmen yazışması (veli ve öğrenci
+   * ekranında). Öğretmen ekranında ve 0058 öncesi panelde gelmiyor.
+   */
+  ogretmen_id?: string | null;
+  ogretmen?: string | null;
 };
+
+/**
+ * 0058 — veli/öğrencinin mesaj yazabileceği öğretmenler; sınıf öğretmeni
+ * önce, platform sahibi sonra. 0058 öncesi panelde alan hiç gelmiyor ve
+ * ekran bugünkü tek yazışmayı gösteriyor.
+ */
+export type MesajOgretmeni = { id: string; ad: string };
 
 export type Yazisma = {
   /** `veli_adi`: 0057, yalnız veli kanalında dolu (bkz. `SinifVelisi`). */
@@ -642,6 +655,7 @@ export type OgrenciYazismalari = {
 export type OgrenciMesajlari = {
   mesajlar: Mesaj[];
   son_gorulme: string | null;
+  ogretmenler?: MesajOgretmeni[];
 };
 
 /**
@@ -689,6 +703,8 @@ export type VeliPaneli = {
   odevler: VeliOdevi[];
   mesajlar: Mesaj[];
   odemeler: Array<{ tutar: number; tarih: string; odendi: boolean }>;
+  /** 0058 — bkz. `MesajOgretmeni`. */
+  ogretmenler?: MesajOgretmeni[];
   /** Mesajlar sekmesinin rozeti (0025) — yalnız VELİ yazışmasından. */
   okunmamis_mesaj: number;
   son_gorulme: string | null;

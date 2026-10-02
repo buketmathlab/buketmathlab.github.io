@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { Yazisma } from '@/components/ui/Yazisma';
+import { OgretmenliYazisma } from '@/components/OgretmenliYazisma';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -61,15 +61,19 @@ export function OgrenciMesajlar() {
         tekrarDene={yenile}
       >
         {veri && (
-          <Yazisma
+          // 0058: birden çok öğretmeni olan öğrenci kime yazacağını seçiyor.
+          <OgretmenliYazisma
+            kim="ogrenci"
+            token={oturum?.token}
             mesajlar={veri.mesajlar}
-            benKimim="ogrenci"
-            adlar={{ ogretmen: 'Öğretmenin' }}
-            yazmaEtiketi="Öğretmenine mesaj"
-            yerTutucu="Sormak istediğini yaz."
-            gonderParametreleri={{ p_token: oturum?.token }}
-            gonderildi={yenile}
-            bosMetin="Henüz mesaj yok. Sormak istediğini aşağıdan yazabilirsin."
+            ogretmenler={veri.ogretmenler}
+            sonGorulme={veri.son_gorulme}
+            yenile={yenile}
+            eski={{
+              adlar: { ogretmen: 'Öğretmenin' },
+              yazmaEtiketi: 'Öğretmenine mesaj',
+              bosMetin: 'Henüz mesaj yok. Sormak istediğini aşağıdan yazabilirsin.',
+            }}
           />
         )}
       </AsyncBoundary>
