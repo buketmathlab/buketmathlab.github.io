@@ -52,9 +52,19 @@ export function VeliOdevler() {
               const sure = sureDurumu(o.son_tarih);
               return (
                 <Card key={i}>
+                  {/* PUAN KARTIN EN GÖRÜNÜR YAZISI (veli şikâyeti: puan
+                      sağda küçük bir etiketteydi ve bazı telefonlarda
+                      ancak kaydırınca görünüyordu). Artık başlığın
+                      altında, kendi satırında ve büyük. */}
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
+                    <div className="min-w-0 break-words">
                       <p className="font-semibold text-ink">{o.baslik}</p>
+                      {o.puan !== null && (
+                        <p className="mt-1 font-display font-semibold leading-tight text-ink">
+                          <span className="sk-sayi text-[28px]">{o.puan}</span>{' '}
+                          <span className="text-[16px]">puan</span>
+                        </p>
+                      )}
                       <p className="mt-1 text-[13px] text-muted">
                         Son tarih {TARIH.format(new Date(o.son_tarih))}
                         {o.gonderildi && o.gonderim_zamani && (
@@ -69,11 +79,6 @@ export function VeliOdevler() {
                         <Tag tur="tehlike">Göndermedi</Tag>
                       ) : (
                         <Tag tur="notr">{sure.metin}</Tag>
-                      )}
-                      {o.puan !== null && (
-                        <Tag tur="basari">
-                          <span className="sk-sayi">{o.puan} puan</span>
-                        </Tag>
                       )}
                       {o.gonderildi && o.puan === null && (
                         <Tag tur="uyari">Öğretmen bakıyor</Tag>

@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/Card';
-import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { KodYenilemeKarti } from '@/components/KodYenilemeKarti';
+import { SonPuanKarti } from '@/components/SonPuanKarti';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -80,27 +80,17 @@ export function VeliPano() {
             <Kutu deger={kacirdi} etiket="Kaçırdı" tehlike />
           </div>
 
-          <ul className="mt-6 grid gap-3">
+          {/* `[&>li]:min-w-0`: grid öğesi içeriğinden dar olamıyordu ve
+              uzun bir ödev adı bütün sayfayı ekrandan genişletiyordu
+              (`SonPuanKarti`'ndaki olay). */}
+          <ul className="mt-6 grid gap-3 [&>li]:min-w-0">
             <li>
-              <Card>
-                <p className="text-[13px] font-bold uppercase tracking-wide text-muted">
-                  Son puanı
-                </p>
-                {sonPuanli ? (
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <span className="min-w-0 truncate text-[15px] text-ink">
-                      {sonPuanli.baslik}
-                    </span>
-                    <Tag tur="basari">
-                      <span className="sk-sayi">{sonPuanli.puan} puan</span>
-                    </Tag>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[15px] text-ink">
-                    Henüz puanlanmış ödev yok.
-                  </p>
-                )}
-              </Card>
+              <SonPuanKarti
+                etiket="Son puanı"
+                odev={sonPuanli?.baslik ?? null}
+                puan={sonPuanli?.puan ?? null}
+                bosMetin="Henüz puanlanmış ödev yok."
+              />
             </li>
 
             {veri.okunmamis_mesaj > 0 && (

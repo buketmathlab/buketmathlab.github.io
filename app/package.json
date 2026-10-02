@@ -39,6 +39,8 @@
     "pdf-cozum-denetim": "node scripts/pdf-cozum-denetimi.mjs",
     "konular-denetim": "node scripts/konular-bekleyen-denetimi.mjs",
     "veli-adi-denetim": "node scripts/veli-adi-denetimi.mjs",
+    "puan-denetim": "node scripts/puan-gorunurluk-denetimi.mjs",
+    "mesaj-secim-denetim": "node scripts/mesaj-ogretmen-secimi-denetimi.mjs",
     "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
     "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"
   },

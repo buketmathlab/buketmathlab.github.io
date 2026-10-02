@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { Yazisma } from '@/components/ui/Yazisma';
+import { OgretmenliYazisma } from '@/components/OgretmenliYazisma';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -44,18 +44,21 @@ export function VeliMesajlar() {
         tekrarDene={yenile}
       >
         {veri && (
-          <Yazisma
+          // p_ogrenci_id GÖNDERİLMİYOR: sunucu velide bu parametreyi
+          // zaten yok sayıyor ve mesajı velinin kendi çocuğuna yazıyor.
+          // ÖĞRETMEN ise 0058'den beri SEÇİLİYOR (`OgretmenliYazisma`).
+          <OgretmenliYazisma
+            kim="veli"
+            token={oturum?.token}
             mesajlar={veri.mesajlar}
-            benKimim="veli"
-            adlar={{ ogretmen: 'Öğretmen' }}
-            yazmaEtiketi="Öğretmene mesaj"
-            yerTutucu="Sormak istediğinizi yazın."
-            // p_ogrenci_id GÖNDERİLMİYOR: sunucu velide bu parametreyi
-            // zaten yok sayıyor ve mesajı velinin kendi çocuğuna yazıyor.
-            // Göndermek, sanki seçilebilirmiş izlenimi verirdi.
-            gonderParametreleri={{ p_token: oturum?.token }}
-            gonderildi={yenile}
-            bosMetin="Henüz mesaj yok. Sormak istediğinizi aşağıdan yazabilirsiniz."
+            ogretmenler={veri.ogretmenler}
+            sonGorulme={veri.son_gorulme}
+            yenile={yenile}
+            eski={{
+              adlar: { ogretmen: 'Öğretmen' },
+              yazmaEtiketi: 'Öğretmene mesaj',
+              bosMetin: 'Henüz mesaj yok. Sormak istediğinizi aşağıdan yazabilirsiniz.',
+            }}
           />
         )}
       </AsyncBoundary>

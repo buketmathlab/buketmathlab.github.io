@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { KodYenilemeKarti } from '@/components/KodYenilemeKarti';
+import { SonPuanKarti } from '@/components/SonPuanKarti';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -109,7 +110,9 @@ export function OgrenciPano() {
             </div>
           </div>
 
-          <ul className="grid gap-3">
+          {/* `[&>li]:min-w-0`: uzun ödev adı sayfayı genişletmesin
+              (`SonPuanKarti`'ndaki olay). */}
+          <ul className="grid gap-3 [&>li]:min-w-0">
             <li>
               <Card vurgu={siradaki && sureDurumu(siradaki.son_tarih).acil ? 'uyari' : 'yok'}>
                 <p className="text-[13px] font-bold uppercase tracking-wide text-muted">
@@ -140,25 +143,12 @@ export function OgrenciPano() {
             </li>
 
             <li>
-              <Card>
-                <p className="text-[13px] font-bold uppercase tracking-wide text-muted">
-                  Son puanın
-                </p>
-                {sonPuan !== null && sonPuanli ? (
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <span className="min-w-0 truncate text-[15px] text-ink">
-                      {sonPuanli.baslik}
-                    </span>
-                    <Tag tur="basari">
-                      <span className="sk-sayi">{sonPuan} puan</span>
-                    </Tag>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[15px] text-ink">
-                    Henüz puanlanmış ödevin yok.
-                  </p>
-                )}
-              </Card>
+              <SonPuanKarti
+                etiket="Son puanın"
+                odev={sonPuanli?.baslik ?? null}
+                puan={sonPuan}
+                bosMetin="Henüz puanlanmış ödevin yok."
+              />
             </li>
 
             {/* Ders satırı YALNIZ dersi olan öğrencide çıkıyor. Okul
