@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import { dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
+import { ODEV_PDF_EN_BUYUK, dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtarlariBirlestir, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { anahtarOku } from '@/services/anahtar-oku';
@@ -127,7 +127,7 @@ export function OdevOlustur() {
 
   /** Anahtar PDF'i seçildiğinde tarayıcıda okunur ve çıkarım yapılır. */
   async function anahtarSecildi(dosya: File) {
-    const sorun = dosyayiDenetle(dosya);
+    const sorun = dosyayiDenetle(dosya, ODEV_PDF_EN_BUYUK);
     if (sorun) {
       setOkumaHatasi(sorun);
       return;
@@ -179,11 +179,11 @@ export function OdevOlustur() {
 
       if (odevPdf) {
         bildir('Ödev PDF’i yükleniyor…');
-        odevYolu = await dosyaYukle(odevPdf, odevDosyaYolu('sorular', odevPdf.name));
+        odevYolu = await dosyaYukle(odevPdf, odevDosyaYolu('sorular', odevPdf.name), ODEV_PDF_EN_BUYUK);
       }
       if (anahtarPdf) {
         bildir('Cevap anahtarı yükleniyor…');
-        anahtarYolu = await dosyaYukle(anahtarPdf, odevDosyaYolu('anahtar', anahtarPdf.name));
+        anahtarYolu = await dosyaYukle(anahtarPdf, odevDosyaYolu('anahtar', anahtarPdf.name), ODEV_PDF_EN_BUYUK);
       }
 
       const ortak = {
@@ -448,6 +448,15 @@ export function OdevOlustur() {
                 accept="application/pdf"
                 onChange={(e) => {
                   const f = e.target.files?.[0] ?? null;
+                  // Boyut SEÇERKEN denetleniyor: yoksa 20 MB'ı aşan dosya
+                  // ancak "Kaydet"e basınca, bütün form doldurulduktan
+                  // sonra reddediliyordu.
+                  const sorun = f ? dosyayiDenetle(f, ODEV_PDF_EN_BUYUK) : null;
+                  if (sorun) {
+                    bildir(sorun, 'hata');
+                    e.target.value = '';
+                    return;
+                  }
                   setOdevPdf(f);
                   if (f) void odevPdfiniOku(f);
                   else setPdfOzet(null);
