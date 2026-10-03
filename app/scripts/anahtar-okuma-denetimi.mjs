@@ -76,7 +76,14 @@ async function kur(detay) {
     localStorage.setItem('sekiz_oturum', JSON.stringify({ rol: 'ogretmen', token: 't'.repeat(64) }));
     window.__cagrilar = [];
     window.__acilan = [];
-    window.open = (u) => { window.__acilan.push(String(u)); return null; };
+    // Sekme dokunuş anında BOŞ açılıp sonra adrese yönlendiriliyor
+    // (`services/dosya-ac.ts`): sahte sekme yönlendirilen adresi kaydediyor.
+    window.open = (u) => {
+      if (u) { window.__acilan.push(String(u)); return null; }
+      const w = { closed: false, opener: null, document: { title: '', body: { style: {}, textContent: '' } },
+        location: { replace: (x) => window.__acilan.push(String(x)) }, close() { w.closed = true; } };
+      return w;
+    };
     const asil = window.fetch;
     const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { 'Content-Type': 'application/json' } });
     window.fetch = async (u, o) => {

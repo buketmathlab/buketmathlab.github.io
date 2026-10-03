@@ -4,6 +4,7 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { rpc } from '@/services/supabase';
 import { dosyaAdresi } from '@/services/dosya';
+import { useDosyaAc } from '@/components/DosyaAcici';
 
 type Props = {
   gonderimId: string;
@@ -35,29 +36,34 @@ export function CozumDugmesi({ gonderimId, etiket, erisilebilirAd }: Props) {
   const { oturum } = useOturum();
   const { bildir } = useToast();
   const [yollar, setYollar] = useState<string[] | null>(null);
+  const dosya = useDosyaAc();
 
-  async function ac(yol: string) {
-    try {
-      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Fotoğraf açılamadı.', 'hata');
-    }
+  // Sekme dokunuş anında açılıyor (`useDosyaAc`).
+  function ac(yol: string) {
+    void dosya.ac(() => dosyaAdresi(yol), { hataMetni: 'Fotoğraf açılamadı.' });
   }
 
-  async function cozumuAc() {
-    try {
-      const r = await rpc<{ yol: string | null; yollar?: string[] }>('gonderim_foto_yolu', {
-        p_token: oturum?.token,
-        p_gonderim: gonderimId,
-      });
-      // `yollar` 0054'le geldi. Gelmiyorsa 0054 henüz çalıştırılmamış: tek `yol`.
-      const liste = r.yollar && r.yollar.length > 0 ? r.yollar : r.yol ? [r.yol] : [];
-      if (liste.length === 0) return bildir('Bu gönderimde fotoğraf yok.', 'hata');
-      if (liste.length === 1) return await ac(liste[0]!);
-      setYollar(liste);
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Fotoğraf açılamadı.', 'hata');
-    }
+  function cozumuAc() {
+    // Tek sayfalık gönderimde sekme BU dokunuşla açılmalı: yol listesi
+    // gelmeden önce. Çok sayfalıysa boş sekme kapanır, sayfa düğmeleri
+    // çıkar (her biri kendi dokunuşuyla açılıyor).
+    let liste: string[] = [];
+    void dosya.ac(
+      async () => {
+        const r = await rpc<{ yol: string | null; yollar?: string[] }>('gonderim_foto_yolu', {
+          p_token: oturum?.token,
+          p_gonderim: gonderimId,
+        });
+        // `yollar` 0054'le geldi. Gelmiyorsa 0054 henüz çalıştırılmamış: tek `yol`.
+        liste = r.yollar && r.yollar.length > 0 ? r.yollar : r.yol ? [r.yol] : [];
+        return liste.length === 1 ? dosyaAdresi(liste[0]!) : null;
+      },
+      { yokMetni: null, hataMetni: 'Fotoğraf açılamadı.' },
+    ).then((sonuc) => {
+      if (sonuc) return;
+      if (liste.length > 1) setYollar(liste);
+      else if (liste.length === 0) bildir('Bu gönderimde fotoğraf yok.', 'hata');
+    });
   }
 
   const sayfalar = yollar && (
@@ -85,15 +91,26 @@ export function CozumDugmesi({ gonderimId, etiket, erisilebilirAd }: Props) {
           {etiket}
         </button>
         {sayfalar}
+        {dosya.yedek}
       </>
     );
   }
 
-  if (sayfalar) return sayfalar;
+  if (sayfalar) {
+    return (
+      <>
+        {sayfalar}
+        {dosya.yedek}
+      </>
+    );
+  }
 
   return (
-    <Button tur="sade" olcu="sm" onClick={() => void cozumuAc()}>
-      Çözümü aç
-    </Button>
+    <>
+      <Button tur="sade" olcu="sm" onClick={() => void cozumuAc()}>
+        Çözümü aç
+      </Button>
+      {dosya.yedek}
+    </>
   );
 }

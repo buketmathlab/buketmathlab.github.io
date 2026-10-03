@@ -13,6 +13,7 @@ import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { KiyasKarti } from '@/components/KiyasKarti';
 import { puanMesaji, type OzelCumleler } from '@/lib/ewalu-puan';
 import { useToast } from '@/components/ui/toast-baglam';
+import { useDosyaAc } from '@/components/DosyaAcici';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -56,6 +57,7 @@ export function OdevTeslim() {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
   const { bildir } = useToast();
+  const dosya = useDosyaAc();
   const git = useNavigate();
 
   const [cevaplar, setCevaplar] = useState<Record<number, string>>({});
@@ -130,12 +132,11 @@ export function OdevTeslim() {
 
   const odev: OgrenciOdev | undefined = veri?.odevler.find((o) => o.id === id);
 
-  async function pdfAc(yol: string) {
-    try {
-      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Dosya açılamadı.', 'hata');
-    }
+  // Sekme dokunuş anında açılıyor; engellenirse ekranda bağlantı çıkıyor
+  // (`useDosyaAc`). Eskiden adres gelince açılıyordu ve bazı telefonlar
+  // bunu sessizce engelliyordu.
+  function pdfAc(yol: string) {
+    void dosya.ac(() => dosyaAdresi(yol));
   }
 
   async function fotoSecildi(dosya: File) {
@@ -345,6 +346,7 @@ export function OdevTeslim() {
           kiyas={kiyas}
         />
       )}
+      {dosya.yedek}
     </AsyncBoundary>
   );
 }

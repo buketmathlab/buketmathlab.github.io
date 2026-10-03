@@ -42,6 +42,7 @@
     "puan-denetim": "node scripts/puan-gorunurluk-denetimi.mjs",
     "mesaj-secim-denetim": "node scripts/mesaj-ogretmen-secimi-denetimi.mjs",
     "pdf-boyut-denetim": "node scripts/odev-pdf-boyut-denetimi.mjs",
+    "dosya-acma-denetim": "node scripts/dosya-acma-denetimi.mjs",
     "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
     "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"
   },

@@ -5480,3 +5480,27 @@ bazılarında kırmızı kalem; çözümler de aynı mavi kalemle yazılmış.
   "okunmamalı"); `anahtar-okuma-denetimi.mjs` `ANAHTAR_PDF_DAIRE` (en az
   88 doğru, 0 yanlış). Kusur provası: renksiz kuralı kaldırılınca el
   yazısı kesiti kırmızı.
+
+## Dosya açma: açılır pencere engeline karşı (istemci)
+
+Olay: bazı öğrenciler "Soruları aç (PDF)"a basınca hiçbir şey olmadığını
+söyledi (üç cihazda). Sunucu tarafı incelendi ve tutarlı bulundu
+(`dosya_erisim_izni`, `ogrenci_odevleri`, `odev_guncelle`'yi tek çağıran
+yol, `odev_kardeslere_yay` aynı `odev_url`'i taşıyor).
+
+İstemcide dört yerde `window.open(await dosyaAdresi(yol), '_blank',
+'noopener')` vardı: sekme, imzalı adres GELDİKTEN sonra açılıyordu.
+iPhone Safari, uygulama içi tarayıcılar ve yavaş sunucuda (Edge Function
+soğuk başlangıcı) Chrome bunu açılır pencere sayıp sessizce engelliyor;
+`noopener` yüzünden engel algılanamıyordu.
+
+- `services/dosya-ac.ts`: sekme dokunuş anında BOŞ açılıyor ("Dosya
+  açılıyor…"), adres gelince `location.replace`. Açılamazsa adres döner;
+  hata/dosya yoksa boş sekme kapanır.
+- `components/DosyaAcici.tsx` (`useDosyaAc`): adres gelince altta kart —
+  "Açılmadıysa: Dosyayı aç" (engellendiyse "Dosya hazır. Açmak için
+  dokunun"). Kart iki durumda da 55 sn duruyor (imzalı adres 60 sn).
+- Öğrenci ödev ekranı, öğretmen Ödevler/Düzenle ve çözüm düğmesi geçti.
+- Testler: `dosya-ac.test.ts` (6), `dosya-acma-denetimi.mjs` D1–D5 (gerçek
+  Chromium sekmesi); kusur provası: eski kalıpla kırmızı. Üç denetimin
+  `window.open` taklidi yönlendirmeyi kaydedecek şekilde güncellendi.
