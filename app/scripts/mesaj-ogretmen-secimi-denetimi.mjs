@@ -125,7 +125,7 @@ console.log('--- S4. Tek öğretmen ---');
 
 console.log('--- S5. Eski sunucu (liste yok) ---');
 {
-  const { b, p } = await kur({ rol: 'veli', ogretmenler: undefined, mesajlar: MESAJLAR.map(({ ogretmen_id, ogretmen, ...r }) => r) });
+  const { b, p } = await kur({ rol: 'veli', ogretmenler: undefined, mesajlar: MESAJLAR.map((m) => ({ kimden: m.kimden, metin: m.metin, zaman: m.zaman })) });
   const m = await metin(p);
   if (m.includes('Kime:') || !m.includes('Öğretmene mesaj')) bozuk(`eski ekran değişti: ${m.slice(0, 300)}`);
   else tamam('bugünkü ekran ("Öğretmene mesaj")');

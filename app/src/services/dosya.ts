@@ -51,8 +51,19 @@ export class DosyaZatenVarHatasi extends Error {
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-/** Bucket sınırıyla aynı (migration 0002): 10 MB. */
+/**
+ * ÖĞRENCİNİN yüklediği dosyalar (çözüm fotoğrafı, PDF'ten çevrilen görsel):
+ * 10 MB. Bunlar cihazda zaten sıkıştırılıyor; öğrenci çoğu zaman mobil
+ * veriyle yüklüyor, sınırı büyütmenin ona bir faydası yok.
+ */
 export const EN_BUYUK_BOYUT = 10 * 1024 * 1024;
+
+/**
+ * ÖĞRETMENİN soru kağıdı ve cevap anahtarı PDF'leri: 20 MB (0059 —
+ * öğretmenin isteği; taranmış çok sayfalı PDF'ler 10 MB'ı aşıyordu).
+ * Bucket'ın sınırı da 0059'dan beri 20 MB; asıl sınır orada.
+ */
+export const ODEV_PDF_EN_BUYUK = 20 * 1024 * 1024;
 
 /** Bucket'ın kabul ettiği türler (migration 0002). */
 export const KABUL_EDILEN_TURLER = [
@@ -77,11 +88,15 @@ export function odevDosyaYolu(tur: 'sorular' | 'anahtar', dosyaAdi: string): str
   return `odev/${crypto.randomUUID()}/${tur}.${uzanti}`;
 }
 
-/** Dosyayı yüklemeden önce yerel kontrol. Sunucu da ayrıca sınırlıyor. */
-export function dosyayiDenetle(dosya: File): string | null {
-  if (dosya.size > EN_BUYUK_BOYUT) {
+/**
+ * Dosyayı yüklemeden önce yerel kontrol. Sunucu da ayrıca sınırlıyor.
+ * `enFazla` verilmezse öğrenci sınırı (10 MB) geçerli.
+ */
+export function dosyayiDenetle(dosya: File, enFazla: number = EN_BUYUK_BOYUT): string | null {
+  if (dosya.size > enFazla) {
     const mb = (dosya.size / 1024 / 1024).toFixed(1);
-    return `Dosya çok büyük (${mb} MB). En fazla 10 MB yükleyebilirsiniz.`;
+    const sinir = Math.round(enFazla / 1024 / 1024);
+    return `Dosya çok büyük (${mb} MB). En fazla ${sinir} MB yükleyebilirsiniz.`;
   }
   if (!(KABUL_EDILEN_TURLER as readonly string[]).includes(dosya.type)) {
     return 'Yalnız PDF ve görsel dosyaları yükleyebilirsiniz.';
@@ -146,8 +161,12 @@ async function fonksiyonuCagir<T>(govde: Record<string, unknown>): Promise<T> {
  * Dosyayı yükler ve storage yolunu döndürür.
  * Dönen yol `odev_olustur`a verilecek değerdir.
  */
-export async function dosyaYukle(dosya: File, yol: string): Promise<string> {
-  const sorun = dosyayiDenetle(dosya);
+export async function dosyaYukle(
+  dosya: File,
+  yol: string,
+  enFazla: number = EN_BUYUK_BOYUT,
+): Promise<string> {
+  const sorun = dosyayiDenetle(dosya, enFazla);
   if (sorun) throw new Error(sorun);
 
   const { imzaliUrl } = await fonksiyonuCagir<YuklemeYaniti>({ yol, islem: 'yukle' });

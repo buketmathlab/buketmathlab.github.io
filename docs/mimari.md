@@ -5438,3 +5438,19 @@ bile). Öğrenci panosunda aynısı vardı.
   satıra taşındı.
 - `puan-gorunurluk-denetimi.mjs`: 280/320/360/412 px × yazı 1/1,3 —
   taşma yok ve puan ekranda (kusur provası: eski kodla 509 px taşma).
+
+## 0059 — Soru kağıdı ve cevap anahtarı için 20 MB
+
+Öğretmenin isteği: taranmış çok sayfalı PDF'ler 10 MB'ı aşıyordu.
+
+- Tek bucket (`odev-dosyalari`) var; sınırı 10 → 20 MB (0059). 0002
+  yeniden çalıştırılırsa 10 MB'a döner — zincir sırayla koştuğu için 0059
+  her zaman sonra gelir.
+- İstemcide iki sınır: `ODEV_PDF_EN_BUYUK` (20 MB, öğretmenin soru/anahtar
+  PDF'leri) ve `EN_BUYUK_BOYUT` (10 MB, öğrencinin çözüm görselleri —
+  cihazda zaten sıkıştırılıyor, mobil veri). `dosyayiDenetle` ve
+  `dosyaYukle` sınırı parametre olarak alıyor; varsayılan öğrenci sınırı.
+- Soru PDF'i artık SEÇERKEN denetleniyor (önceden ancak Kaydet'te
+  reddediliyordu).
+- `dosya.test.ts`, `odev-pdf-boyut-denetimi.mjs` B1–B3 (kusur provası:
+  sınır 10 MB'a çekilince kırmızı).

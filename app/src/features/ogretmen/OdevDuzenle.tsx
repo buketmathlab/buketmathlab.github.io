@@ -9,7 +9,13 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import { dosyaAdresi, dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
+import {
+  ODEV_PDF_EN_BUYUK,
+  dosyaAdresi,
+  dosyaYukle,
+  odevDosyaYolu,
+  dosyayiDenetle,
+} from '@/services/dosya';
 import { pdfSatirlariniOku } from '@/services/pdf-metin';
 import { anahtarOku } from '@/services/anahtar-oku';
 import { anahtarFarki, anahtarlariBirlestir, type Cikarim } from '@/lib/cevap-anahtari';
@@ -177,7 +183,7 @@ export function OdevDuzenle() {
       setOkumaHatasi(null);
       return;
     }
-    const sorun = dosyayiDenetle(dosya);
+    const sorun = dosyayiDenetle(dosya, ODEV_PDF_EN_BUYUK);
     if (sorun) return setOkumaHatasi(sorun);
     setYeniAnahtarPdf(dosya);
     setOkumaHatasi(null);
@@ -228,11 +234,11 @@ export function OdevDuzenle() {
 
       if (yeniOdevPdf) {
         bildir('Ödev PDF’i yükleniyor…');
-        odevYolu = await dosyaYukle(yeniOdevPdf, odevDosyaYolu('sorular', yeniOdevPdf.name));
+        odevYolu = await dosyaYukle(yeniOdevPdf, odevDosyaYolu('sorular', yeniOdevPdf.name), ODEV_PDF_EN_BUYUK);
       }
       if (yeniAnahtarPdf) {
         bildir('Cevap anahtarı yükleniyor…');
-        anahtarYolu = await dosyaYukle(yeniAnahtarPdf, odevDosyaYolu('anahtar', yeniAnahtarPdf.name));
+        anahtarYolu = await dosyaYukle(yeniAnahtarPdf, odevDosyaYolu('anahtar', yeniAnahtarPdf.name), ODEV_PDF_EN_BUYUK);
       }
 
       const sinirDegisti = sayfaSiniri !== sayfaSiniriniOku(detay.sayfa_limiti);
@@ -422,6 +428,9 @@ export function OdevDuzenle() {
                 onAc={() => void yukluDosyayiAc('odev')}
                 secilen={yeniOdevPdf}
                 onSec={(f) => {
+                  // Boyut SEÇERKEN denetleniyor (bkz. OdevOlustur).
+                  const sorun = f ? dosyayiDenetle(f, ODEV_PDF_EN_BUYUK) : null;
+                  if (sorun) return bildir(sorun, 'hata');
                   setYeniOdevPdf(f);
                   if (f) void odevPdfiniOku(f);
                   else setPdfOzet(null);
