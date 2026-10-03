@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useToast } from '@/components/ui/toast-baglam';
+import { useDosyaAc } from '@/components/DosyaAcici';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -81,6 +82,7 @@ export function OdevDuzenle() {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
   const { bildir } = useToast();
+  const dosya = useDosyaAc();
   const git = useNavigate();
 
   const [form, setForm] = useState<OdevFormDegerleri>({
@@ -208,18 +210,19 @@ export function OdevDuzenle() {
   }
 
   /** Yüklü dosyayı açar. Yol istemcide tutulmuyor; imzalı adres her seferinde. */
-  async function yukluDosyayiAc(tur: 'odev' | 'anahtar') {
-    try {
-      const { yol } = await rpc<{ yol: string | null }>('odev_dosya_yolu', {
-        p_token: oturum?.token,
-        p_id: id,
-        p_tur: tur,
-      });
-      if (!yol) return bildir('Bu ödevde o dosya yok.', 'hata');
-      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Dosya açılamadı.', 'hata');
-    }
+  function yukluDosyayiAc(tur: 'odev' | 'anahtar') {
+    // Sekme dokunuş anında açılıyor (`useDosyaAc`).
+    void dosya.ac(
+      async () => {
+        const { yol } = await rpc<{ yol: string | null }>('odev_dosya_yolu', {
+          p_token: oturum?.token,
+          p_id: id,
+          p_tur: tur,
+        });
+        return yol ? dosyaAdresi(yol) : null;
+      },
+      { yokMetni: 'Bu ödevde o dosya yok.' },
+    );
   }
 
   const degisenCevaplar = anahtarOncesi ? anahtarFarki(anahtarOncesi, anahtar) : [];
@@ -306,6 +309,7 @@ export function OdevDuzenle() {
 
   return (
     <>
+      {dosya.yedek}
       <SayfaBasligi
         baslik="Ödevi düzenle"
         aciklama={

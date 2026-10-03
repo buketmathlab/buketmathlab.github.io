@@ -7,6 +7,7 @@ import { Tag } from '@/components/ui/Tag';
 import { Dialog } from '@/components/ui/Dialog';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useToast } from '@/components/ui/toast-baglam';
+import { useDosyaAc } from '@/components/DosyaAcici';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -38,6 +39,7 @@ function gecti(sonTarih: string): boolean {
 export function Odevler() {
   const { oturum } = useOturum();
   const { bildir } = useToast();
+  const dosya = useDosyaAc();
   const git = useNavigate();
   const [filtre, setFiltre] = useState<'hepsi' | 'taslak' | 'yayinda'>('hepsi');
   const [sinifId, setSinifId] = useState('');
@@ -88,23 +90,25 @@ export function Odevler() {
     }
   }
 
-  async function pdfAc(o: OdevSatiri, tur: 'odev' | 'anahtar') {
-    try {
-      // Yol istemcide tutulmuyor; imzalı adres her seferinde yeniden alınır.
-      const { yol } = await rpc<{ yol: string | null }>('odev_dosya_yolu', {
-        p_token: oturum?.token,
-        p_id: o.id,
-        p_tur: tur,
-      });
-      if (!yol) return bildir('Bu ödevde o dosya yok.', 'hata');
-      window.open(await dosyaAdresi(yol), '_blank', 'noopener');
-    } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Dosya açılamadı.', 'hata');
-    }
+  function pdfAc(o: OdevSatiri, tur: 'odev' | 'anahtar') {
+    // Yol istemcide tutulmuyor; imzalı adres her seferinde yeniden alınır.
+    // Sekme dokunuş anında açılıyor (`useDosyaAc`).
+    void dosya.ac(
+      async () => {
+        const { yol } = await rpc<{ yol: string | null }>('odev_dosya_yolu', {
+          p_token: oturum?.token,
+          p_id: o.id,
+          p_tur: tur,
+        });
+        return yol ? dosyaAdresi(yol) : null;
+      },
+      { yokMetni: 'Bu ödevde o dosya yok.' },
+    );
   }
 
   return (
     <>
+      {dosya.yedek}
       <SayfaBasligi
         baslik="Ödevler"
         aciklama="Ödev taslak olarak kaydedilir; yayınlayana kadar öğrenci göremez."
