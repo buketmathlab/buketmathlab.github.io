@@ -4,10 +4,16 @@ import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import {
   EN_AZ_FARK,
+  daireler,
   harfiTani,
   isaretlerdenAnahtar,
+  kalemDaireleri,
+  kalemHarfiTani,
+  kirmiziMi,
+  maviMi,
   pembeKutular,
   pembeMi,
+  renkliMi,
   sutunlar,
   type Goruntu,
   type HarfSonucu,
@@ -107,6 +113,94 @@ describe('pembeKutular', () => {
     expect(pembeKutular(g, 3)).toHaveLength(1);
     // Ölçek 30'da aynı kutu 5×2 punto: çok küçük.
     expect(pembeKutular(g, 30)).toHaveLength(0);
+  });
+});
+
+/**
+ * KALEM DAİRESİ — öğretmenin "9. Sınıf Sayılar 117 Soru" cevap anahtarından
+ * kesitler (ölçek 3): mavi ya da kırmızı kalemle çizilmiş daire, etrafında
+ * 12 punto pay. `x_` ile başlayanlarda harf OKUNMAMALI:
+ *  - x_el_yazisi_halka: el yazısındaki "[" — eskiden "B" okunuyordu,
+ *  - x_C_kayik_daire_*: daire "C)"nin sağına kaymış — eskiden "D" okunuyordu.
+ */
+const KALEM = resolve(KESITLER, 'kalem');
+async function kalemOku(dosya: string): Promise<Goruntu> {
+  const { data, info } = await sharp(resolve(KALEM, dosya)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return { veri: new Uint8ClampedArray(data), genislik: info.width, yukseklik: info.height };
+}
+
+describe('kalem dairesi — gerçek kesitler', () => {
+  const dosyalar = readdirSync(KALEM).filter((d) => d.endsWith('.png'));
+
+  it('kesitler yerinde', () => {
+    expect(dosyalar.length).toBeGreaterThanOrEqual(10);
+  });
+
+  for (const dosya of dosyalar.filter((d) => !d.startsWith('x_'))) {
+    const beklenen = dosya[0];
+    it(`${dosya} → daire bulunur, ${beklenen} emin`, async () => {
+      const g = await kalemOku(dosya);
+      const harfler = kalemDaireleri(g, 3)
+        .map((k) => kalemHarfiTani(g, k).harf)
+        .filter((h) => h !== null);
+      expect(harfler).toEqual([beklenen]);
+    });
+  }
+
+  for (const dosya of dosyalar.filter((d) => d.startsWith('x_'))) {
+    it(`${dosya} → hiçbir harf EMİN okunmaz`, async () => {
+      const g = await kalemOku(dosya);
+      const harfler = kalemDaireleri(g, 3).map((k) => kalemHarfiTani(g, k).harf);
+      expect(harfler.filter((h) => h !== null)).toEqual([]);
+    });
+  }
+});
+
+describe('kalem renkleri ve daire süzgeci', () => {
+  it('ölçülen renkler: mavi ve kırmızı kalem evet; siyah, sarı, pembe hayır', () => {
+    expect(maviMi(16, 48, 176)).toBe(true);
+    expect(kirmiziMi(224, 0, 0)).toBe(true);
+    for (const [r, g, b] of [[0, 0, 0], [60, 60, 60], [255, 230, 150], [223, 200, 198]] as const) {
+      expect(maviMi(r, g, b) || kirmiziMi(r, g, b)).toBe(false);
+    }
+  });
+
+  it('renkli: lacivert mürekkebin koyu yeri de renkli, siyah baskı değil', () => {
+    expect(renkliMi(32, 48, 96)).toBe(true);
+    expect(renkliMi(20, 20, 25)).toBe(false);
+  });
+
+  /** Ölçek 1'de (x0,y0)'dan başlayan, `boy` puntoluk, `kalinlik` kalın halka. */
+  function halka(g: Goruntu, x0: number, y0: number, boy: number, kalinlik: number, renk: [number, number, number]) {
+    const c = boy / 2;
+    for (let y = 0; y < boy; y++) {
+      for (let x = 0; x < boy; x++) {
+        const d = Math.hypot(x + 0.5 - c, y + 0.5 - c);
+        if (d <= c && d >= c - kalinlik) {
+          const i = ((y0 + y) * g.genislik + (x0 + x)) * 4;
+          g.veri[i] = renk[0];
+          g.veri[i + 1] = renk[1];
+          g.veri[i + 2] = renk[2];
+        }
+      }
+    }
+  }
+
+  it('içi boş halka daire; dolu leke, çok küçük ve çok büyük halka değil', () => {
+    const MAVI: [number, number, number] = [16, 48, 176];
+    const g = sayfa(200, 60, [[{ x0: 60, y0: 10, x1: 72, y1: 22 }, MAVI]]); // dolu leke
+    halka(g, 10, 10, 13, 2, MAVI); // şık dairesi
+    halka(g, 100, 10, 4, 1, MAVI); // nokta
+    halka(g, 120, 5, 40, 2, MAVI); // büyük çember (çizim)
+    expect(daireler(g, 1, maviMi)).toEqual([{ x0: 10, y0: 10, x1: 22, y1: 22 }]);
+  });
+
+  it('içinde basılı harf olmayan halka (el yazısı "0") harf vermez', () => {
+    const g = sayfa(60, 60, []);
+    halka(g, 20, 20, 13, 2, [16, 48, 176]);
+    const [k] = daireler(g, 1, maviMi);
+    expect(k).toBeDefined();
+    expect(kalemHarfiTani(g, k!).aday).toBeNull();
   });
 });
 

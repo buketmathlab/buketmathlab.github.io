@@ -25,6 +25,17 @@
  *
  * ## Emin olunamayan UYDURULMAZ
  *
+ * ## İkinci biçim: elle çizilmiş KALEM DAİRESİ (mavi ya da kırmızı)
+ *
+ * Öğretmenin "9. Sınıf Sayılar 117 Soru Çözümlü Cevap Anahtarı" PDF'inde
+ * doğru şık pembe kutuyla değil, kalemle çizilmiş bir DAİREYLE işaretli —
+ * bazı sayfalarda mavi, bazılarında kırmızı kalem. Çözümler de aynı mavi
+ * kalemle yazılmış; dairenin el yazısından ayrılması şuna dayanıyor: daire
+ * küçük, yuvarlağa yakın, içi BOŞ bir halka ve İÇİNDE BASILI SİYAH bir şık
+ * harfi var (`kalemDaireleri`). Harf tanınırken kalem pikselleri yok
+ * sayılıyor (çizgi harfin üstünden geçebiliyor). El yazısındaki "0", "6"
+ * gibi halkaların içinde basılı harf yok → elenir.
+ *
  * Benzerlik `EN_AZ_BENZERLIK`'in ya da en iyi iki harfin farkı `EN_AZ_FARK`'ın
  * altındaysa (ör. harfin üstüne el yazısı gelmiş) soru BOŞ kalır; öğretmen
  * ızgarada işaretler. Ölçülen (51 soruluk gerçek PDF): 49 doğru, 1 okunamadı
@@ -50,6 +61,9 @@ export type Kutu = { x0: number; y0: number; x1: number; y1: number };
 export type Numara = { no: number; x: number; y: number };
 
 export type Harf = 'A' | 'B' | 'C' | 'D' | 'E';
+
+/** Piksel rengine göre evet/hayır (kalem rengi, harf ararken yok sayılan). */
+export type PikselSuzgeci = (r: number, g: number, b: number) => boolean;
 
 /**
  * En iyi iki harfin benzerlik farkı bunun altındaysa "emin değil".
@@ -128,6 +142,140 @@ export function pembeKutular(g: Goruntu, olcek: number): Kutu[] {
 }
 
 // -----------------------------------------------------------------------------
+// 1b. MAVİ DAİRELER
+// -----------------------------------------------------------------------------
+
+/**
+ * Mavi tükenmez kalem. Ölçülen (117 soruluk PDF): R 0–50, G 48–80,
+ * B 144–192. Siyah baskı (B−R ≈ 0), sarı fosforlu kalem ve pembe dışarıda.
+ */
+export function maviMi(r: number, g: number, b: number): boolean {
+  return b >= 100 && b - r >= 50 && b - g >= 40;
+}
+
+/**
+ * Kırmızı kalem. Ölçülen: R 190–240, G ve B 0–30. Pembe işaret kutusu
+ * (R−G ≈ 25) ve kenar yumuşatmasının açık pembesi (R−G ≈ 80) dışarıda.
+ */
+export function kirmiziMi(r: number, g: number, b: number): boolean {
+  return r >= 150 && r - g >= 110 && r - b >= 110;
+}
+
+/** Herhangi bir kalem rengi. */
+export function kalemMi(r: number, g: number, b: number): boolean {
+  return maviMi(r, g, b) || kirmiziMi(r, g, b);
+}
+
+/**
+ * RENKLİ piksel: kanallar arası fark büyük. Kalem dairesinin içinde harf
+ * aranırken bunlar yok sayılıyor — basılı şık harfi SİYAH (R≈G≈B), kalem
+ * ise her tonuyla renkli. Yalnız `kalemMi`yi dışlamak yetmiyordu:
+ * lacivert mürekkebin en koyu yerleri (ör. R 32, G 48, B 96) mavi
+ * eşiğinin altında kalıp basılı harf sanılıyordu (117 soruluk PDF'te el
+ * yazısındaki bir köşeli parantez "B" okunmuştu).
+ */
+export function renkliMi(r: number, g: number, b: number): boolean {
+  return Math.max(r, g, b) - Math.min(r, g, b) > 50;
+}
+
+/**
+ * Kalem dairesinde harfi kabul etmek için en az benzerlik. Pembe kutudan
+ * daha sıkı, çünkü kalem çoğu zaman harfin üstünden geçiyor ve harfin bir
+ * kısmı siliniyor. Ölçüm (117 soruluk PDF): yanlış okunanların en
+ * yükseği 0.77; eşik bunun üstünde. İstisna: A harfi diğerlerinden çok
+ * farklı (fark ≥ 0.3) — orada fark yeterli kanıt.
+ */
+export const KALEM_EN_AZ_BENZERLIK = 0.75;
+/** Kalem dairesinde en iyi iki harfin farkı (pembe kutudaki 0.05'ten sıkı). */
+export const KALEM_EN_AZ_FARK = 0.05;
+export const KALEM_TEK_BASINA_FARK = 0.3;
+
+/**
+ * Elle çizilmiş şık daireleri: mavi ya da kırmızı kalem. Her renk AYRI
+ * aranıyor — kırmızı bir daire mavi el yazısına değse bile ikisi tek
+ * parça sayılmasın.
+ */
+export function kalemDaireleri(g: Goruntu, olcek: number): Kutu[] {
+  return [...daireler(g, olcek, maviMi), ...daireler(g, olcek, kirmiziMi)];
+}
+
+/**
+ * Tek renkte şık daireleri: küçük, yuvarlağa yakın, içi boş.
+ *
+ * Kalem çizgisi kenar yumuşatması yüzünden kesik kesik çıkabiliyor; bu
+ * yüzden bileşen kurulurken 2 piksellik boşluklar köprüleniyor.
+ *
+ * Süzgeçler punto cinsinden (ölçülen daireler 9–14 pt, doluluk ~0.3):
+ *  - en ve boy 6–24 pt, en/boy oranı 0.5–2,
+ *  - doluluk ≤ 0.5 (halka; dolu bir el yazısı lekesi değil),
+ *  - ortadaki bölge neredeyse boş (≤ %15 kalem).
+ * El yazısında bu şartları sağlayan halkalar ("0", "6") yine geçebilir;
+ * onları `harfiTani`'nın İÇERİDE BASILI HARF araması eliyor.
+ */
+export function daireler(g: Goruntu, olcek: number, renk: PikselSuzgeci): Kutu[] {
+  const { veri, genislik: W, yukseklik: H } = g;
+  const maske = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) {
+    if (renk(veri[i * 4]!, veri[i * 4 + 1]!, veri[i * 4 + 2]!)) maske[i] = 1;
+  }
+
+  const kutular: Kutu[] = [];
+  const yigin: number[] = [];
+  for (let i = 0; i < W * H; i++) {
+    if (maske[i] !== 1) continue;
+    maske[i] = 2;
+    yigin.push(i);
+    let x0 = W, y0 = H, x1 = -1, y1 = -1, sayi = 0;
+    while (yigin.length > 0) {
+      const j = yigin.pop()!;
+      const x = j % W;
+      const y = (j - x) / W;
+      sayi++;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const q = yy * W + xx;
+          if (maske[q] === 1) {
+            maske[q] = 2;
+            yigin.push(q);
+          }
+        }
+      }
+    }
+    const w = x1 - x0 + 1;
+    const h = y1 - y0 + 1;
+    if (w < 6 * olcek || h < 6 * olcek || w > 24 * olcek || h > 24 * olcek) continue;
+    if (w / h < 0.5 || w / h > 2) continue;
+    if (sayi / (w * h) > 0.5) continue;
+
+    // Orta bölge (ortadaki %40 × %40) boş olmalı: halka.
+    const ox0 = x0 + Math.round(w * 0.3);
+    const ox1 = x1 - Math.round(w * 0.3);
+    const oy0 = y0 + Math.round(h * 0.3);
+    const oy1 = y1 - Math.round(h * 0.3);
+    let orta = 0;
+    let ortaKalem = 0;
+    for (let y = oy0; y <= oy1; y++) {
+      for (let x = ox0; x <= ox1; x++) {
+        orta++;
+        const k = (y * W + x) * 4;
+        if (renk(veri[k]!, veri[k + 1]!, veri[k + 2]!)) ortaKalem++;
+      }
+    }
+    if (orta === 0 || ortaKalem / orta > 0.15) continue;
+
+    kutular.push({ x0, y0, x1, y1 });
+  }
+  return kutular;
+}
+
+// -----------------------------------------------------------------------------
 // 2. HARF TANIMA
 // -----------------------------------------------------------------------------
 
@@ -138,7 +286,14 @@ export function pembeKutular(g: Goruntu, olcek: number): Kutu[] {
  * Şablon üretimi (`scripts/sik-sablonlari.mjs`) de BU fonksiyonu kullanıyor;
  * kıyaslanan iki şey aynı yoldan geçiyor.
  */
-export function enSoldakiHarf(g: Goruntu, k: Kutu, koyuEsigi = 128): Float32Array | null {
+export function enSoldakiHarf(
+  g: Goruntu,
+  k: Kutu,
+  koyuEsigi = 128,
+  haric?: PikselSuzgeci,
+  /** Verilirse yalnız MERKEZİ bu kutunun içinde kalan bileşen harf sayılır. */
+  merkez?: Kutu,
+): Float32Array | null {
   const w = k.x1 - k.x0 + 1;
   const h = k.y1 - k.y0 + 1;
   if (w < 3 || h < 3) return null;
@@ -146,8 +301,11 @@ export function enSoldakiHarf(g: Goruntu, k: Kutu, koyuEsigi = 128): Float32Arra
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = ((k.y0 + y) * g.genislik + (k.x0 + x)) * 4;
-      const l = 0.3 * g.veri[i]! + 0.59 * g.veri[i + 1]! + 0.11 * g.veri[i + 2]!;
-      if (l < koyuEsigi) koyu[y * w + x] = 1;
+      const r = g.veri[i]!;
+      const gr = g.veri[i + 1]!;
+      const b = g.veri[i + 2]!;
+      const l = 0.3 * r + 0.59 * gr + 0.11 * b;
+      if (l < koyuEsigi && !haric?.(r, gr, b)) koyu[y * w + x] = 1;
     }
   }
 
@@ -191,8 +349,19 @@ export function enSoldakiHarf(g: Goruntu, k: Kutu, koyuEsigi = 128): Float32Arra
   // Harf, yazının boyuna yakın ve bölgenin sol kenarına YAPIŞMAYAN en
   // soldaki bileşen. Küçük noktalar (gürültü) ve kesirlerin çizgisi elenir.
   const enBoy = Math.max(...bilesenler.map((c) => c.y1 - c.y0 + 1));
+  const icinde = (c: { x0: number; y0: number; x1: number; y1: number }) => {
+    if (!merkez) return true;
+    // ")" gibi İNCE işaretler harf değil: büyütülünce D'nin sağ yarısına
+    // benziyordu ve "C)" çevresindeki daire D okunuyordu. A–E'nin en/boy
+    // oranı ~0.6–1.1.
+    const oran = (c.x1 - c.x0 + 1) / (c.y1 - c.y0 + 1);
+    if (oran < 0.45 || oran > 1.6) return false;
+    const mx = k.x0 + (c.x0 + c.x1) / 2;
+    const my = k.y0 + (c.y0 + c.y1) / 2;
+    return mx >= merkez.x0 && mx <= merkez.x1 && my >= merkez.y0 && my <= merkez.y1;
+  };
   const harf = bilesenler
-    .filter((c) => c.y1 - c.y0 + 1 >= 0.45 * enBoy && c.n >= 8 && c.x0 > 0)
+    .filter((c) => c.y1 - c.y0 + 1 >= 0.45 * enBoy && c.n >= 8 && c.x0 > 0 && icinde(c))
     .sort((a, z) => a.x0 - z.x0)[0];
   if (!harf) return null;
 
@@ -242,9 +411,13 @@ export type HarfSonucu = {
 /** Kutudaki şıkkın harfi. `sonSecenek` 'D' ise E adayı hiç değerlendirilmez. */
 export function harfiTani(g: Goruntu, k: Kutu, sonSecenek: 'D' | 'E' = 'E'): HarfSonucu {
   const v = enSoldakiHarf(g, k);
-  const bos: HarfSonucu = { harf: null, aday: null, benzerlik: 0, fark: 0 };
-  if (!v) return bos;
+  if (!v) return { harf: null, aday: null, benzerlik: 0, fark: 0 };
+  return harfiPuanla(v, sonSecenek);
+}
 
+/** Izgarayı A–E şablonlarıyla kıyaslar (pembe kutu eşikleriyle). */
+function harfiPuanla(v: Float32Array, sonSecenek: 'D' | 'E'): HarfSonucu {
+  const bos: HarfSonucu = { harf: null, aday: null, benzerlik: 0, fark: 0 };
   const izinli = sonSecenek === 'D' ? 'ABCD' : 'ABCDE';
   const puan = new Map<Harf, number>();
   for (const s of SIK_SABLONLARI) {
@@ -258,6 +431,41 @@ export function harfiTani(g: Goruntu, k: Kutu, sonSecenek: 'D' | 'E' = 'E'): Har
   const fark = benzerlik - ikinci;
   const emin = benzerlik >= EN_AZ_BENZERLIK && fark >= EN_AZ_FARK;
   return { harf: emin ? aday : null, aday: benzerlik >= EN_AZ_BENZERLIK ? aday : null, benzerlik, fark };
+}
+
+/**
+ * Kalem dairesindeki şıkkın harfi.
+ *
+ * Harf dairenin kutusundan biraz TAŞABİLİYOR (dar çizilmiş daire, ör.
+ * "C)" etrafında): arama alanı her yandan dairenin yarısı kadar
+ * genişletiliyor, ama yalnız MERKEZİ dairenin içinde kalan bileşen harf
+ * sayılıyor — yandaki şıkkın harfi karışmasın. Renkli pikseller (kalem)
+ * yok sayılıyor. Emin olmak için `KALEM_EN_AZ_BENZERLIK` gerekiyor.
+ */
+export function kalemHarfiTani(
+  g: Goruntu,
+  daire: Kutu,
+  sonSecenek: 'D' | 'E' = 'E',
+): HarfSonucu {
+  const w = daire.x1 - daire.x0 + 1;
+  const h = daire.y1 - daire.y0 + 1;
+  const arama: Kutu = {
+    x0: Math.max(0, daire.x0 - Math.round(w / 2)),
+    y0: Math.max(0, daire.y0 - Math.round(h / 2)),
+    x1: Math.min(g.genislik - 1, daire.x1 + Math.round(w / 2)),
+    y1: Math.min(g.yukseklik - 1, daire.y1 + Math.round(h / 2)),
+  };
+  // Merkez payı YOK: denendi, daire yandaki şık METNİNE taşınca metindeki
+  // bir harf ("C) A < C < B" içindeki A) yüksek benzerlikle seçildi.
+  const v = enSoldakiHarf(g, arama, 128, renkliMi, daire);
+  const bos: HarfSonucu = { harf: null, aday: null, benzerlik: 0, fark: 0 };
+  if (!v) return bos;
+  const sonuc = harfiPuanla(v, sonSecenek);
+  const emin =
+    sonuc.aday !== null &&
+    sonuc.fark >= KALEM_EN_AZ_FARK &&
+    (sonuc.benzerlik >= KALEM_EN_AZ_BENZERLIK || sonuc.fark >= KALEM_TEK_BASINA_FARK);
+  return { ...sonuc, harf: emin ? sonuc.aday : null };
 }
 
 // -----------------------------------------------------------------------------
