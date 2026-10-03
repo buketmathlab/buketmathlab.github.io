@@ -12,6 +12,8 @@
 import {
   harfiTani,
   isaretlerdenAnahtar,
+  kalemDaireleri,
+  kalemHarfiTani,
   pembeKutular,
   type IsaretCikarimi,
   type Numara,
@@ -67,7 +69,7 @@ async function numaralariTopla(belge: PdfBelgesi, soruSayisi: number) {
 }
 
 /**
- * Belgedeki pembe kutularla işaretli şıkları okur.
+ * Belgedeki işaretli şıkları okur: pembe kutu ya da kalemle çizilmiş daire.
  *
  * @param ilerleme Her sayfa bitince (bitti, toplam) — "Sayfa 3/9".
  */
@@ -95,10 +97,19 @@ export async function isaretliSiklariOku(
       const { data, width, height } = ctx.getImageData(0, 0, tuval.width, tuval.height);
       const goruntu = { veri: data, genislik: width, yukseklik: height };
 
-      const kutular = pembeKutular(goruntu, olcek).map((kutu) => ({
-        kutu,
-        sonuc: harfiTani(goruntu, kutu, sonSecenek),
-      }));
+      const kutular = [
+        ...pembeKutular(goruntu, olcek).map((kutu) => ({
+          kutu,
+          sonuc: harfiTani(goruntu, kutu, sonSecenek),
+        })),
+        // İkinci biçim: kalemle (mavi/kırmızı) çizilmiş daire. Harf
+        // aranırken renkli pikseller (kalem) yok sayılıyor ve daha sıkı
+        // bir eşik isteniyor (`kalemHarfiTani`).
+        ...kalemDaireleri(goruntu, olcek).map((kutu) => ({
+          kutu,
+          sonuc: kalemHarfiTani(goruntu, kutu, sonSecenek),
+        })),
+      ];
       const sayfaNumaralari: Numara[] = (numaralar[i - 1] ?? []).map((n) => {
         const [x, y] = vp.convertToViewportPoint(n.x, n.y) as [number, number];
         return { no: n.no, x, y };

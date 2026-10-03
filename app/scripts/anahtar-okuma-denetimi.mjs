@@ -19,8 +19,10 @@
  *    el yazısı çözümler, kitap soruları). Yol verilirse:
  *      ANAHTAR_PDF_ISARETLI=…/Üslü ve Köklü Çözüm.pdf  (51 soru, pembe kutu)
  *      ANAHTAR_PDF_METIN=…/Çözüm.pdf                    (9 soru, metin)
+ *      ANAHTAR_PDF_DAIRE=…/9_Sinif_Sayilar_117_Soru…pdf  (117 soru, mavi/
+ *                         kırmızı kalemle DAİRE; 3 soruda işaret yok)
  *    Ekrandan yüklenip okunuyor: 51'de en az 49 doğru ve HİÇ YANLIŞ YOK;
- *    9'da 9/9.
+ *    9'da 9/9; 117'de en az 88 doğru ve HİÇ YANLIŞ YOK.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/anahtar-okuma-denetimi.mjs
@@ -212,6 +214,15 @@ const GERCEK = [
     dogru: 'ACCCCBACCBBDC-BDCBCCDAAEECBBEEBDCDBBCBBEC-DEDADDADB',
   },
   { ortam: 'ANAHTAR_PDF_METIN', n: 9, enAzDogru: 9, dogru: 'DECCCBBED' },
+  {
+    ortam: 'ANAHTAR_PDF_DAIRE', n: 117, enAzDogru: 88,
+    // Gözle okunmuş (20 sayfanın hepsi). 56, 87 ve 91'de daire yok — BOŞ
+    // kalmalı. Ölçülen: 88 doğru, 0 yanlış, 26 okunamadı (kalem harfin
+    // üstünden geçmiş ya da daire el yazısına değiyor).
+    dogru:
+      'EBBBEECCDECADDEEEDEEABCDCACDACDDACCCACADCAEAECDCBEBCEEC-BCCECBBBDE' +
+      'CBBADACCDDBCBDAECBAE-DDC-AECBDACECADBDCBBDDEBEECCAA',
+  },
 ];
 for (const g of GERCEK) {
   const yol = process.env[g.ortam];

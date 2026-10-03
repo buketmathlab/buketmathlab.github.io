@@ -5454,3 +5454,29 @@ bile). Öğrenci panosunda aynısı vardı.
   reddediliyordu).
 - `dosya.test.ts`, `odev-pdf-boyut-denetimi.mjs` B1–B3 (kusur provası:
   sınır 10 MB'a çekilince kırmızı).
+
+## Cevap anahtarında kalemle çizilmiş daire (istemci)
+
+Öğretmenin "9. Sınıf Sayılar 117 Soru Çözümlü Cevap Anahtarı" PDF'i
+"PDF'ten cevap çıkarılamadı" diyordu: sorular görsel, doğru şık pembe kutu
+yerine elle çizilmiş bir DAİREYLE işaretli — bazı sayfalarda mavi,
+bazılarında kırmızı kalem; çözümler de aynı mavi kalemle yazılmış.
+
+- `lib/isaretli-sik.ts`: `maviMi`, `kirmiziMi`, `kalemDaireleri` (her renk
+  AYRI; küçük, yuvarlağa yakın, içi boş halka), `kalemHarfiTani`.
+- Harf yalnız RENKSİZ (siyah baskı) piksellerden aranıyor (`renkliMi`
+  dışlanıyor): lacivert mürekkebin koyu yerleri mavi eşiğinin altında
+  kalıp el yazısındaki "[" "B" okunuyordu.
+- Arama alanı dairenin yarısı kadar genişletiliyor, ama harfin MERKEZİ
+  dairenin içinde olmalı (pay denendi: daire şık metnine taşınca metindeki
+  "A" seçildi — kaldırıldı). ")" gibi ince işaretler harf sayılmıyor.
+- Eşik pembe kutudan sıkı: benzerlik ≥ 0.75 ve fark ≥ 0.05, ya da fark
+  ≥ 0.3 (A). Ölçülen: 114 işaretli sorunun 88'i doğru, 0 yanlış, 26
+  okunamadı (boş, öğretmen işaretliyor). İlk sürüm 3 yanlış veriyordu
+  (kalem C'nin üstünden geçince D; el yazısı halka) — eşik ve renksiz
+  harf kuralı ikisini de kapattı.
+- Eski iki gerçek PDF aynen: pembe kutu 49/51, metin 9/9, yanlış yok.
+- Testler: `__fixtures__/isaretli-sik/kalem/` gerçek kesitler (8 harf, 3
+  "okunmamalı"); `anahtar-okuma-denetimi.mjs` `ANAHTAR_PDF_DAIRE` (en az
+  88 doğru, 0 yanlış). Kusur provası: renksiz kuralı kaldırılınca el
+  yazısı kesiti kırmızı.
