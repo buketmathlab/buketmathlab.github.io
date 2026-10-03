@@ -5504,3 +5504,32 @@ soğuk başlangıcı) Chrome bunu açılır pencere sayıp sessizce engelliyor;
 - Testler: `dosya-ac.test.ts` (6), `dosya-acma-denetimi.mjs` D1–D5 (gerçek
   Chromium sekmesi); kusur provası: eski kalıpla kırmızı. Üç denetimin
   `window.open` taklidi yönlendirmeyi kaydedecek şekilde güncellendi.
+
+## 0060 — Müdür hesabı (salt izleme)
+
+İstek: "Müdür için hesap açmak istiyorum." Öğretmenin seçtiği kapsam:
+salt izleme; sınıf özetleri, öğretmen etkinliği, veli onam durumu.
+Öğrenci puanları YOK.
+
+- Müdür `ogretmenler` tablosunda `mudur = true` satırı (PIN'le aynı
+  girişten girer), ama oturumu ayrı rolle açılıyor: `rol = 'mudur'`.
+  Değiştiren her uç `_ogretmen` üzerinden yalnız `'ogretmen'` rolünü kabul
+  ettiği için müdür YAPISI GEREĞİ hiçbir şeyi değiştiremiyor — tek tek
+  izin listesi tutulmuyor.
+- Açık uçlar: `mudur_paneli` (sınıf özetleri + öğretmen etkinliği),
+  `sinif_analizi` ve `onam_dokumu` (erişim `_sinif_okuyucusu`: öğretmen
+  kendi sınıfı, müdür özel ders dışındaki her sınıf), `cikis`.
+- Kapananlar: müdüre sınıf atanamaz (tetikleyici), vekâlet yok
+  (`_oturum_ac` reddediyor), mesaj listesinde görünmez, özel ders grupları
+  ona kapalı, `mudur and yonetici` aynı anda olamaz.
+- Ekleme: yalnız sahip, Öğretmenler → "Müdür ekle" (`mudur_ekle`, denetim
+  izi `mudur_eklendi`). PIN'i sahip sıfırlar; çıkarma/geri alma öğretmenle
+  aynı. Müdür satırında "Sınıfları" ve "Bu öğretmen olarak gir" yok.
+- Arayüz: `features/mudur/` — Sınıflar (kart: öğrenci, yayındaki ödev,
+  süresi dolan ödevlerde gönderim oranı ve ortalama) ve Öğretmenler
+  (sınıflar, yayınlanan ödev, son 30 gün). Sınıf analizi ve onam dökümü
+  öğretmen ekranlarının aynısı, `geriYol="/mudur"` ile.
+- Testler: `mudur_testleri.sql` (8 grup; 5. grup p_token alan her anon
+  ucunu müdür jetonuyla çağırıp 42501 bekliyor), `mudur-denetimi.mjs`
+  M1–M5. Kusur provası: müdür satırında vekâlet düğmesi açılınca M5
+  kırmızı.

@@ -31,7 +31,7 @@ if (!url || !anonKey) {
 /** Oturum jetonunun tarayıcıda saklandığı anahtar. */
 const JETON_ANAHTARI = 'sekiz_oturum';
 
-export type Rol = 'ogretmen' | 'ogrenci' | 'veli';
+export type Rol = 'ogretmen' | 'ogrenci' | 'veli' | 'mudur';
 
 export type Oturum = {
   rol: Rol;

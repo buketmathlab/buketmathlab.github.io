@@ -48,6 +48,9 @@ import {
 import { OdevOlustur } from '@/features/ogretmen/OdevOlustur';
 import { OdevDuzenle } from '@/features/ogretmen/OdevDuzenle';
 import { OdevGonderimleri } from '@/features/ogretmen/OdevGonderimleri';
+import { MudurKabuk } from '@/features/mudur/MudurKabuk';
+import { MudurSiniflar } from '@/features/mudur/MudurSiniflar';
+import { MudurOgretmenler } from '@/features/mudur/MudurOgretmenler';
 // Tasarım vitrini nadiren açılır ve büyüktür; ayrı parçaya alınıyor.
 const TasarimSistemi = lazy(() =>
   import('@/pages/TasarimSistemi').then((m) => ({ default: m.TasarimSistemi })),
@@ -117,8 +120,25 @@ function Yonlendirme() {
     );
   }
 
+  if (oturum.rol === 'mudur') {
+    // Müdür yalnız izler: sınıf özetleri, öğretmen etkinliği, sınıf
+    // analizi ve onam dökümü. Yazma yolu yok — sunucu da yazan her
+    // uç için 'ogretmen' rolünü istiyor (0060).
+    return (
+      <Routes>
+        <Route path="/mudur" element={<MudurKabuk />}>
+          <Route index element={<MudurSiniflar />} />
+          <Route path="ogretmenler" element={<MudurOgretmenler />} />
+          <Route path="sinif/:id" element={<SinifAnalizi geriYol="/mudur" />} />
+          <Route path="sinif/:id/onam" element={<OnamDokumu geriYol="/mudur" />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/mudur" replace />} />
+      </Routes>
+    );
+  }
+
   if (oturum.rol !== 'ogretmen') {
-    // Bilinmeyen bir rol: üç bilinen rolün dışında bir şey dönerse kullanıcı
+    // Bilinmeyen bir rol: bilinen rollerin dışında bir şey dönerse kullanıcı
     // boş ekranla kalmasın.
     return <HenuzYok />;
   }

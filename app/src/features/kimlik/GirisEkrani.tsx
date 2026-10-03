@@ -48,8 +48,8 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
         setHata('Bu kod bulunamadı. Büyük/küçük harfe dikkat edip tekrar deneyin.');
         return;
       }
-      if (sonuc.rol === 'ogretmen') {
-        onGiris({ rol: 'ogretmen', token: sonuc.token });
+      if (sonuc.rol === 'ogretmen' || sonuc.rol === 'mudur') {
+        onGiris({ rol: sonuc.rol, token: sonuc.token });
         return;
       }
       onGiris({ rol: sonuc.rol, token: sonuc.token, ogrenci: sonuc.ogrenci });

@@ -35,7 +35,7 @@ const SAYI = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 });
  * soruluk bir konuya "çalışılması gerekiyor" demek, olmayan bir bilgi
  * vermek olurdu.
  */
-export function SinifAnalizi() {
+export function SinifAnalizi({ geriYol }: { geriYol?: string } = {}) {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
   const git = useNavigate();
@@ -61,8 +61,8 @@ export function SinifAnalizi() {
     <>
       <div className="print:hidden">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <Button tur="sade" olcu="sm" onClick={() => git(`/ogretmen/siniflar/${id}`)}>
-            ← Sınıf
+          <Button tur="sade" olcu="sm" onClick={() => git(geriYol ?? `/ogretmen/siniflar/${id}`)}>
+            {geriYol ? '← Sınıflar' : '← Sınıf'}
           </Button>
           {veri && <Button onClick={() => window.print()}>Yazdır</Button>}
         </div>

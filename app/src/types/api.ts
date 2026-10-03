@@ -1,11 +1,13 @@
 /** Veritabanı RPC'lerinin dönüş tipleri. supabase/migrations ile eşleşir. */
 
-export type Rol = 'ogretmen' | 'ogrenci' | 'veli';
+/** 0060: 'mudur' — okul müdürü, salt izleme. */
+export type Rol = 'ogretmen' | 'ogrenci' | 'veli' | 'mudur';
 
 export type GirisSonucu =
   | { rol: 'kurulum' }
   | { rol: 'yok' }
   | { rol: 'ogretmen'; token: string }
+  | { rol: 'mudur'; token: string }
   | {
       rol: 'ogrenci' | 'veli';
       token: string;
@@ -802,6 +804,8 @@ export type OgretmenSatiri = {
   id: string;
   ad: string;
   sahip: boolean;
+  /** 0060: müdür (yalnız izler). 0060 öncesi panelde gelmez. */
+  mudur?: boolean;
   aktif: boolean;
   /** PIN'i belirlenmiş mi (yedekten geri yüklemede boş olabilir). */
   pin_var: boolean;
@@ -885,5 +889,35 @@ export type SinifOgrenciOzeti = {
      * değil) — öğrenciyi etiketlememek için (bkz. 0051).
      */
     eksik_konular: string[];
+  }>;
+};
+
+/**
+ * `mudur_paneli` (0060) — müdürün tek ucu; yalnız TOPLAMLAR, öğrenci adı
+ * yok. Özel ders grubu ve arşivlenmiş sınıflar yok.
+ */
+export type MudurPaneli = {
+  ad: string;
+  siniflar: Array<{
+    id: string;
+    ad: string;
+    ogretmenler: string[];
+    ogrenci_sayisi: number;
+    /** Yayındaki ödev sayısı. */
+    odev_sayisi: number;
+    /** Son tarihi geçmiş (değerlendirilen) ödev sayısı. */
+    suresi_dolan: number;
+    /** Süresi dolan ödevlerde gönderim yüzdesi; ödev yoksa null. */
+    gonderim_orani: number | null;
+    ortalama: number | string | null;
+    son_odev: string | null;
+  }>;
+  ogretmenler: Array<{
+    ad: string;
+    sahip: boolean;
+    siniflar: string[];
+    odev_sayisi: number;
+    son_30_gun: number;
+    son_odev: string | null;
   }>;
 };

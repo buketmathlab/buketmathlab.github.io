@@ -188,7 +188,9 @@ begin
     )
     select h.proname, h.argtipleri
       from hedef h
-     where pg_get_functiondef(h.oid) ~ '_ogretmen\(|_oturum\('
+     -- 0060: `_mudur(` ve `_sinif_okuyucusu(` da oturumu okuyup rol
+     -- denetleyen kapılar; bu uçlar da uydurma jetonla denensin.
+     where pg_get_functiondef(h.oid) ~ '_ogretmen\(|_oturum\(|_mudur\(|_sinif_okuyucusu\('
      order by h.proname
   loop
     select array_agg('null::' || format_type(t, null) order by i)
@@ -238,7 +240,10 @@ begin
      -- 0033: `_yonetici(` de bir rol şartı — üstelik daha SERTİ. Kendi
      -- içinde `_ogretmen`i çağırıyor, yani öğretmen olmak yetmiyor, sahip
      -- olmak gerekiyor. Desen genişledi ama iddia gevşemedi.
-   where pg_get_functiondef(h.oid) !~ '_ogretmen\(|_oturum\(|_yonetici\(';
+     -- 0060: `_mudur(` (yalnız müdür) ve `_sinif_okuyucusu(` (öğretmen
+     -- kendi sınıfı / müdür) de rol şartı — ikisi de `_oturum`u okuyup
+     -- rolü denetliyor (`mudur_testleri.sql` 5. grup ayrıca ölçüyor).
+   where pg_get_functiondef(h.oid) !~ '_ogretmen\(|_oturum\(|_yonetici\(|_mudur\(|_sinif_okuyucusu\(';
 
   if sayac <> 3 then
     raise exception '1c BAŞARISIZ — rol şartı taşımayan uç sayısı 3 değil, %. Yeni bir uç şartsız kalmış olabilir.', sayac;
