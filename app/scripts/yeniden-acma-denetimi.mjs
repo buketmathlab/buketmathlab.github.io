@@ -163,7 +163,8 @@ async function bas(l) {
   await l.evaluate((e) => e.scrollIntoView({ block: 'center' }));
   await l.click();
 }
-const gonderBas = async (p) => { await bas(p.getByRole('button', { name: 'Ödevi gönder' })); await p.waitForTimeout(400); };
+const onayla = async (p) => { const k = p.getByRole('checkbox', { name: /Bu ödevi kendim çözdüm/ }); await k.evaluate((e) => e.scrollIntoView({ block: 'center' })); await k.check(); };
+const gonderBas = async (p) => { await onayla(p); await bas(p.getByRole('button', { name: 'Ödevi gönder' })); await p.waitForTimeout(400); };
 
 console.log('--- B0. "Ödevi gönder" ALT ÇUBUĞUN ALTINDA DEĞİL (sayfa sonunda) ---');
 {

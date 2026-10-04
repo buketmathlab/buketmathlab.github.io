@@ -5740,3 +5740,28 @@ alınmalı ve hemen geçmişe dönük ortalamalar ödev verileri güncellenmeli.
   - Kusur provaları: onaysız kayıt ve "Yayında" etiketi geri getirilince
     denetimler kırmızıya döndü.
 - `toplu-ogrenci-denetimi.mjs` "yalnız ekle" kipine geçirildi.
+
+## Çözüm el yazısıyla: kural kartı ve onay (istemci)
+
+Bir öğrenci bilgisayarda yazılmış, büyük olasılıkla yapay zekâya
+yaptırılmış bir çözüm yükledi. Öğretmenin kuralı: çözüm el yazısıyla
+olacak. Geçerli iki yol var: kâğıtta çözüp fotoğrafını yüklemek ya da
+tablette ödev PDF'ini açıp soruların üzerine kalemle çözmek. İkincisi de
+el yazısı sayılıyor.
+
+- `lib/el-yazisi-metni.ts`: başlık, neden (öğrenmeye odaklı, suçlamadan),
+  iki yol, kabul edilmeyenler, onay ve uyarı metni. Metinler React'siz;
+  vitest iki yolun, "yapay zekâ"nın ve "kâğıtta ya da tablette"nin metinde
+  olduğunu, suçlayıcı sözcük olmadığını denetliyor (sözcük sınırıyla:
+  "kopyalanmış" içindeki "yalan" yanlış alarm vermesin).
+- `OdevTeslim.tsx`: kural kartı yükleme alanının ÜSTÜNDE (tek alan ve çok
+  sayfalı yolda); "Ödevi gönder"in üstünde onay kutusu. Onaysız basınca
+  `gonder()` yüklemeye ve `odev_gonder`'e gitmiyor; `role="alert"` uyarısı
+  çıkıyor, düğme kapatılmıyor. Gönderilmiş ödevde kart ve onay yok.
+- Onay SAKLANMIYOR; sunucu ve şema değişmedi. Bu, öğrencinin verdiği söz.
+  Asıl denetim öğretmenin elinde: "Gönderimi yeniden aç" (0056).
+- `el-yazisi-denetimi.mjs`: kart ve iki yol, onaysız gönderimde çağrı ve
+  yükleme yok, uyarı görünüyor, onaylıyken gönderim gidiyor, çok sayfalı yol,
+  gönderilmiş ödev, 360 px. Kusur provası: onay şartı kaldırılınca 5 sapma.
+  `pdf-cozum`, `sayfa-siniri` ve `yeniden-acma` denetimleri artık göndermeden
+  önce onayı işaretliyor.

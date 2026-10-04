@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import * as EL_YAZISI from '@/lib/el-yazisi-metni';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { bosCevapUyarisi, type BosCevapUyarisi } from '@/lib/bos-cevap-uyarisi';
@@ -72,6 +73,9 @@ export function OdevTeslim() {
   const [isliyor, setIsliyor] = useState(false);
   // Boş cevap uyarısı açıkken dolu; "Yine de gönder" onu onaylıyor.
   const [bosUyari, setBosUyari] = useState<BosCevapUyarisi | null>(null);
+  // El yazısı onayı (öğretmenin kuralı). Saklanmıyor; gönderimin ön şartı.
+  const [elYazisiOnay, setElYazisiOnay] = useState(false);
+  const [onayEksik, setOnayEksik] = useState(false);
 
   const { veri, durum, hata, yenile } = useVeri<OgrenciOdevleri>('ogrenci_odevleri', {
     p_token: oturum?.token,
@@ -222,6 +226,12 @@ export function OdevTeslim() {
     if (dosyalar.length === 0) {
       return setFotoHatasi('Çözüm fotoğrafı olmadan ödev gönderilemez.');
     }
+    // EL YAZISI ONAYI — sunucuya gitmeden. Düğme kapatılmıyor: öğrenci
+    // bastığında neyin eksik olduğunu görsün.
+    if (!elYazisiOnay) {
+      setOnayEksik(true);
+      return;
+    }
     // BOŞ SORU VARSA ÖNCE SOR. Gönderim sonradan değiştirilemiyor; bir
     // öğrencinin cevapları boş gitti ve 0 aldı (51 sorudan 51'i boş).
     if (odev.tur === 'test' && !bosOnaylandi) {
@@ -340,6 +350,12 @@ export function OdevTeslim() {
             setSayfalar((s) => sahnedenCikar(s, i));
           }}
           onGonder={() => void gonder()}
+          elYazisiOnay={elYazisiOnay}
+          onElYazisiOnay={(v) => {
+            setElYazisiOnay(v);
+            if (v) setOnayEksik(false);
+          }}
+          onayEksik={onayEksik}
           onPdf={pdfAc}
           onGeri={() => git('/ogrenci')}
           ozelCumleler={ozelCumleler}
@@ -370,6 +386,11 @@ type IcerikProps = {
   onSayfaEkle: (d: File[]) => void;
   onSayfaCikar: (sira: number) => void;
   onGonder: () => void;
+  /** Öğrencinin "kendim, el yazımla çözdüm" onayı. */
+  elYazisiOnay: boolean;
+  onElYazisiOnay: (v: boolean) => void;
+  /** Onaysız göndermeye çalıştı mı (uyarı gösterilir). */
+  onayEksik: boolean;
   onPdf: (yol: string) => void;
   onGeri: () => void;
   /** Öğretmenin yazdığı Ewalu cümleleri (0032); boşsa varsayılanlar. */
@@ -395,6 +416,9 @@ function OdevIcerigi({
   onSayfaEkle,
   onSayfaCikar,
   onGonder,
+  elYazisiOnay,
+  onElYazisiOnay,
+  onayEksik,
   onPdf,
   onGeri,
   ozelCumleler,
@@ -506,6 +530,27 @@ function OdevIcerigi({
             </div>
           )}
 
+          {/* EL YAZISI KURALI — yüklemeden ÖNCE okunsun (öğretmenin kuralı:
+              kâğıtta ya da tablette soruların üzerine; ikisi de el yazısı). */}
+          <section
+            aria-labelledby="el-yazisi-baslik"
+            className="mb-5 rounded-sk-sm border border-line bg-paper p-4"
+          >
+            <h2 id="el-yazisi-baslik" className="text-[16px] font-semibold text-ink">
+              {EL_YAZISI.BASLIK}
+            </h2>
+            <p className="mt-1 text-[14px] text-ink">{EL_YAZISI.NEDEN}</p>
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              {EL_YAZISI.YOLLAR.map((y) => (
+                <li key={y.baslik} className="rounded-sk-sm bg-surface p-3 text-[14px] text-ink">
+                  <strong className="block">{y.baslik}</strong>
+                  {y.metin}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-[13px] text-muted">{EL_YAZISI.KABUL_EDILMEYEN}</p>
+          </section>
+
           {/* SINIR 1 → BUGÜNKÜ TEK ALAN, DOKUNULMADAN (0054). Çok sayfalı
               seçim yalnız öğretmen sınırı yükselttiğinde çiziliyor. */}
           {!sinirHazir ? (
@@ -523,7 +568,7 @@ function OdevIcerigi({
             <>
               <Field
                 etiket="Çözüm fotoğrafı ya da PDF"
-                ipucu="Zorunlu. Çözüm kâğıdının fotoğrafını çek ya da PDF seç; okunaklı olsun yeter. PDF birden fazla sayfaysa sayfalar tek görselde birleştirilir."
+                ipucu={EL_YAZISI.YUKLEME_IPUCU}
                 zorunlu
                 {...(fotoHatasi ? { hata: fotoHatasi } : {})}
               >
@@ -563,6 +608,23 @@ function OdevIcerigi({
             Gönderdikten sonra <strong>değiştiremezsin</strong>. Cevaplarını bir kez daha
             gözden geçir.
           </p>
+
+          <label className="mb-1 flex min-h-[44px] items-start gap-2 text-[15px] text-ink">
+            <input
+              type="checkbox"
+              className="mt-1 size-5 shrink-0 accent-ink"
+              checked={elYazisiOnay}
+              onChange={(e) => onElYazisiOnay(e.target.checked)}
+              aria-describedby={onayEksik ? 'el-yazisi-uyari' : undefined}
+            />
+            <span>{EL_YAZISI.ONAY}</span>
+          </label>
+          {onayEksik && (
+            <p id="el-yazisi-uyari" role="alert" className="mb-3 text-[14px] font-semibold text-danger">
+              {EL_YAZISI.ONAY_EKSIK}
+            </p>
+          )}
+          <div className="mb-3" />
 
           <Button
             onClick={onGonder}
