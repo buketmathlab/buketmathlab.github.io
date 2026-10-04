@@ -8,19 +8,21 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
-import type { Pano as PanoVerisi } from '@/types/api';
+import { GENEL_ACIKLAMA, GenelOzet } from '@/features/genel/GenelOzet';
+import type { OkulGeneli, Pano as PanoVerisi } from '@/types/api';
+
+/** `Card`'ın görünümü, iç boşluksuz: satırlar kenara kadar uzansın. */
+const LISTE_KUTUSU = 'overflow-hidden rounded-sk-md border border-line bg-surface shadow-sk-sm';
 
 /**
- * Pano kutusu — artık TIKLANABİLİR.
+ * BUGÜN SATIRI — dar (0065, öğretmenin isteği: "üstte kalsın fakat daha
+ * dar satırlarda gösterilsin"). Eskiden dört büyük kutuydu; sayfanın
+ * altına okulun genel özeti eklenince kutular ekranın yarısını alıyordu.
  *
- * Sayı tek başına eyleme dönüşmüyordu: "11 öğrenci göndermemiş" bilgisi,
- * o on bir ismin kim olduğunu söylemeden öğretmene bir şey yaptırmıyor.
- * Kutu artık listenin kapısı.
- *
- * Tüm kart bir düğme: 360 px'de dörde bölünmüş bir ızgarada küçük bir
- * bağlantı metnini hedeflemek zor, kartın tamamı rahat bir hedef.
+ * Satırın TAMAMI düğme ve listenin kapısı ("11 öğrenci göndermemiş"
+ * bilgisi o on bir ismi açmalı); 44 px dokunma yüksekliği korunuyor.
  */
-function Sayi({
+function BugunSatiri({
   deger,
   etiket,
   vurgu,
@@ -38,25 +40,35 @@ function Sayi({
         ? 'text-warning'
         : 'text-ink';
   return (
-    <button
-      type="button"
-      onClick={onAc}
-      className="rounded-sk-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-    >
-      <Card className="h-full text-center transition-colors hover:border-ink-soft">
-        <p className={`sk-sayi font-display text-[30px] font-semibold ${renk}`}>{deger}</p>
-        <p className="mt-1 text-[13px] text-muted">{etiket}</p>
-      </Card>
-    </button>
+    <li>
+      <button
+        type="button"
+        onClick={onAc}
+        className="flex min-h-[44px] w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
+      >
+        <span className="text-[15px] text-ink">{etiket}</span>
+        <span className="flex items-center gap-2">
+          <span className={`sk-sayi font-display text-[20px] font-semibold ${renk}`}>{deger}</span>
+          <span aria-hidden="true" className="text-muted">
+            ›
+          </span>
+        </span>
+      </button>
+    </li>
   );
 }
 
 /**
- * Öğretmen panosu.
+ * Öğretmenin GENEL sayfası (0065'e kadar "Pano").
  *
- * Tek soruya cevap verir: **bugün neye bakmalıyım?**
- * Bu yüzden dört sayı ve son gönderimlerden ibaret. Pano, veriyi sergilemek
- * için değil karar aldırmak için var; grafik yığını dikkat dağıtır.
+ * Öğretmenin isteği: "Müdürün genel sekmesinde olan bilgiler öğretmenlerin
+ * pano sayfasında olsun. Öğretmenlerin Pano sayfasının adı 'genel' olarak
+ * değiştirilsin." Kapsam okulun tamamı (öğretmenin seçimi).
+ *
+ * Üstte hâlâ "bugün neye bakmalıyım?" (dar satırlarla), altında okulun
+ * genel özeti — müdürün Genel sekmesiyle AYNI bileşen (`GenelOzet`).
+ * İki ayrı uç ve iki ayrı yükleme: özet yavaş ya da hatalıysa bugünün
+ * işleri yine görünür.
  */
 export function Pano() {
   const { ben } = useBenKimim();
@@ -65,6 +77,10 @@ export function Pano() {
   const { veri, durum, hata, yenile } = useVeri<PanoVerisi>('ogretmen_panosu', {
     p_token: oturum?.token,
   });
+  const genel = useVeri<OkulGeneli>('okul_geneli', { p_token: oturum?.token });
+  // 0065 panelde henüz çalıştırılmadıysa özet bölümü hiç çizilmiyor.
+  const genelUcYok =
+    genel.hata !== null && /could not find the function|schema cache/i.test(genel.hata);
 
   return (
     <>
@@ -81,12 +97,22 @@ export function Pano() {
           `dekoratif` — cümlenin kendisi zaten yanında yazıyor; ekran
           okuyucunun ayrıca "Ewalu ceketiyle defterine yazıyor" demesi
           bilgi katmaz, tekrar olurdu. */}
-      <div className="mb-5 flex items-center gap-3">
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <EwaluFigure poz="calisma" boyut={56} dekoratif className="shrink-0" />
-        <div className="min-w-0">
-          <h1 className="text-[24px] text-ink">Bugün</h1>
-          <p className="mt-0.5 text-[14px] text-muted">Dikkat etmeniz gerekenler</p>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[24px] text-ink">Genel</h1>
+          <p className="mt-0.5 text-[14px] text-muted">
+            Bugün dikkat etmeniz gerekenler ve okulun genel durumu
+          </p>
         </div>
+        {/* DUYURU (0065): alt çubukta yedinci sekmeye yer yok (360 px'de
+            ölçüldü); her gün açılan bu sayfanın başında duruyor. */}
+        <Link
+          to="/ogretmen/duyurular"
+          className="inline-flex min-h-[44px] items-center rounded-sk-md border border-line bg-surface px-4 text-[15px] font-semibold text-ink hover:border-ink-soft"
+        >
+          Duyuru yap
+        </Link>
       </div>
 
       <AsyncBoundary
@@ -98,32 +124,34 @@ export function Pano() {
       >
         {veri && (
           <>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {/* Öğrenci kutusu artık TOPLAM değil, ödev verilen öğrenci
-                  sayısı — öğretmenin isteği. Toplam öğrenci sayısını zaten
-                  biliyor; anlamlı olan sistemin kaç öğrenciye ulaştığı. */}
-              <Sayi
-                deger={veri.odev_verilen_ogrenci}
-                etiket="Ödev verilen öğrenci"
-                onAc={() => git('/ogretmen/bugun/ogrenci')}
-              />
-              <Sayi
-                deger={veri.acik_odev}
-                etiket="Açık ödev"
-                onAc={() => git('/ogretmen/bugun/acik_odev')}
-              />
-              <Sayi
-                deger={veri.gecikmis_eksik}
-                etiket="Göndermeyen"
-                vurgu="tehlike"
-                onAc={() => git('/ogretmen/bugun/gondermeyen')}
-              />
-              <Sayi
-                deger={veri.bekleyen_degerlendirme}
-                etiket="Puan bekliyor"
-                vurgu="uyari"
-                onAc={() => git('/ogretmen/bugun/puan_bekleyen')}
-              />
+            <h2 className="mb-2 text-[18px] text-ink">Bugün</h2>
+            <div className={LISTE_KUTUSU}>
+              <ul className="divide-y divide-line">
+                {/* Ödev verilen öğrenci: TOPLAM değil, sistemin ulaştığı
+                    öğrenci — öğretmenin isteği. */}
+                <BugunSatiri
+                  deger={veri.odev_verilen_ogrenci}
+                  etiket="Ödev verilen öğrenci"
+                  onAc={() => git('/ogretmen/bugun/ogrenci')}
+                />
+                <BugunSatiri
+                  deger={veri.acik_odev}
+                  etiket="Açık ödev"
+                  onAc={() => git('/ogretmen/bugun/acik_odev')}
+                />
+                <BugunSatiri
+                  deger={veri.gecikmis_eksik}
+                  etiket="Göndermeyen"
+                  vurgu="tehlike"
+                  onAc={() => git('/ogretmen/bugun/gondermeyen')}
+                />
+                <BugunSatiri
+                  deger={veri.bekleyen_degerlendirme}
+                  etiket="Puan bekliyor"
+                  vurgu="uyari"
+                  onAc={() => git('/ogretmen/bugun/puan_bekleyen')}
+                />
+              </ul>
             </div>
 
             {/* Burada İKİNCİ bir Ewalu YOK. Başlıkta zaten konuşuyor;
@@ -142,20 +170,22 @@ export function Pano() {
               </Card>
             )}
 
-            <h2 className="mb-3 mt-8 text-[18px] text-ink">Son gönderimler</h2>
+            <h2 className="mb-2 mt-6 text-[18px] text-ink">Son gönderimler</h2>
             {veri.son_gonderimler.length === 0 ? (
               <Card>
                 <p className="text-[14px] text-muted">Henüz gönderim yok.</p>
               </Card>
             ) : (
-              <div className="space-y-2">
-                {veri.son_gonderimler.map((g, i) => (
-                  <Card key={i}>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        {/* AD + SINIF, ADA TIKLAYINCA ÇÖZÜM (0055). Öğretmenin
-                            isteği. Alanlar 0055 öncesinde gelmiyor: o zaman ad
-                            bugünkü gibi düz metin kalıyor. */}
+              <div className={LISTE_KUTUSU}>
+                <ul className="divide-y divide-line">
+                  {veri.son_gonderimler.map((g, i) => (
+                    <li
+                      key={i}
+                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        {/* AD + SINIF, ADA TIKLAYINCA ÇÖZÜM (0055). Alanlar
+                            0055 öncesinde gelmiyor: o zaman ad düz metin. */}
                         {g.gonderim_id ? (
                           <CozumDugmesi
                             gonderimId={g.gonderim_id}
@@ -163,33 +193,50 @@ export function Pano() {
                             erisilebilirAd={`${g.ogrenci} — çözümü aç`}
                           />
                         ) : (
-                          <p className="font-semibold text-ink">{g.ogrenci}</p>
+                          <span className="font-semibold text-ink">{g.ogrenci}</span>
                         )}
-                        {g.sinif && (
-                          <span className="ml-2 text-[13px] text-muted">{g.sinif}</span>
-                        )}
+                        {g.sinif && <span className="ml-2 text-[13px] text-muted">{g.sinif}</span>}
                         <p className="truncate text-[13px] text-muted">{g.odev}</p>
                       </div>
                       <div className="flex flex-wrap justify-end gap-1">
-                        {/* Gecikme burada da görünür: pano öğretmenin
-                            "bugün ne oldu" ekranı, gecikmeyi başka bir
-                            yere bakarak öğrenmemeli. */}
                         {g.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
                         {g.puan === null ? (
                           <Tag tur="uyari">Puan bekliyor</Tag>
                         ) : (
                           <Tag tur="basari">
-                            {/* Sayı ve kelime TEK metin düğümünde: Tag
-                                inline-flex olduğu için aralarındaki boşluk
-                                ayrı düğüm olsaydı yok olurdu ("92puan"). */}
+                            {/* Sayı ve kelime TEK metin düğümünde ("92puan"
+                                olmasın). */}
                             <span className="sk-sayi">{g.puan} puan</span>
                           </Tag>
                         )}
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </li>
+                  ))}
+                </ul>
               </div>
+            )}
+
+            {/* OKULUN GENEL DURUMU (0065) — müdürün Genel sekmesiyle aynı. */}
+            {!genelUcYok && (
+              <section aria-labelledby="okul-geneli" className="mt-8">
+                <h2 id="okul-geneli" className="text-[18px] text-ink">
+                  Okulun genel durumu
+                </h2>
+                <p className="mb-3 text-[13px] text-muted">{GENEL_ACIKLAMA}</p>
+                <AsyncBoundary
+                  durum={
+                    genel.durum === 'hazir' && (genel.veri?.siniflar?.length ?? 0) === 0
+                      ? 'bos'
+                      : genel.durum
+                  }
+                  bosBaslik="Henüz sınıf yok"
+                  {...(genel.hata ? { hataAciklama: genel.hata } : {})}
+                  tekrarDene={genel.yenile}
+                >
+                  {/* Beklenmeyen yanıt (ör. eski sunucu) bütün sayfayı düşürmesin. */}
+                  {genel.veri?.okul && <GenelOzet veri={genel.veri} />}
+                </AsyncBoundary>
+              </section>
             )}
 
             {/* YEDEK EN ALTTA, bilerek. Panonun işi "bugün ne yapmalıyım";

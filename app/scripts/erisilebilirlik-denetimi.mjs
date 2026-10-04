@@ -139,18 +139,26 @@ const KENDI_KARNEM={kapsam:{ad:'Ada Yıldırım',sinif:'9A'},odev_sayisi:2,
            {konu:'Kesirler',toplam:2,dogru:2,yanlis:0,bos:0}],
   gelisim:[{odev:'Kesirler denemesi',tarih:gun(-3),tur:'test',deger:50},
            {odev:'Kesirler yazılı',tarih:gun(-2),tur:'acik',deger:70}]};
-const CEVAP={ben_kimim:BEN_KIMIM,ogretmenler_listesi:OGRETMENLER,kendi_karnem:KENDI_KARNEM,ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,ewalu_mesajlari:EWALU_MESAJLARI,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
+// 0065: öğretmenin Genel sayfası okulun özetini de çekiyor.
+const OKUL_GENELI={yil_baslangici:'2026-09-01',
+  okul:{sinif_sayisi:2,ogrenci_sayisi:56,odev_sayisi:12,soru_toplami:240,soru_sayisiz:0,gonderim_orani:82,ortalama:71.4},
+  seviyeler:[{seviye:9,sinif_sayisi:2,ogrenci_sayisi:56,odev_sayisi:12,soru_toplami:240,soru_sayisiz:0,gonderim_orani:82,ortalama:71.4,
+    eksik_konular:[{konu:'Köklü İfadeler ve Üslü Sayılarda Sadeleştirme',toplam:40,dogru:18,oran:45}]}],
+  siniflar:[{id:'s1',ad:'9A',seviye:9,ogrenci_sayisi:28,odev_sayisi:6,soru_toplami:120,gonderim_orani:85,ortalama:74.1}],
+  aylar:[{ay:'2026-09-01',odev_sayisi:8,soru_toplami:160,gonderim_orani:80,ortalama:70}]};
+const CEVAP={ben_kimim:BEN_KIMIM,okul_geneli:OKUL_GENELI,ogretmen_duyurulari:[],sinif_kartlari:[],ogretmenler_listesi:OGRETMENLER,kendi_karnem:KENDI_KARNEM,ogrenci_yazismalari:OGRENCI_YAZISMALARI,ogrenci_mesajlari:OGRENCI_MESAJLARI,bildirim_sayilari:BILDIRIM,konu_karnesi:KONU_KARNESI,ozel_ders_detay:OZEL_DETAY,odev_detay:ODEV_DETAY,ewalu_mesajlari:EWALU_MESAJLARI,konu_onerileri:KONU_ONERILERI,veliler_listesi:VELILER,sinif_velileri:SINIF_VELILERI,mesajlar_ogretmen:YAZISMA,
   veli_paneli:VELI_PANEL,ogrenci_kodlari:OGRENCI_KODLARI,ogretmen_panosu:{ogrenci_sayisi:40,odev_verilen_ogrenci:31,acik_odev:2,bekleyen_degerlendirme:1,gecikmis_eksik:3,son_gonderimler:[]},siniflar_listesi:SINIFLAR,ogrenciler_listesi:OGR,ogrenci_odevleri:OGRENCI_ODEVLERI,odevler_listesi:ODEVLER_LISTESI,odev_gonderimleri:GONDERIMLER,sinif_ogrencileri:SINIF_DETAY,pano_detay:PANO_DETAY};
 const b=await chromium.launch();
 let tasmali=0;
 let seritKusuru=false;
-for (const [ad,yol,rol,vekaletli] of [['Giriş','/'],['Pano','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
+for (const [ad,yol,rol,vekaletli] of [['Giriş','/'],['Genel','/ogretmen'],['Sınıflar','/ogretmen/siniflar'],
                             ['Öğrenciler','/ogretmen/ogrenciler'],
                             ['Ödevler','/ogretmen/odevler'],
                             ['Gönderimler','/ogretmen/odevler/a1/gonderimler'],
                             ['Sınıf karnesi','/ogretmen/siniflar/11B'],
-                            ['Pano detayı','/ogretmen/bugun/gondermeyen'],
-                            ['Pano sınıfı','/ogretmen/bugun/gondermeyen/9A'],
+                            ['Genel detayı','/ogretmen/bugun/gondermeyen'],
+                            ['Genel sınıfı','/ogretmen/bugun/gondermeyen/9A'],
+                            ['Duyurular','/ogretmen/duyurular'],
                             ['Ödev düzenle','/ogretmen/odevler/a1'],
                             // 0030'da fark edildi: ödev OLUŞTURMA ekranı bu
                             // listede hiç yoktu — en çok alanı olan ekranlardan

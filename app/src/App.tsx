@@ -33,6 +33,7 @@ import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { TopluOgrenci } from '@/features/ogretmen/TopluOgrenci';
 import { Odevler } from '@/features/ogretmen/Odevler';
 import { Mesajlar } from '@/features/ogretmen/Mesajlar';
+import { Duyurular } from '@/features/ogretmen/Duyurular';
 import { Kodlar, SinifKodlari } from '@/features/ogretmen/Kodlar';
 import { KodFisleri } from '@/features/ogretmen/KodFisleri';
 import { OnamDokumu } from '@/features/ogretmen/OnamDokumu';
@@ -195,6 +196,9 @@ function Yonlendirme() {
             gelseydi `:id = "yazisma"` olarak eşleşirdi. */}
         <Route path="ogrenciler/yazisma/:id" element={<OgrenciYazismasi />} />
         <Route path="ogrenciler/:id" element={<OgrenciDetay />} />
+        {/* DUYURULAR (0065) — sekme değil: Genel sayfasının başındaki
+            "Duyuru yap" ve Mesajlar başlığındaki bağlantı. */}
+        <Route path="duyurular" element={<Duyurular />} />
         <Route path="odevler" element={<Odevler />} />
         <Route path="odevler/yeni" element={<OdevOlustur />} />
         <Route path="odevler/:id" element={<OdevDuzenle />} />

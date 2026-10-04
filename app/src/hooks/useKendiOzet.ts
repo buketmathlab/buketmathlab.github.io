@@ -24,6 +24,8 @@ export type KendiOzet = {
   /** Özel ders mi: veli kabuğunda Ödemeler sekmesi buna göre çıkıyor. */
   tur: 'okul' | 'ozel' | null;
   okunmamis_mesaj: number;
+  /** 0065 — öğrencinin Pano sekmesi rozeti; velide hep 0. */
+  okunmamis_duyuru: number;
   /**
    * 0034 — veli henüz onam vermemiş. Sunucu bu durumda `veli_paneli`
    * yanıtında ÇOCUĞA AİT HİÇBİR ALAN döndürmüyor; kabuk da sekmelerin
@@ -43,9 +45,14 @@ export type KendiOzet = {
   hazir: boolean;
 };
 
+/** Rozeti hemen yeniletmek için (ör. duyurular okundu). */
+export const OZET_YENILE = 'sekiz:ozet-yenile';
+const ARALIK_MS = 10 * 60 * 1000;
+
 const BOS: KendiOzet = {
   tur: null,
   okunmamis_mesaj: 0,
+  okunmamis_duyuru: 0,
   onam_gerekli: false,
   hazir: false,
 };
@@ -62,11 +69,13 @@ export function useKendiOzet(uc: 'ogrenci_odevleri' | 'veli_paneli'): KendiOzet 
       const v = await rpc<{
         ogrenci?: { tur?: 'okul' | 'ozel' };
         okunmamis_mesaj?: number;
+        okunmamis_duyuru?: number;
         onam_gerekli?: boolean;
       }>(uc, { p_token: token }, { oturumDusurmesin: true });
       setOzet({
         tur: v?.ogrenci?.tur ?? null,
         okunmamis_mesaj: Number(v?.okunmamis_mesaj ?? 0),
+        okunmamis_duyuru: Number(v?.okunmamis_duyuru ?? 0),
         onam_gerekli: v?.onam_gerekli === true,
         hazir: true,
       });
@@ -82,6 +91,25 @@ export function useKendiOzet(uc: 'ogrenci_odevleri' | 'veli_paneli'): KendiOzet 
   useEffect(() => {
     void bak();
   }, [bak, konum.pathname]);
+
+  // 0065 — DUYURU ACİL OLABİLİR: rozet yalnız sayfa değişince yenilenirse
+  // açık bırakılmış bir telefonda hiç güncellenmez. Öğretmendeki
+  // `useBildirimler` deseni: uygulama öne gelince ve aralıkla. Duyurular
+  // okununca da (`OZET_YENILE` olayı) rozet hemen düşsün.
+  useEffect(() => {
+    const zamanlayici = window.setInterval(() => void bak(), ARALIK_MS);
+    const gorunurluk = () => {
+      if (document.visibilityState === 'visible') void bak();
+    };
+    const yenile = () => void bak();
+    document.addEventListener('visibilitychange', gorunurluk);
+    window.addEventListener(OZET_YENILE, yenile);
+    return () => {
+      window.clearInterval(zamanlayici);
+      document.removeEventListener('visibilitychange', gorunurluk);
+      window.removeEventListener(OZET_YENILE, yenile);
+    };
+  }, [bak]);
 
   return ozet;
 }

@@ -12,7 +12,7 @@ eksiğin kapatıldığı turun çıktısı.
 
 ## Yedek alma
 
-**Pano → en altta "Verinizin yedeği" → "Yedeği indir".**
+**Genel → en altta "Verinizin yedeği" → "Yedeği indir".**
 
 Cihazınıza `sekiz-yedek-2026-08-14.json` gibi tarihli bir dosya iner.
 İndirdikten sonra kart ne yazıldığını sayılarla gösterir; "alındı" demekle

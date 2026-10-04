@@ -717,7 +717,7 @@ function Ogretmen() {
           <Ekran
             dosya="ogretmen.webp"
             alt="Öğretmen panosu: öğrenci sayısı, açık ödev, puan bekleyen ve teslim edilmemiş ödev sayıları"
-            aciklama="Pano"
+            aciklama="Genel"
           />
           <Ekran
             dosya="ogretmen-sinif.webp"

@@ -928,6 +928,27 @@ export type SinifKarti = MudurOzeti & {
   son_odev: string | null;
 };
 
+/**
+ * 0065 — `okul_geneli`: öğretmenin Genel sayfası. `mudur_paneli` ile AYNI
+ * hesap; öğretmen listesi ve şube kartlarındaki öğretmen adları yok.
+ * `MudurPaneli` bu tipe uyuyor, ortak bileşen (`GenelOzet`) ikisini de alıyor.
+ */
+export type OkulGeneli = Pick<MudurPaneli, 'yil_baslangici' | 'okul' | 'seviyeler' | 'aylar'> & {
+  siniflar: Array<
+    Pick<
+      SinifKarti,
+      | 'id'
+      | 'ad'
+      | 'seviye'
+      | 'ogrenci_sayisi'
+      | 'odev_sayisi'
+      | 'soru_toplami'
+      | 'gonderim_orani'
+      | 'ortalama'
+    >
+  >;
+};
+
 export type MudurPaneli = {
   ad: string;
   /** Eğitim yılının ilk günü (1 Eylül); `aylar` buradan başlar. */
@@ -1014,4 +1035,22 @@ export type SinifNotCizelgesi = {
     ortalama: number | string | null;
     gonderim_orani: number | null;
   }>;
+};
+
+/** 0065 — öğretmenin gönderdiği duyuru; şube başına "gören / mevcut". */
+export type OgretmenDuyurusu = {
+  id: string;
+  metin: string;
+  zaman: string;
+  siniflar: Array<{ id: string; ad: string; mevcut: number; goren: number }>;
+};
+
+/** 0065 — öğrencinin şubesine gelen duyuru (son 30 gün). */
+export type OgrenciDuyurusu = {
+  id: string;
+  metin: string;
+  zaman: string;
+  ogretmen: string;
+  /** Öğrenci Pano'yu en son açtığından sonra mı geldi. */
+  yeni: boolean;
 };

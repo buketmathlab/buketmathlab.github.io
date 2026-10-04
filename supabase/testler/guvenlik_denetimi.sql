@@ -133,6 +133,12 @@ begin
                -- `ewalu_mesaj_yaz` listede YOK, yani öğretmene özel olduğu
                -- burada ölçülmeye devam ediyor.
                'ewalu_mesajlari',
+               -- 0065: duyurular ÖĞRENCİNİN kendi uçları — kendi şubesine
+               -- yapılan duyuruları okuyor ve "gördüm" diyor. Muafiyet dar:
+               -- YAZMA uçları (`duyuru_yayinla`, `duyuru_kaldir`) listede
+               -- YOK. Velinin reddedildiği `duyuru_testleri.sql` 2. ve 4.
+               -- grupta ayrıca ölçülüyor.
+               'ogrenci_duyurulari', 'duyurulari_okudum',
                -- rol şartı taşımayan üçlü (1c ayrıca sayıyor)
                'giris', 'cikis', 'pin_ayarla'
              )
