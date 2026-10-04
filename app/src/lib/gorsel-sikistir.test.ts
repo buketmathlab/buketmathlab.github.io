@@ -18,8 +18,8 @@ const tuvaller: SahteTuval[] = [];
 let sonTur: string | undefined;
 let sonKalite: number | undefined;
 
-function ortamKur(opts: { en: number; boy: number; yuklenir?: boolean; blob?: Blob | null }) {
-  const { en, boy, yuklenir = true, blob = new Blob(['x'], { type: 'image/jpeg' }) } = opts;
+function ortamKur(opts: { en: number; boy: number; yuklenir?: boolean; blob?: Blob | null; parlaklik?: number }) {
+  const { en, boy, yuklenir = true, blob = new Blob(['x'], { type: 'image/jpeg' }), parlaklik = 220 } = opts;
 
   vi.stubGlobal('URL', {
     ...URL,
@@ -43,7 +43,11 @@ function ortamKur(opts: { en: number; boy: number; yuklenir?: boolean; blob?: Bl
     const t: SahteTuval = {
       width: 0,
       height: 0,
-      getContext: () => ({ drawImage: () => undefined }),
+      getContext: () => ({
+        drawImage: () => undefined,
+        // Tek renkli 10×10 görsel: parlaklık testten seçiliyor.
+        getImageData: () => ({ data: new Uint8ClampedArray(400).fill(parlaklik) }),
+      }),
       toBlob: (geri, tur, kalite) => {
         sonTur = tur;
         sonKalite = kalite;
@@ -104,5 +108,10 @@ describe('gorseliSikistir', () => {
   it('sıkıştırma başarısızsa ham dosyaya düşmez', async () => {
     ortamKur({ en: 2000, boy: 2000, blob: null });
     await expect(gorseliSikistir(dosya())).rejects.toThrow(/işlenemedi/);
+  });
+
+  it('karanlık (siyah) fotoğrafı gönderime almaz, ne yapacağını söyler', async () => {
+    ortamKur({ en: 4032, boy: 3024, parlaklik: 4 });
+    await expect(gorseliSikistir(dosya())).rejects.toThrow(/çok karanlık.*Aydınlık bir ortamda yeniden çekip yükle/);
   });
 });

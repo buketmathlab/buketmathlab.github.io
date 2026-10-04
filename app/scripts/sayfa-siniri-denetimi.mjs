@@ -548,6 +548,7 @@ const acilan = (p) => p.evaluate(() => window.__acilan);
 const bekle = (p, ms = 700) => p.waitForTimeout(ms);
 const yuklemeler = async (p) =>
   (await cagrilar(p)).filter((c) => c.ad === 'dosya-url' && c.govde?.islem === 'yukle').map((c) => c.govde.yol);
+const onayla = async (p) => { const k = p.getByRole('checkbox', { name: /Bu ödevi kendim çözdüm/ }); await k.evaluate((e) => e.scrollIntoView({ block: 'center' })); await k.check(); };
 const gonderim = async (p) => (await cagrilar(p)).filter((c) => c.ad === 'odev_gonder');
 
 // ---------------------------------------------------------------------------
@@ -560,6 +561,7 @@ console.log('--- B1. Öğrenci, SINIR 1: ekran ve ağ çağrısı 0054 öncesiyl
   if (await p.locator('input[type=file][multiple]').count()) bozuk('tek alanlı yolda `multiple` var');
   await p.locator('input[type=file]').setInputFiles(gorsel('cozum.png'));
   await bekle(p);
+  await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
   await bekle(p, 1200);
   const y = await yuklemeler(p);
@@ -602,6 +604,7 @@ console.log('--- B3. Öğrenci, SINIR 3: sınır, çıkarma, sıra ---');
   if (!m.includes('2/3 sayfa seçildi') || (await p.getByRole('button', { name: '3. sayfayı çıkar' }).count())) {
     bozuk('çıkarınca yeniden numaralanmadı');
   } else tamam('ortadan çıkarılınca 2 sayfa, boşluksuz numara');
+  await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
   await bekle(p, 1500);
   const y = await yuklemeler(p);
@@ -621,6 +624,7 @@ console.log('--- B4. YARIDA KALAN yükleme: gönderim YOK, seçim duruyor ---');
   const { b, p } = await kur({ rol: 'ogrenci', sinir: 3, bozukSayfa: 2 }, `/ogrenci/odev/${ODEV}`);
   await p.locator('input[type=file]').setInputFiles([gorsel('a.png'), gorsel('b.png')]);
   await bekle(p, 1000);
+  await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
   await bekle(p, 1200);
   const m = await metin(p);
@@ -639,6 +643,7 @@ console.log('--- B5. "ZATEN VAR": yeniden denemede mevcut dosya kullanılıyor -
   const { b, p } = await kur({ rol: 'ogrenci', sinir: 1, zatenVar: true }, `/ogrenci/odev/${ODEV}`);
   await p.locator('input[type=file]').setInputFiles(gorsel('cozum.png'));
   await bekle(p);
+  await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
   await bekle(p, 1200);
   const g = await gonderim(p);

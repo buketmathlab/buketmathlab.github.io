@@ -124,7 +124,9 @@ async function sec(p, ad, veri, tur = 'application/pdf') {
   await p.waitForFunction(() => !/PDF hazırlanıyor|Görseller hazırlanıyor/.test(document.body.innerText), null, { timeout: 60000 });
   await p.waitForTimeout(300);
 }
+const onayla = async (p) => { const k = p.getByRole('checkbox', { name: /Bu ödevi kendim çözdüm/ }); await k.evaluate((e) => e.scrollIntoView({ block: 'center' })); await k.check(); };
 async function gonder(p) {
+  await onayla(p);
   const d = p.getByRole('button', { name: 'Ödevi gönder' });
   await d.evaluate((e) => e.scrollIntoView({ block: 'center' }));
   await d.click();

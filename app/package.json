@@ -46,6 +46,7 @@
     "mudur-denetim": "node scripts/mudur-denetimi.mjs",
     "esitleme-denetim": "node scripts/sinif-esitleme-denetimi.mjs",
     "odev-durum-denetim": "node scripts/odev-durum-denetimi.mjs",
+    "el-yazisi-denetim": "node scripts/el-yazisi-denetimi.mjs",
     "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
     "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"
   },
