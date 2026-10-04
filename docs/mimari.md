@@ -5623,3 +5623,120 @@ faydası var:
 - `mudur-denetimi.mjs` M10.
   - Kusur provası: sınıf sayfasındaki bağlantı sabit `/mudur`'a
     çevrilince kırmızıya döndü.
+
+## 0063 — Ortak Sınıflar sayfası, seviyelere göre konular, konu_karnesi erişimi
+
+Öğretmenin istekleri:
+- müdürün Genel sayfasında zorlanılan konular sınıf seviyelerine göre
+  gösterilsin;
+- öğretmen ve müdür Sınıflar sayfaları "aynı düzende, aynı özelliklerde"
+  olsun. Seçimi: ikisinin birleşimi.
+
+**Sunucu:**
+- `_sinif_kart_ozetleri(p_idler, p_ogretmen)`: kart sayılarının tek kaynağı.
+  - `sinif_kartlari` (öğretmen) ve `mudur_paneli.siniflar` buradan okuyor.
+  - Öğretmende `_odeve_erisir` uygulanıyor; müdürde sınıfın bütün
+    ödevleri sayılıyor.
+- `mudur_paneli.seviyeler[].eksik_konular`: her seviyenin ilk 5 konusu.
+  Okul geneli liste kalktı.
+- `sinif_not_cizelgesi(p_token, p_sinif_id, p_onizleme)`.
+  - Ödev kapsamı:
+    - müdür → bütün ödevler;
+    - sahip ve `p_onizleme` → bütün ödevler;
+    - öğretmen → `_odeve_erisir`.
+  - Öğrenciye `sinif_ogrencileri` ile birebir alanlar: `yapti`, `yapmadi`,
+    `ortalama_yapan`, `ortalama_tum`.
+  - Sıra 0044 kuralıyla; arşivdeki sınıf da açılıyor.
+- `konu_karnesi`: **açık kapandı.**
+  - 0033'ten beri yalnız rol bakılıyordu; bir öğretmen başka öğretmenin
+    sınıfının ya da öğrencisinin karnesini okuyabiliyordu.
+  - Artık sınıf yolu `_sinif_okuyucusu`, öğrenci yolu `_ogrenci_sahibi`
+    ile korunuyor.
+
+**İstemci:**
+- `features/siniflar/SinifKartlari.tsx` ve `SinifSayfasi.tsx`: öğretmen ve
+  müdür aynı bileşenleri kullanıyor.
+  - Öğretmende bunlara ek olarak Sınıf ekle, Arşivle, öğrenci adı
+    bağlantısı ve ortak sınıfta kapsam notu var.
+- Sınıf sayfasının bölümleri:
+  - öğrenci kartları (yaptı/yapmadı, "Yaptıkları" ve "Genel", aç/kapa
+    puan grafiği);
+  - aylık gelişim;
+  - ödevler ve soru sayıları;
+  - konu karnesi.
+- `SinifDetay` ve `MudurSinif` artık ince sarmalayıcı.
+
+**Müdür ödevleri ve cevap anahtarlarını görüyor** (öğretmenin isteği):
+- `sinif_not_cizelgesi.odevler[]` yeni alanlar: `odev_yolu`,
+  `anahtar_yolu`, `cevap_anahtari`.
+- `dosya_erisim_izni`: müdür, özel ders dışındaki yayındaki ödevlerin soru
+  ve anahtar PDF'lerini açabiliyor; öğrenci çözüm kâğıtları kapalı.
+- Dosya depoda var olmalı. Edge Function aynı izinle yükleme adresi de
+  üretiyor ve yükleme üzerine yazmıyor; bu yüzden müdür hiçbir dosya
+  oluşturamıyor.
+- Ekranda ödev satırında iki düğme var: "Soruları aç (PDF)" ve "Cevap
+  anahtarı" (harfler ve anahtar PDF'i).
+
+**Testler:**
+- `mudur_testleri.sql` 13. grup.
+  - Kusur provası: `konu_karnesi` kontrolü kaldırılınca 13e kırmızıya
+    döndü.
+  - Kusur provası: müdüre çözüm kâğıdı açılınca 13f kırmızıya döndü.
+  - Kusur provası: öğretmen kapsamı kaldırılınca 13b kırmızıya döndü.
+- `mudur-denetimi.mjs`: M6 seviye blokları, M7 ortak sınıf sayfası, M11
+  öğretmen tarafı.
+
+## 0064 — Sınıf listesi esas (gelen/giden öğrenci); Ödevler etiketleri
+
+İstek: "Verdiğim sınıf listesinde kim varsa sınıfa da sadece o öğrenciler
+alınmalı ve hemen geçmişe dönük ortalamalar ödev verileri güncellenmeli."
+
+**Öğretmenin seçimleri:**
+- listede olmayan öğrenci çıkarılır, verisi kalır (pasif);
+- şube değiştirenin aynı kaydı taşınır;
+- sonradan gelene, gelmeden önceki ödevler sayılmaz.
+
+**Sunucu:**
+- `ogrenciler.sinif_giris`: öğrencinin sınıfa geliş günü.
+  - Mevcut kayıtlarda boş; bu, hesaplarının değişmediği anlamına geliyor.
+  - Varsayılan değer sütun eklendikten sonra verildi.
+- `_odev_ogrenciye_dusar(giris, son_tarih, verilis)`: tek kural. Ödev
+  öğrenciye sayılmaz, eğer gelmeden önce verildiyse ve son tarihi de gelmeden
+  önce dolduysa.
+- `siniflari_esitle(p_token, p_siniflar, p_uygula)`.
+  - Önizleme ve uygulama aynı planı döndürüyor; bütün şubeler tek işlemde.
+  - Eşleşme sırası: aynı sınıfta aynı ad (kalır); başka şubede tek adaş
+    (taşınır; numaralar çelişiyorsa taşınmaz; birden çok aday varsa ve numara
+    ayırt etmiyorsa reddedilir); kalanlar yeni.
+  - Listede olmayanlar `ogrenci_pasiflestir` ile aynı biçimde çıkarılıyor.
+  - Boş liste ve özel ders grubu reddediliyor.
+- **Sınıf listesi esas:** ödev istatistikleri yalnız bugün sınıfta olan
+  öğrencilerden hesaplanıyor. Değişen işlemler:
+  - sınıf kartı ve müdür panosu;
+  - not çizelgesi, `sinif_ogrencileri`, `sinif_ogrenci_ozeti`;
+  - `odevler_listesi`, `odev_gonderimleri` (konu karnesi testindeki
+    "bilinen ayrışma" kapandı);
+  - panolar;
+  - öğrenci ve veli ödev listeleri, kendi karnem, ödev kıyası.
+- `pano_detay`: öğretmenin kendi sınıf ve ödevleriyle sınırlandı. Önceden
+  kalma bir açıktı: liste bütün okulu gösteriyordu.
+
+**İstemci:**
+- Toplu öğrenci ekranında kip seçimi var: "Sınıfı bu listeyle eşitle"
+  (varsayılan) ya da "Yalnız ekle".
+  - Plan kartı: kim kalır, kim yeni, kim başka şubeden gelir, kim çıkar.
+  - Çıkarılacak öğrenci varsa onay kutusu işaretlenmeden kayıt yapılamıyor.
+- Ödevler sekmesi:
+  - süresi dolan ödevde "Süresi doldu" etiketi var (artık "Yayında"
+    yazmıyor) ve "Süresi dolan" filtresi eklendi;
+  - ortalama iki satırda gösteriliyor: "Sınıfın tamamı (göndermeyenler
+    dahil)" ve "Yalnız gönderenler".
+
+**Testler:**
+- `sinif_listesi_testleri.sql` 7 grup.
+  - Kusur provaları: öğrenci kuralı ve sınıf listesi kuralı kaldırılınca
+    testler kırmızıya döndü.
+- `sinif-esitleme-denetimi.mjs` E1–E7 ve `odev-durum-denetimi.mjs` Ö1–Ö3.
+  - Kusur provaları: onaysız kayıt ve "Yayında" etiketi geri getirilince
+    denetimler kırmızıya döndü.
+- `toplu-ogrenci-denetimi.mjs` "yalnız ekle" kipine geçirildi.

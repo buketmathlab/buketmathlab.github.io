@@ -23,9 +23,34 @@ type EklenenKayit = {
   id: string;
   ad: string;
   ogrenci_no: string | null;
-  durum: 'eklendi' | 'guncellendi' | 'degismedi';
+  durum: 'eklendi' | 'guncellendi' | 'degismedi' | 'tasindi';
   ogrenci_kodu: string;
   veli_kodu: string;
+};
+
+/**
+ * 0064 — SINIF LİSTESİ ESAS. `siniflari_esitle` önizlemede (`p_uygula:
+ * false`) ve uygulamada AYNI planı döndürüyor; ekran planı kaydetmeden önce
+ * gösteriyor.
+ */
+type EsitlemeSinifi = {
+  sinif_id: string;
+  ad: string;
+  kalan: number;
+  yeni: { ad: string; no: string | null }[];
+  tasinan: { id: string; ad: string; no: string | null; eski_sinif: string }[];
+  cikarilan: { id: string; ad: string; ogrenci_no: string | null }[];
+};
+type EsitlemeYaniti = {
+  uygulandi: boolean;
+  siniflar: EsitlemeSinifi[];
+  eklenen?: EklenenKayit[];
+  adet?: number;
+  eklendi?: number;
+  tasindi?: number;
+  guncellendi?: number;
+  degismedi?: number;
+  cikarildi?: number;
 };
 
 /**
@@ -43,6 +68,9 @@ type TopluSonuc = {
   eklendi: number;
   guncellendi: number;
   degismedi: number;
+  /** 0064 — yalnız eşitlemede. */
+  tasindi?: number;
+  cikarilanlar?: { ad: string; sinif: string }[];
 };
 
 /** Sonuç satırlarından sayaçları çıkarır (şubeli dosyada toplama gerekiyor). */
@@ -51,6 +79,7 @@ function sayaclar(satirlar: EklenenKayit[]) {
     eklendi: satirlar.filter((k) => k.durum === 'eklendi').length,
     guncellendi: satirlar.filter((k) => k.durum === 'guncellendi').length,
     degismedi: satirlar.filter((k) => k.durum === 'degismedi').length,
+    tasindi: satirlar.filter((k) => k.durum === 'tasindi').length,
   };
 }
 
@@ -59,7 +88,9 @@ function sonucBasligi(s: TopluSonuc): string {
   const parca: string[] = [];
   if (s.eklendi > 0) parca.push(`${s.eklendi} yeni öğrenci eklendi`);
   if (s.guncellendi > 0) parca.push(`${s.guncellendi} öğrencinin numarası güncellendi`);
+  if (s.tasindi) parca.push(`${s.tasindi} öğrenci başka şubeden taşındı`);
   if (s.degismedi > 0) parca.push(`${s.degismedi} öğrenci zaten kayıtlıydı`);
+  if (s.cikarilanlar?.length) parca.push(`${s.cikarilanlar.length} öğrenci sınıftan çıkarıldı`);
   // Boş kalamaz: sunucu her satır için bir durum döndürüyor.
   return parca.length > 0 ? parca.join(', ') : `${s.adet} satır işlendi`;
 }
@@ -91,6 +122,15 @@ export function TopluOgrenci() {
   // türetiliyor (aşağıda), tahminden değil.
   const [eslestirElle, setEslestirElle] = useState<boolean | null>(null);
   const [cikarilan, setCikarilan] = useState<Set<number>>(new Set());
+  /**
+   * 0064 — KİP. Öğretmenin kuralı: "Verdiğim sınıf listesinde kim varsa
+   * sınıfa da sadece o öğrenciler alınmalı." Varsayılan eşitleme; "yalnız
+   * ekle" eski davranış (birkaç yeni öğrenci eklerken kimse çıkmasın).
+   */
+  const [kip, setKip] = useState<'esitle' | 'ekle'>('esitle');
+  const [plan, setPlan] = useState<EsitlemeSinifi[] | null>(null);
+  const [planHata, setPlanHata] = useState<string | null>(null);
+  const [cikarmaOnay, setCikarmaOnay] = useState(false);
   const [kaydediyor, setKaydediyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [sonuc, setSonuc] = useState<TopluSonuc | null>(null);
@@ -263,6 +303,59 @@ export function TopluOgrenci() {
 
   const eksikSubeler = subeler.filter((s) => s.sinif === null);
 
+  /** Eşitleme yükü: şube başına liste (şubesiz dosyada seçilen sınıf). */
+  const yuk = useMemo(() => {
+    if (subeliMi) {
+      if (eksikSubeler.length > 0) return [];
+      return subeler
+        .filter((s) => s.sinif && s.satirlar.length > 0)
+        .map((s) => ({
+          sinif_id: s.sinif!.id,
+          adlar: s.satirlar.map((r) => ({ ad: r.ad, no: r.no })),
+        }));
+    }
+    if (!sinifId || secilenler.length === 0) return [];
+    return [{ sinif_id: sinifId, adlar: secilenler.map((r) => ({ ad: r.ad, no: r.no })) }];
+  }, [subeliMi, eksikSubeler.length, subeler, sinifId, secilenler]);
+  const yukAnahtari = JSON.stringify(yuk);
+
+  // PLAN SUNUCUDAN: kim kalır, kim taşınır, kim çıkar — kaydetmeden önce.
+  // Tarayıcıda tahmin edilmiyor; kaydedilen plan bununla birebir aynı.
+  useEffect(() => {
+    setCikarmaOnay(false);
+    if (kip !== 'esitle' || yukAnahtari === '[]' || !oturum?.token) {
+      setPlan(null);
+      setPlanHata(null);
+      return;
+    }
+    let iptal = false;
+    const zaman = window.setTimeout(() => {
+      rpc<EsitlemeYaniti>('siniflari_esitle', {
+        p_token: oturum.token,
+        p_siniflar: JSON.parse(yukAnahtari) as unknown,
+        p_uygula: false,
+      })
+        .then((v) => {
+          if (iptal) return;
+          setPlan(v.siniflar);
+          setPlanHata(null);
+        })
+        .catch((e: unknown) => {
+          if (iptal) return;
+          setPlan(null);
+          setPlanHata(e instanceof Error ? e.message : 'Liste karşılaştırılamadı.');
+        });
+    }, 400);
+    return () => {
+      iptal = true;
+      window.clearTimeout(zaman);
+    };
+  }, [kip, yukAnahtari, oturum?.token]);
+
+  const cikacakSayisi = (plan ?? []).reduce((t, p) => t + p.cikarilan.length, 0);
+  const tasinacakSayisi = (plan ?? []).reduce((t, p) => t + p.tasinan.length, 0);
+  const yeniSayisi = (plan ?? []).reduce((t, p) => t + p.yeni.length, 0);
+
   function satirCikar(i: number) {
     setCikarilan((e) => new Set(e).add(i));
   }
@@ -288,6 +381,44 @@ export function TopluOgrenci() {
   async function ekle() {
     if (secilenler.length === 0) return setHata('Eklenecek ad yok.');
     setHata(null);
+
+    // 0064 — EŞİTLEME: bütün şubeler TEK çağrıda, tek işlemde.
+    if (kip === 'esitle') {
+      if (subeliMi && eksikSubeler.length > 0) {
+        return setHata(
+          `Şu sınıflar depoda yok: ${eksikSubeler.map((s) => s.ad).join(', ')}. ` +
+            'Önce oluşturun ya da o satırları çıkarın.',
+        );
+      }
+      if (!subeliMi && !sinifId) return setHata('Sınıf seçin.');
+      if (cikacakSayisi > 0 && !cikarmaOnay) {
+        return setHata('Listede olmayan öğrencilerin çıkarılmasını onaylayın.');
+      }
+      setKaydediyor(true);
+      try {
+        const v = await rpc<EsitlemeYaniti>('siniflari_esitle', {
+          p_token: oturum?.token,
+          p_siniflar: yuk,
+          p_uygula: true,
+        });
+        const eklenen = v.eklenen ?? [];
+        const toplu: TopluSonuc = {
+          eklenen,
+          adet: eklenen.length,
+          ...sayaclar(eklenen),
+          cikarilanlar: v.siniflar.flatMap((p) =>
+            p.cikarilan.map((c) => ({ ad: c.ad, sinif: p.ad })),
+          ),
+        };
+        setSonuc(toplu);
+        bildir(sonucBasligi(toplu), 'basari');
+      } catch (e) {
+        setHata(e instanceof Error ? e.message : 'Liste kaydedilemedi. Hiçbir değişiklik yapılmadı.');
+      } finally {
+        setKaydediyor(false);
+      }
+      return;
+    }
 
     // ŞUBELİ DOSYA: her şube KENDİ sınıfına, ayrı çağrılarla.
     //
@@ -397,6 +528,25 @@ export function TopluOgrenci() {
           }
         />
 
+        {sonuc.cikarilanlar && sonuc.cikarilanlar.length > 0 && (
+          <Card className="mb-4">
+            <p className="mb-1 font-semibold text-ink">
+              Sınıftan çıkarılanlar (<span className="sk-sayi">{sonuc.cikarilanlar.length}</span>)
+            </p>
+            <p className="mb-2 text-[13px] text-muted">
+              Listelerden ve ortalamalardan düştüler, giriş kodları iptal edildi. Ödevleri ve
+              puanları silinmedi.
+            </p>
+            <ul className="text-[14px] text-ink">
+              {sonuc.cikarilanlar.map((c) => (
+                <li key={`${c.sinif}-${c.ad}`}>
+                  <span className="text-muted">{c.sinif}</span> · {c.ad}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
         {/* KODLAR BİR KEZ GÖSTERİLİYOR. Sayfadan çıkınca kaybolur; sonradan
             gerekirse Kodlar sekmesinden öğrenci öğrenci alınır (0018 yolu).
             Bu yüzden dosyayı şimdi indirmek önemli. */}
@@ -464,6 +614,8 @@ export function TopluOgrenci() {
                       <td className="py-2 pr-3 text-[14px]">
                         {k.durum === 'eklendi' ? (
                           <Tag tur="basari">Yeni</Tag>
+                        ) : k.durum === 'tasindi' ? (
+                          <Tag tur="bilgi">Şubesi değişti</Tag>
                         ) : k.durum === 'guncellendi' ? (
                           <Tag tur="bilgi">Numarası yazıldı</Tag>
                         ) : (
@@ -659,7 +811,110 @@ export function TopluOgrenci() {
       {/* KARAR: eşleşen varsa ne yapılacağı KAYDETMEDEN ÖNCE soruluyor.
           Bu kart olmadığı için öğretmenin bütün sınıfları iki katına çıktı:
           "Sınıfta kayıtlı" uyarısı vardı, ama bir yol yoktu. */}
-      {eslesen > 0 && (
+      {/* 0064 — KİP SEÇİMİ */}
+      {ozet.satirlar.length > 0 && (
+        <Card className="mb-4">
+          <h2 className="mb-2 text-[18px] text-ink">Liste nasıl kaydedilsin?</h2>
+          <div className="grid gap-2">
+            <label className="flex min-h-[44px] items-start gap-2 text-[15px] text-ink">
+              <input
+                type="radio"
+                name="kip"
+                className="mt-1 size-5 accent-ink"
+                checked={kip === 'esitle'}
+                onChange={() => setKip('esitle')}
+              />
+              <span>
+                <strong>Sınıfı bu listeyle eşitle</strong>
+                <span className="block text-[13px] text-muted">
+                  Sınıfta yalnız listedekiler kalır: listede olmayanlar sınıftan çıkarılır,
+                  başka şubeden gelenler kodları değişmeden taşınır, yeniler eklenir.
+                </span>
+              </span>
+            </label>
+            <label className="flex min-h-[44px] items-start gap-2 text-[15px] text-ink">
+              <input
+                type="radio"
+                name="kip"
+                className="mt-1 size-5 accent-ink"
+                checked={kip === 'ekle'}
+                onChange={() => setKip('ekle')}
+              />
+              <span>
+                <strong>Yalnız ekle</strong>
+                <span className="block text-[13px] text-muted">
+                  Kimse çıkarılmaz. Birkaç yeni öğrenci eklerken bunu seçin.
+                </span>
+              </span>
+            </label>
+          </div>
+        </Card>
+      )}
+
+      {kip === 'esitle' && planHata && (
+        <Card className="mb-4" vurgu="tehlike">
+          <p className="font-semibold text-ink">Liste karşılaştırılamadı</p>
+          <p className="text-[14px] text-muted">{planHata}</p>
+        </Card>
+      )}
+
+      {kip === 'esitle' && plan && (
+        <Card className="mb-4" vurgu={cikacakSayisi > 0 ? 'uyari' : 'yok'}>
+          <h2 className="mb-1 text-[18px] text-ink">Kaydedince ne olacak</h2>
+          <div className="flex flex-col gap-3">
+            {plan.map((p) => (
+              <section key={p.sinif_id} aria-label={`${p.ad} değişiklikleri`}>
+                <p className="font-semibold text-ink">
+                  {p.ad}: <span className="sk-sayi">{p.kalan}</span> öğrenci kalıyor
+                </p>
+                {p.yeni.length > 0 && (
+                  <p className="text-[14px] text-ink">
+                    <Tag tur="basari">Yeni</Tag>{' '}
+                    <span className="sk-sayi">{p.yeni.length}</span>:{' '}
+                    {p.yeni.map((y) => y.ad).join(', ')}
+                  </p>
+                )}
+                {p.tasinan.length > 0 && (
+                  <p className="text-[14px] text-ink">
+                    <Tag tur="bilgi">Başka şubeden</Tag>{' '}
+                    {p.tasinan.map((t) => `${t.ad} (${t.eski_sinif}'dan)`).join(', ')}
+                    <span className="block text-[13px] text-muted">
+                      Aynı kayıt taşınır: giriş kodları ve geçmiş notları değişmez.
+                    </span>
+                  </p>
+                )}
+                {p.cikarilan.length > 0 && (
+                  <p className="text-[14px] text-ink">
+                    <Tag tur="tehlike">Sınıftan çıkacak</Tag>{' '}
+                    <span className="sk-sayi">{p.cikarilan.length}</span>:{' '}
+                    {p.cikarilan.map((c) => c.ad).join(', ')}
+                  </p>
+                )}
+              </section>
+            ))}
+          </div>
+          {cikacakSayisi > 0 && (
+            <>
+              <p className="mt-3 text-[13px] text-muted">
+                Çıkarılanlar listelerden ve ortalamalardan hemen düşer, giriş kodları iptal
+                olur. Ödevleri ve puanları silinmez.
+              </p>
+              <label className="mt-2 flex min-h-[44px] items-center gap-2 text-[14px] font-semibold text-ink">
+                <input
+                  type="checkbox"
+                  className="size-5 accent-ink"
+                  checked={cikarmaOnay}
+                  onChange={(e) => setCikarmaOnay(e.target.checked)}
+                />
+                Listede olmayan <span className="sk-sayi">{cikacakSayisi}</span> öğrencinin
+                sınıftan çıkarılmasını onaylıyorum
+              </label>
+            </>
+          )}
+        </Card>
+      )}
+
+      {kip === 'ekle' && eslesen > 0 && (
         <Card className="mb-4" vurgu="uyari">
           <h2 className="mb-1 text-[18px] text-ink">
             <span className="sk-sayi">{eslesen}</span> öğrenci sınıfta zaten kayıtlı,{' '}
@@ -787,13 +1042,27 @@ export function TopluOgrenci() {
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={ekle} yukleniyor={kaydediyor} disabled={secilenler.length === 0}>
-          {secilenler.length === 0
-            ? 'Öğrenci ekle'
-            : eslestir && eslesen > 0
-              ? `${yeni} ekle, ${eslesen} güncelle`
-              : `${secilenler.length} öğrenci ekle`}
-        </Button>
+        {kip === 'esitle' ? (
+          <Button
+            onClick={ekle}
+            yukleniyor={kaydediyor}
+            disabled={
+              secilenler.length === 0 || !plan || !!planHata || (cikacakSayisi > 0 && !cikarmaOnay)
+            }
+          >
+            {plan
+              ? `Listeyi kaydet (${yeniSayisi} yeni, ${tasinacakSayisi} taşınan, ${cikacakSayisi} çıkan)`
+              : 'Listeyi kaydet'}
+          </Button>
+        ) : (
+          <Button onClick={ekle} yukleniyor={kaydediyor} disabled={secilenler.length === 0}>
+            {secilenler.length === 0
+              ? 'Öğrenci ekle'
+              : eslestir && eslesen > 0
+                ? `${yeni} ekle, ${eslesen} güncelle`
+                : `${secilenler.length} öğrenci ekle`}
+          </Button>
+        )}
         <Button tur="sade" onClick={() => git('/ogretmen/ogrenciler')}>
           Vazgeç
         </Button>

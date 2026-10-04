@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Tag } from '@/components/ui/Tag';
 import { Dialog } from '@/components/ui/Dialog';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -11,7 +8,8 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
-import type { Sinif } from '@/types/api';
+import { SinifKartlari } from '@/features/siniflar/SinifKartlari';
+import type { SinifKarti } from '@/types/api';
 
 /**
  * Sınıf yönetimi.
@@ -30,7 +28,6 @@ import type { Sinif } from '@/types/api';
 export function Siniflar() {
   const { oturum } = useOturum();
   const { bildir } = useToast();
-  const git = useNavigate();
   const [arsivGoster, setArsivGoster] = useState(false);
   const [ekleAcik, setEkleAcik] = useState(false);
   const [seviye, setSeviye] = useState('9');
@@ -47,9 +44,9 @@ export function Siniflar() {
    * olduğunu bilmek için verinin tamamı gerekiyor — tek istek, ek maliyet
    * yok (sınıf sayısı on üç).
    */
-  const { veri, durum, hata, yenile } = useVeri<Sinif[]>(
-    'siniflar_listesi',
-    { p_token: oturum?.token, p_arsiv: true },
+  const { veri, durum, hata, yenile } = useVeri<SinifKarti[]>(
+    'sinif_kartlari',
+    { p_token: oturum?.token },
     (v) => v.length === 0,
   );
 
@@ -81,7 +78,7 @@ export function Siniflar() {
     }
   }
 
-  async function arsivle(s: Sinif) {
+  async function arsivle(s: SinifKarti) {
     try {
       await rpc('sinif_arsivle', {
         p_token: oturum?.token,
@@ -127,45 +124,29 @@ export function Siniflar() {
         {...(hata ? { hataAciklama: hata } : {})}
         tekrarDene={yenile}
       >
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {gorunen.map((s) => (
-            <Card key={s.id} vurgu={s.arsiv ? 'uyari' : 'yok'}>
-              <div className="flex items-center justify-between gap-2">
-                {/* Sınıfa tıklayınca öğrenci listesi ve ödev karnesi
-                    açılıyor — öğretmenin açık isteği. */}
-                <button
-                  type="button"
-                  onClick={() => git(`/ogretmen/siniflar/${s.id}`)}
-                  className="min-h-[44px] text-left underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                >
-                  <span className="block font-display text-[20px] font-semibold text-ink">
-                    {s.ad}
-                  </span>
-                  <span className="block text-[13px] text-muted">
-                    <span className="sk-sayi">{s.ogrenci_sayisi}</span> öğrenci
-                  </span>
-                </button>
-                <div className="flex flex-col items-end gap-2">
-                  {s.arsiv && <Tag tur="uyari">Arşivde</Tag>}
-                  {/* Özel ders grubu arşivlenemez: arşivlenirse ödev verme
-                      ekranındaki sınıf listesinden düşer ve özel ders
-                      öğrencilerine ödev verilemez. Kural sunucuda da var
-                      (0014); düğmeyi gizlemek tek başına yeterli değil. */}
-                  {s.ozel && !s.arsiv ? (
-                    <p className="max-w-[150px] text-right text-[12px] text-muted">
-                      Bu grup arşivlenemez — arşivlenirse özel ders
-                      öğrencilerinize ödev veremezsiniz.
-                    </p>
-                  ) : (
-                    <Button tur="sade" olcu="sm" onClick={() => arsivle(s)}>
-                      {s.arsiv ? 'Geri al' : 'Arşivle'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <SinifKartlari
+          kartlar={gorunen}
+          baglanti={{
+            sinif: (id) => `/ogretmen/siniflar/${id}`,
+            analiz: (id) => `/ogretmen/siniflar/${id}/analiz`,
+            onam: (id) => `/ogretmen/veliler/sinif/${id}/onam`,
+          }}
+          eylem={(s) =>
+            /* Özel ders grubu arşivlenemez: arşivlenirse ödev verme
+               ekranındaki sınıf listesinden düşer ve özel ders
+               öğrencilerine ödev verilemez. Kural sunucuda da var
+               (0014); düğmeyi gizlemek tek başına yeterli değil. */
+            s.ozel && !s.arsiv ? (
+              <p className="basis-full text-[12px] text-muted">
+                Bu grup arşivlenemez — arşivlenirse özel ders öğrencilerinize ödev veremezsiniz.
+              </p>
+            ) : (
+              <Button tur="sade" olcu="sm" onClick={() => void arsivle(s)}>
+                {s.arsiv ? 'Geri al' : 'Arşivle'}
+              </Button>
+            )
+          }
+        />
       </AsyncBoundary>
 
       <Dialog

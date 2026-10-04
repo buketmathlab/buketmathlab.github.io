@@ -27,6 +27,11 @@
 -- 12. (0062) Sahip müdür ekranını KENDİ oturumuyla önizliyor: aynı sınıflar,
 --     `onizleme` işaretli; kendisine atanmamış sınıfın çizelgesini açıyor.
 --     Sıradan öğretmen ve sahibin vekâlet oturumu giremiyor.
+-- 13. (0063) Ortak sınıf sayfası: öğretmen kipinde sayılar
+--     `sinif_ogrencileri` ile birebir; ödev kapsamı role göre (öğretmen
+--     yalnız erişebildiklerini, müdür ve sahip önizlemesi hepsini görüyor);
+--     öğretmenin kartları müdürünkiyle aynı yardımcıdan; seviyelere göre
+--     zorlanılan konular; konu_karnesi erişim açığı kapalı.
 --
 -- İZOLASYON: kendi sınıflarını kuruyor (12MA, 12MB); tekrar çalıştırılınca
 -- önceki koşunun öğrencileri pasif, ödevleri yayın dışı bırakılıyor.
@@ -40,7 +45,7 @@ declare
   s_m uuid; s_n uuid; s_ozel uuid;
   a1 uuid; a2 uuid; a3 uuid;
   o_odev uuid; o2 uuid; o3 uuid;
-  jm2 text; beklenen integer; oz jsonb; cz jsonb; jv text;
+  jm2 text; beklenen integer; oz jsonb; cz jsonb; jv text; o_baris uuid; o_konu uuid; konu_ad text;
   v jsonb; satir jsonb; t jsonb; m jsonb;
   ek text := to_char(clock_timestamp(), 'HH24MISSUS');
   r record; cagri text; patladi boolean; durum text;
@@ -69,7 +74,7 @@ begin
   s_m := (public.sinif_ekle(jt, 12::smallint, 'MA'))->>'id';
   s_n := (public.sinif_ekle(jt, 12::smallint, 'MB'))->>'id';
   update public.ogrenciler set aktif = false where sinif_id = s_m;
-  update public.odevler set yayinda = false where sinif_id = s_m;
+  update public.odevler set yayinda = false where sinif_id in (s_m, s_n);
   perform public.ogretmen_sinif_ata(jt, v_baris, jsonb_build_array(s_n::text));
   select id into s_ozel from public.siniflar where ozel limit 1;
 
@@ -400,8 +405,10 @@ begin
        where x->>'odev_id' = o_odev::text) <> 'gondermedi' then
     raise exception '11g: a2 gönderilmedi görünmüyor: %', cz->'puanlar';
   end if;
-  if m::text ~* 'cevap|yorum|cozum/' then
-    raise exception '11h: çizelgede cevap/yorum/dosya yolu var';
+  -- 0063'ten beri ödevin cevap ANAHTARI ve dosyası çizelgede (öğretmenin
+  -- isteği); öğrencinin CEVAPLARI, yorum ve çözüm kâğıdı hâlâ yok.
+  if m::text ~* '"cevaplar"|yorum|cozum/' then
+    raise exception '11h: çizelgede öğrenci cevabı/yorum/çözüm kâğıdı var';
   end if;
   patladi := false;
   begin
@@ -456,6 +463,149 @@ begin
   end;
   if not patladi then raise exception '12f: vekâlet oturumu başkasının sınıfını açtı'; end if;
   raise notice '12 OK — sahip müdür ekranını kendi oturumuyla birebir görüyor; atanmamış sınıfı açıyor; öğretmen ve vekâlet giremiyor';
+
+  -- ---------------------------------------------------------------------------
+  -- 13. ORTAK SINIF SAYFASI (0063)
+  -- ---------------------------------------------------------------------------
+  -- 13a. Öğretmen kipi = sinif_ogrencileri (öğretmenin bugünkü sayıları).
+  t := public.sinif_ogrencileri(jt, s_m);
+  m := public.sinif_not_cizelgesi(jt, s_m);
+  if (m->>'degerlendirilen_odev')::int <> (t->>'degerlendirilen_odev')::int then
+    raise exception '13a: değerlendirilen ödev % ≠ %', m->>'degerlendirilen_odev', t->>'degerlendirilen_odev';
+  end if;
+  if (select jsonb_agg(jsonb_build_object('id', x->'id', 'yapti', x->'yapti', 'yapmadi', x->'yapmadi',
+                                          'oy', x->'ortalama_yapan', 'ot', x->'ortalama_tum') order by n)
+        from jsonb_array_elements(m->'ogrenciler') with ordinality y(x, n))
+     is distinct from
+     (select jsonb_agg(jsonb_build_object('id', x->'id', 'yapti', x->'yapti', 'yapmadi', x->'yapmadi',
+                                          'oy', x->'ortalama_yapan', 'ot', x->'ortalama_tum') order by n)
+        from jsonb_array_elements(t->'ogrenciler') with ordinality y(x, n)) then
+    raise exception '13a: öğretmen kipi sinif_ogrencileri''nden farklı: % / %', m->'ogrenciler', t->'ogrenciler';
+  end if;
+
+  -- 13b. Ödev kapsamı: Barış 12MB'ye bir ödev veriyor.
+  o_baris := (public.odev_olustur(jb, 'Barış müdür testi', null, s_n, 'acik',
+               (current_date + 3)::date))->>'id';
+  perform public.odev_yayinla(jb, o_baris);
+  if exists (select 1 from jsonb_array_elements(public.sinif_not_cizelgesi(jt, s_n)->'odevler') x
+              where x->>'id' = o_baris::text) then
+    raise exception '13b: sahip kendi sınıf sayfasında Barış''ın ödevini görüyor (kapsam değişti)';
+  end if;
+  if not exists (select 1 from jsonb_array_elements(public.sinif_not_cizelgesi(jb, s_n)->'odevler') x
+                  where x->>'id' = o_baris::text)
+     or not exists (select 1 from jsonb_array_elements(public.sinif_not_cizelgesi(jm, s_n)->'odevler') x
+                     where x->>'id' = o_baris::text)
+     or not exists (select 1 from jsonb_array_elements(public.sinif_not_cizelgesi(jt, s_n, true)->'odevler') x
+                     where x->>'id' = o_baris::text) then
+    raise exception '13b: Barış, müdür ya da sahibin önizlemesi ödevi görmüyor';
+  end if;
+  if public.sinif_not_cizelgesi(jm, s_n)->>'kapsam' <> 'tum'
+     or public.sinif_not_cizelgesi(jb, s_n)->>'kapsam' <> 'ogretmen' then
+    raise exception '13b: kapsam işareti yanlış';
+  end if;
+
+  -- 13c. Kartlar: öğretmenin kartı müdürünkiyle aynı yardımcıdan.
+  select x into oz from jsonb_array_elements(public.sinif_kartlari(jt)) x where x->>'id' = s_m::text;
+  select x into cz from jsonb_array_elements(public.mudur_paneli(jm)->'siniflar') x where x->>'id' = s_m::text;
+  if oz - 'arsiv' - 'ozel' is distinct from cz - 'arsiv' - 'ozel' then
+    raise exception '13c: 12MA kartı öğretmende %, müdürde %', oz, cz;
+  end if;
+  select x into oz from jsonb_array_elements(public.sinif_kartlari(jt)) x where x->>'id' = s_n::text;
+  select x into cz from jsonb_array_elements(public.mudur_paneli(jm)->'siniflar') x where x->>'id' = s_n::text;
+  if (cz->>'odev_sayisi')::int <> (oz->>'odev_sayisi')::int + 1 then
+    raise exception '13c: 12MB ödev sayısı müdürde %, sahipte % (Barış''ın ödevi yalnız müdürde olmalı)',
+      cz->>'odev_sayisi', oz->>'odev_sayisi';
+  end if;
+  if exists (select 1 from jsonb_array_elements(public.sinif_kartlari(jb)) x where x->>'id' = s_m::text)
+     or not exists (select 1 from jsonb_array_elements(public.sinif_kartlari(jb)) x where x->>'id' = s_n::text) then
+    raise exception '13c: Barış''ın kartları yanlış sınıfları içeriyor';
+  end if;
+
+  -- 13d. Seviyelere göre konular: 12MA'da tek konulu, süresi dolmuş bir test.
+  konu_ad := 'Müdür Konusu ' || ek;
+  o_konu := (public.odev_olustur(jt, 'Müdür konu testi', null, s_m, 'test',
+              (current_date + 3)::date, 5, '{"1":"A","2":"B","3":"C","4":"D","5":"E"}'::jsonb,
+              null, null, true, 5::smallint,
+              jsonb_build_object('1', konu_ad, '2', konu_ad, '3', konu_ad, '4', konu_ad, '5', konu_ad)))->>'id';
+  perform public.odev_yayinla(jt, o_konu);
+  perform public.odev_gonder(
+    (public.giris((select kod from public.giris_kodlari where ogrenci_id = a1 and rol = 'ogrenci')))->>'token',
+    o_konu, 'cozum/' || o_konu::text || '/' || a1::text || '.jpg',
+    '{"1":"A","2":"B","3":"A","4":"A","5":"A"}'::jsonb);
+  update public.odevler set son_tarih = current_date - 1 where id = o_konu;
+  v := public.mudur_paneli(jm);
+  if v ? 'eksik_konular' then raise exception '13d: okul geneli liste hâlâ var'; end if;
+  if not exists (select 1 from jsonb_array_elements(v->'seviyeler') sv,
+                               jsonb_array_elements(sv->'eksik_konular') k
+                  where (sv->>'seviye')::int = 12 and k->>'konu' = konu_ad
+                    and (k->>'toplam')::int = 5 and (k->>'dogru')::int = 2) then
+    raise exception '13d: 12. seviyede konu yok: %', v->'seviyeler';
+  end if;
+  if exists (select 1 from jsonb_array_elements(v->'seviyeler') sv,
+                           jsonb_array_elements(sv->'eksik_konular') k
+              where (sv->>'seviye')::int <> 12 and k->>'konu' = konu_ad) then
+    raise exception '13d: konu başka seviyede de görünüyor';
+  end if;
+  update public.odevler set yayinda = false where id = o_konu;
+
+  -- 13e. konu_karnesi erişimi.
+  patladi := false;
+  begin
+    perform public.konu_karnesi(jb, s_m, null);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '13e: Barış başka sınıfın konu karnesini açtı'; end if;
+  patladi := false;
+  begin
+    perform public.konu_karnesi(jb, null, a1);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '13e: Barış başka sınıfın öğrencisinin karnesini açtı'; end if;
+  patladi := false;
+  begin
+    perform public.konu_karnesi(jm, s_ozel, null);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '13e: müdür özel ders karnesini açtı'; end if;
+  perform public.konu_karnesi(jm, s_m, null);
+  perform public.konu_karnesi(jt, s_m, null);
+  perform public.konu_karnesi(jt, null, a1);
+  perform public.konu_karnesi(jb, s_n, null);
+  -- 13f. Müdür ödevi ve cevap anahtarını görüyor; çözüm kâğıdını görmüyor.
+  update public.odevler set odev_url = 'odev/' || o_odev::text || '/sorular.pdf',
+                            anahtar_url = 'odev/' || o_odev::text || '/anahtar.pdf'
+   where id = o_odev;
+  select x into cz from jsonb_array_elements(public.sinif_not_cizelgesi(jm, s_m)->'odevler') x
+   where x->>'id' = o_odev::text;
+  if cz->'cevap_anahtari' <> '{"1":"A","2":"B","3":"C","4":"D","5":"E"}'::jsonb
+     or cz->>'odev_yolu' <> 'odev/' || o_odev::text || '/sorular.pdf'
+     or cz->>'anahtar_yolu' <> 'odev/' || o_odev::text || '/anahtar.pdf' then
+    raise exception '13f: çizelgede ödev/anahtar yok: %', cz;
+  end if;
+  -- Dosya depoda yokken izin YOK: müdür yükleme adresi alıp dosya
+  -- oluşturamamalı (Edge Function aynı izinle yükleme adresi de üretiyor).
+  if public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/sorular.pdf') then
+    raise exception '13f: depoda olmayan dosyaya müdür izni (yükleme kapısı açık)';
+  end if;
+  insert into storage.objects (bucket_id, name)
+  select 'odev-dosyalari', y from unnest(array['odev/' || o_odev::text || '/sorular.pdf',
+                                               'odev/' || o_odev::text || '/anahtar.pdf']) y
+   where not exists (select 1 from storage.objects so where so.name = y);
+  if not public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/sorular.pdf')
+     or not public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/anahtar.pdf') then
+    raise exception '13f: müdür ödev ya da anahtar PDF''ini açamıyor';
+  end if;
+  if public.dosya_erisim_izni(jm, (select foto_yolu from public.gonderimler
+                                    where odev_id = o_odev and ogrenci_id = a1)) then
+    raise exception '13f: müdür öğrencinin çözüm kâğıdını açabiliyor';
+  end if;
+  update public.odevler set yayinda = false where id = o_odev;
+  if public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/sorular.pdf') then
+    raise exception '13f: yayından kalkan ödevin dosyası müdüre açık';
+  end if;
+  update public.odevler set yayinda = true where id = o_odev;
+
+  raise notice '13 OK — öğretmen kipi sinif_ogrencileri ile birebir; kapsam role göre; kartlar tek kaynaktan; seviyelere göre konular; konu_karnesi erişimi kapalı; müdür ödev ve anahtarı görüyor, çözüm kâğıdını görmüyor';
 
   -- ---------------------------------------------------------------------------
   -- 7. PASİFLEŞTİRİLEN MÜDÜR (en sonda: hesabı kapatıyor)

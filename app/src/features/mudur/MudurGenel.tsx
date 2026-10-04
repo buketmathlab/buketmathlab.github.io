@@ -144,27 +144,37 @@ export function MudurGenel() {
               />
             </Card>
 
-            {/* EKSİK KONULAR */}
+            {/* ZORLANILAN KONULAR — SEVİYE SEVİYE (0063, öğretmenin isteği:
+                "dokuzuncu sınıfların en çok zorlandığı konular, onuncu ..."). */}
             <Card>
-              <h2 className="text-[18px] text-ink">Okulun en çok zorlandığı konular</h2>
+              <h2 className="text-[18px] text-ink">En çok zorlanılan konular</h2>
               <p className="mb-3 text-[13px] text-muted">
-                Test ödevlerinde en çok yanlış ya da boş bırakılan konular; çubuk doğru
-                yüzdesi. Az soru çözülmüş konular sayılmadı.
+                Her sınıf seviyesinde, test ödevlerinde en çok yanlış ya da boş bırakılan beş
+                konu; çubuk doğru yüzdesi. Az soru çözülmüş konular sayılmadı.
               </p>
-              {veri.eksik_konular.length === 0 ? (
-                <p className="text-[14px] text-muted">Henüz yeterli veri yok.</p>
-              ) : (
-                <CubukListesi
-                  birim="%"
-                  etiketGenisligi="w-28"
-                  satirlar={veri.eksik_konular.map((k) => ({
-                    anahtar: k.konu,
-                    etiket: k.konu,
-                    deger: k.oran,
-                    ek: `doğru: ${SAYI.format(k.dogru)} / ${SAYI.format(k.toplam)} cevap`,
-                  }))}
-                />
-              )}
+              <div className="flex flex-col gap-5">
+                {veri.seviyeler.map((v) => (
+                  <section key={v.seviye} aria-labelledby={`konu-${v.seviye}`}>
+                    <h3 id={`konu-${v.seviye}`} className="mb-2 text-[15px] font-semibold text-ink">
+                      {v.seviye}. sınıfların en çok zorlandığı konular
+                    </h3>
+                    {v.eksik_konular.length === 0 ? (
+                      <p className="text-[14px] text-muted">Henüz yeterli veri yok.</p>
+                    ) : (
+                      <CubukListesi
+                        birim="%"
+                        etiketGenisligi="w-28"
+                        satirlar={v.eksik_konular.map((k) => ({
+                          anahtar: `${v.seviye}-${k.konu}`,
+                          etiket: k.konu,
+                          deger: k.oran,
+                          ek: `doğru: ${SAYI.format(k.dogru)} / ${SAYI.format(k.toplam)} cevap`,
+                        }))}
+                      />
+                    )}
+                  </section>
+                ))}
+              </div>
             </Card>
           </div>
         )}

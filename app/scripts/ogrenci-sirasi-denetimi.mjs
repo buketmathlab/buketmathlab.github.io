@@ -100,6 +100,29 @@ await s.addInitScript(
 
       if (m[1] === 'siniflar_listesi') return json(siniflar);
       if (m[1] === 'sinif_ogrencileri') return json(detay);
+      // 0063: Sınıflar sekmesi ve sınıf sayfası ortak bileşen; uçlar
+      // `sinif_kartlari` ve `sinif_not_cizelgesi`.
+      if (m[1] === 'sinif_kartlari')
+        return json(
+          siniflar.map((k) => ({
+            ...k,
+            ogretmenler: ['Buket Topuzoğlu'],
+            odev_sayisi: 2, suresi_dolan: 2, soru_toplami: 40, soru_sayisiz: 0,
+            gonderim_orani: 100, ortalama: 80, son_odev: null,
+          })),
+        );
+      if (m[1] === 'sinif_not_cizelgesi')
+        return json({
+          sinif: { ...detay.sinif, ogretmenler: ['Buket Topuzoğlu'] },
+          kapsam: 'ogretmen',
+          degerlendirilen_odev: detay.degerlendirilen_odev,
+          mevcut: detay.ogrenciler.length,
+          odevler: [],
+          aylar: [],
+          ogrenciler: detay.ogrenciler.map((o) => ({
+            ...o, ortalama: o.ortalama_tum, yapilan: o.yapti, yapilmayan: o.yapmadi, puanlar: [],
+          })),
+        });
 
       if (m[1] === 'ogrenciler_listesi') {
         // TAKLİT SADIK: sunucunun `_numara_sira` kuralının aynısı, ve

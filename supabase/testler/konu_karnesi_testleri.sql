@@ -410,15 +410,16 @@ begin
     raise exception '8c: pasif öğrencinin kendi karnesi boş döndü: %', v;
   end if;
 
-  -- BİLİNEN AYRIŞMA: konu_ozeti pasifi de sayıyor, karne saymıyor.
+  -- AYRIŞMA KAPANDI (0064 — "sınıf listesi esas"): ödevin konu özeti de
+  -- artık çıkarılan öğrenciyi saymıyor; karneyle aynı küme.
   oz := public.odev_gonderimleri(jt, v_o1) -> 'konu_ozeti';
   select (e->>'toplam')::int into t_sonra
   from jsonb_array_elements(oz) e where e->>'konu' = 'Türev';
-  if t_sonra <> 6 then   -- Ada 2 + Ege 2 + Pınar 2
-    raise exception '8d: konu_ozeti''nin pasifi saydığı varsayımı bozuldu: %', oz;
+  if t_sonra <> 4 then   -- Ada 2 + Ege 2 (Pınar çıkarıldı)
+    raise exception '8d: konu_ozeti çıkarılan öğrenciyi hâlâ sayıyor: %', oz;
   end if;
 
-  raise notice '8 OK — pasif sınıf karnesinden düşüyor, kendi karnesi duruyor, konu_ozeti farkı beklenen kadar';
+  raise notice '8 OK — pasif sınıf karnesinden ve ödevin konu özetinden düşüyor, kendi karnesi duruyor';
 end $$;
 
 -- -----------------------------------------------------------------------------

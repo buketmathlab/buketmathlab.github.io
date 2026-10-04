@@ -908,23 +908,36 @@ export type MudurOzeti = {
   ortalama: number | string | null;
 };
 
+/** Konu, doğru ve toplam cevap; `oran` doğru yüzdesi. */
+export type EksikKonu = { konu: string; toplam: number; dogru: number; oran: number };
+
+/**
+ * 0063 — SINIF KARTI, öğretmenin ve müdürün Sınıflar sayfasında AYNI.
+ * Sayılar tek yardımcıdan (`_sinif_kart_ozetleri`); öğretmende kapsam
+ * erişebildiği ödevler, müdürde sınıfın bütün ödevleri.
+ */
+export type SinifKarti = MudurOzeti & {
+  id: string;
+  ad: string;
+  seviye: number;
+  ozel: boolean;
+  arsiv: boolean;
+  ogretmenler: string[];
+  /** Son tarihi geçmiş (değerlendirilen) ödev sayısı. */
+  suresi_dolan: number;
+  son_odev: string | null;
+};
+
 export type MudurPaneli = {
   ad: string;
   /** Eğitim yılının ilk günü (1 Eylül); `aylar` buradan başlar. */
   yil_baslangici: string;
   okul: MudurOzeti & { sinif_sayisi: number };
-  seviyeler: Array<MudurOzeti & { seviye: number; sinif_sayisi: number }>;
-  siniflar: Array<
-    MudurOzeti & {
-      id: string;
-      ad: string;
-      seviye: number;
-      ogretmenler: string[];
-      /** Son tarihi geçmiş (değerlendirilen) ödev sayısı. */
-      suresi_dolan: number;
-      son_odev: string | null;
-    }
+  /** 0063: her seviyenin en çok zorlandığı 5 konu (`eksik_konular`). */
+  seviyeler: Array<
+    MudurOzeti & { seviye: number; sinif_sayisi: number; eksik_konular: EksikKonu[] }
   >;
+  siniflar: SinifKarti[];
   /** Ödevin son tarihinin ayı; ödevsiz ayda oran ve ortalama null. */
   aylar: Array<{
     ay: string;
@@ -933,8 +946,6 @@ export type MudurPaneli = {
     gonderim_orani: number | null;
     ortalama: number | string | null;
   }>;
-  /** Okulun en çok eksik 5 konusu; `oran` doğru yüzdesi. */
-  eksik_konular: Array<{ konu: string; toplam: number; dogru: number; oran: number }>;
   ogretmenler: Array<{
     ad: string;
     sahip: boolean;
@@ -951,7 +962,11 @@ export type MudurPaneli = {
  * `ogrenciler[].puanlar` `odevler` ile AYNI sırada.
  */
 export type SinifNotCizelgesi = {
-  sinif: { id: string; ad: string; ogretmenler: string[] };
+  sinif: { id: string; ad: string; ozel: boolean; arsiv: boolean; ogretmenler: string[] };
+  /** 0063: 'tum' müdür (ve sahibin önizlemesi); 'ogretmen' erişebildiği ödevler. */
+  kapsam: 'tum' | 'ogretmen';
+  /** Ortalamaların paydası: süresi dolmuş ödev sayısı. */
+  degerlendirilen_odev: number;
   mevcut: number;
   odevler: Array<{
     id: string;
@@ -959,8 +974,14 @@ export type SinifNotCizelgesi = {
     tur: 'test' | 'acik';
     ogretmen: string | null;
     soru_sayisi: number | null;
+    /** 0063 — soru PDF'i, anahtar PDF'i ve anahtar harfleri (müdür de görür). */
+    odev_yolu: string | null;
+    anahtar_yolu: string | null;
+    cevap_anahtari: Record<string, string> | null;
     son_tarih: string;
     sure_doldu: boolean;
+    /** 0064 — ödevin beklediği öğrenci sayısı: bugün sınıfta olan ve o ödev ona düşen. */
+    beklenen: number;
     gonderim: number;
     ortalama: number | string | null;
   }>;
@@ -968,14 +989,23 @@ export type SinifNotCizelgesi = {
     id: string;
     ad: string;
     ogrenci_no: string | null;
+    tur: 'okul' | 'ozel';
     /** `sinif_ogrenci_ozeti` kuralı: gönderilmeyen süresi dolmuş ödev 0. */
     ortalama: number | string | null;
+    /** 0063 — `sinif_ogrencileri` ile birebir (öğretmenin sınıf sayfası). */
+    yapti: number;
+    yapmadi: number;
+    /** Yalnız yaptığı ödevlerin ortalaması. */
+    ortalama_yapan: number | string | null;
+    /** Genel: yapmadığı ödev 0. */
+    ortalama_tum: number | string | null;
     yapilan: number;
     yapilmayan: number;
     puanlar: Array<{
       odev_id: string;
       puan: number | string | null;
-      durum: 'gonderdi' | 'gondermedi' | 'suresi_devam';
+      /** 'kapsam_disi' (0064): sınıfa gelmeden önce verilip süresi dolan ödev. */
+      durum: 'gonderdi' | 'gondermedi' | 'suresi_devam' | 'kapsam_disi';
     }>;
   }>;
   aylar: Array<{

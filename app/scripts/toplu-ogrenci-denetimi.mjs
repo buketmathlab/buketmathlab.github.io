@@ -188,6 +188,19 @@ const cagrilar = () => p.evaluate(() => window.__cagrilar.map((c) => c.ad));
 const gonder = () =>
   p.getByRole('button', { name: /(öğrenci ekle|güncelle)$/i }).first();
 
+/**
+ * 0064: varsayılan kip "Sınıfı bu listeyle eşitle" oldu. Bu denetim "yalnız
+ * ekle" yolunu (0043 eşleştirmesi, bayrak, şube şube çağrı) ölçüyor;
+ * eşitleme `sinif-esitleme-denetimi.mjs`'te.
+ */
+const yalnizEkle = async () => {
+  const r = p.getByRole('radio', { name: /Yalnız ekle/ });
+  if (await r.count()) {
+    await r.check();
+    await p.waitForTimeout(200);
+  }
+};
+
 await p.goto(KOK + '#/ogretmen/ogrenciler/toplu', { waitUntil: 'networkidle' });
 await p.waitForTimeout(500);
 
@@ -203,6 +216,7 @@ console.log('2 — SINIF SEÇ + LİSTE YAPIŞTIR → ÖNİZLEME');
   await p.selectOption('select', 's9a');
   await p.fill('textarea', YAPISTIRMA);
   await p.waitForTimeout(400);
+  await yalnizEkle();
   const t = await metin();
 
   de(t.includes('Ali Yılmaz'), 'BÜYÜK HARF ad düzeltilmiş görünüyor');
@@ -325,6 +339,7 @@ console.log('4c — KAPALI SEÇENEKLE GÖNDERİLEN BAYRAK false');
   await p.selectOption('select', 's9a');
   await p.fill('textarea', YAPISTIRMA);
   await p.waitForTimeout(400);
+  await yalnizEkle();
   await p.getByRole('button', { name: /Ali Yılmaz satırını çıkar/ }).first().click();
   await p.waitForTimeout(300);
   await p.evaluate(() => {
@@ -535,6 +550,7 @@ console.log('8 — e-OKUL PDF\'İ YÜKLENİYOR (0042)');
     buffer: eokulPdfi(),
   });
   await p.waitForTimeout(1500);
+  await yalnizEkle();
 
   const kutu = await p.locator('textarea').inputValue();
   de(kutu.includes('ALİ YILMAZ'), 'PDF okundu ve metin kutusuna döküldü');

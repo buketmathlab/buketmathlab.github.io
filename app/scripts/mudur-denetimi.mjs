@@ -23,6 +23,10 @@
  *  M8. PIN: `mudur_pin_degistir` çağrılıyor; yeni PIN'ler uyuşmazsa
  *      sunucuya gidilmiyor; yanlış eski PIN'de (28000) oturum düşmüyor.
  *  M9. 360 px: yeni sayfalarda yatay taşma yok.
+ *  M11. (0063) Öğretmenin Sınıflar sayfası müdürünkiyle AYNI bileşen:
+ *      kartlarda toplam soru, gönderim, ortalama; Arşivle ve Sınıf ekle
+ *      duruyor; sınıf sayfasında aynı bölümler, öğrenci adı bağlantı,
+ *      bağlantılar öğretmen adresleri, ortak sınıfta kapsam notu.
  *  M10. (0062) Sahip → "Müdür ekranını gör": müdürün hesabına girmeden,
  *      kendi oturumuyla müdür ekranı; önizleme şeridi; PIN sekmesi yok;
  *      sınıf → konu analizi → geri hep önizleme içinde; hiçbir yazma ucu
@@ -48,16 +52,22 @@ const PANEL = {
     gonderim_orani: 84, ortalama: 72.5,
   },
   seviyeler: [
-    { seviye: 9, sinif_sayisi: 1, ogrenci_sayisi: 28, odev_sayisi: 6, soru_toplami: 1240, soru_sayisiz: 1, gonderim_orani: 84, ortalama: 72.5 },
-    { seviye: 10, sinif_sayisi: 1, ogrenci_sayisi: 31, odev_sayisi: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null },
+    {
+      seviye: 9, sinif_sayisi: 1, ogrenci_sayisi: 28, odev_sayisi: 6, soru_toplami: 1240, soru_sayisiz: 1, gonderim_orani: 84, ortalama: 72.5,
+      eksik_konular: [
+        { konu: 'Limit', toplam: 48, dogru: 15, oran: 31 },
+        { konu: 'Üslü Sayılar', toplam: 24, dogru: 14, oran: 58 },
+      ],
+    },
+    { seviye: 10, sinif_sayisi: 1, ogrenci_sayisi: 31, odev_sayisi: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null, eksik_konular: [] },
   ],
   siniflar: [
     {
-      id: '9a', ad: '9A', seviye: 9, ogretmenler: ['Buket Topuzoğlu'], ogrenci_sayisi: 28,
+      id: '9a', ad: '9A', seviye: 9, ozel: false, arsiv: false, ogretmenler: ['Buket Topuzoğlu'], ogrenci_sayisi: 28,
       odev_sayisi: 6, suresi_dolan: 5, soru_toplami: 1240, soru_sayisiz: 1, gonderim_orani: 84, ortalama: 72.5, son_odev: '2026-09-30',
     },
     {
-      id: '10b', ad: '10B', seviye: 10, ogretmenler: ['Barış Atmaca', 'Buket Topuzoğlu'], ogrenci_sayisi: 31,
+      id: '10b', ad: '10B', seviye: 10, ozel: false, arsiv: false, ogretmenler: ['Barış Atmaca', 'Buket Topuzoğlu'], ogrenci_sayisi: 31,
       odev_sayisi: 0, suresi_dolan: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null, son_odev: null,
     },
   ],
@@ -65,10 +75,6 @@ const PANEL = {
     { ay: '2026-09-01', odev_sayisi: 4, soru_toplami: 800, gonderim_orani: 88, ortalama: 70 },
     { ay: '2026-10-01', odev_sayisi: 0, soru_toplami: 0, gonderim_orani: null, ortalama: null },
     { ay: '2026-11-01', odev_sayisi: 2, soru_toplami: 440, gonderim_orani: 80, ortalama: 75.5 },
-  ],
-  eksik_konular: [
-    { konu: 'Limit', toplam: 48, dogru: 15, oran: 31 },
-    { konu: 'Üslü Sayılar', toplam: 24, dogru: 14, oran: 58 },
   ],
   ogretmenler: [
     { ad: 'Barış Atmaca', sahip: false, siniflar: ['10B'], odev_sayisi: 3, soru_toplami: 75, son_30_gun: 2, son_odev: '2026-09-28' },
@@ -100,16 +106,22 @@ const ONAM = {
   ],
 };
 const CIZELGE = {
-  sinif: { id: '9a', ad: '9A', ogretmenler: ['Buket Topuzoğlu'] },
+  sinif: { id: '9a', ad: '9A', ozel: false, arsiv: false, ogretmenler: ['Buket Topuzoğlu'] },
+  kapsam: 'tum',
+  degerlendirilen_odev: 2,
   mevcut: 2,
   odevler: [
-    { id: 'd1', baslik: 'Sayılar testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 20, son_tarih: '2026-09-10', sure_doldu: true, gonderim: 2, ortalama: 75 },
-    { id: 'd2', baslik: 'Kümeler testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 25, son_tarih: '2026-09-24', sure_doldu: true, gonderim: 1, ortalama: 90 },
-    { id: 'd3', baslik: 'Açık uçlu ödev', tur: 'acik', ogretmen: 'Buket Topuzoğlu', soru_sayisi: null, son_tarih: '2026-12-01', sure_doldu: false, gonderim: 0, ortalama: null },
+    { id: 'd1', baslik: 'Sayılar testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 20,
+      odev_yolu: 'odev/d1/sorular.pdf', anahtar_yolu: 'odev/d1/anahtar.pdf', cevap_anahtari: { 1: 'A', 2: 'C', 3: 'B' }, son_tarih: '2026-09-10', sure_doldu: true, gonderim: 2, ortalama: 75 },
+    { id: 'd2', baslik: 'Kümeler testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 25,
+      odev_yolu: null, anahtar_yolu: null, cevap_anahtari: null, son_tarih: '2026-09-24', sure_doldu: true, gonderim: 1, ortalama: 90 },
+    { id: 'd3', baslik: 'Açık uçlu ödev', tur: 'acik', ogretmen: 'Buket Topuzoğlu', soru_sayisi: null,
+      odev_yolu: 'odev/d3/sorular.pdf', anahtar_yolu: null, cevap_anahtari: null, son_tarih: '2026-12-01', sure_doldu: false, gonderim: 0, ortalama: null },
   ],
   ogrenciler: [
     {
-      id: 'o1', ad: 'Deniz Yalın', ogrenci_no: '101', ortalama: 85, yapilan: 2, yapilmayan: 0,
+      id: 'o1', ad: 'Deniz Yalın', ogrenci_no: '101', tur: 'okul', ortalama: 85, yapilan: 2, yapilmayan: 0,
+      yapti: 2, yapmadi: 0, ortalama_yapan: 85, ortalama_tum: 85,
       puanlar: [
         { odev_id: 'd1', puan: 80, durum: 'gonderdi' },
         { odev_id: 'd2', puan: 90, durum: 'gonderdi' },
@@ -117,7 +129,8 @@ const CIZELGE = {
       ],
     },
     {
-      id: 'o2', ad: 'Kerem Aksu', ogrenci_no: '102', ortalama: 35, yapilan: 1, yapilmayan: 1,
+      id: 'o2', ad: 'Kerem Aksu', ogrenci_no: '102', tur: 'okul', ortalama: 35, yapilan: 1, yapilmayan: 1,
+      yapti: 1, yapmadi: 1, ortalama_yapan: 70, ortalama_tum: 35,
       puanlar: [
         { odev_id: 'd1', puan: 70, durum: 'gonderdi' },
         { odev_id: 'd2', puan: null, durum: 'gondermedi' },
@@ -130,9 +143,28 @@ const CIZELGE = {
     { ay: '2026-10-01', odev_sayisi: 0, ortalama: null, gonderim_orani: null },
   ],
 };
+/** Öğretmenin gördüğü: ortak sınıfta yalnız erişebildiği ödevler (0063). */
+const CIZELGE_OGRETMEN = {
+  ...CIZELGE,
+  kapsam: 'ogretmen',
+  sinif: { ...CIZELGE.sinif, ogretmenler: ['Buket Topuzoğlu', 'Barış Atmaca'] },
+};
+const KARNE = {
+  kapsam: { tur: 'sinif', ad: '9A', sinif: '9A', mevcut: 2 },
+  odev_sayisi: 2,
+  konular: [{ konu: 'Kümeler', toplam: 10, dogru: 4, yanlis: 4, bos: 2 }],
+  gelisim: [],
+};
+/** Öğretmenin kartları: biri arşivde, biri özel ders grubu. */
+const KARTLAR = [
+  { ...PANEL.siniflar[0] },
+  { ...PANEL.siniflar[1], id: '10c', ad: '10C', arsiv: true },
+  { ...PANEL.siniflar[1], id: 'oz', ad: 'Özel ders', seviye: 12, ozel: true, ogretmenler: ['Buket Topuzoğlu'] },
+];
+
 /** Müdür oturumunda çağrılabilecek uçlar — sunucudaki `izinli` ile aynı. */
 const MUDUR_UCLARI = new Set([
-  'giris', 'mudur_paneli', 'sinif_analizi', 'onam_dokumu', 'sinif_not_cizelgesi',
+  'giris', 'mudur_paneli', 'sinif_analizi', 'onam_dokumu', 'sinif_not_cizelgesi', 'konu_karnesi',
   'mudur_pin_degistir', 'cikis',
 ]);
 
@@ -155,7 +187,13 @@ async function sayfa({ oturum, yol, genislik = 390, pinYaniti = null }) {
       : uc === 'mudur_paneli' ? PANEL
       : uc === 'sinif_analizi' ? ANALIZ
       : uc === 'onam_dokumu' ? ONAM
-      : uc === 'sinif_not_cizelgesi' ? CIZELGE
+      : uc === 'sinif_not_cizelgesi'
+        ? (JSON.parse(r.request().postData() ?? '{}').p_token ?? '').startsWith('t') &&
+          !JSON.parse(r.request().postData() ?? '{}').p_onizleme
+          ? CIZELGE_OGRETMEN
+          : CIZELGE
+      : uc === 'konu_karnesi' ? KARNE
+      : uc === 'sinif_kartlari' ? KARTLAR
       : uc === 'mudur_pin_degistir' ? { durum: 'tamam' }
       : uc === 'ben_kimim' ? { id: 's1', ad: 'Buket Topuzoğlu', sahip: true, vekalet: false, vekil: null }
       : uc === 'ogretmenler_listesi'
@@ -168,6 +206,15 @@ async function sayfa({ oturum, yol, genislik = 390, pinYaniti = null }) {
       : uc === 'siniflar_listesi' ? []
       : {};
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
+  });
+  // Dosya adresi (Edge Function): imzalı adres yerine aynı sunucudaki bir dosya.
+  await s.route('**/functions/v1/dosya-url', (r) => {
+    govdeler.push({ uc: 'dosya-url', govde: r.request().postData() });
+    r.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ imzaliUrl: 'http://127.0.0.1:8788/yeni/surum.json?imzali=1', gecerlilikSn: 60 }),
+    });
   });
   if (oturum) {
     await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)), oturum);
@@ -305,13 +352,16 @@ console.log('--- M6. Genel: soru toplamı, seviyeler, grafik, konular ---');
   await s.getByText('Tablo olarak gör').first().click();
   const tablo = await s.locator('table').first().innerText();
   olc('tablo görünümünde ay, ödev ve soru', /Kasım 2026\s*75,5\s*%80\s*2\s*440/.test(tablo), tablo);
-  olc('şube çubukları ve eksik konular', m.includes('Şubelerin ortalaması') && m.includes('Limit') && m.includes('doğru: 15 / 48 cevap'));
+  olc('şube çubukları', m.includes('Şubelerin ortalaması'));
+  olc('konular seviyelere göre: 9. sınıflar', /9\. sınıfların en çok zorlandığı konular\s*Limit[\s\S]*doğru: 15 \/ 48 cevap[\s\S]*Üslü Sayılar/.test(m));
+  olc('10. sınıflarda veri yok yazıyor', /10\. sınıfların en çok zorlandığı konular\s*Henüz yeterli veri yok/.test(m));
+  olc('okul geneli tek liste kalktı', !m.includes('Okulun en çok zorlandığı konular'));
   await s.close();
 }
 
 console.log('--- M7. Sınıflar ve sınıf sayfası: soru sayıları, öğrenci notları ---');
 {
-  const { s, uclar } = await sayfa({ oturum: MUDUR, yol: '/mudur/siniflar' });
+  const { s, uclar, govdeler } = await sayfa({ oturum: MUDUR, yol: '/mudur/siniflar' });
   const m = await metin(s);
   olc('9A kartında toplam soru 1.240', /9A[\s\S]*Toplam soru\s*1\.240/.test(m));
   await s.getByRole('button', { name: 'Sınıfı aç' }).first().click();
@@ -322,17 +372,45 @@ console.log('--- M7. Sınıflar ve sınıf sayfası: soru sayıları, öğrenci 
   olc('ödev başlığında toplam: 3 ödev · 45 soru', /3\s*ödev · 45\s*soru/.test(k), k.slice(0, 600));
   olc('ödev satırında soru sayısı (20 soru, 25 soru)', k.includes('20 soru') && k.includes('25 soru'));
   olc('süresi sürmekte olan ödev işaretli', k.includes('süresi sürüyor'));
-  olc('öğrenci notları: Deniz 85, Kerem 35', /Deniz Yalın[\s\S]*?85/.test(k) && /Kerem Aksu[\s\S]*?35/.test(k));
-  olc('ortalama kuralı yazıyor', k.includes('gönderilmeyen ödev 0 sayılır'));
-  olc('cevap/yorum yok', !/cevap anahtar|yorum/i.test(k));
-  await s.getByRole('button', { name: /Kerem Aksu/ }).click();
+  const kerem = s.locator('li', { has: s.getByRole('button', { name: /Ödev ödev puanlar/ }) }).filter({ hasText: 'Kerem Aksu' });
+  olc('öğrenci kartı: Kerem 1 yaptı 1 yapmadı, Yaptıkları 70, Genel 35', /1\s*yaptı · 1\s*yapmadı[\s\S]*YAPTIKLARI\s*70\s*GENEL\s*35/.test(await kerem.innerText()), await kerem.innerText());
+  olc('ortalama kuralı yazıyor', k.includes('gönderilmeyen 0 sayılır'));
+  olc('müdürde öğrenci adı bağlantı değil', (await s.getByRole('link', { name: 'Kerem Aksu' }).count()) === 0);
+  olc('bölümler: Öğrenciler, Aylık gelişim, Ödevler, Konu karnesi', ['Öğrenciler', 'Aylık gelişim', 'Ödevler', 'Konu karnesi'].every((b) => k.includes(b)));
+  // Cevap ANAHTARI artık bilerek var (0063); öğretmen yorumu yok.
+  olc('öğretmen yorumu yok', !/yorum/i.test(k));
+  const ac = kerem.getByRole('button', { name: /Ödev ödev puanlar/ });
+  await ac.click();
   await s.waitForTimeout(300);
-  const d = await metin(s);
+  const d = await kerem.innerText();
   olc('Kerem açıldı: Gönderilmedi görünüyor', d.includes('Gönderilmedi'));
   olc('Kerem: süresi süren ödev notu', d.includes('ödevin süresi sürüyor'));
   const g = s.getByRole('img', { name: /Kerem Aksu ödev puanları/ });
   olc('Kerem grafiği: 2 ödevden 1 nokta', (await g.count()) === 1 && (await g.locator('circle[data-nokta]').count()) === 1);
-  olc('aria-expanded', (await s.getByRole('button', { name: /Kerem Aksu/ }).getAttribute('aria-expanded')) === 'true');
+  olc('aria-expanded', (await ac.getAttribute('aria-expanded')) === 'true');
+
+  // ÖDEV VE CEVAP ANAHTARI (öğretmenin isteği: "Müdür verilen ödevleri de
+  // cevap anahtarını da görebilsin").
+  const sayilar = s.locator('li').filter({ hasText: 'Sayılar testi' }).last();
+  const sekmeSozu = s.context().waitForEvent('page', { timeout: 4000 }).catch(() => null);
+  await sayilar.getByRole('button', { name: 'Soruları aç (PDF)' }).click();
+  const sekme = await sekmeSozu;
+  await s.waitForTimeout(500);
+  const istek = JSON.parse(govdeler.filter((x) => x.uc === 'dosya-url').pop()?.govde ?? '{}');
+  olc('"Soruları aç" ödev PDF yolunu istiyor ve sekme açılıyor', istek.yol === 'odev/d1/sorular.pdf' && !!sekme, JSON.stringify(istek));
+  if (sekme) await sekme.close();
+  await sayilar.getByRole('button', { name: /Cevap anahtarı/ }).click();
+  await s.waitForTimeout(200);
+  const an = await sayilar.innerText();
+  olc('cevap anahtarı harfleri görünüyor (1. A, 2. C, 3. B)', /1\.\s*A[\s\S]*2\.\s*C[\s\S]*3\.\s*B/.test(an), an);
+  await sayilar.getByRole('button', { name: "Anahtar PDF'ini aç" }).click();
+  await s.waitForTimeout(600);
+  const istek2 = JSON.parse(govdeler.filter((x) => x.uc === 'dosya-url').pop()?.govde ?? '{}');
+  olc('anahtar PDF\'i istenebiliyor', istek2.yol === 'odev/d1/anahtar.pdf', JSON.stringify(istek2));
+  const kumeler = s.locator('li').filter({ hasText: 'Kümeler testi' }).last();
+  olc('dosyası ve anahtarı olmayan ödevde düğme yok',
+      (await kumeler.getByRole('button', { name: /Soruları aç|Cevap anahtarı/ }).count()) === 0);
+  for (const p of s.context().pages()) if (p !== s) await p.close();
   olc('yalnız müdür uçları', yalnizMudurUclari(uclar), [...new Set(uclar)].join(', '));
   await s.close();
 }
@@ -376,7 +454,7 @@ console.log('--- M8. PIN değiştir ---');
 
 console.log('--- M10. Sahibin önizlemesi ---');
 {
-  const { s, uclar } = await sayfa({
+  const { s, uclar, govdeler } = await sayfa({
     oturum: { rol: 'ogretmen', token: 't'.repeat(64) },
     yol: '/ogretmen/ogretmenler',
     genislik: 1024,
@@ -395,6 +473,8 @@ console.log('--- M10. Sahibin önizlemesi ---');
   await s.waitForTimeout(600);
   olc('sınıf önizlemede açıldı', s.url().endsWith('#/ogretmen/mudur-onizleme/siniflar/9a'), s.url());
   olc('öğrenci notları görünüyor', (await metin(s)).includes('Deniz Yalın'));
+  const istek = JSON.parse(govdeler.filter((x) => x.uc === 'sinif_not_cizelgesi').pop()?.govde ?? '{}');
+  olc('önizleme sunucuya bildiriliyor (bütün ödevler)', istek.p_onizleme === true);
   await s.getByRole('button', { name: 'Konu analizi' }).click();
   await s.waitForTimeout(600);
   olc('konu analizi önizlemede', s.url().endsWith('#/ogretmen/mudur-onizleme/siniflar/9a/analiz'), s.url());
@@ -409,20 +489,58 @@ console.log('--- M10. Sahibin önizlemesi ---');
   await s.close();
 }
 
+console.log('--- M11. Öğretmenin Sınıflar sayfası müdürünkiyle aynı ---');
+{
+  const { s, govdeler } = await sayfa({
+    oturum: { rol: 'ogretmen', token: 't'.repeat(64) },
+    yol: '/ogretmen/siniflar',
+  });
+  const m = await metin(s);
+  olc('kartlarda toplam soru, gönderim, ortalama', /9A[\s\S]*Toplam soru\s*1\.240[\s\S]*Gönderim oranı\s*%84[\s\S]*Sınıf ortalaması\s*72,5/.test(m), m.slice(0, 500));
+  olc('"Sınıf ekle" ve "Arşivle" duruyor', (await s.getByRole('button', { name: 'Sınıf ekle' }).count()) >= 1 && (await s.getByRole('button', { name: 'Arşivle' }).count()) >= 1);
+  olc('arşiv şeridi: 1 sınıf arşivde (10C), kart gizli', /1\s*sınıf arşivde/.test(m) && !/10C\s*Buket/.test(m));
+  olc('özel ders grubu arşivlenemez notu', m.includes('Bu grup arşivlenemez'));
+  await s.getByRole('button', { name: 'Konu analizi' }).first().click();
+  await s.waitForTimeout(400);
+  olc('kartın Konu analizi → öğretmen adresi', s.url().endsWith('#/ogretmen/siniflar/9a/analiz'), s.url());
+  await s.goto(KOK + '/ogretmen/siniflar', { waitUntil: 'networkidle' });
+  await s.getByRole('button', { name: 'Onam dökümü' }).first().click();
+  await s.waitForTimeout(400);
+  olc('kartın Onam dökümü → öğretmen adresi', s.url().endsWith('#/ogretmen/veliler/sinif/9a/onam'), s.url());
+  await s.goto(KOK + '/ogretmen/siniflar', { waitUntil: 'networkidle' });
+  await s.getByRole('button', { name: 'Sınıfı aç' }).first().click();
+  await s.waitForTimeout(700);
+  olc('sınıf sayfası /ogretmen/siniflar/9a', s.url().endsWith('#/ogretmen/siniflar/9a'), s.url());
+  const k = await metin(s);
+  olc('aynı bölümler: Öğrenciler, Aylık gelişim, Ödevler, Konu karnesi', ['Öğrenciler', 'Aylık gelişim', 'Ödevler', 'Konu karnesi'].every((b) => k.includes(b)));
+  olc('ödevlerde soru sayısı', k.includes('20 soru') && /3\s*ödev · 45\s*soru/.test(k));
+  olc('öğrenci adı öğrenci sayfasına bağlantı', (await s.getByRole('link', { name: 'Kerem Aksu' }).getAttribute('href'))?.endsWith('#/ogretmen/ogrenciler/o2'));
+  olc('ortak sınıfta kapsam notu', k.includes('sizin ve platform sahibinin verdiği ödevler sayılıyor'));
+  const istek = JSON.parse(govdeler.filter((x) => x.uc === 'sinif_not_cizelgesi').pop()?.govde ?? '{}');
+  olc('öğretmen önizleme bayrağı göndermiyor', !('p_onizleme' in istek));
+  await s.getByRole('button', { name: /Ödev ödev puanlar/ }).first().click();
+  await s.waitForTimeout(300);
+  olc('öğretmende de öğrenci grafiği açılıyor', (await s.getByRole('img', { name: /Deniz Yalın ödev puanları/ }).count()) === 1);
+  await s.getByRole('button', { name: '← Sınıflar' }).click();
+  await s.waitForTimeout(400);
+  olc('"← Sınıflar" öğretmen listesine döndürüyor', s.url().endsWith('#/ogretmen/siniflar'), s.url());
+  await s.close();
+}
+
 console.log('--- M9. 360 px yatay taşma ---');
 {
   for (const yol of ['/mudur', '/mudur/siniflar', '/mudur/siniflar/9a', '/mudur/ogretmenler', '/mudur/ayarlar']) {
     const s = await tarayici.newPage({ viewport: { width: 360, height: 800 } });
     await s.route('**/rest/v1/rpc/*', (r) => {
       const uc = r.request().url().split('/').pop().split('?')[0];
-      const govde = uc === 'mudur_paneli' ? PANEL : uc === 'sinif_not_cizelgesi' ? CIZELGE : {};
+      const govde = uc === 'mudur_paneli' ? PANEL : uc === 'sinif_not_cizelgesi' ? CIZELGE : uc === 'konu_karnesi' ? KARNE : {};
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
     });
     await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)), MUDUR);
     await s.goto(KOK + yol, { waitUntil: 'networkidle' });
     await s.waitForTimeout(400);
     if (yol.endsWith('9a')) {
-      await s.getByRole('button', { name: /Deniz Yalın/ }).click();
+      await s.getByRole('button', { name: /Ödev ödev puanlar/ }).first().click();
       await s.waitForTimeout(200);
     }
     const tasma = await s.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
