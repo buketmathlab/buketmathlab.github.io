@@ -4,6 +4,8 @@
 --  1. okul_geneli: öğretmen alıyor; müdür, öğrenci ve veli 42501 alıyor.
 --     okul / seviyeler / aylar `mudur_paneli` ile BİREBİR aynı; öğretmene
 --     öğretmen listesi ve şube kartlarındaki öğretmen adları gitmiyor.
+--     0066: `kontrol_edilen_soru` yalnız GÖNDERENLERİ sayıyor (5 soruluk
+--     ödev, iki öğrenciden biri gönderdi → +5; gönderilen soru +5).
 --  2. Duyuru seçilen şubelerin öğrencisine gidiyor; başka şubeye gitmiyor.
 --     Veli görmüyor (veli ucu yok; öğrenci ucu veli jetonunu reddediyor).
 --  3. Yazma kuralları: kendi şubesi olmayan, arşivdeki şube, özel ders grubu
@@ -27,7 +29,7 @@ declare
   v_duy uuid; v_mudur uuid;
   o_a1 uuid; o_a2 uuid; o_b1 uuid; o_yeni uuid;
   d1 uuid; d2 uuid; d_eski uuid;
-  v jsonb; m jsonb; x jsonb;
+  v jsonb; m jsonb; x jsonb; once jsonb; h1 uuid;
   ek text := to_char(clock_timestamp(), 'HH24MISSUS');
   hata text;
 begin
@@ -52,6 +54,7 @@ begin
   s_c := (public.sinif_ekle(jt, 12::smallint, 'DC'))->>'id';
   update public.siniflar set arsiv = false where id in (s_a, s_b, s_c);
   update public.ogrenciler set aktif = false where sinif_id in (s_a, s_b, s_c);
+  update public.odevler set yayinda = false where sinif_id in (s_a, s_b, s_c);
   update public.duyurular set kaldirildi = now()
    where kaldirildi is null
      and id in (select duyuru_id from public.duyuru_siniflari where sinif_id in (s_a, s_b, s_c));
@@ -90,7 +93,29 @@ begin
     exception when insufficient_privilege then null;
     end;
   end loop;
-  raise notice '1 OK — okul_geneli: müdürle aynı rakamlar, öğretmen listesi yok; müdür/öğrenci/veli 42501';
+  -- 0066: KONTROL EDİLEN SORU — yalnız gönderenler.
+  once := public.okul_geneli(jd)->'okul';
+  if not (once ? 'kontrol_edilen_soru') then
+    raise exception '1e: kontrol_edilen_soru alanı yok';
+  end if;
+  h1 := (public.odev_olustur(jd, 'Kontrol edilen soru ' || ek, null, s_a, 'test', (current_date + 3)::date, 5,
+          '{"1":"A","2":"B","3":"C","4":"D","5":"E"}'::jsonb))->>'id';
+  perform public.odev_yayinla(jd, h1);
+  -- Ada Bir gönderiyor, Ada İki göndermiyor.
+  perform public.odev_gonder(jo_a, h1, 'cozum/' || h1 || '/' || o_a1 || '.jpg',
+            '{"1":"A","2":"B","3":"C","4":"D","5":"A"}'::jsonb);
+  v := public.okul_geneli(jd)->'okul';
+  if (v->>'kontrol_edilen_soru')::int - (once->>'kontrol_edilen_soru')::int <> 5 then
+    raise exception '1f: kontrol edilen soru +5 olmalıydı: önce %, sonra %',
+      once->>'kontrol_edilen_soru', v->>'kontrol_edilen_soru';
+  end if;
+  if (v->>'soru_toplami')::int - (once->>'soru_toplami')::int <> 5 then
+    raise exception '1g: gönderilen soru +5 olmalıydı';
+  end if;
+  if v <> public.mudur_paneli(jm)->'okul' then
+    raise exception '1h: okul_geneli ve mudur_paneli kontrol edilen soruda ayrıştı';
+  end if;
+  raise notice '1 OK — okul_geneli: müdürle aynı rakamlar, öğretmen listesi yok; müdür/öğrenci/veli 42501; kontrol edilen soru yalnız gönderenler (+5)';
 
   -- ---------------------------------------------------------------------------
   -- 2. Duyuru yalnız seçilen şubeye

@@ -5882,3 +5882,25 @@ yapılacaksa o sınıfın öğrencilerine o duyuru gitsin."
     kaldırıldı, her biri testi kırmızıya çevirdi.
   - `genel-denetimi.mjs` ve `duyuru-denetimi.mjs` (Chromium).
   - `erisilebilirlik-denetimi` taklitlerine `okul_geneli` eklendi.
+
+## 0066 — Kontrol edilen soru
+
+Öğretmenin isteği: "Gönderilen toplam soru ile kontrol edilen toplam soru
+ayrımı olsun." Seçimi: yalnız gönderenler sayılıyor. 30 kişilik şubede 28
+kişi 50 soruluk ödevi gönderdiyse sayı 1400.
+
+- **Sunucu:** `okul_geneli` ve `mudur_paneli` aynı alanı döndürüyor:
+  `okul.kontrol_edilen_soru`. Bu, yayındaki ödevlere bugün sınıfta olan
+  aktif öğrencilerin gönderdiği çözümlerdeki soru sayısının toplamı.
+  Süresi dolmamış ödevler de sayılıyor. Soru sayısı girilmemiş ödev
+  sayılmıyor.
+- **İstemci:** `GenelOzet`'te "Toplam soru" etiketi "Gönderilen soru" oldu;
+  seviye kartlarında da aynı. Yanında "Kontrol edilen soru" kutucuğu var.
+  Alan gelmezse (0066 öncesi) bu kutucuk çizilmiyor.
+- **Test:**
+  - `duyuru_testleri` 1. grup: 5 soruluk ödev, iki öğrenciden biri
+    gönderdi; sayı +5 artıyor. İki uç hâlâ birebir eşit.
+  - Kusur provası: "ödev verilen herkes" sayılınca sayı +10 artıyor ve test
+    kırmızıya dönüyor.
+  - Ekran denetimleri: `genel-denetimi` G3 ve `mudur-denetimi` (alan
+    yokken kutucuk yok).

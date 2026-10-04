@@ -10,7 +10,9 @@
  *  G2. Bugün: dört KÜÇÜK KUTU ("kutu içinde daha güzeldi … daha küçük
  *      minimal kutular"): her biri 44–72 px, telefonda ikişerli; kutu
  *      tıklanınca ayrıntıya gidiyor. Son gönderimler TEK SATIR (≤ 52 px).
- *  G3. Okulun genel durumu: müdürün Genel sekmesindeki bölümler (Aylık
+ *  G3. (0066: "Gönderilen soru" ve "Kontrol edilen soru" ayrı kutucuk;
+ *      alan gelmezse ikincisi yok.)
+ *      Okulun genel durumu: müdürün Genel sekmesindeki bölümler (Aylık
  *      gelişim, Sınıf seviyeleri, Şubelerin ortalaması, En çok zorlanılan
  *      konular) ve okul kutucukları `okul_geneli` verisiyle.
  *  G4. "Duyuru yap" bağlantısı duyurular sayfasına gidiyor.
@@ -43,7 +45,7 @@ const OZET = (o) => ({ ogrenci_sayisi: 56, odev_sayisi: 12, soru_toplami: 240, s
   gonderim_orani: 82, ortalama: 71.4, ...o });
 const GENEL = {
   yil_baslangici: '2026-09-01',
-  okul: OZET({ sinif_sayisi: 2 }),
+  okul: OZET({ sinif_sayisi: 2, kontrol_edilen_soru: 1400 }),
   seviyeler: [{ ...OZET({}), seviye: 9, sinif_sayisi: 2,
     eksik_konular: [{ konu: 'Mutlak Değer', toplam: 40, dogru: 18, oran: 45 }] }],
   siniflar: [
@@ -116,7 +118,9 @@ console.log('--- G1. Sekme adı ve başlık ---');
     'En çok zorlanılan konular', '9. sınıfların en çok zorlandığı konular', 'Mutlak Değer', 'Okul ortalaması']) {
     olc(`"${parca}" görünüyor`, m.includes(parca));
   }
-  olc('okul kutucukları okul_geneli verisiyle (240 soru)', /Toplam soru\s*240/.test(m), m.slice(0, 400));
+  olc('"Gönderilen soru 240" (0066)', /Gönderilen soru\s*240/.test(m), m.slice(0, 400));
+  olc('"Kontrol edilen soru 1.400" ayrı kutucuk (0066)', /Kontrol edilen soru\s*1\.400/.test(m), m.slice(0, 500));
+  olc('eski "Toplam soru" etiketi yok', !m.includes('Toplam soru'));
   const sira = m.indexOf('Bugün') < m.indexOf('Okulun genel durumu');
   olc('Bugün üstte, okul özeti altında', sira);
 

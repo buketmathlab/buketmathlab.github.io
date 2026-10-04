@@ -953,7 +953,11 @@ export type MudurPaneli = {
   ad: string;
   /** Eğitim yılının ilk günü (1 Eylül); `aylar` buradan başlar. */
   yil_baslangici: string;
-  okul: MudurOzeti & { sinif_sayisi: number };
+  /**
+   * 0066 — `kontrol_edilen_soru`: öğrencilerin GÖNDERDİĞİ çözümlerdeki soru
+   * toplamı (yalnız gönderenler). 0066 çalıştırılmadıysa gelmez.
+   */
+  okul: MudurOzeti & { sinif_sayisi: number; kontrol_edilen_soru?: number };
   /** 0063: her seviyenin en çok zorlandığı 5 konu (`eksik_konular`). */
   seviyeler: Array<
     MudurOzeti & { seviye: number; sinif_sayisi: number; eksik_konular: EksikKonu[] }
