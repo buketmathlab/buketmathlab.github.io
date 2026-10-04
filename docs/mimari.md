@@ -5831,6 +5831,9 @@ yapılacaksa o sınıfın öğrencilerine o duyuru gitsin."
     gönderimler de tek kutuda dar satırlarla.
   - Özet ayrı bir uçtan geliyor. Uç yoksa bölüm hiç çizilmiyor; beklenmeyen
     bir yanıt sayfayı düşürmüyor.
+  - "Verinizin yedeği" kartı Genel'den **Ayarlar**'a taşındı (öğretmenin
+    isteği), yine yalnız sahipte. `docs/yedekleme.md` güncellendi;
+    `genel-denetimi` G8 bunu ölçüyor.
 
 ### Duyurular
 

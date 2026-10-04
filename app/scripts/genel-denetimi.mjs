@@ -17,6 +17,9 @@
  *      çizilmiyor, Bugün yine görünüyor.
  *  G6. Öğrenci ve velinin sekmesi hâlâ "Pano".
  *  G7. 360 px'de yatay taşma yok.
+ *  G8. "Verinizin yedeği" Genel'de YOK, Ayarlar'da VAR (öğretmenin isteği:
+ *      "Verinizin yedeği kısmı ayarların içine taşınsın"); sahip olmayan
+ *      öğretmenin Ayarlar'ında yine yok.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/genel-denetimi.mjs
@@ -50,7 +53,7 @@ const GENEL = {
           { ay: '2026-10-01', odev_sayisi: 4, soru_toplami: 80, gonderim_orani: 85, ortalama: 73 }],
 };
 
-async function ac({ yol, rol = 'ogretmen', en = 390, genelYok = false }) {
+async function ac({ yol, rol = 'ogretmen', en = 390, genelYok = false, sahip = true }) {
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: en, height: 900 } });
   p.on('pageerror', (e) => olc('sayfa hatası yok', false, e.message));
@@ -64,7 +67,7 @@ async function ac({ yol, rol = 'ogretmen', en = 390, genelYok = false }) {
     }
     const govde = {
       ogretmen_panosu: PANO, okul_geneli: GENEL, bildirim_sayilari: {},
-      ben_kimim: { id: 't1', ad: 'Buket Topuzoğlu', sahip: true, vekalet: false, vekil: null },
+      ben_kimim: { id: 't1', ad: 'Buket Topuzoğlu', sahip, vekalet: false, vekil: null },
       ogrenci_odevleri: { ogrenci: { id: 'o1', ad: 'Elif Yıldırım', sinif: '9A', tur: 'okul' }, okunmamis_mesaj: 0,
         okunmamis_duyuru: 0, odevler: [], dersler: [] },
       ogrenci_duyurulari: [], ewalu_mesajlari: [], sinif_kartlari: [], ogretmen_duyurulari: [],
@@ -146,6 +149,22 @@ console.log('--- G7. 360 px ---');
   const { b, p } = await ac({ yol: '/ogretmen', en: 360 });
   const tasma = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   olc(`yatay taşma yok (${tasma} px)`, tasma <= 0);
+  await b.close();
+}
+
+console.log('--- G8. Yedek Ayarlar\'da ---');
+{
+  const { b, p } = await ac({ yol: '/ogretmen' });
+  olc('Genel sayfasında yedek kartı yok', !(await p.locator('main').innerText()).includes('Verinizin yedeği'));
+  await p.goto(KOK + '/ogretmen/ayarlar', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  const m = await p.locator('main').innerText();
+  olc('Ayarlar\'da "Verinizin yedeği" ve "Yedeği indir"', m.includes('Verinizin yedeği') && m.includes('Yedeği indir'), m.slice(0, 300));
+  await b.close();
+}
+{
+  const { b, p } = await ac({ yol: '/ogretmen/ayarlar', sahip: false });
+  olc('sahip olmayan öğretmende yedek kartı yok', !(await p.locator('main').innerText()).includes('Verinizin yedeği'));
   await b.close();
 }
 

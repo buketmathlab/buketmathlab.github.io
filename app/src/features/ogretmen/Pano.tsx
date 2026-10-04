@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { useBenKimim } from '@/hooks/useBenKimim';
-import { Yedek } from './Yedek';
 import { CozumDugmesi } from './CozumDugmesi';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -239,30 +238,6 @@ export function Pano() {
               </section>
             )}
 
-            {/* YEDEK EN ALTTA, bilerek. Panonun işi "bugün ne yapmalıyım";
-                yedek günlük bir iş değil. Ama görünmeyen yedek alınmayan
-                yedektir — bu yüzden ayrı bir sekmeye gömülmedi, öğretmenin
-                her gün açtığı ekranın sonunda duruyor. Eskidiğinde kart
-                sarıya dönüp kendini hatırlatıyor. */}
-            {/* YEDEK YALNIZ SAHİPTE (0033). `disa_aktar` bütün sistemi tek
-                dosyada indiriyor; dört öğretmenin her birinin
-                meslektaşlarının verisini indirmesi kabul edilemez. Sunucu
-                zaten reddediyor — ekran reddedilecek bir düğmeyi hiç
-                göstermiyor (`ucYok` deseni, Part VIII).
-
-                VARSAYILAN GÜVENLİ TARAFTA: kart yalnız "bu kişi sahip
-                DEĞİL" olduğunu BİLDİĞİMİZDE gizleniyor. 0033 panelde henüz
-                çalıştırılmadıysa `ben_kimim` ucu yoktur ve `ben` null
-                kalır — o durumda kart bugünkü gibi görünmeye devam eder.
-                Aksi hâlde arayüz yayınlanıp SQL çalıştırılmadığı aralıkta
-                öğretmen yedek alamaz hâle gelirdi. */}
-            {(ben === null || ben.sahip) && (
-              <>
-                <h2 className="mb-3 mt-8 text-[18px] text-ink">Verinizin yedeği</h2>
-                <Yedek />
-              </>
-            )}
-
             {/* Dar ekranda yan menü gizli; Ayarlar'a tek giriş burası.
                 `lg:hidden` — geniş ekranda yan menüde zaten var, iki kez
                 göstermek gereksiz. */}
@@ -273,7 +248,7 @@ export function Pano() {
               >
                 Ayarlar
               </Link>{' '}
-              — PIN’inizi buradan değiştirebilirsiniz.
+              — PIN’inizi değiştirebilir, verinizin yedeğini alabilirsiniz.
             </p>
 
             {/* ÖĞRETMENLER EKRANINA DAR EKRANDAN GİRİŞ.
