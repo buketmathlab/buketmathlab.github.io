@@ -14,7 +14,9 @@ const oku = (y: string) => readFileSync(`src/${y}`, 'utf8');
 const yorumsuz = (k: string) =>
   k.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1');
 
-const KAYNAK = yorumsuz(oku('features/ogretmen/Ayarlar.tsx'));
+// 0061: form `PinDegistirKarti`'na taşındı (öğretmen ve müdür ortak).
+const KAYNAK = yorumsuz(oku('components/PinDegistirKarti.tsx'));
+const AYARLAR = yorumsuz(oku('features/ogretmen/Ayarlar.tsx'));
 const SERVIS = yorumsuz(oku('services/supabase.ts'));
 
 /**
@@ -49,6 +51,20 @@ describe('Ayarlar — PIN alanları', () => {
     // atıyor. Bayrak kalkarsa PIN'ini yanlış yazan öğretmen yine sistemden
     // atılır.
     expect(KAYNAK).toMatch(/oturumDusurmesin:\s*true/);
+  });
+});
+
+describe('PIN kartı — kim hangi ucu çağırıyor (0061)', () => {
+  it('öğretmen Ayarlar\'ı kartı pin_degistir ile kullanıyor', () => {
+    expect(AYARLAR).toMatch(/<PinDegistirKarti uc="pin_degistir" \/>/);
+  });
+  it('müdür ekranı kartı mudur_pin_degistir ile kullanıyor', () => {
+    expect(yorumsuz(oku('features/mudur/MudurAyarlar.tsx'))).toMatch(
+      /<PinDegistirKarti uc="mudur_pin_degistir" \/>/,
+    );
+  });
+  it('kart ucu sabit yazmıyor, prop\'tan alıyor', () => {
+    expect(KAYNAK).toMatch(/rpc\(\s*uc,/);
   });
 });
 

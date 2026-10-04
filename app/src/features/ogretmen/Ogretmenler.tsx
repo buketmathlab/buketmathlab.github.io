@@ -29,6 +29,11 @@ import type { OgretmenSatiri, Sinif } from '@/types/api';
  * göndermeyi reddediyor ve denetim izine "Sahip → Hedef" yazıyor. Bu ekran
  * o sınırı düğmenin yanında yazıyor — sonradan öğrenilen bir yetki,
  * baştan bilinenden çok daha rahatsız edici olur.
+ *
+ * MÜDÜR (0060) aynı listede durur ama yalnız izler: sınıf atanamaz,
+ * hesabına girilemez; PIN'ini kendisi değiştirir (0061), unutursa sahip
+ * sıfırlar. Bu yüzden müdür satırında
+ * yalnız "PIN sıfırla" ve "Çıkar"/"Geri al" var.
  */
 export function Ogretmenler() {
   const { oturum, girisYap } = useOturum();
@@ -36,6 +41,8 @@ export function Ogretmenler() {
   const git = useNavigate();
 
   const [ekleAcik, setEkleAcik] = useState(false);
+  /** Aynı pencere iki iş görüyor: öğretmen ya da müdür ekleme. */
+  const [ekleTuru, setEkleTuru] = useState<'ogretmen' | 'mudur'>('ogretmen');
   const [ad, setAd] = useState('');
   const [pin, setPin] = useState('');
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
@@ -63,9 +70,16 @@ export function Ogretmenler() {
     p_arsiv: false,
   });
 
+  function ekleAc(tur: 'ogretmen' | 'mudur') {
+    setEkleTuru(tur);
+    setFormHatasi(null);
+    setEkleAcik(true);
+  }
+
   async function ekle() {
+    const mudur = ekleTuru === 'mudur';
     if (!ad.trim()) {
-      setFormHatasi('Öğretmenin adını yazın.');
+      setFormHatasi(mudur ? 'Müdürün adını yazın.' : 'Öğretmenin adını yazın.');
       return;
     }
     if (pin.length < 6) {
@@ -75,14 +89,18 @@ export function Ogretmenler() {
     setFormHatasi(null);
     setKaydediyor(true);
     try {
-      await rpc('ogretmen_ekle', { p_token: oturum?.token, p_ad: ad.trim(), p_pin: pin });
+      await rpc(mudur ? 'mudur_ekle' : 'ogretmen_ekle', {
+        p_token: oturum?.token,
+        p_ad: ad.trim(),
+        p_pin: pin,
+      });
       bildir(`${ad.trim()} eklendi. PIN'i kendisine iletin.`, 'basari');
       setEkleAcik(false);
       setAd('');
       setPin('');
       yenile();
     } catch (e) {
-      setFormHatasi(e instanceof Error ? e.message : 'Öğretmen eklenemedi.');
+      setFormHatasi(e instanceof Error ? e.message : mudur ? 'Müdür eklenemedi.' : 'Öğretmen eklenemedi.');
     } finally {
       setKaydediyor(false);
     }
@@ -224,7 +242,14 @@ export function Ogretmenler() {
       <SayfaBasligi
         baslik="Öğretmenler"
         aciklama="Platformu kimlerin kullandığı, kimin hangi sınıfa girdiği ve erişim yönetimi."
-        eylem={<Button onClick={() => setEkleAcik(true)}>Öğretmen ekle</Button>}
+        eylem={
+          <div className="flex flex-wrap gap-2">
+            <Button tur="sade" onClick={() => ekleAc('mudur')}>
+              Müdür ekle
+            </Button>
+            <Button onClick={() => ekleAc('ogretmen')}>Öğretmen ekle</Button>
+          </div>
+        }
       />
 
       <AsyncBoundary
@@ -242,12 +267,19 @@ export function Ogretmenler() {
                   <p className="flex flex-wrap items-center gap-2 text-[16px] font-semibold text-ink">
                     {o.ad}
                     {o.sahip && <Tag tur="bilgi">Platform sahibi</Tag>}
+                    {o.mudur && <Tag tur="bilgi">Müdür · yalnız izler</Tag>}
                     {!o.aktif && <Tag tur="tehlike">Sistemden çıkarıldı</Tag>}
                     {!o.pin_var && <Tag tur="uyari">PIN belirlenmemiş</Tag>}
                   </p>
                   <p className="mt-1 text-[13px] text-muted">
-                    <span className="sk-sayi">{o.sinif_sayisi}</span> sınıf ·{' '}
-                    <span className="sk-sayi">{o.odev_sayisi}</span> ödev
+                    {o.mudur ? (
+                      'Sınıf özetlerini, öğrenci notlarını, öğretmen etkinliğini ve onam durumunu görür'
+                    ) : (
+                      <>
+                        <span className="sk-sayi">{o.sinif_sayisi}</span> sınıf ·{' '}
+                        <span className="sk-sayi">{o.odev_sayisi}</span> ödev
+                      </>
+                    )}
                     {o.son_gorulme
                       ? ` · son giriş ${new Date(o.son_gorulme).toLocaleDateString('tr-TR')}`
                       : ' · hiç giriş yapmadı'}
@@ -259,17 +291,28 @@ export function Ogretmenler() {
                     reddedilecek bir düğmeyi hiç göstermiyor. */}
                 {!o.sahip && (
                   <div className="flex flex-wrap gap-2">
-                    <Button tur="sade" olcu="sm" onClick={() => sinifPenceresiniAc(o)}>
-                      Sınıfları
-                    </Button>
+                    {!o.mudur && (
+                      <Button tur="sade" olcu="sm" onClick={() => sinifPenceresiniAc(o)}>
+                        Sınıfları
+                      </Button>
+                    )}
+                    {/* 0062: müdürün hesabına GİRİLMİYOR; sahip müdürün
+                        gördüğü ekranı kendi oturumuyla önizliyor. */}
+                    {o.mudur && (
+                      <Button tur="sade" olcu="sm" onClick={() => git('/ogretmen/mudur-onizleme')}>
+                        Müdür ekranını gör
+                      </Button>
+                    )}
                     <Button tur="sade" olcu="sm" onClick={() => setPinAcik(o)}>
                       PIN sıfırla
                     </Button>
                     {o.aktif ? (
                       <>
-                        <Button tur="sade" olcu="sm" onClick={() => setVekaletAcik(o)}>
-                          Bu öğretmen olarak gir
-                        </Button>
+                        {!o.mudur && (
+                          <Button tur="sade" olcu="sm" onClick={() => setVekaletAcik(o)}>
+                            Bu öğretmen olarak gir
+                          </Button>
+                        )}
                         <Button tur="tehlike" olcu="sm" onClick={() => setCikarAcik(o)}>
                           Çıkar
                         </Button>
@@ -288,14 +331,32 @@ export function Ogretmenler() {
       </AsyncBoundary>
 
       {/* --- Öğretmen ekle --- */}
-      <Dialog acik={ekleAcik} onKapat={() => setEkleAcik(false)} baslik="Öğretmen ekle">
+      <Dialog
+        acik={ekleAcik}
+        onKapat={() => setEkleAcik(false)}
+        baslik={ekleTuru === 'mudur' ? 'Müdür ekle' : 'Öğretmen ekle'}
+      >
         <div className="flex flex-col gap-3">
+          {ekleTuru === 'mudur' && (
+            <p className="text-[14px] text-muted">
+              Müdür <span className="font-semibold">yalnız izler</span>: okulun genel
+              özetini, sınıfları, ödevlerin soru sayılarını, öğrencilerin notlarını,
+              öğretmenlerin ödev etkinliğini, sınıf analizini ve veli onam durumunu görür.
+              Cevapları, öğretmen yorumlarını ve mesajları görmez; kendi PIN'i dışında hiçbir
+              şeyi değiştiremez. Özel ders grupları ona görünmez. PIN'ini unutursa siz
+              sıfırlarsınız.
+            </p>
+          )}
           <Field etiket="Ad soyad">
             {(k) => <Input {...k} value={ad} onChange={(e) => setAd(e.target.value)} autoComplete="off" />}
           </Field>
           <Field
             etiket="Başlangıç PIN'i"
-            ipucu="En az 6 hane. Bu PIN'i kendisine siz ileteceksiniz; girdikten sonra Ayarlar'dan değiştirebilir."
+            ipucu={
+              ekleTuru === 'mudur'
+                ? "En az 6 hane, başka kimsenin PIN'iyle aynı olmamalı. Kendisine siz ileteceksiniz; girdikten sonra PIN sekmesinden değiştirebilir."
+                : "En az 6 hane. Bu PIN'i kendisine siz ileteceksiniz; girdikten sonra Ayarlar'dan değiştirebilir."
+            }
           >
             {/* autoCapitalize YOK — iPad'de harfleri büyütüp PIN'i bozuyordu
                 (giriş kutusunda bir kez yaşandı, regresyon testi var). */}

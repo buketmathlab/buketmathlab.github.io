@@ -5504,3 +5504,122 @@ soğuk başlangıcı) Chrome bunu açılır pencere sayıp sessizce engelliyor;
 - Testler: `dosya-ac.test.ts` (6), `dosya-acma-denetimi.mjs` D1–D5 (gerçek
   Chromium sekmesi); kusur provası: eski kalıpla kırmızı. Üç denetimin
   `window.open` taklidi yönlendirmeyi kaydedecek şekilde güncellendi.
+
+## 0060 — Müdür hesabı (salt izleme)
+
+İstek: "Müdür için hesap açmak istiyorum." Öğretmenin seçtiği kapsam:
+salt izleme; sınıf özetleri, öğretmen etkinliği, veli onam durumu.
+Öğrenci puanları YOK.
+
+- Müdür `ogretmenler` tablosunda `mudur = true` satırı (PIN'le aynı
+  girişten girer), ama oturumu ayrı rolle açılıyor: `rol = 'mudur'`.
+  Değiştiren her uç `_ogretmen` üzerinden yalnız `'ogretmen'` rolünü kabul
+  ettiği için müdür YAPISI GEREĞİ hiçbir şeyi değiştiremiyor — tek tek
+  izin listesi tutulmuyor.
+- Açık uçlar: `mudur_paneli` (sınıf özetleri + öğretmen etkinliği),
+  `sinif_analizi` ve `onam_dokumu` (erişim `_sinif_okuyucusu`: öğretmen
+  kendi sınıfı, müdür özel ders dışındaki her sınıf), `cikis`.
+- Kapananlar: müdüre sınıf atanamaz (tetikleyici), vekâlet yok
+  (`_oturum_ac` reddediyor), mesaj listesinde görünmez, özel ders grupları
+  ona kapalı, `mudur and yonetici` aynı anda olamaz.
+- Ekleme: yalnız sahip, Öğretmenler → "Müdür ekle" (`mudur_ekle`, denetim
+  izi `mudur_eklendi`). PIN'i sahip sıfırlar; çıkarma/geri alma öğretmenle
+  aynı. Müdür satırında "Sınıfları" ve "Bu öğretmen olarak gir" yok.
+- Arayüz: `features/mudur/` — Sınıflar (kart: öğrenci, yayındaki ödev,
+  süresi dolan ödevlerde gönderim oranı ve ortalama) ve Öğretmenler
+  (sınıflar, yayınlanan ödev, son 30 gün). Sınıf analizi ve onam dökümü
+  öğretmen ekranlarının aynısı, `geriYol="/mudur"` ile.
+- Testler: `mudur_testleri.sql` (8 grup; 5. grup p_token alan her anon
+  ucunu müdür jetonuyla çağırıp 42501 bekliyor), `mudur-denetimi.mjs`
+  M1–M5. Kusur provası: müdür satırında vekâlet düğmesi açılınca M5
+  kırmızı.
+
+## 0061 — Müdür: PIN, soru sayıları, analizler, gelişim, bireysel notlar
+
+İstek: "Kendi kodunu değiştirebilsin. Ödevlerdeki soru sayısını
+görebilsin. Bugüne kadar verilen toplam soru sayısı şube sınıf bazlı
+gösterilsin. Daha detaylı analizler, gelişim grafikleri olsun. Öğrencilerin
+bireysel notlarını da görsün."
+
+**Onam kararı (öğretmenin):** müdür bütün öğrencilerin notlarını görüyor.
+Onam metni değişmedi, çünkü velilere duyuru yapıldı. Cevaplar, öğretmen
+yorumları, mesajlar ve özel ders yine kapalı.
+
+**Sunucu:**
+- `mudur_pin_degistir`: müdürün tek yazma ucu.
+  - `_mudur` kapısından geçiyor; `pin_degistir`'in `_ogretmen` kapısı
+    genişletilmedi.
+  - Başka hesabın PIN'i reddediliyor; diğer oturumlar düşüyor.
+- `mudur_paneli` yeni alanlar:
+  - `okul`, `seviyeler`, şube ve öğretmen bazında `soru_toplami`;
+  - `soru_sayisiz` (soru sayısı girilmemiş ödev adedi);
+  - `aylar` (eğitim yılı 1 Eylül'den, ödevin son tarihinin ayı);
+  - `eksik_konular` (ilk 5, `_konu_durumu` ölçütüyle).
+  - Ortalama ve oran artık yalnız aktif ve o sınıfın öğrencilerinden
+    hesaplanıyor; bu `sinif_analizi` ile aynı küme. 0060 ortalamaya pasif
+    öğrencileri de katıyordu.
+- `sinif_not_cizelgesi`: öğrenci × ödev çizelgesi.
+  - Erişim `_sinif_okuyucusu` ile.
+  - Ortalama, yapılan/yapılmayan ve sıra `sinif_ogrenci_ozeti` ile birebir
+    (SQL testi 11. grup bunu karşılaştırıyor).
+  - Cevap, yorum ve dosya yolu dönmüyor.
+
+**İstemci:**
+- `components/grafik/CizgiGrafik.tsx`: SVG, kütüphane yok.
+  - 0–100 tek eksen; boş ay çizgiyi kesiyor.
+  - Lejant, uç değer etiketi, ipucu (fare ve ok tuşları) ve tablo görünümü
+    var.
+  - Renkler dataviz doğrulayıcısından geçti.
+- `components/grafik/CubukListesi.tsx`: yatay çubuklar.
+- `lib/grafik.ts`: hesaplar, vitest testleriyle.
+- Müdür sekmeleri: Genel, Sınıflar (`/mudur/siniflar/:id`), Öğretmenler,
+  PIN.
+  - Pano kabukta bir kez çekiliyor ve `Outlet` bağlamıyla sekmelere
+    paylaşılıyor.
+- `components/PinDegistirKarti.tsx`: öğretmen Ayarlar'ından çıkarıldı;
+  öğretmen ve müdür aynı formu kullanıyor. `Ayarlar.test.tsx` artık kartı
+  okuyor.
+
+**Testler:**
+- `mudur_testleri.sql` 9–11.
+  - Kusur provası: gönderilmeyen ödev 0 sayılmayınca 11. grup kırmızıya
+    döndü.
+- `mudur-denetimi.mjs` M1–M9.
+  - Kusur provası: ödev satırında soru sayısı gizlenince M7 kırmızıya
+    döndü.
+
+## 0062 — Müdür ekranı önizlemesi (platform sahibi)
+
+Öğretmenin sorusu: "Diğer öğretmenlere onların hesapları gibi
+girebiliyordum. Müdürün kinde de öyle mi olacak?" Cevap: müdür hesabına
+vekâletle girilmiyor (0060). Bunun yerine sahip, Öğretmenler ekranında
+"Müdür ekranını gör" ile müdürün gördüğü ekranın aynısını **kendi
+oturumuyla** açıyor (`/ogretmen/mudur-onizleme`).
+
+**Neden vekâlet değil:** müdür hiçbir şeyi değiştiremediği için hesabına
+girmenin tek amacı "ne görüyor" sorusunu cevaplamak. Önizlemenin üç
+faydası var:
+- müdürün son girişi değişmiyor;
+- onam dökümünde "alan" sahibin adı oluyor;
+- müdür adına PIN değiştirme kapısı açılmıyor.
+
+**Sunucu:**
+- `mudur_paneli` müdüre ya da `_yonetici`'ye açık; yanıtta `onizleme`
+  alanı var.
+- `_sinif_okuyucusu`: sahip, vekâlette değilken, özel ders dışındaki her
+  sınıfı okuyabiliyor. Bu üç okuma ucunu etkiliyor: `sinif_analizi`,
+  `onam_dokumu`, `sinif_not_cizelgesi`.
+- Diğer öğretmenlerin kuralı değişmedi.
+
+**İstemci:**
+- `MudurKabuk onizleme`: önizleme şeridi; PIN sekmesi ve Çıkış düğmesi yok;
+  "← Öğretmenler" sahibin ekranına döndürüyor.
+- Bağlantı kökü `Outlet` bağlamından geliyor (`mudur-baglam.ts`:
+  `MUDUR_KOKU`, `ONIZLEME_KOKU`).
+
+**Testler:**
+- `mudur_testleri.sql` 12. grup.
+  - Kusur provası: sahip kuralı kaldırılınca kırmızıya döndü.
+- `mudur-denetimi.mjs` M10.
+  - Kusur provası: sınıf sayfasındaki bağlantı sabit `/mudur`'a
+    çevrilince kırmızıya döndü.
