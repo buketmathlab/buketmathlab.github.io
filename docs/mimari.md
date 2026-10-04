@@ -5965,3 +5965,27 @@ Seçimi: müdür bütün okulu görür, her öğretmen yalnız derse girdiği
   - `mudur_testleri` izin listesine `okul_odevleri` eklendi.
   - Ekran denetimleri: `mudur-denetimi` M12, `genel-denetimi` G9,
     `ozel-ders-gizlilik` ve `erisilebilirlik`.
+
+## 0068 — Boş sınıfı silme
+
+Öğretmenin sorusu: "Platform sahibi olarak sınıfı silemiyor muyum?"
+Kararı: yalnız **boş sınıf** silinebilir. Yukarıdaki "Arşiv" kuralı
+değişmedi: geçmişi olan sınıf silinmez, arşivlenir.
+
+- **`sinif_sil(p_token, p_id)`:**
+  - Yalnız sahip, kendi hesabındayken (`_yonetici`; vekâlette yasak).
+  - Özel ders grubu silinmiyor (42501).
+  - Öğrenci kaydı (aktif ya da pasif) ya da ödev (taslak dahil) varsa
+    22023 dönüyor; mesaj sayıyı ve "arşivleyebilirsiniz"i söylüyor.
+  - `ogretmen_siniflari` ve `duyuru_siniflari` cascade ile siliniyor.
+    Öğrenci ve ödev bağları `restrict`: kontrol atlansa bile veritabanı
+    reddediyor (kusur provasında görüldü).
+  - Denetim izi: `sinif_silindi`.
+- **İstemci:** `Siniflar.tsx`'te "Sil" düğmesi yalnız sahipte ve kartta
+  öğrenci ve ödev sıfırken çıkıyor; tıklanınca onay penceresi açılıyor.
+- **Test:**
+  - `sinif_silme_testleri.sql`: 7 grup. Kusur provası: öğrenci, ödev ve
+    özel grup kontrolleri tek tek kaldırıldı; her biri testi kırmızıya
+    çevirdi.
+  - `sinif-silme-denetimi.mjs`: kusur provasında "boş" şartı kaldırılınca
+    2 sapma çıkıyor.
