@@ -5831,6 +5831,9 @@ yapılacaksa o sınıfın öğrencilerine o duyuru gitsin."
     gönderimler de tek kutuda dar satırlarla.
   - Özet ayrı bir uçtan geliyor. Uç yoksa bölüm hiç çizilmiyor; beklenmeyen
     bir yanıt sayfayı düşürmüyor.
+  - Bugün bölümü yeniden KUTU (öğretmenin isteği: "kutu içinde daha
+    güzeldi … daha küçük minimal kutular"): telefonda ikişerli, 44–72 px.
+    Son gönderimler tek satır (ad, sınıf, kısaltılmış ödev adı, etiket).
   - "Verinizin yedeği" kartı Genel'den **Ayarlar**'a taşındı (öğretmenin
     isteği), yine yalnız sahipte. `docs/yedekleme.md` güncellendi;
     `genel-denetimi` G8 bunu ölçüyor.
