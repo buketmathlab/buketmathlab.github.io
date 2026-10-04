@@ -18,10 +18,17 @@ export function OdevSatiri({
   odev: o,
   mevcut,
   ac,
+  anahtarPdfDogrudan = false,
 }: {
   odev: OdevSatirVerisi;
   mevcut: number;
   ac: (yol: string) => void;
+  /**
+   * 0068 — öğretmenin isteği (Genel → "Şubelere göre gör"): anahtar PDF'i
+   * varsa "Cevap anahtarı (PDF)" düğmesi onu DOĞRUDAN açsın; harf listesi
+   * yalnız PDF yokken açılır kapanır panelde.
+   */
+  anahtarPdfDogrudan?: boolean;
 }) {
   const [anahtarAcik, setAnahtarAcik] = useState(false);
   const harfler = Object.entries(o.cevap_anahtari ?? {})
@@ -29,6 +36,7 @@ export function OdevSatiri({
     .filter(([no]) => Number.isFinite(no))
     .sort((a, b) => a[0] - b[0]);
   const anahtarVar = harfler.length > 0 || !!o.anahtar_yolu;
+  const anahtarPdfDugmesi = anahtarPdfDogrudan && !!o.anahtar_yolu;
   const panelId = `anahtar-${o.id}`;
 
   return (
@@ -61,7 +69,12 @@ export function OdevSatiri({
               Soruları aç (PDF)
             </Button>
           )}
-          {anahtarVar && (
+          {anahtarPdfDugmesi && (
+            <Button tur="sade" olcu="sm" onClick={() => ac(o.anahtar_yolu as string)}>
+              Cevap anahtarı (PDF)
+            </Button>
+          )}
+          {anahtarVar && !anahtarPdfDugmesi && (
             <Button
               tur="sade"
               olcu="sm"

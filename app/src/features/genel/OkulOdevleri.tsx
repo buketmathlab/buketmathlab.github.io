@@ -92,6 +92,7 @@ export function OkulOdevleri({
                         odev={o}
                         // "x/y gönderdi" sunucudaki `beklenen` ile yazılıyor.
                         mevcut={o.beklenen}
+                        anahtarPdfDogrudan
                         ac={(yol) => void dosya.ac(() => dosyaAdresi(yol))}
                       />
                     ))}

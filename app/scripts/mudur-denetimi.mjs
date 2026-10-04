@@ -580,17 +580,26 @@ console.log('--- M12. Ödevler ve cevap anahtarları (0067) ---');
   await s.close();
 }
 {
-  const { s, uclar } = await sayfa({ oturum: MUDUR, yol: '/mudur' });
+  const { s, uclar, govdeler } = await sayfa({ oturum: MUDUR, yol: '/mudur' });
   await s.getByRole('link', { name: 'Yayınlanan ödevler — şube şube aç' }).click();
   await s.waitForTimeout(600);
   olc('Genel → "Yayınlanan ödev" şube şube sayfasını açtı', s.url().endsWith('#/mudur/odevler'), s.url());
   olc('okul_odevleri çağrıldı', uclar.includes('okul_odevleri'), uclar.join(','));
   await s.locator('summary').filter({ hasText: '9A' }).click();
   await s.waitForTimeout(200);
-  await s.getByRole('button', { name: /Cevap anahtarı/ }).first().click();
-  await s.waitForTimeout(200);
+  // 0068: anahtar PDF'i olan ödevde düğme PDF'i DOĞRUDAN açıyor (öğretmenin
+  // isteği); harf paneli yalnız PDF'i olmayan ödevde.
+  const [sekme] = await Promise.all([
+    s.waitForEvent('popup', { timeout: 5000 }).catch(() => null),
+    s.getByRole('button', { name: 'Cevap anahtarı (PDF)' }).first().click(),
+  ]);
+  await s.waitForTimeout(300);
+  const istek = JSON.parse(govdeler.filter((x) => x.uc === 'dosya-url').pop()?.govde ?? '{}');
+  olc('"Cevap anahtarı (PDF)" anahtar PDF yolunu doğrudan açıyor', istek.yol === 'odev/d1/anahtar.pdf' && !!sekme, JSON.stringify(istek));
+  if (sekme) await sekme.close();
+  olc('anahtar PDF\'i olan ödevde harf paneli düğmesi yok',
+    (await s.getByRole('button', { name: /Cevap anahtarı ▾/ }).count()) === 0);
   const m = await metin(s);
-  olc('şube şube sayfada anahtar görünüyor', /1\.\s*A/.test(m), m.slice(0, 600));
   olc('şube özeti "3 ödev"', /9A[\s\S]*3 ödev/.test(m), m.slice(0, 300));
   await s.close();
 }
