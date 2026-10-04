@@ -14,6 +14,8 @@ export type KonuVerisi = {
   test_odev: number;
   dolan_test: number;
   konulu_dolan_test: number;
+  /** 0070 — süresine bakmadan konusu girilmiş test; 0070 öncesinde gelmez. */
+  konulu_test?: number;
   yeterli_konu: number;
   en_az_cevap: number;
 };
@@ -28,6 +30,11 @@ export function konuYokNedeni(seviye: number, v: KonuVerisi | undefined | null):
   }
   if (v.dolan_test === 0) {
     return `${ad} test ödevlerinin süresi henüz dolmadı. Son tarih geçince konular burada görünür.`;
+  }
+  // 0070: konular girilmiş ama o testlerin süresi dolmamış. Öğretmenin
+  // bildirimi: "konu girdiğim halde konu girilmedi yazıyor".
+  if (v.konulu_dolan_test === 0 && (v.konulu_test ?? 0) > 0) {
+    return `${ad} konusu girilmiş testlerin süresi henüz dolmadı. Son tarih geçince konular burada görünür.`;
   }
   if (v.konulu_dolan_test === 0) {
     return `${ad} süresi dolan testlerde sorulara konu girilmemiş. Konu girilince burada görünür.`;
