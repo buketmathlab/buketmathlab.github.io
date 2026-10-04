@@ -23,6 +23,8 @@
  *  G8. "Verinizin yedeği" Genel'de YOK, Ayarlar'da VAR (öğretmenin isteği:
  *      "Verinizin yedeği kısmı ayarların içine taşınsın"); sahip olmayan
  *      öğretmenin Ayarlar'ında yine yok.
+ *  G9. (0067) "Yayınlanan ödev" kutucuğu öğretmende şube şube ödev sayfasını
+ *      açıyor ("Derse girdiğiniz şubeler"), cevap anahtarı görünüyor.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/genel-denetimi.mjs
@@ -74,6 +76,10 @@ async function ac({ yol, rol = 'ogretmen', en = 390, genelYok = false, sahip = t
       ogrenci_odevleri: { ogrenci: { id: 'o1', ad: 'Elif Yıldırım', sinif: '9A', tur: 'okul' }, okunmamis_mesaj: 0,
         okunmamis_duyuru: 0, odevler: [], dersler: [] },
       ogrenci_duyurulari: [], ewalu_mesajlari: [], sinif_kartlari: [], ogretmen_duyurulari: [],
+      okul_odevleri: [{ sinif_id: 's1', sinif: '9A', seviye: 9, odevler: [{ id: 'd1', baslik: 'Üslü sayılar',
+        ogretmen: 'Buket Topuzoğlu', tur: 'test', son_tarih: '2026-09-10', soru_sayisi: 3, gonderim: 2, beklenen: 3,
+        sure_doldu: true, ortalama: 75, odev_yolu: 'odev/d1/sorular.pdf', anahtar_yolu: null,
+        cevap_anahtari: { 1: 'A', 2: 'C', 3: 'B' } }] }],
       pano_detay: { tur: 'gondermeyen', baslik: 'Göndermeyen öğrenciler', aciklama: '', toplam: 1,
         gruplar: [{ sinif: '9A', ozel: false, satirlar: [{ ad: 'Mehmet Kaya', eksik: 1 }] }] },
     }[uc] ?? {};
@@ -178,6 +184,21 @@ console.log('--- G8. Yedek Ayarlar\'da ---');
 {
   const { b, p } = await ac({ yol: '/ogretmen/ayarlar', sahip: false });
   olc('sahip olmayan öğretmende yedek kartı yok', !(await p.locator('main').innerText()).includes('Verinizin yedeği'));
+  await b.close();
+}
+
+console.log('--- G9. Yayınlanan ödev → şube şube (öğretmen) ---');
+{
+  const { b, p, cagrilar } = await ac({ yol: '/ogretmen' });
+  await p.getByRole('link', { name: 'Yayınlanan ödevler — şube şube aç' }).click();
+  await p.waitForTimeout(500);
+  olc('öğretmende şube şube ödev sayfası açıldı', p.url().endsWith('#/ogretmen/okul-odevleri'), p.url());
+  olc('okul_odevleri çağrıldı', cagrilar.includes('okul_odevleri'));
+  olc('"Derse girdiğiniz şubeler" açıklaması', (await p.locator('main').innerText()).includes('Derse girdiğiniz şubelerin ödevleri'));
+  await p.locator('summary').filter({ hasText: '9A' }).click();
+  await p.getByRole('button', { name: /Cevap anahtarı/ }).first().click();
+  await p.waitForTimeout(200);
+  olc('cevap anahtarı görünüyor', /1\.\s*A/.test(await p.locator('main').innerText()));
   await b.close();
 }
 

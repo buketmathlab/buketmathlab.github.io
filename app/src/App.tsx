@@ -28,7 +28,11 @@ import { SinifYazdirma } from '@/features/ogretmen/SinifYazdirma';
 import { OgrenciDetay } from '@/features/ogretmen/OgrenciDetay';
 import { PanoDetay } from '@/features/ogretmen/PanoDetay';
 import { Siniflar } from '@/features/ogretmen/Siniflar';
-import { SinifDetay } from '@/features/ogretmen/SinifDetay';
+import {
+  OgretmenOkulOdevleri,
+  OgretmenSinifOdevleri,
+  SinifDetay,
+} from '@/features/ogretmen/SinifDetay';
 import { Ogrenciler } from '@/features/ogretmen/Ogrenciler';
 import { TopluOgrenci } from '@/features/ogretmen/TopluOgrenci';
 import { Odevler } from '@/features/ogretmen/Odevler';
@@ -54,6 +58,8 @@ import { MudurSiniflar } from '@/features/mudur/MudurSiniflar';
 import { MudurOgretmenler } from '@/features/mudur/MudurOgretmenler';
 import { MudurGenel } from '@/features/mudur/MudurGenel';
 import { MudurSinif } from '@/features/mudur/MudurSinif';
+import { MudurSinifOdevleri } from '@/features/mudur/MudurSinifOdevleri';
+import { MudurOkulOdevleri } from '@/features/mudur/MudurOkulOdevleri';
 import { MudurAyarlar } from '@/features/mudur/MudurAyarlar';
 import { MUDUR_KOKU, ONIZLEME_KOKU } from '@/features/mudur/mudur-baglam';
 
@@ -140,6 +146,8 @@ function Yonlendirme() {
           <Route path="siniflar" element={<MudurSiniflar />} />
           <Route path="siniflar/:id" element={<MudurSinif />} />
           <Route path="siniflar/:id/analiz" element={<SinifAnalizi geriYol={mudurSinifi} />} />
+          <Route path="siniflar/:id/odevler" element={<MudurSinifOdevleri />} />
+          <Route path="odevler" element={<MudurOkulOdevleri />} />
           <Route path="siniflar/:id/onam" element={<OnamDokumu geriYol={mudurSinifi} />} />
           <Route path="ogretmenler" element={<MudurOgretmenler />} />
           <Route path="ayarlar" element={<MudurAyarlar />} />
@@ -165,6 +173,8 @@ function Yonlendirme() {
         <Route path="siniflar" element={<MudurSiniflar />} />
         <Route path="siniflar/:id" element={<MudurSinif />} />
         <Route path="siniflar/:id/analiz" element={<SinifAnalizi geriYol={onizlemeSinifi} />} />
+        <Route path="siniflar/:id/odevler" element={<MudurSinifOdevleri />} />
+        <Route path="odevler" element={<MudurOkulOdevleri />} />
         <Route path="siniflar/:id/onam" element={<OnamDokumu geriYol={onizlemeSinifi} />} />
         <Route path="ogretmenler" element={<MudurOgretmenler />} />
       </Route>
@@ -178,6 +188,10 @@ function Yonlendirme() {
         <Route path="siniflar/:id" element={<SinifDetay />} />
         {/* Analiz SEKME DEĞİL: bir sınıfın belgesi, ara sıra bakılır. */}
         <Route path="siniflar/:id/analiz" element={<SinifAnalizi />} />
+        {/* 0067: şubenin ödevleri ve cevap anahtarları; Genel'deki
+            "Yayınlanan ödev" kutucuğunun açtığı şube şube liste. */}
+        <Route path="siniflar/:id/odevler" element={<OgretmenSinifOdevleri />} />
+        <Route path="okul-odevleri" element={<OgretmenOkulOdevleri />} />
         <Route path="ogrenciler" element={<Ogrenciler />} />
         {/* `:id`'DEN ÖNCE. Sonra gelseydi `/ogrenciler/toplu` isteği
             `:id = "toplu"` olarak eşleşir ve "öğrenci bulunamadı" ekranı

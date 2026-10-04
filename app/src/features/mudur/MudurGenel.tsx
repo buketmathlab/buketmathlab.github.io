@@ -13,7 +13,7 @@ import { listeDurumu, useMudurPaneli } from './mudur-baglam';
  * Gövde 0065'ten beri öğretmenin Genel sayfasıyla ortak: `GenelOzet`.
  */
 export function MudurGenel() {
-  const { veri, durum, hata, yenile } = useMudurPaneli();
+  const { veri, durum, hata, yenile, kok } = useMudurPaneli();
 
   return (
     <>
@@ -24,7 +24,7 @@ export function MudurGenel() {
         {...(hata ? { hataAciklama: hata } : {})}
         tekrarDene={yenile}
       >
-        {veri && <GenelOzet veri={veri} />}
+        {veri && <GenelOzet veri={veri} odevlerYolu={`${kok}/odevler`} />}
       </AsyncBoundary>
     </>
   );

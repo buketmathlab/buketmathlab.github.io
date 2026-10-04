@@ -1058,3 +1058,11 @@ export type OgrenciDuyurusu = {
   /** Öğrenci Pano'yu en son açtığından sonra mı geldi. */
   yeni: boolean;
 };
+
+/** 0067 — `okul_odevleri`: şube şube ödevler (satırlar `sinif_not_cizelgesi` ile aynı). */
+export type OkulOdevleri = Array<{
+  sinif_id: string;
+  sinif: string;
+  seviye: number;
+  odevler: SinifNotCizelgesi['odevler'];
+}>;

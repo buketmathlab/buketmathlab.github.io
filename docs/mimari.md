@@ -5929,3 +5929,39 @@ dönüyor: `_ogretmenin_ogrencisi`, `_sinif_okuyucusu` ve `mudur_paneli`
 Öğrenciler (ekleme penceresiyle), Yeni ödev (4 şık açık) ve Duyurular
 sayfalarında, müdürün Genel bakış sayfasında "özel ders" yazısı yok;
 sahipte seçenek duruyor. Kusur provası: eski yazılarla 5 sapma.
+
+## 0067 — Ödevler ve cevap anahtarları: sınıf kartında düğme, Genel'de şube şube liste
+
+Öğretmenin istekleri:
+
+- Sınıflar sekmesindeki şube kutusunda düğme sırası "Sınıfı aç → Konu
+  analizi → Ödevler ve cevap anahtarları → Onam dökümü" olsun.
+- Genel'de "Yayınlanan ödev"e dokununca şube şube ödevler ve cevap
+  anahtarları görünsün.
+
+Seçimi: müdür bütün okulu görür, her öğretmen yalnız derse girdiği
+şubeleri.
+
+- **Sunucu, `okul_odevleri(p_token, p_onizleme)`:** Yeni hesap yok; her
+  şube için `sinif_not_cizelgesi(...)->'odevler'` kullanılıyor. Satır
+  kuralları ve kapı (`_sinif_okuyucusu`) oradan geliyor.
+  - Kapsam: müdürde bütün şubeler; sahip önizlemesinde (`_yonetici`) de
+    bütün şubeler; öğretmende `_ogretmenin_sinifi` olanlar. Arşiv, özel ders
+    ve ödevsiz şube listeye girmiyor.
+  - Öğretmenin `p_onizleme` ile kapsamını genişletme girişimini iki kapı
+    durduruyor: `_yonetici` ve içerideki `_sinif_okuyucusu`. Kusur
+    provasında birincisi kaldırıldığında ikincisi tuttu.
+- **İstemci:**
+  - `siniflar/OdevSatiri.tsx` (sınıf sayfasından taşındı, değişmedi).
+  - `siniflar/SinifOdevleri.tsx`: bir şubenin ödevleri ve cevap
+    anahtarları; adresi `.../siniflar/:id/odevler`.
+  - `genel/OkulOdevleri.tsx`: şube şube açılır kapanır liste; adresler
+    `/mudur/odevler` ve `/ogretmen/okul-odevleri`.
+  - `GenelOzet`'te "Yayınlanan ödev" kutucuğu gerilmiş bağlantı
+    ("Şubelere göre gör ›"). Kart ve sınıf sayfası başlığı yeni sırada.
+- **Test:**
+  - `okul_odevleri_testleri.sql`: 5 grup. Kusur provası: şube süzgeci
+    kaldırılınca ve özel grup dahil edilince test kırmızıya dönüyor.
+  - `mudur_testleri` izin listesine `okul_odevleri` eklendi.
+  - Ekran denetimleri: `mudur-denetimi` M12, `genel-denetimi` G9,
+    `ozel-ders-gizlilik` ve `erisilebilirlik`.
