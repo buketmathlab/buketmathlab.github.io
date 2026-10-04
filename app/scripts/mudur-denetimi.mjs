@@ -64,7 +64,8 @@ const PANEL = {
         { konu: 'Üslü Sayılar', toplam: 24, dogru: 14, oran: 58 },
       ],
     },
-    { seviye: 10, sinif_sayisi: 1, ogrenci_sayisi: 31, odev_sayisi: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null, eksik_konular: [] },
+    { seviye: 10, sinif_sayisi: 1, ogrenci_sayisi: 31, odev_sayisi: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null, eksik_konular: [],
+      konu_verisi: { test_odev: 2, dolan_test: 0, konulu_dolan_test: 0, yeterli_konu: 0, en_az_cevap: 5 } },
   ],
   siniflar: [
     {
@@ -362,7 +363,11 @@ console.log('--- M6. Genel: soru toplamı, seviyeler, grafik, konular ---');
   olc('tablo görünümünde ay, ödev ve soru', /Kasım 2026\s*75,5\s*%80\s*2\s*440/.test(tablo), tablo);
   olc('şube çubukları', m.includes('Şubelerin ortalaması'));
   olc('konular seviyelere göre: 9. sınıflar', /9\. sınıfların en çok zorlandığı konular\s*Limit[\s\S]*doğru: 15 \/ 48 cevap[\s\S]*Üslü Sayılar/.test(m));
-  olc('10. sınıflarda veri yok yazıyor', /10\. sınıfların en çok zorlandığı konular\s*Henüz yeterli veri yok/.test(m));
+  // 0069: genel cümle yerine NEDEN (öğretmenin sorusu: "neden yeteri kadar
+  // veri yok yazıyor?").
+  olc('10. sınıflarda nedeni yazıyor (süresi dolmadı)',
+    /10\. sınıfların en çok zorlandığı konular\s*10\. sınıflarda test ödevlerinin süresi henüz dolmadı/.test(m), m.slice(-700));
+  olc('eski genel cümle yok', !m.includes('Henüz yeterli veri yok'));
   olc('okul geneli tek liste kalktı', !m.includes('Okulun en çok zorlandığı konular'));
   await s.close();
 }

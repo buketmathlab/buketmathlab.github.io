@@ -115,7 +115,31 @@ begin
   if v <> public.mudur_paneli(jm)->'okul' then
     raise exception '1h: okul_geneli ve mudur_paneli kontrol edilen soruda ayrıştı';
   end if;
-  raise notice '1 OK — okul_geneli: müdürle aynı rakamlar, öğretmen listesi yok; müdür/öğrenci/veli 42501; kontrol edilen soru yalnız gönderenler (+5)';
+  -- 0069: KONU NEDENİ — 12. sınıf seviyesinde sayılar adım adım değişiyor.
+  once := (select sv->'konu_verisi' from jsonb_array_elements(public.okul_geneli(jd)->'seviyeler') sv
+            where (sv->>'seviye')::int = 12);
+  if once is null or not (once ? 'test_odev' and once ? 'dolan_test' and once ? 'konulu_dolan_test'
+                          and once ? 'yeterli_konu' and once ? 'en_az_cevap') then
+    raise exception '1i: konu_verisi eksik: %', once;
+  end if;
+  update public.odevler set son_tarih = current_date - 1 where id = h1;
+  v := (select sv->'konu_verisi' from jsonb_array_elements(public.okul_geneli(jd)->'seviyeler') sv
+         where (sv->>'seviye')::int = 12);
+  if (v->>'dolan_test')::int - (once->>'dolan_test')::int <> 1
+     or (v->>'konulu_dolan_test')::int <> (once->>'konulu_dolan_test')::int then
+    raise exception '1j: süresi dolan konusuz test yanlış sayıldı: önce % sonra %', once, v;
+  end if;
+  update public.odevler set konular = '{"1":"Limit","2":"Limit","3":"Limit","4":"Limit","5":"Limit"}'::jsonb
+   where id = h1;
+  m := (select sv->'konu_verisi' from jsonb_array_elements(public.okul_geneli(jd)->'seviyeler') sv
+         where (sv->>'seviye')::int = 12);
+  if (m->>'konulu_dolan_test')::int - (v->>'konulu_dolan_test')::int <> 1 then
+    raise exception '1k: konu girilince sayılmadı: % → %', v, m;
+  end if;
+  if public.okul_geneli(jd)->'seviyeler' <> public.mudur_paneli(jm)->'seviyeler' then
+    raise exception '1l: konu nedeni iki uçta ayrıştı';
+  end if;
+  raise notice '1 OK — okul_geneli: müdürle aynı rakamlar, öğretmen listesi yok; müdür/öğrenci/veli 42501; kontrol edilen soru yalnız gönderenler (+5); konu nedeni sayıları doğru (0069)';
 
   -- ---------------------------------------------------------------------------
   -- 2. Duyuru yalnız seçilen şubeye
