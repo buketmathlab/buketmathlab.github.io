@@ -14,7 +14,8 @@
  *  M2. Öğretmenler: sınıflar, ödev ve soru sayısı.
  *  M3. Sınıflar → Konu analizi ve Onam dökümü; "← Sınıf" o sınıfın sayfasına.
  *  M4. Öğretmen adresi elle yazılsa da müdür ekranına düşüyor.
- *  M5. Sahip → "Müdür ekle": `mudur_ekle`; müdür satırında vekâlet/sınıf yok.
+ *  M5. Sahip → "Müdür ekle": `mudur_ekle`; müdür satırında vekâlet/sınıf yok,
+ *      son giriş tarihi öğretmenlerdeki gibi var.
  *  M6. Genel: toplam soru, seviye kartları, aylık grafik (ay kadar nokta,
  *      boş ay çizilmiyor), şube çubukları, eksik konular, tablo görünümü.
  *  M7. Sınıflar kartında soru toplamı; sınıf sayfasında ödevlerin soru
@@ -157,7 +158,7 @@ async function sayfa({ oturum, yol, genislik = 390, pinYaniti = null }) {
         ? [
             { id: 'g1', ad: 'Buket Topuzoğlu', sahip: true, aktif: true, pin_var: true, sinif_sayisi: 2, odev_sayisi: 14, son_gorulme: null, sinif_idler: [] },
             { id: 'g2', ad: 'Barış Atmaca', sahip: false, aktif: true, pin_var: true, sinif_sayisi: 1, odev_sayisi: 3, son_gorulme: null, sinif_idler: ['10b'] },
-            { id: 'g3', ad: 'Ayşe Kaya', sahip: false, mudur: true, aktif: true, pin_var: true, sinif_sayisi: 0, odev_sayisi: 0, son_gorulme: null, sinif_idler: [] },
+            { id: 'g3', ad: 'Ayşe Kaya', sahip: false, mudur: true, aktif: true, pin_var: true, sinif_sayisi: 0, odev_sayisi: 0, son_gorulme: '2026-10-02T09:00:00Z', sinif_idler: [] },
           ]
       : uc === 'mudur_ekle' ? { id: 'g4', ad: 'Yeni Müdür' }
       : uc === 'siniflar_listesi' ? []
@@ -255,6 +256,7 @@ console.log('--- M5. Sahip: Müdür ekle ---');
   olc('müdür satırında "Sınıfları" yok', !satirMetni.includes('Sınıfları'), satirMetni.replace(/\s+/g, ' '));
   olc('müdür satırında "Bu öğretmen olarak gir" yok', !satirMetni.includes('Bu öğretmen olarak gir'));
   olc('müdür satırında "PIN sıfırla" var', satirMetni.includes('PIN sıfırla'));
+  olc('müdürün son girişi görünüyor (öğretmenler gibi)', satirMetni.includes('son giriş 02.10.2026'), satirMetni.replace(/\s+/g, ' '));
   olc('öğretmen satırında "Bu öğretmen olarak gir" duruyor', (await s.getByRole('button', { name: 'Bu öğretmen olarak gir' }).count()) === 1);
 
   await s.getByRole('button', { name: 'Müdür ekle' }).click();

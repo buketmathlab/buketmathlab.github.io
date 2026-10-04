@@ -1,7 +1,8 @@
 -- =============================================================================
 -- SEKİZ — 0060: MÜDÜR HESABI (salt izleme)
 --
---  1. Müdür PIN'iyle giriş 'mudur' rolü döndürüyor.
+--  1. Müdür PIN'iyle giriş 'mudur' rolü döndürüyor; son girişi sahibin
+--     Öğretmenler listesinde görünüyor.
 --  2. Pano: sınıflar ve öğretmenler; sayılar doğru; özel ders grubu ve
 --     arşiv yok; ÖĞRENCİ ADI HİÇBİR YERDE YOK; müdür öğretmen listesinde yok.
 --  3. Sınıf analizi müdürde öğretmeninkiyle BİREBİR aynı; onam dökümü
@@ -98,7 +99,21 @@ begin
     raise exception '1: müdür girişi: %', v;
   end if;
   jm := v->>'token';
-  raise notice '1 OK — müdür PIN''i "mudur" rolüyle oturum açıyor';
+  -- SON GİRİŞ: sahip, Öğretmenler ekranında müdürün son girişini de
+  -- öğretmenlerinki gibi görmeli (`_oturum` → `son_gorulme`). Oturum
+  -- açılışı zaten bir tarih yazıyor; ölçüm boşa çıkmasın diye o tarih
+  -- iki gün geriye çekiliyor ve müdürün sonraki kullanımıyla güncellenmesi
+  -- bekleniyor.
+  update public.oturumlar set son_gorulme = now() - interval '2 days'
+   where rol = 'mudur' and ogretmen_id = v_mudur;
+  perform public.mudur_paneli(jm);
+  select e into t from jsonb_array_elements(public.ogretmenler_listesi(jt)) e
+   where (e->>'id')::uuid = v_mudur;
+  if t is null or not (t->>'mudur')::boolean or t->>'son_gorulme' is null
+     or (t->>'son_gorulme')::timestamptz < now() - interval '1 minute' then
+    raise exception '1b: müdürün son girişi Öğretmenler listesinde yok: %', t;
+  end if;
+  raise notice '1 OK — müdür PIN''i "mudur" rolüyle oturum açıyor; son girişi sahibin listesinde görünüyor';
 
   -- ---------------------------------------------------------------------------
   -- 2. PANO
