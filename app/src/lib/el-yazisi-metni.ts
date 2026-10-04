@@ -3,7 +3,7 @@
  * React'siz, doğrudan test edilebilir (`ogrenci-cikarma-metni.ts` deseni).
  *
  * Öğretmenin kuralı: çözüm el yazısıyla olmalı. GEÇERLİ İKİ YOL var:
- * kâğıda kalemle çözmek ya da tablette/iPad'de ödev dosyasını açıp
+ * kâğıda kalemle çözmek ya da iPad/tablette ödev dosyasını açıp
  * soruların ÜZERİNE kalemle çözmek. İkincisi de el yazısıdır ve metin bunu
  * açıkça söylüyor; tabletle çalışan öğrenci kuralı kendine karşı
  * okumamalı.
@@ -16,40 +16,40 @@
  * öğretmenin "yeniden aç" yolu (0056).
  */
 
-export const BASLIK = 'Çözümün senin el yazınla olsun';
+export const BASLIK = 'Çözümünü kendi el yazınla teslim et';
 
 export const NEDEN =
-  'Bu ödevde benim için en değerli şey, soruyu nasıl düşündüğün. Çözüm ' +
-  'yolunu görünce nerede zorlandığını anlar, sana o noktada yardım ederim. ' +
-  'Yalnız doğru şıkkı bilmek bunu göstermez.';
+  'Çözüm adımların, nasıl düşündüğünü ve nerede desteğe ihtiyaç duyduğunu görmemi sağlar.';
 
+/** İki geçerli yol. Cihaz adı açıkça yazılı: iPad'de kalemle çözen öğrenci
+ *  kuralı kendine karşı okumasın ("Bu da el yazısı sayılır"). */
 export const YOLLAR: ReadonlyArray<{ baslik: string; metin: string }> = [
   {
-    baslik: 'Kâğıtta',
-    metin: 'Soruları kâğıda çöz; çözümünün okunaklı bir fotoğrafını çekip yükle.',
+    baslik: 'Kâğıt üzerinde',
+    metin: 'Soruları kâğıda kalemle çöz; çözümünün net bir fotoğrafını yükle.',
   },
   {
-    baslik: 'Tablette',
+    baslik: 'iPad veya tablet üzerinde',
     metin:
-      '“Soruları aç (PDF)” ile ödev dosyasını aç, tablet kalemiyle soruların ' +
-      'üzerine çöz. Sayfaları resim ya da PDF olarak kaydedip buraya yükle.',
+      '“Soruları aç (PDF)” ile ödev dosyasını aç, soruların üzerine kalemle çöz; ' +
+      'sayfaları kaydedip yükle. Bu da el yazısı sayılır.',
   },
 ];
 
-/** Sonuç açıkça yazılı (öğretmenin isteği): kurala uymayan ödev kabul
- *  edilmez. Bunu öğrenci göndermeden ÖNCE bilsin. */
+/** Kabul edilmeyen, CİHAZA göre değil YAZIM BİÇİMİNE göre tarif ediliyor:
+ *  "bilgisayarda yazılmış" iPad'de kalemle yazanı yanıltabiliyordu
+ *  (öğretmenin uyarısı). "Klavyeyle yazılmış" her cihazda aynı anlamda. */
 export const KABUL_EDILMEYEN =
-  'Bilgisayarda yazılmış, başkasından kopyalanmış ya da yapay zekâya ' +
-  'yaptırılmış bir çözüm gönderirsen ödevin kabul edilmez.';
+  'Klavyeyle yazılmış, başkasından alınmış ya da yapay zekâyla hazırlanmış ' +
+  'bir çözüm gönderirsen ödevin kabul edilmez.';
 
 export const ONAY =
-  'Bu ödevi kendim çözdüm; çözümüm kendi el yazımla (kâğıtta ya da tablette). ' +
+  'Bu ödevi kendim çözdüm; çözüm kendi el yazımdır. ' +
   'Aksi durumda ödevimin kabul edilmeyeceğini biliyorum.';
 
-export const ONAY_EKSIK = 'Göndermeden önce el yazısı onayını işaretle.';
+export const ONAY_EKSIK = 'Ödevi göndermek için onay kutusunu işaretle.';
 
 /** Yükleme alanının ipucu: iki yol da geçerli. */
 export const YUKLEME_IPUCU =
-  'Zorunlu. Kâğıttaki çözümünün fotoğrafı ya da tablette soruların üzerine ' +
-  'yazdığın sayfalar (resim ya da PDF). Okunaklı olsun yeter; PDF birden fazla ' +
-  'sayfaysa sayfalar tek görselde birleştirilir.';
+  'Zorunlu. Kâğıttaki çözümünün fotoğrafı ya da iPad/tablette çözdüğün ' +
+  'sayfalar (görsel veya PDF). Birden çok sayfalı PDF tek görselde birleştirilir.';

@@ -13,16 +13,21 @@ const hepsi = [BASLIK, NEDEN, KABUL_EDILMEYEN, ONAY, ONAY_EKSIK, YUKLEME_IPUCU, 
 
 describe('el yazısı kuralı metni', () => {
   it('iki geçerli yol da yazılı: kâğıt ve tablette soruların üzerine', () => {
-    expect(YOLLAR.map((y) => y.baslik)).toEqual(['Kâğıtta', 'Tablette']);
-    expect(YOLLAR[0]?.metin).toMatch(/kâğıda/);
-    expect(YOLLAR[1]?.metin).toMatch(/soruların üzerine/);
-    expect(YUKLEME_IPUCU).toMatch(/tablette soruların üzerine/);
+    expect(YOLLAR.map((y) => y.baslik)).toEqual(['Kâğıt üzerinde', 'iPad veya tablet üzerinde']);
+    expect(YOLLAR[0]?.metin).toMatch(/kâğıda kalemle/);
+    expect(YOLLAR[1]?.metin).toMatch(/soruların üzerine kalemle/);
+    expect(YOLLAR[1]?.metin).toMatch(/Bu da el yazısı sayılır/);
+    expect(YUKLEME_IPUCU).toMatch(/iPad\/tablette/);
   });
 
-  it('kabul edilmeyenler açık: bilgisayar, kopya, yapay zekâ', () => {
-    expect(KABUL_EDILMEYEN).toMatch(/Bilgisayarda yazılmış/);
-    expect(KABUL_EDILMEYEN).toMatch(/kopyalanmış/);
+  it('kabul edilmeyenler açık: klavye, başkasından alınmış, yapay zekâ', () => {
+    expect(KABUL_EDILMEYEN).toMatch(/Klavyeyle yazılmış/);
+    expect(KABUL_EDILMEYEN).toMatch(/başkasından alınmış/);
     expect(KABUL_EDILMEYEN).toMatch(/yapay zekâ/);
+  });
+
+  it('cihaz adıyla yasak yok — iPad\'de kalemle yazan kendini dışarıda sanmasın', () => {
+    expect(hepsi).not.toMatch(/bilgisayar/i);
   });
 
   it('sonuç açık: kurala uymayan ödev kabul edilmez — kart ve onay ikisi de söylüyor', () => {
@@ -30,12 +35,12 @@ describe('el yazısı kuralı metni', () => {
     expect(ONAY).toMatch(/Aksi durumda ödevimin kabul edilmeyeceğini biliyorum/);
   });
 
-  it('onay iki yolu da kapsıyor — tabletle çözen kendini dışarıda sanmasın', () => {
-    expect(ONAY).toMatch(/kâğıtta ya da tablette/);
+  it('onay el yazısını söylüyor', () => {
+    expect(ONAY).toMatch(/kendi el yazımdır/);
   });
 
   it('neden yazılı: kural gerekçesiyle veriliyor', () => {
-    expect(NEDEN).toMatch(/nasıl düşündüğün/);
+    expect(NEDEN).toMatch(/nasıl düşündüğünü/);
   });
 
   it('suçlayıcı dil yok', () => {

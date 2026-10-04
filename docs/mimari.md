@@ -5763,6 +5763,13 @@ el yazısı sayılıyor.
 - Sonuç açıkça yazılı (öğretmenin isteği): kartta "…bir çözüm gönderirsen
   ödevin kabul edilmez." (koyu, soluk değil); onay metni "Aksi durumda
   ödevimin kabul edilmeyeceğini biliyorum." ile bitiyor.
+- Metinler sadeleştirildi (öğretmenin isteği: daha açık, kısa, profesyonel).
+  Yollar artık "Kâğıt üzerinde" ve "iPad veya tablet üzerinde"; ikincisi
+  "Bu da el yazısı sayılır." diye bitiyor. Kabul edilmeyen, cihaza göre
+  ("bilgisayarda yazılmış") değil yazım biçimine göre tarif ediliyor:
+  "Klavyeyle yazılmış…". Böylece iPad'de kalemle yazan öğrenci kuralı
+  kendine karşı okumuyor. vitest metinde "bilgisayar" geçmediğini
+  denetliyor.
 - `el-yazisi-denetimi.mjs`: kart ve iki yol, onaysız gönderimde çağrı ve
   yükleme yok, uyarı görünüyor, onaylıyken gönderim gidiyor, çok sayfalı yol,
   gönderilmiş ödev, 360 px. Kusur provası: onay şartı kaldırılınca 5 sapma.
@@ -5783,8 +5790,8 @@ hatası değildi (çizim başarısız olsaydı gürültüsüz, tam 0 çıkardı)
   köşesi görünen fotoğraf da reddedilmiyor.
 - `gorseliSikistir`: çizimden sonra bu denetimi yapıyor ve
   `KaranlikFotografHatasi` fırlatıyor. Öğrenci şu uyarıyı görüyor:
-  "Fotoğraf çok karanlık, çözümün görünmüyor. Işıklı bir yerde yeniden
-  çek." Fotoğraf seçilmemiş sayılıyor; gönderim ve yükleme yapılmıyor.
+  "Fotoğraf çok karanlık; çözümün okunmuyor. Aydınlık bir ortamda
+  yeniden çekip yükle." Fotoğraf seçilmemiş sayılıyor; gönderim ve yükleme yapılmıyor.
   Çok sayfalı yolda dosyanın adıyla birlikte aynı uyarı çıkıyor.
 - Denetim: vitest (eşik ve sıkıştırıcı) ve `el-yazisi-denetimi.mjs` E7.
   E7'de 0–13 gürültülü 1400×1050 JPEG uyarı veriyor ve gitmiyor; aydınlık

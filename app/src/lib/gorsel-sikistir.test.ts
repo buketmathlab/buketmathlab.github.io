@@ -112,6 +112,6 @@ describe('gorseliSikistir', () => {
 
   it('karanlık (siyah) fotoğrafı gönderime almaz, ne yapacağını söyler', async () => {
     ortamKur({ en: 4032, boy: 3024, parlaklik: 4 });
-    await expect(gorseliSikistir(dosya())).rejects.toThrow(/çok karanlık.*Işıklı bir yerde yeniden çek/);
+    await expect(gorseliSikistir(dosya())).rejects.toThrow(/çok karanlık.*Aydınlık bir ortamda yeniden çekip yükle/);
   });
 });

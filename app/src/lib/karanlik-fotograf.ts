@@ -12,7 +12,7 @@
 export const KARANLIK_ESIK = 40;
 
 export const KARANLIK_METNI =
-  'Fotoğraf çok karanlık, çözümün görünmüyor. Işıklı bir yerde yeniden çek.';
+  'Fotoğraf çok karanlık; çözümün okunmuyor. Aydınlık bir ortamda yeniden çekip yükle.';
 
 export class KaranlikFotografHatasi extends Error {
   constructor() {

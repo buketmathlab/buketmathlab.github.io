@@ -4,8 +4,8 @@
  * Öğretmen: "Öğrenciye kural ve onay olsun fakat iPad/tabletten açıp soru
  * dosyasının üzerinden de çözmüş olabilir. Bu da bir el yazısı."
  *
- *  E1. Gönderilmemiş ödevde kural kartı: başlık, neden, iki yol (Kâğıtta /
- *      Tablette — "soruların üzerine"), kabul edilmeyenler.
+ *  E1. Gönderilmemiş ödevde kural kartı: başlık, neden, iki yol (Kâğıt üzerinde /
+ *      iPad veya tablet üzerinde — "soruların üzerine kalemle"), kabul edilmeyenler.
  *  E2. Onaysız "Ödevi gönder" → `odev_gonder` ÇAĞRILMIYOR, yükleme yok,
  *      `role="alert"` uyarısı görünüyor; düğme kapalı değil.
  *  E3. Onay işaretlenince uyarı kalkıyor; gönderim gidiyor.
@@ -82,7 +82,7 @@ async function kur(yol, { sinir = 1, en = 390 } = {}) {
 const metin = (p) => p.evaluate(() => document.body.innerText);
 const gonderimler = async (p) => (await p.evaluate(() => window.__cagrilar)).filter((c) => c.ad === 'odev_gonder');
 const kutu = (p) => p.getByRole('checkbox', { name: /Bu ödevi kendim çözdüm/ });
-const kart = (p) => p.getByRole('region', { name: 'Çözümün senin el yazınla olsun' });
+const kart = (p) => p.getByRole('region', { name: 'Çözümünü kendi el yazınla teslim et' });
 async function bas(p) {
   const d = p.getByRole('button', { name: 'Ödevi gönder' });
   await d.evaluate((e) => e.scrollIntoView({ block: 'center' }));
@@ -97,11 +97,12 @@ const { b, p } = await kur('/ogrenci/odev/a1');
   else {
     const k = await kart(p).innerText();
     const bek = [
-      [/nasıl düşündüğün/, 'neden'],
-      [/Kâğıtta/, 'kâğıt yolu'],
-      [/Tablette/, 'tablet yolu'],
-      [/soruların üzerine çöz/, 'tablette soruların üzerine'],
-      [/Bilgisayarda yazılmış/, 'bilgisayar yazısı kabul edilmez'],
+      [/nasıl düşündüğünü/, 'neden'],
+      [/Kâğıt üzerinde/, 'kâğıt yolu'],
+      [/iPad veya tablet üzerinde/, 'iPad/tablet yolu'],
+      [/soruların üzerine kalemle çöz/, 'soruların üzerine kalemle'],
+      [/Bu da el yazısı sayılır/, 'iPad/tablet de el yazısı'],
+      [/Klavyeyle yazılmış/, 'klavyeyle yazılmış kabul edilmez'],
       [/yapay zekâ/, 'yapay zekâ kabul edilmez'],
       [/ödevin kabul edilmez/, 'sonuç: "ödevin kabul edilmez"'],
     ];
@@ -131,9 +132,9 @@ console.log('--- E2. Onaysız gönderme: sunucuya gitmez, uyarı çıkar ---');
   else tamam('onaysız: odev_gonder çağrılmadı');
   if (await p.evaluate(() => window.__yuklenen)) bozuk('onaysız dosya yüklendi');
   else tamam('onaysız: dosya da yüklenmedi');
-  const uyari = p.getByRole('alert').filter({ hasText: 'el yazısı onayını işaretle' });
+  const uyari = p.getByRole('alert').filter({ hasText: 'onay kutusunu işaretle' });
   if ((await uyari.count()) !== 1) bozuk('uyarı görünmüyor');
-  else tamam('"Göndermeden önce el yazısı onayını işaretle." (role=alert)');
+  else tamam('"Ödevi göndermek için onay kutusunu işaretle." (role=alert)');
   const tanim = await kutu(p).getAttribute('aria-describedby');
   (tanim === 'el-yazisi-uyari' ? tamam : bozuk)('kutu uyarıya aria-describedby ile bağlı');
 }
@@ -141,7 +142,7 @@ console.log('--- E2. Onaysız gönderme: sunucuya gitmez, uyarı çıkar ---');
 console.log('--- E3. Onaylı gönderme gider ---');
 {
   await kutu(p).check();
-  if (await p.getByRole('alert').filter({ hasText: 'el yazısı onayını işaretle' }).count()) bozuk('işaretleyince uyarı kalkmadı');
+  if (await p.getByRole('alert').filter({ hasText: 'onay kutusunu işaretle' }).count()) bozuk('işaretleyince uyarı kalkmadı');
   else tamam('işaretleyince uyarı kalktı');
   await bas(p);
   const g = await gonderimler(p);
@@ -191,7 +192,7 @@ console.log('--- E7. Karanlık fotoğraf ---');
   await p.locator('input[type=file]').setInputFiles({ name: 'cozum.jpg', mimeType: 'image/jpeg', buffer: siyah });
   await p.waitForTimeout(800);
   const m = await metin(p);
-  (/Fotoğraf çok karanlık, çözümün görünmüyor\. Işıklı bir yerde yeniden çek\./.test(m) ? tamam : bozuk)('siyah fotoğrafta uyarı görünüyor');
+  (/Fotoğraf çok karanlık; çözümün okunmuyor\. Aydınlık bir ortamda yeniden çekip yükle\./.test(m) ? tamam : bozuk)('siyah fotoğrafta uyarı görünüyor');
   await kutu(p).check();
   await bas(p);
   if ((await gonderimler(p)).length || (await p.evaluate(() => window.__yuklenen))) bozuk('SİYAH FOTOĞRAF GÖNDERİLDİ');
