@@ -37,6 +37,18 @@ const SINIF_DETAY = {
   degerlendirilen_odev: 8,
   ogrenciler: [{ id: 'o1', ad: 'Ali Yıldırım', tur: 'okul', yapti: 8, yapmadi: 0, ortalama_yapan: 86.5, ortalama_tum: 86.5 }],
 };
+/** 0063: sınıf sayfası ortak bileşen; ucu `sinif_not_cizelgesi`. */
+const CIZELGE = {
+  sinif: { ...SINIF_DETAY.sinif, ogretmenler: ['Buket Topuzoğlu'] },
+  kapsam: 'ogretmen',
+  degerlendirilen_odev: SINIF_DETAY.degerlendirilen_odev,
+  mevcut: 1,
+  odevler: [],
+  aylar: [],
+  ogrenciler: SINIF_DETAY.ogrenciler.map((o) => ({
+    ...o, ogrenci_no: null, ortalama: o.ortalama_tum, yapilan: o.yapti, yapilmayan: o.yapmadi, puanlar: [],
+  })),
+};
 const OZEL_DETAY = {
   ogrenci: { id: 'o9', ad: 'Deniz Okul', tur: 'okul', sinif: '11B', aktif: true },
   dersler: [], odemeler: [],
@@ -85,7 +97,7 @@ async function ekran(b, yol, karneCevabi, ekCevap = {}) {
     },
     [
       JSON.stringify({ token: 'sahte', rol: 'ogretmen', ad: 'Buket Topuzoğlu' }),
-      { konu_karnesi: karneCevabi, sinif_ogrencileri: SINIF_DETAY, ozel_ders_detay: OZEL_DETAY, ...ekCevap },
+      { konu_karnesi: karneCevabi, sinif_ogrencileri: SINIF_DETAY, sinif_not_cizelgesi: CIZELGE, ozel_ders_detay: OZEL_DETAY, ...ekCevap },
     ],
   );
   const p = await s.newPage();
@@ -199,7 +211,7 @@ console.log('6 — 1280 px’te de taşma yok');
       };
     },
     [JSON.stringify({ token: 'sahte', rol: 'ogretmen', ad: 'Buket Topuzoğlu' }),
-     { konu_karnesi: DOLU, sinif_ogrencileri: SINIF_DETAY }],
+     { konu_karnesi: DOLU, sinif_ogrencileri: SINIF_DETAY, sinif_not_cizelgesi: CIZELGE }],
   );
   const p = await s.newPage();
   await p.goto(KOK + '#/ogretmen/siniflar/11B', { waitUntil: 'networkidle' });

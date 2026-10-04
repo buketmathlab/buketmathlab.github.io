@@ -5666,10 +5666,22 @@ faydası var:
   - konu karnesi.
 - `SinifDetay` ve `MudurSinif` artık ince sarmalayıcı.
 
+**Müdür ödevleri ve cevap anahtarlarını görüyor** (öğretmenin isteği):
+- `sinif_not_cizelgesi.odevler[]` yeni alanlar: `odev_yolu`,
+  `anahtar_yolu`, `cevap_anahtari`.
+- `dosya_erisim_izni`: müdür, özel ders dışındaki yayındaki ödevlerin soru
+  ve anahtar PDF'lerini açabiliyor; öğrenci çözüm kâğıtları kapalı.
+- Dosya depoda var olmalı. Edge Function aynı izinle yükleme adresi de
+  üretiyor ve yükleme üzerine yazmıyor; bu yüzden müdür hiçbir dosya
+  oluşturamıyor.
+- Ekranda ödev satırında iki düğme var: "Soruları aç (PDF)" ve "Cevap
+  anahtarı" (harfler ve anahtar PDF'i).
+
 **Testler:**
 - `mudur_testleri.sql` 13. grup.
   - Kusur provası: `konu_karnesi` kontrolü kaldırılınca 13e kırmızıya
     döndü.
+  - Kusur provası: müdüre çözüm kâğıdı açılınca 13f kırmızıya döndü.
   - Kusur provası: öğretmen kapsamı kaldırılınca 13b kırmızıya döndü.
 - `mudur-denetimi.mjs`: M6 seviye blokları, M7 ortak sınıf sayfası, M11
   öğretmen tarafı.

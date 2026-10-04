@@ -111,9 +111,12 @@ const CIZELGE = {
   degerlendirilen_odev: 2,
   mevcut: 2,
   odevler: [
-    { id: 'd1', baslik: 'Sayılar testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 20, son_tarih: '2026-09-10', sure_doldu: true, gonderim: 2, ortalama: 75 },
-    { id: 'd2', baslik: 'Kümeler testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 25, son_tarih: '2026-09-24', sure_doldu: true, gonderim: 1, ortalama: 90 },
-    { id: 'd3', baslik: 'Açık uçlu ödev', tur: 'acik', ogretmen: 'Buket Topuzoğlu', soru_sayisi: null, son_tarih: '2026-12-01', sure_doldu: false, gonderim: 0, ortalama: null },
+    { id: 'd1', baslik: 'Sayılar testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 20,
+      odev_yolu: 'odev/d1/sorular.pdf', anahtar_yolu: 'odev/d1/anahtar.pdf', cevap_anahtari: { 1: 'A', 2: 'C', 3: 'B' }, son_tarih: '2026-09-10', sure_doldu: true, gonderim: 2, ortalama: 75 },
+    { id: 'd2', baslik: 'Kümeler testi', tur: 'test', ogretmen: 'Buket Topuzoğlu', soru_sayisi: 25,
+      odev_yolu: null, anahtar_yolu: null, cevap_anahtari: null, son_tarih: '2026-09-24', sure_doldu: true, gonderim: 1, ortalama: 90 },
+    { id: 'd3', baslik: 'Açık uçlu ödev', tur: 'acik', ogretmen: 'Buket Topuzoğlu', soru_sayisi: null,
+      odev_yolu: 'odev/d3/sorular.pdf', anahtar_yolu: null, cevap_anahtari: null, son_tarih: '2026-12-01', sure_doldu: false, gonderim: 0, ortalama: null },
   ],
   ogrenciler: [
     {
@@ -203,6 +206,15 @@ async function sayfa({ oturum, yol, genislik = 390, pinYaniti = null }) {
       : uc === 'siniflar_listesi' ? []
       : {};
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
+  });
+  // Dosya adresi (Edge Function): imzalı adres yerine aynı sunucudaki bir dosya.
+  await s.route('**/functions/v1/dosya-url', (r) => {
+    govdeler.push({ uc: 'dosya-url', govde: r.request().postData() });
+    r.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ imzaliUrl: 'http://127.0.0.1:8788/yeni/surum.json?imzali=1', gecerlilikSn: 60 }),
+    });
   });
   if (oturum) {
     await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)), oturum);
@@ -349,7 +361,7 @@ console.log('--- M6. Genel: soru toplamı, seviyeler, grafik, konular ---');
 
 console.log('--- M7. Sınıflar ve sınıf sayfası: soru sayıları, öğrenci notları ---');
 {
-  const { s, uclar } = await sayfa({ oturum: MUDUR, yol: '/mudur/siniflar' });
+  const { s, uclar, govdeler } = await sayfa({ oturum: MUDUR, yol: '/mudur/siniflar' });
   const m = await metin(s);
   olc('9A kartında toplam soru 1.240', /9A[\s\S]*Toplam soru\s*1\.240/.test(m));
   await s.getByRole('button', { name: 'Sınıfı aç' }).first().click();
@@ -365,7 +377,8 @@ console.log('--- M7. Sınıflar ve sınıf sayfası: soru sayıları, öğrenci 
   olc('ortalama kuralı yazıyor', k.includes('gönderilmeyen 0 sayılır'));
   olc('müdürde öğrenci adı bağlantı değil', (await s.getByRole('link', { name: 'Kerem Aksu' }).count()) === 0);
   olc('bölümler: Öğrenciler, Aylık gelişim, Ödevler, Konu karnesi', ['Öğrenciler', 'Aylık gelişim', 'Ödevler', 'Konu karnesi'].every((b) => k.includes(b)));
-  olc('cevap/yorum yok', !/cevap anahtar|yorum/i.test(k));
+  // Cevap ANAHTARI artık bilerek var (0063); öğretmen yorumu yok.
+  olc('öğretmen yorumu yok', !/yorum/i.test(k));
   const ac = kerem.getByRole('button', { name: /Ödev ödev puanlar/ });
   await ac.click();
   await s.waitForTimeout(300);
@@ -375,6 +388,29 @@ console.log('--- M7. Sınıflar ve sınıf sayfası: soru sayıları, öğrenci 
   const g = s.getByRole('img', { name: /Kerem Aksu ödev puanları/ });
   olc('Kerem grafiği: 2 ödevden 1 nokta', (await g.count()) === 1 && (await g.locator('circle[data-nokta]').count()) === 1);
   olc('aria-expanded', (await ac.getAttribute('aria-expanded')) === 'true');
+
+  // ÖDEV VE CEVAP ANAHTARI (öğretmenin isteği: "Müdür verilen ödevleri de
+  // cevap anahtarını da görebilsin").
+  const sayilar = s.locator('li').filter({ hasText: 'Sayılar testi' }).last();
+  const sekmeSozu = s.context().waitForEvent('page', { timeout: 4000 }).catch(() => null);
+  await sayilar.getByRole('button', { name: 'Soruları aç (PDF)' }).click();
+  const sekme = await sekmeSozu;
+  await s.waitForTimeout(500);
+  const istek = JSON.parse(govdeler.filter((x) => x.uc === 'dosya-url').pop()?.govde ?? '{}');
+  olc('"Soruları aç" ödev PDF yolunu istiyor ve sekme açılıyor', istek.yol === 'odev/d1/sorular.pdf' && !!sekme, JSON.stringify(istek));
+  if (sekme) await sekme.close();
+  await sayilar.getByRole('button', { name: /Cevap anahtarı/ }).click();
+  await s.waitForTimeout(200);
+  const an = await sayilar.innerText();
+  olc('cevap anahtarı harfleri görünüyor (1. A, 2. C, 3. B)', /1\.\s*A[\s\S]*2\.\s*C[\s\S]*3\.\s*B/.test(an), an);
+  await sayilar.getByRole('button', { name: "Anahtar PDF'ini aç" }).click();
+  await s.waitForTimeout(600);
+  const istek2 = JSON.parse(govdeler.filter((x) => x.uc === 'dosya-url').pop()?.govde ?? '{}');
+  olc('anahtar PDF\'i istenebiliyor', istek2.yol === 'odev/d1/anahtar.pdf', JSON.stringify(istek2));
+  const kumeler = s.locator('li').filter({ hasText: 'Kümeler testi' }).last();
+  olc('dosyası ve anahtarı olmayan ödevde düğme yok',
+      (await kumeler.getByRole('button', { name: /Soruları aç|Cevap anahtarı/ }).count()) === 0);
+  for (const p of s.context().pages()) if (p !== s) await p.close();
   olc('yalnız müdür uçları', yalnizMudurUclari(uclar), [...new Set(uclar)].join(', '));
   await s.close();
 }

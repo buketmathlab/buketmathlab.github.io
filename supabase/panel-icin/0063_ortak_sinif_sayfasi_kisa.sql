@@ -12,7 +12,9 @@
 --     toplam soru, gönderim oranı, ortalama; sınıf sayfasında öğrenciler,
 --     gelişim grafiği, ödevler ve soru sayıları, konu karnesi.
 --     Öğretmen ortak sınıfta yine yalnız kendi ve sizin ödevlerinizi görür.
---  3. Güvenlik düzeltmesi: bir öğretmen artık başka öğretmenin sınıfının
+--  3. Müdür, sınıf sayfasında verilen ödevlerin soru dosyasını ve cevap
+--     anahtarını görebilir (öğrenci çözüm kâğıtlarını göremez).
+--  4. Güvenlik düzeltmesi: bir öğretmen artık başka öğretmenin sınıfının
 --     konu karnesini açamıyor.
 --
 -- Veri SİLİNMİYOR, tablo DEĞİŞMİYOR; yalnız fonksiyonlar.
@@ -384,6 +386,10 @@ begin
                'tur', d.tur,
                'ogretmen', (select g.ad from public.ogretmenler g where g.id = d.ogretmen_id),
                'soru_sayisi', d.soru_sayisi,
+               -- 0063: müdür ödevi ve cevap anahtarını görebiliyor.
+               'odev_yolu', d.odev_url,
+               'anahtar_yolu', d.anahtar_url,
+               'cevap_anahtari', d.cevap_anahtari,
                'son_tarih', d.son_tarih,
                'sure_doldu', d.son_tarih < bugun_tr,
                'gonderim', (select count(*)::integer from public.gonderimler g
@@ -686,7 +692,85 @@ end;
 $$;
 
 -- -----------------------------------------------------------------------------
--- 6. YETKİLER
+-- 6. DOSYA ERİŞİMİ — müdür ödev ve anahtar PDF'lerini açabiliyor
+-- -----------------------------------------------------------------------------
+create or replace function public.dosya_erisim_izni(p_token text, p_yol text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  o record;
+begin
+  select * into o from public._oturum(p_token);
+  -- ONAM KAPISI (0034). Veli dışındaki rollerde etkisiz: bu iki uç
+  -- öğrenci tarafından da kullanılıyor.
+  perform public._onam_kapisi(o.rol, o.ogrenci_id);
+
+  if o.rol = 'ogretmen' then
+    return true;
+  end if;
+
+  if o.rol = 'ogrenci' then
+    return
+      -- kendi gönderdiği çözüm kâğıdı (teslimden sonra görüntülemek için)
+      exists (
+        select 1 from public.gonderimler g
+        where g.ogrenci_id = o.ogrenci_id
+          and (g.foto_yolu = p_yol or p_yol = any(g.ek_sayfa_yollari))
+      )
+      -- teslim ettiği ödevin cevap anahtarı
+      or exists (
+        select 1 from public.odevler d
+        join public.gonderimler g on g.odev_id = d.id and g.ogrenci_id = o.ogrenci_id
+        where d.anahtar_url = p_yol
+      )
+      -- kendi sınıfındaki yayındaki ödevin soru PDF'i (teslim şartı yok)
+      or exists (
+        select 1 from public.odevler d
+        join public.ogrenciler ogr on ogr.id = o.ogrenci_id
+        where d.odev_url = p_yol
+          and d.yayinda
+          and d.sinif_id = ogr.sinif_id
+      )
+      -- YENİ: henüz göndermeden, kendi çözüm fotoğrafını YÜKLEMEK için
+      or public._cozum_yolu_gecerli(o.ogrenci_id, p_yol);
+  end if;
+
+  -- 0063 — MÜDÜR: özel ders dışındaki YAYINDAKİ ödevlerin soru PDF'i ve
+  -- cevap anahtarı PDF'i (öğretmenin isteği). Öğrencinin çözüm kâğıdı yok.
+  --
+  -- DOSYA DEPODA VAR OLMALI. Edge Function bu izinle OKUMA da YÜKLEME de
+  -- adresi üretebiliyor (`islem`); yükleme üzerine yazmıyor (upsert yok).
+  -- Var olan dosyaya yükleme her zaman reddedildiği için müdür bu kapıdan
+  -- hiçbir dosya oluşturamıyor — salt izleme depoda da geçerli.
+  if o.rol = 'mudur' then
+    return exists (
+      select 1 from public.odevler d
+      join public.siniflar s on s.id = d.sinif_id
+      where d.yayinda and not s.ozel
+        and (d.odev_url = p_yol or d.anahtar_url = p_yol)
+    ) and exists (
+      select 1 from storage.objects so
+      where so.bucket_id = 'odev-dosyalari' and so.name = p_yol
+    );
+  end if;
+
+  if o.rol = 'veli' then
+    return exists (
+      select 1 from public.gonderimler g
+      where g.ogrenci_id = o.ogrenci_id
+          and (g.foto_yolu = p_yol or p_yol = any(g.ek_sayfa_yollari))
+    );
+  end if;
+
+  return false;
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 7. YETKİLER
 -- -----------------------------------------------------------------------------
 revoke all on function public._sinif_kart_ozetleri(uuid[], uuid) from public, anon, authenticated;
 
@@ -702,8 +786,11 @@ grant execute on function public.sinif_not_cizelgesi(text, uuid, boolean) to ano
 revoke all on function public.konu_karnesi(text, uuid, uuid) from public, anon, authenticated;
 grant execute on function public.konu_karnesi(text, uuid, uuid) to anon, authenticated;
 
+revoke all on function public.dosya_erisim_izni(text, text) from public, anon, authenticated;
+grant execute on function public.dosya_erisim_izni(text, text) to anon, authenticated, service_role;
+
 -- -----------------------------------------------------------------------------
--- 7. KENDİ KENDİNİ DENETLEME
+-- 8. KENDİ KENDİNİ DENETLEME
 -- -----------------------------------------------------------------------------
 do $$
 begin
@@ -721,6 +808,19 @@ begin
   if pg_get_functiondef('public.mudur_paneli(text)'::regprocedure) not like '%_sinif_kart_ozetleri(%'
      or pg_get_functiondef('public.sinif_kartlari(text)'::regprocedure) not like '%_sinif_kart_ozetleri(%' then
     raise exception '0063: kart sayıları tek kaynaktan gelmiyor';
+  end if;
+  if pg_get_functiondef('public.dosya_erisim_izni(text, text)'::regprocedure) not like '%o.rol = ''mudur''%'
+     or pg_get_functiondef('public.dosya_erisim_izni(text, text)'::regprocedure) not like '%_cozum_yolu_gecerli(%' then
+    raise exception '0063: dosya_erisim_izni eksik';
+  end if;
+  -- Müdürün dosya izni `storage.objects`'i okuyor. Fonksiyonun sahibi o
+  -- tabloyu RLS'e takılmadan okuyamıyorsa izin hep "hayır" döner (güvenli
+  -- ama özellik çalışmaz) — sessiz kalmasın.
+  if (select c.relrowsecurity from pg_class c where c.oid = 'storage.objects'::regclass)
+     and not (select r.rolbypassrls or r.rolsuper from pg_roles r where r.rolname = current_user)
+     and (select c.relowner from pg_class c where c.oid = 'storage.objects'::regclass)
+         <> (select r.oid from pg_roles r where r.rolname = current_user) then
+    raise exception '0063: % rolü storage.objects''i okuyamıyor; müdür dosya açamaz', current_user;
   end if;
   if has_function_privilege('anon', 'public._sinif_kart_ozetleri(uuid[], uuid)', 'execute') then
     raise exception '0063: _sinif_kart_ozetleri istemciye açık';

@@ -974,6 +974,10 @@ export type SinifNotCizelgesi = {
     tur: 'test' | 'acik';
     ogretmen: string | null;
     soru_sayisi: number | null;
+    /** 0063 — soru PDF'i, anahtar PDF'i ve anahtar harfleri (müdür de görür). */
+    odev_yolu: string | null;
+    anahtar_yolu: string | null;
+    cevap_anahtari: Record<string, string> | null;
     son_tarih: string;
     sure_doldu: boolean;
     gonderim: number;

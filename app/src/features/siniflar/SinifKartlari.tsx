@@ -51,17 +51,21 @@ export function SinifKartlari({
                   onClick={() => git(baglanti.sinif(s.id))}
                   className="min-h-[44px] min-w-0 text-left underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
-                  <span className="block font-display text-[22px] font-semibold text-ink">{s.ad}</span>
-                  <span className="block break-words text-[13px] text-muted">
-                    {s.ogretmenler.length > 0 ? s.ogretmenler.join(', ') : 'Öğretmen atanmamış'}
+                  {/* Ad + "N öğrenci": Öğrenciler sekmesindeki sınıf kutusuyla
+                      AYNI ölçü (öğretmenin önceki isteği; ogrenci-sirasi
+                      denetimi 3b iki sekmeyi karşılaştırıyor). */}
+                  <span className="block font-display text-[20px] font-semibold text-ink">{s.ad}</span>
+                  <span className="block text-[13px] text-muted">
+                    <span className="sk-sayi">{s.ogrenci_sayisi}</span> öğrenci
                   </span>
                 </button>
                 {s.arsiv && <Tag tur="uyari">Arşivde</Tag>}
               </div>
+              <p className="mt-1 break-words text-[13px] text-muted">
+                {s.ogretmenler.length > 0 ? s.ogretmenler.join(', ') : 'Öğretmen atanmamış'}
+              </p>
 
               <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-[14px]">
-                <dt className="text-muted">Öğrenci</dt>
-                <dd className="sk-sayi text-right font-semibold text-ink">{s.ogrenci_sayisi}</dd>
                 <dt className="text-muted">Yayındaki ödev</dt>
                 <dd className="sk-sayi text-right font-semibold text-ink">{s.odev_sayisi}</dd>
                 <dt className="text-muted">Toplam soru</dt>

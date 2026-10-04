@@ -405,8 +405,10 @@ begin
        where x->>'odev_id' = o_odev::text) <> 'gondermedi' then
     raise exception '11g: a2 gönderilmedi görünmüyor: %', cz->'puanlar';
   end if;
-  if m::text ~* 'cevap|yorum|cozum/' then
-    raise exception '11h: çizelgede cevap/yorum/dosya yolu var';
+  -- 0063'ten beri ödevin cevap ANAHTARI ve dosyası çizelgede (öğretmenin
+  -- isteği); öğrencinin CEVAPLARI, yorum ve çözüm kâğıdı hâlâ yok.
+  if m::text ~* '"cevaplar"|yorum|cozum/' then
+    raise exception '11h: çizelgede öğrenci cevabı/yorum/çözüm kâğıdı var';
   end if;
   patladi := false;
   begin
@@ -569,7 +571,41 @@ begin
   perform public.konu_karnesi(jt, s_m, null);
   perform public.konu_karnesi(jt, null, a1);
   perform public.konu_karnesi(jb, s_n, null);
-  raise notice '13 OK — öğretmen kipi sinif_ogrencileri ile birebir; kapsam role göre; kartlar tek kaynaktan; seviyelere göre konular; konu_karnesi erişimi kapalı';
+  -- 13f. Müdür ödevi ve cevap anahtarını görüyor; çözüm kâğıdını görmüyor.
+  update public.odevler set odev_url = 'odev/' || o_odev::text || '/sorular.pdf',
+                            anahtar_url = 'odev/' || o_odev::text || '/anahtar.pdf'
+   where id = o_odev;
+  select x into cz from jsonb_array_elements(public.sinif_not_cizelgesi(jm, s_m)->'odevler') x
+   where x->>'id' = o_odev::text;
+  if cz->'cevap_anahtari' <> '{"1":"A","2":"B","3":"C","4":"D","5":"E"}'::jsonb
+     or cz->>'odev_yolu' <> 'odev/' || o_odev::text || '/sorular.pdf'
+     or cz->>'anahtar_yolu' <> 'odev/' || o_odev::text || '/anahtar.pdf' then
+    raise exception '13f: çizelgede ödev/anahtar yok: %', cz;
+  end if;
+  -- Dosya depoda yokken izin YOK: müdür yükleme adresi alıp dosya
+  -- oluşturamamalı (Edge Function aynı izinle yükleme adresi de üretiyor).
+  if public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/sorular.pdf') then
+    raise exception '13f: depoda olmayan dosyaya müdür izni (yükleme kapısı açık)';
+  end if;
+  insert into storage.objects (bucket_id, name)
+  select 'odev-dosyalari', y from unnest(array['odev/' || o_odev::text || '/sorular.pdf',
+                                               'odev/' || o_odev::text || '/anahtar.pdf']) y
+   where not exists (select 1 from storage.objects so where so.name = y);
+  if not public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/sorular.pdf')
+     or not public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/anahtar.pdf') then
+    raise exception '13f: müdür ödev ya da anahtar PDF''ini açamıyor';
+  end if;
+  if public.dosya_erisim_izni(jm, (select foto_yolu from public.gonderimler
+                                    where odev_id = o_odev and ogrenci_id = a1)) then
+    raise exception '13f: müdür öğrencinin çözüm kâğıdını açabiliyor';
+  end if;
+  update public.odevler set yayinda = false where id = o_odev;
+  if public.dosya_erisim_izni(jm, 'odev/' || o_odev::text || '/sorular.pdf') then
+    raise exception '13f: yayından kalkan ödevin dosyası müdüre açık';
+  end if;
+  update public.odevler set yayinda = true where id = o_odev;
+
+  raise notice '13 OK — öğretmen kipi sinif_ogrencileri ile birebir; kapsam role göre; kartlar tek kaynaktan; seviyelere göre konular; konu_karnesi erişimi kapalı; müdür ödev ve anahtarı görüyor, çözüm kâğıdını görmüyor';
 
   -- ---------------------------------------------------------------------------
   -- 7. PASİFLEŞTİRİLEN MÜDÜR (en sonda: hesabı kapatıyor)
