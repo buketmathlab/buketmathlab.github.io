@@ -2,32 +2,26 @@ import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Card } from '@/components/ui/Card';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { Tag } from '@/components/ui/Tag';
-import { useOturum } from '@/hooks/oturum-baglam';
-import { useVeri } from '@/hooks/useVeri';
-import type { MudurPaneli } from '@/types/api';
+import { listeDurumu, useMudurPaneli } from './mudur-baglam';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
+const SAYI = new Intl.NumberFormat('tr-TR');
 
 /**
  * Müdür → Öğretmenler: kim kaç ödev vermiş, hangi sınıflara giriyor.
  * Giriş saatleri BİLEREK yok (öğretmenin seçtiği kapsam).
  */
 export function MudurOgretmenler() {
-  const { oturum } = useOturum();
-  const { veri, durum, hata, yenile } = useVeri<MudurPaneli>(
-    'mudur_paneli',
-    { p_token: oturum?.token },
-    (v) => v.ogretmenler.length === 0,
-  );
+  const { veri, durum, hata, yenile } = useMudurPaneli();
 
   return (
     <>
       <SayfaBasligi
         baslik="Öğretmenler"
-        aciklama="Öğretmenlerin girdiği sınıflar ve yayınladıkları ödev sayıları."
+        aciklama="Öğretmenlerin girdiği sınıflar, yayınladıkları ödev ve soru sayıları."
       />
       <AsyncBoundary
-        durum={durum}
+        durum={listeDurumu(durum, (veri?.ogretmenler.length ?? 0) === 0)}
         bosBaslik="Henüz öğretmen yok"
         {...(hata ? { hataAciklama: hata } : {})}
         tekrarDene={yenile}
@@ -45,8 +39,9 @@ export function MudurOgretmenler() {
                     {o.siniflar.length > 0 ? o.siniflar.join(', ') : 'Sınıf atanmamış'}
                   </p>
                   <p className="mt-2 text-[14px] text-ink">
-                    <span className="sk-sayi font-semibold">{o.odev_sayisi}</span> ödev yayınladı
-                    {' · '}son 30 günde <span className="sk-sayi font-semibold">{o.son_30_gun}</span>
+                    <span className="sk-sayi font-semibold">{o.odev_sayisi}</span> ödev ·{' '}
+                    <span className="sk-sayi font-semibold">{SAYI.format(o.soru_toplami)}</span> soru
+                    {' · '}son 30 günde <span className="sk-sayi font-semibold">{o.son_30_gun}</span> ödev
                     {o.son_odev && <> · son ödev {TARIH.format(new Date(o.son_odev))}</>}
                   </p>
                 </Card>

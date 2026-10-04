@@ -3,35 +3,31 @@ import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { useOturum } from '@/hooks/oturum-baglam';
-import { useVeri } from '@/hooks/useVeri';
 import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
-import type { MudurPaneli } from '@/types/api';
+import { listeDurumu, useMudurPaneli } from './mudur-baglam';
+
+const SAYI = new Intl.NumberFormat('tr-TR');
 
 /**
- * Müdür → Sınıflar: her sınıfın ÖZETİ (öğretmenin kararı: öğrenci adı yok).
+ * Müdür → Sınıflar: her şubenin özeti ve toplam soru sayısı (0061).
  *
  * Sayılar yalnız yayındaki ödevlerden. Gönderim oranı ve ortalama, son
  * tarihi geçmiş ödevlerden — sınıf analiziyle aynı pencere; süresi
- * dolmamış ödev "eksik gönderim" gibi görünmesin.
+ * dolmamış ödev "eksik gönderim" gibi görünmesin. Öğrenci notları
+ * sınıfın kendi sayfasında.
  */
 export function MudurSiniflar() {
-  const { oturum } = useOturum();
   const git = useNavigate();
-  const { veri, durum, hata, yenile } = useVeri<MudurPaneli>(
-    'mudur_paneli',
-    { p_token: oturum?.token },
-    (v) => v.siniflar.length === 0,
-  );
+  const { veri, durum, hata, yenile } = useMudurPaneli();
 
   return (
     <>
       <SayfaBasligi
         baslik="Sınıflar"
-        aciklama="Sınıf sınıf ödev ve gönderim özeti. Öğrenci bazında bilgi bu ekranda yer almaz."
+        aciklama="Şube şube ödev, soru ve gönderim özeti. Öğrenci notları için sınıfı açın."
       />
       <AsyncBoundary
-        durum={durum}
+        durum={listeDurumu(durum, (veri?.siniflar.length ?? 0) === 0)}
         bosBaslik="Henüz sınıf yok"
         {...(hata ? { hataAciklama: hata } : {})}
         tekrarDene={yenile}
@@ -52,6 +48,10 @@ export function MudurSiniflar() {
                       <dd className="sk-sayi text-right font-semibold text-ink">{s.ogrenci_sayisi}</dd>
                       <dt className="text-muted">Yayındaki ödev</dt>
                       <dd className="sk-sayi text-right font-semibold text-ink">{s.odev_sayisi}</dd>
+                      <dt className="text-muted">Toplam soru</dt>
+                      <dd className="sk-sayi text-right font-semibold text-ink">
+                        {SAYI.format(s.soru_toplami)}
+                      </dd>
                       <dt className="text-muted">Gönderim oranı</dt>
                       <dd className="sk-sayi text-right font-semibold text-ink">
                         {s.gonderim_orani === null ? '—' : `%${s.gonderim_orani}`}
@@ -62,12 +62,30 @@ export function MudurSiniflar() {
                     <p className="mt-2 text-[12px] text-muted">
                       Gönderim ve ortalama, süresi dolan{' '}
                       <span className="sk-sayi">{s.suresi_dolan}</span> ödevden.
+                      {s.soru_sayisiz > 0 && (
+                        <>
+                          {' '}
+                          <span className="sk-sayi">{s.soru_sayisiz}</span> ödevde soru sayısı
+                          girilmemiş; toplama katılmadı.
+                        </>
+                      )}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button tur="ikincil" olcu="sm" onClick={() => git(`/mudur/sinif/${s.id}`)}>
-                        Sınıf analizi
+                      <Button olcu="sm" onClick={() => git(`/mudur/siniflar/${s.id}`)}>
+                        Sınıfı aç
                       </Button>
-                      <Button tur="sade" olcu="sm" onClick={() => git(`/mudur/sinif/${s.id}/onam`)}>
+                      <Button
+                        tur="sade"
+                        olcu="sm"
+                        onClick={() => git(`/mudur/siniflar/${s.id}/analiz`)}
+                      >
+                        Konu analizi
+                      </Button>
+                      <Button
+                        tur="sade"
+                        olcu="sm"
+                        onClick={() => git(`/mudur/siniflar/${s.id}/onam`)}
+                      >
                         Onam dökümü
                       </Button>
                     </div>

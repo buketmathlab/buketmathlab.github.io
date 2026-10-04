@@ -8,21 +8,24 @@ import { useVeri } from '@/hooks/useVeri';
 import type { MudurPaneli } from '@/types/api';
 
 const SEKMELER: SekmeTanim[] = [
-  { yol: '/mudur', etiket: 'Sınıflar', ikon: SEKME_IKON.sinif, sonu: true },
+  { yol: '/mudur', etiket: 'Genel', ikon: SEKME_IKON.pano, sonu: true },
+  { yol: '/mudur/siniflar', etiket: 'Sınıflar', ikon: SEKME_IKON.sinif },
   { yol: '/mudur/ogretmenler', etiket: 'Öğretmenler', ikon: SEKME_IKON.ogrenci },
+  { yol: '/mudur/ayarlar', etiket: 'PIN', ikon: SEKME_IKON.kod },
 ];
 
 /**
  * Müdür kabuğu (0060) — SALT İZLEME.
  *
- * Müdür hiçbir şeyi değiştiremiyor ve bu ekranlarda değiştirme düğmesi
- * yok. Asıl sınır sunucuda: müdür oturumu 'mudur' rolüyle açılıyor ve
+ * Müdür hiçbir şeyi değiştiremiyor (kendi PIN'i dışında, 0061) ve bu
+ * ekranlarda değiştirme düğmesi yok. Asıl sınır sunucuda: müdür oturumu 'mudur' rolüyle açılıyor ve
  * değiştiren her uç yalnız 'ogretmen' rolünü kabul ediyor
  * (`mudur_testleri.sql` 5. grup her ucu tek tek ölçüyor).
  */
 export function MudurKabuk() {
   const { oturum, cikisYap } = useOturum();
-  const { veri } = useVeri<MudurPaneli>('mudur_paneli', { p_token: oturum?.token });
+  const panel = useVeri<MudurPaneli>('mudur_paneli', { p_token: oturum?.token });
+  const { veri } = panel;
 
   return (
     <div className="min-h-dvh">
@@ -46,7 +49,7 @@ export function MudurKabuk() {
       </div>
 
       <main className="mx-auto w-full max-w-[880px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-6 lg:pb-10">
-        <Outlet />
+        <Outlet context={panel} />
       </main>
 
       <SekmeCubugu sekmeler={SEKMELER} bicim="alt" className="lg:hidden print:hidden" />

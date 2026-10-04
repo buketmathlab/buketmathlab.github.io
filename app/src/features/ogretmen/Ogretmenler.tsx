@@ -31,7 +31,8 @@ import type { OgretmenSatiri, Sinif } from '@/types/api';
  * baştan bilinenden çok daha rahatsız edici olur.
  *
  * MÜDÜR (0060) aynı listede durur ama yalnız izler: sınıf atanamaz,
- * hesabına girilemez, PIN'ini sahip sıfırlar. Bu yüzden müdür satırında
+ * hesabına girilemez; PIN'ini kendisi değiştirir (0061), unutursa sahip
+ * sıfırlar. Bu yüzden müdür satırında
  * yalnız "PIN sıfırla" ve "Çıkar"/"Geri al" var.
  */
 export function Ogretmenler() {
@@ -272,7 +273,7 @@ export function Ogretmenler() {
                   </p>
                   <p className="mt-1 text-[13px] text-muted">
                     {o.mudur ? (
-                      'Sınıf özetlerini, öğretmen etkinliğini ve onam durumunu görür'
+                      'Sınıf özetlerini, öğrenci notlarını, öğretmen etkinliğini ve onam durumunu görür'
                     ) : (
                       <>
                         <span className="sk-sayi">{o.sinif_sayisi}</span> sınıf ·{' '}
@@ -331,10 +332,12 @@ export function Ogretmenler() {
         <div className="flex flex-col gap-3">
           {ekleTuru === 'mudur' && (
             <p className="text-[14px] text-muted">
-              Müdür <span className="font-semibold">yalnız izler</span>: sınıf özetlerini,
+              Müdür <span className="font-semibold">yalnız izler</span>: okulun genel
+              özetini, sınıfları, ödevlerin soru sayılarını, öğrencilerin notlarını,
               öğretmenlerin ödev etkinliğini, sınıf analizini ve veli onam durumunu görür.
-              Öğrenci puanlarını, cevapları ve mesajları görmez; hiçbir şeyi değiştiremez.
-              Özel ders grupları ona görünmez. PIN'ini siz belirler, gerekirse siz sıfırlarsınız.
+              Cevapları, öğretmen yorumlarını ve mesajları görmez; kendi PIN'i dışında hiçbir
+              şeyi değiştiremez. Özel ders grupları ona görünmez. PIN'ini unutursa siz
+              sıfırlarsınız.
             </p>
           )}
           <Field etiket="Ad soyad">
@@ -344,7 +347,7 @@ export function Ogretmenler() {
             etiket="Başlangıç PIN'i"
             ipucu={
               ekleTuru === 'mudur'
-                ? "En az 6 hane, başka kimsenin PIN'iyle aynı olmamalı. Kendisine siz ileteceksiniz."
+                ? "En az 6 hane, başka kimsenin PIN'iyle aynı olmamalı. Kendisine siz ileteceksiniz; girdikten sonra PIN sekmesinden değiştirebilir."
                 : "En az 6 hane. Bu PIN'i kendisine siz ileteceksiniz; girdikten sonra Ayarlar'dan değiştirebilir."
             }
           >

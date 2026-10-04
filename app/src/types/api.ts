@@ -896,28 +896,92 @@ export type SinifOgrenciOzeti = {
  * `mudur_paneli` (0060) — müdürün tek ucu; yalnız TOPLAMLAR, öğrenci adı
  * yok. Özel ders grubu ve arşivlenmiş sınıflar yok.
  */
+/** 0061 — gönderim oranı ve ortalama yalnız süresi dolmuş ödevlerden. */
+export type MudurOzeti = {
+  ogrenci_sayisi: number;
+  odev_sayisi: number;
+  /** Yayındaki ödevlerin soru sayısı toplamı (bugüne kadar). */
+  soru_toplami: number;
+  /** Soru sayısı girilmemiş ödev (çoğu açık uçlu) — toplama girmiyor. */
+  soru_sayisiz: number;
+  gonderim_orani: number | null;
+  ortalama: number | string | null;
+};
+
 export type MudurPaneli = {
   ad: string;
-  siniflar: Array<{
-    id: string;
-    ad: string;
-    ogretmenler: string[];
-    ogrenci_sayisi: number;
-    /** Yayındaki ödev sayısı. */
+  /** Eğitim yılının ilk günü (1 Eylül); `aylar` buradan başlar. */
+  yil_baslangici: string;
+  okul: MudurOzeti & { sinif_sayisi: number };
+  seviyeler: Array<MudurOzeti & { seviye: number; sinif_sayisi: number }>;
+  siniflar: Array<
+    MudurOzeti & {
+      id: string;
+      ad: string;
+      seviye: number;
+      ogretmenler: string[];
+      /** Son tarihi geçmiş (değerlendirilen) ödev sayısı. */
+      suresi_dolan: number;
+      son_odev: string | null;
+    }
+  >;
+  /** Ödevin son tarihinin ayı; ödevsiz ayda oran ve ortalama null. */
+  aylar: Array<{
+    ay: string;
     odev_sayisi: number;
-    /** Son tarihi geçmiş (değerlendirilen) ödev sayısı. */
-    suresi_dolan: number;
-    /** Süresi dolan ödevlerde gönderim yüzdesi; ödev yoksa null. */
+    soru_toplami: number;
     gonderim_orani: number | null;
     ortalama: number | string | null;
-    son_odev: string | null;
   }>;
+  /** Okulun en çok eksik 5 konusu; `oran` doğru yüzdesi. */
+  eksik_konular: Array<{ konu: string; toplam: number; dogru: number; oran: number }>;
   ogretmenler: Array<{
     ad: string;
     sahip: boolean;
     siniflar: string[];
     odev_sayisi: number;
+    soru_toplami: number;
     son_30_gun: number;
     son_odev: string | null;
+  }>;
+};
+
+/**
+ * 0061 — öğrenci × ödev puan çizelgesi (müdür ve sınıfın öğretmeni).
+ * `ogrenciler[].puanlar` `odevler` ile AYNI sırada.
+ */
+export type SinifNotCizelgesi = {
+  sinif: { id: string; ad: string; ogretmenler: string[] };
+  mevcut: number;
+  odevler: Array<{
+    id: string;
+    baslik: string;
+    tur: 'test' | 'acik';
+    ogretmen: string | null;
+    soru_sayisi: number | null;
+    son_tarih: string;
+    sure_doldu: boolean;
+    gonderim: number;
+    ortalama: number | string | null;
+  }>;
+  ogrenciler: Array<{
+    id: string;
+    ad: string;
+    ogrenci_no: string | null;
+    /** `sinif_ogrenci_ozeti` kuralı: gönderilmeyen süresi dolmuş ödev 0. */
+    ortalama: number | string | null;
+    yapilan: number;
+    yapilmayan: number;
+    puanlar: Array<{
+      odev_id: string;
+      puan: number | string | null;
+      durum: 'gonderdi' | 'gondermedi' | 'suresi_devam';
+    }>;
+  }>;
+  aylar: Array<{
+    ay: string;
+    odev_sayisi: number;
+    ortalama: number | string | null;
+    gonderim_orani: number | null;
   }>;
 };

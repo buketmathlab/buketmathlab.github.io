@@ -5533,3 +5533,57 @@ salt izleme; sınıf özetleri, öğretmen etkinliği, veli onam durumu.
   ucunu müdür jetonuyla çağırıp 42501 bekliyor), `mudur-denetimi.mjs`
   M1–M5. Kusur provası: müdür satırında vekâlet düğmesi açılınca M5
   kırmızı.
+
+## 0061 — Müdür: PIN, soru sayıları, analizler, gelişim, bireysel notlar
+
+İstek: "Kendi kodunu değiştirebilsin. Ödevlerdeki soru sayısını
+görebilsin. Bugüne kadar verilen toplam soru sayısı şube sınıf bazlı
+gösterilsin. Daha detaylı analizler, gelişim grafikleri olsun. Öğrencilerin
+bireysel notlarını da görsün."
+
+**Onam kararı (öğretmenin):** müdür bütün öğrencilerin notlarını görüyor.
+Onam metni değişmedi, çünkü velilere duyuru yapıldı. Cevaplar, öğretmen
+yorumları, mesajlar ve özel ders yine kapalı.
+
+**Sunucu:**
+- `mudur_pin_degistir`: müdürün tek yazma ucu.
+  - `_mudur` kapısından geçiyor; `pin_degistir`'in `_ogretmen` kapısı
+    genişletilmedi.
+  - Başka hesabın PIN'i reddediliyor; diğer oturumlar düşüyor.
+- `mudur_paneli` yeni alanlar:
+  - `okul`, `seviyeler`, şube ve öğretmen bazında `soru_toplami`;
+  - `soru_sayisiz` (soru sayısı girilmemiş ödev adedi);
+  - `aylar` (eğitim yılı 1 Eylül'den, ödevin son tarihinin ayı);
+  - `eksik_konular` (ilk 5, `_konu_durumu` ölçütüyle).
+  - Ortalama ve oran artık yalnız aktif ve o sınıfın öğrencilerinden
+    hesaplanıyor; bu `sinif_analizi` ile aynı küme. 0060 ortalamaya pasif
+    öğrencileri de katıyordu.
+- `sinif_not_cizelgesi`: öğrenci × ödev çizelgesi.
+  - Erişim `_sinif_okuyucusu` ile.
+  - Ortalama, yapılan/yapılmayan ve sıra `sinif_ogrenci_ozeti` ile birebir
+    (SQL testi 11. grup bunu karşılaştırıyor).
+  - Cevap, yorum ve dosya yolu dönmüyor.
+
+**İstemci:**
+- `components/grafik/CizgiGrafik.tsx`: SVG, kütüphane yok.
+  - 0–100 tek eksen; boş ay çizgiyi kesiyor.
+  - Lejant, uç değer etiketi, ipucu (fare ve ok tuşları) ve tablo görünümü
+    var.
+  - Renkler dataviz doğrulayıcısından geçti.
+- `components/grafik/CubukListesi.tsx`: yatay çubuklar.
+- `lib/grafik.ts`: hesaplar, vitest testleriyle.
+- Müdür sekmeleri: Genel, Sınıflar (`/mudur/siniflar/:id`), Öğretmenler,
+  PIN.
+  - Pano kabukta bir kez çekiliyor ve `Outlet` bağlamıyla sekmelere
+    paylaşılıyor.
+- `components/PinDegistirKarti.tsx`: öğretmen Ayarlar'ından çıkarıldı;
+  öğretmen ve müdür aynı formu kullanıyor. `Ayarlar.test.tsx` artık kartı
+  okuyor.
+
+**Testler:**
+- `mudur_testleri.sql` 9–11.
+  - Kusur provası: gönderilmeyen ödev 0 sayılmayınca 11. grup kırmızıya
+    döndü.
+- `mudur-denetimi.mjs` M1–M9.
+  - Kusur provası: ödev satırında soru sayısı gizlenince M7 kırmızıya
+    döndü.

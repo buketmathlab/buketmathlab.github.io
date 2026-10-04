@@ -3,7 +3,7 @@ import { rpc } from '@/services/supabase';
 
 export type Durum = 'yukleniyor' | 'hata' | 'bos' | 'hazir';
 
-type Sonuc<T> = {
+export type Sonuc<T> = {
   veri: T | null;
   durum: Durum;
   hata: string | null;

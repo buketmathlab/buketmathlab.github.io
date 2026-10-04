@@ -38,7 +38,11 @@ const GUN = new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' });
  * DÜRÜST SINIR, KÂĞIDA DA YAZILI: velinin adı kendi beyanıdır, kimlik
  * doğrulaması değildir. Belgeyi okuyan bunu bilmeli.
  */
-export function OnamDokumu({ geriYol }: { geriYol?: string } = {}) {
+/**
+ * `geriYol` (0060/0061): müdür bu ekranı kendi sınıf sayfasından açıyor;
+ * "← Sınıf" onu oraya döndürsün.
+ */
+export function OnamDokumu({ geriYol }: { geriYol?: (id: string) => string } = {}) {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
   const git = useNavigate();
@@ -56,8 +60,8 @@ export function OnamDokumu({ geriYol }: { geriYol?: string } = {}) {
           gizli; bu blok EKRANIN kendi düğmeleri için. */}
       <div className="print:hidden">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <Button tur="sade" olcu="sm" onClick={() => git(geriYol ?? `/ogretmen/veliler/sinif/${id}`)}>
-            {geriYol ? '← Sınıflar' : '← Sınıf'}
+          <Button tur="sade" olcu="sm" onClick={() => git(geriYol ? geriYol(id ?? '') : `/ogretmen/veliler/sinif/${id}`)}>
+            ← Sınıf
           </Button>
           {veri && <Button onClick={() => window.print()}>Yazdır</Button>}
         </div>

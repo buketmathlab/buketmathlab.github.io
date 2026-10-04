@@ -14,6 +14,15 @@
 --  6. Müdüre sınıf atanamıyor, müdür hesabına vekâletle girilemiyor.
 --  7. Pasifleştirilen müdürün jetonu düşüyor.
 --  8. Yalnız sahip müdür ekleyebiliyor; aynı PIN reddediliyor.
+--  9. (0061) Müdür kendi PIN'ini değiştiriyor: yanlış eski PIN, başkasının
+--     PIN'i, kısa PIN reddediliyor; öğretmen jetonu bu uca giremiyor;
+--     değişince diğer oturumları düşüyor.
+-- 10. (0061) Soru toplamları: şube, seviye ve okul toplamları birbirini
+--     tutuyor; soru sayısız ödev ayrı sayılıyor; aylık ödev sayıları
+--     eğitim yılındaki ödevlerle aynı.
+-- 11. (0061) Not çizelgesi: her öğrencinin ortalaması ve yapılan/yapılmayan
+--     sayısı `sinif_ogrenci_ozeti` ile BİREBİR; puan durumları doğru;
+--     cevap/yorum/dosya yolu yok; özel ders ve başkasının sınıfı kapalı.
 --
 -- İZOLASYON: kendi sınıflarını kuruyor (12MA, 12MB); tekrar çalıştırılınca
 -- önceki koşunun öğrencileri pasif, ödevleri yayın dışı bırakılıyor.
@@ -26,13 +35,15 @@ declare
   v_ben uuid; v_baris uuid; v_mudur uuid;
   s_m uuid; s_n uuid; s_ozel uuid;
   a1 uuid; a2 uuid; a3 uuid;
-  o_odev uuid;
+  o_odev uuid; o2 uuid; o3 uuid;
+  jm2 text; beklenen integer; oz jsonb; cz jsonb;
   v jsonb; satir jsonb; t jsonb; m jsonb;
   ek text := to_char(clock_timestamp(), 'HH24MISSUS');
   r record; cagri text; patladi boolean; durum text;
   -- `cikis` müdüre de açık (kendi oturumunu kapatır) — ve döngüde çağrılsaydı
   -- jetonu düşürüp sonraki bütün uçları "oturum geçersiz"le geçirirdi.
-  izinli text[] := array['mudur_paneli', 'sinif_analizi', 'onam_dokumu', 'cikis'];
+  izinli text[] := array['mudur_paneli', 'sinif_analizi', 'onam_dokumu', 'cikis',
+                          'mudur_pin_degistir', 'sinif_not_cizelgesi'];
   acik text[] := '{}';
   sayi integer := 0;
 begin
@@ -187,7 +198,7 @@ begin
   end if;
   -- Jeton döngü boyunca geçerli kaldı mı? (Ölçüm boşa çıkmadı mı?)
   perform public.mudur_paneli(jm);
-  raise notice '5 OK — % token''lı uç müdür jetonunu yetkiyle (42501) reddediyor; açık olan yalnız 3 okuma ucu ve çıkış', sayi;
+  raise notice '5 OK — % token''lı uç müdür jetonunu yetkiyle (42501) reddediyor; açık olan yalnız 4 okuma ucu, kendi PIN''i ve çıkış', sayi;
 
   -- ---------------------------------------------------------------------------
   -- 6. SINIF ATAMA VE VEKÂLET
@@ -226,6 +237,167 @@ begin
   end;
   if not patladi then raise exception '8b: başkasının PIN''iyle müdür eklendi'; end if;
   raise notice '8 OK — müdürü yalnız sahip ekliyor; kullanılan PIN reddediliyor';
+
+  -- ---------------------------------------------------------------------------
+  -- 9. MÜDÜR KENDİ PIN'İNİ DEĞİŞTİRİR (0061)
+  -- ---------------------------------------------------------------------------
+  jm2 := (public.giris('Mudur!Okul26'))->>'token';
+  patladi := false;
+  begin
+    perform public.mudur_pin_degistir(jm, 'yanlis-pin', 'Mudur!Yeni26');
+  exception when sqlstate '28000' then patladi := true;
+  end;
+  if not patladi then raise exception '9a: yanlış eski PIN kabul edildi'; end if;
+  patladi := false;
+  begin
+    perform public.mudur_pin_degistir(jm, 'Mudur!Okul26', 'MudurBaris!26');
+  exception when sqlstate '22023' then patladi := true;
+  end;
+  if not patladi then raise exception '9b: başkasının PIN''i kabul edildi'; end if;
+  patladi := false;
+  begin
+    perform public.mudur_pin_degistir(jm, 'Mudur!Okul26', '12345');
+  exception when sqlstate '22023' then patladi := true;
+  end;
+  if not patladi then raise exception '9c: kısa PIN kabul edildi'; end if;
+  patladi := false;
+  begin
+    perform public.mudur_pin_degistir(jt, 'Mudur!Sahip26', 'Sahip!Yeni26');
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '9d: öğretmen jetonu müdür PIN ucuna girdi'; end if;
+
+  perform public.mudur_pin_degistir(jm, 'Mudur!Okul26', 'Mudur!Yeni26');
+  v := public.giris('Mudur!Yeni26');
+  if v->>'rol' <> 'mudur' then raise exception '9e: yeni PIN''le giriş: %', v; end if;
+  if (public.giris('Mudur!Okul26'))->>'rol' = 'mudur' then
+    raise exception '9f: eski PIN hâlâ çalışıyor';
+  end if;
+  perform public.mudur_paneli(jm);  -- değiştiren oturum açık kalıyor
+  patladi := false;
+  begin
+    perform public.mudur_paneli(jm2);
+  exception when sqlstate '28000' then patladi := true;
+  end;
+  if not patladi then raise exception '9g: diğer oturum düşmedi'; end if;
+  perform public.mudur_pin_degistir(jm, 'Mudur!Yeni26', 'Mudur!Okul26');  -- geri al
+  raise notice '9 OK — müdür PIN''ini değiştiriyor; yanlış/başkasının/kısa PIN ve öğretmen jetonu reddediliyor; diğer oturum düşüyor';
+
+  -- ---------------------------------------------------------------------------
+  -- 10. SORU TOPLAMLARI (0061)
+  --
+  -- 12MA: 5 soruluk (süresi dolmuş) + 10 soruluk (süresi sürüyor) test +
+  -- soru sayısız açık uçlu ödev.
+  -- ---------------------------------------------------------------------------
+  o2 := (public.odev_olustur(jt, 'Müdür testi ödevi 2', null, s_m, 'test',
+          (current_date + 5)::date, 10,
+          '{"1":"A","2":"B","3":"C","4":"D","5":"E","6":"A","7":"B","8":"C","9":"D","10":"E"}'::jsonb,
+          null, null, true, 5::smallint, '{}'::jsonb))->>'id';
+  perform public.odev_yayinla(jt, o2);
+  o3 := (public.odev_olustur(jt, 'Müdür açık uçlu', null, s_m, 'acik',
+          (current_date + 5)::date))->>'id';
+  perform public.odev_yayinla(jt, o3);
+
+  v := public.mudur_paneli(jm);
+  select e2 into satir from jsonb_array_elements(v->'siniflar') e2 where e2->>'id' = s_m::text;
+  if (satir->>'soru_toplami')::int <> 15 or (satir->>'soru_sayisiz')::int <> 1
+     or (satir->>'odev_sayisi')::int <> 3 or (satir->>'seviye')::int <> 12 then
+    raise exception '10a: 12MA soru toplamı: %', satir;
+  end if;
+  -- Şubelerin toplamı = okul; seviyelerin toplamı = okul; 12. seviye =
+  -- 12. sınıf şubelerinin toplamı.
+  if (select sum((e2->>'soru_toplami')::int) from jsonb_array_elements(v->'siniflar') e2)
+       <> (v->'okul'->>'soru_toplami')::int
+     or (select sum((e2->>'soru_toplami')::int) from jsonb_array_elements(v->'seviyeler') e2)
+       <> (v->'okul'->>'soru_toplami')::int
+     or (select (e2->>'soru_toplami')::int from jsonb_array_elements(v->'seviyeler') e2
+          where (e2->>'seviye')::int = 12)
+       <> (select sum((e2->>'soru_toplami')::int) from jsonb_array_elements(v->'siniflar') e2
+            where (e2->>'seviye')::int = 12)
+     or (select sum((e2->>'odev_sayisi')::int) from jsonb_array_elements(v->'seviyeler') e2)
+       <> (v->'okul'->>'odev_sayisi')::int then
+    raise exception '10b: toplamlar tutmuyor: okul %, seviyeler %', v->'okul', v->'seviyeler';
+  end if;
+  -- Okul toplamı veritabanından bağımsız hesapla aynı: ÖZEL DERS YOK.
+  select coalesce(sum(d.soru_sayisi), 0) into beklenen
+    from public.odevler d join public.siniflar s on s.id = d.sinif_id
+   where d.yayinda and not s.arsiv and not s.ozel;
+  if (v->'okul'->>'soru_toplami')::int <> beklenen then
+    raise exception '10c: okul soru toplamı % ≠ %', v->'okul'->>'soru_toplami', beklenen;
+  end if;
+  -- Aylık ödev sayıları = eğitim yılı başından bu ayın sonuna kadarki ödevler.
+  select count(*) into beklenen
+    from public.odevler d join public.siniflar s on s.id = d.sinif_id
+   where d.yayinda and not s.arsiv and not s.ozel
+     and d.son_tarih >= (v->>'yil_baslangici')::date
+     and d.son_tarih < (date_trunc('month', (now() at time zone 'Europe/Istanbul')::date)
+                        + interval '1 month')::date;
+  if (select sum((e2->>'odev_sayisi')::int) from jsonb_array_elements(v->'aylar') e2) <> beklenen then
+    raise exception '10d: aylık ödev sayıları % ≠ %',
+      (select sum((e2->>'odev_sayisi')::int) from jsonb_array_elements(v->'aylar') e2), beklenen;
+  end if;
+  if jsonb_typeof(v->'eksik_konular') <> 'array' then
+    raise exception '10e: eksik_konular dizi değil';
+  end if;
+  if v::text like '%Gizli Ogrenci%' then raise exception '10f: panoda öğrenci adı'; end if;
+  raise notice '10 OK — 12MA 15 soru (+1 sayısız ödev); şube, seviye, okul ve aylık toplamlar tutuyor; özel ders yok';
+
+  -- ---------------------------------------------------------------------------
+  -- 11. NOT ÇİZELGESİ (0061)
+  -- ---------------------------------------------------------------------------
+  m := public.sinif_not_cizelgesi(jm, s_m);
+  t := public.sinif_ogrenci_ozeti(jt, s_m);
+  if jsonb_array_length(m->'ogrenciler') <> jsonb_array_length(t->'ogrenciler') then
+    raise exception '11a: öğrenci sayısı farklı';
+  end if;
+  for oz in select x from jsonb_array_elements(t->'ogrenciler') x loop
+    select x into cz from jsonb_array_elements(m->'ogrenciler') x where x->>'id' = oz->>'id';
+    if cz is null
+       or (cz->'ortalama') is distinct from (oz->'ortalama')
+       or (cz->>'yapilan') <> (oz->>'yapilan') or (cz->>'yapilmayan') <> (oz->>'yapilmayan') then
+      raise exception '11b: % çizelgede %, özette %', oz->>'ad', cz, oz;
+    end if;
+  end loop;
+  if (select string_agg(x->>'id', ',' order by n) from jsonb_array_elements(m->'ogrenciler') with ordinality y(x, n))
+     <> (select string_agg(x->>'id', ',' order by n) from jsonb_array_elements(t->'ogrenciler') with ordinality y(x, n)) then
+    raise exception '11c: öğrenci sırası özetten farklı';
+  end if;
+  if jsonb_array_length(m->'odevler') <> 3 then raise exception '11d: ödev sayısı %', m->'odevler'; end if;
+  select x into cz from jsonb_array_elements(m->'odevler') x where x->>'id' = o2::text;
+  if (cz->>'soru_sayisi')::int <> 10 or (cz->>'sure_doldu')::boolean then
+    raise exception '11e: ödev satırı: %', cz;
+  end if;
+  select x into cz from jsonb_array_elements(m->'ogrenciler') x where x->>'id' = a1::text;
+  if (cz->'puanlar'->0->>'odev_id') <> (m->'odevler'->0->>'id')
+     or (select x->>'durum' from jsonb_array_elements(cz->'puanlar') x
+          where x->>'odev_id' = o_odev::text) <> 'gonderdi'
+     or (select (x->>'puan')::numeric from jsonb_array_elements(cz->'puanlar') x
+          where x->>'odev_id' = o_odev::text) <> 80
+     or (select x->>'durum' from jsonb_array_elements(cz->'puanlar') x
+          where x->>'odev_id' = o2::text) <> 'suresi_devam' then
+    raise exception '11f: a1 puanları: %', cz->'puanlar';
+  end if;
+  select x into cz from jsonb_array_elements(m->'ogrenciler') x where x->>'id' = a2::text;
+  if (select x->>'durum' from jsonb_array_elements(cz->'puanlar') x
+       where x->>'odev_id' = o_odev::text) <> 'gondermedi' then
+    raise exception '11g: a2 gönderilmedi görünmüyor: %', cz->'puanlar';
+  end if;
+  if m::text ~* 'cevap|yorum|cozum/' then
+    raise exception '11h: çizelgede cevap/yorum/dosya yolu var';
+  end if;
+  patladi := false;
+  begin
+    perform public.sinif_not_cizelgesi(jm, s_ozel);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '11i: özel ders çizelgesi müdüre açık'; end if;
+  patladi := false;
+  begin
+    perform public.sinif_not_cizelgesi(jb, s_m);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '11j: başkasının sınıfı öğretmene açık'; end if;
+  raise notice '11 OK — not çizelgesi: ortalama, yapılan/yapılmayan ve sıra sinif_ogrenci_ozeti ile birebir; durumlar doğru; cevap yok';
 
   -- ---------------------------------------------------------------------------
   -- 7. PASİFLEŞTİRİLEN MÜDÜR (en sonda: hesabı kapatıyor)

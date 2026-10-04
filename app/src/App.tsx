@@ -51,6 +51,12 @@ import { OdevGonderimleri } from '@/features/ogretmen/OdevGonderimleri';
 import { MudurKabuk } from '@/features/mudur/MudurKabuk';
 import { MudurSiniflar } from '@/features/mudur/MudurSiniflar';
 import { MudurOgretmenler } from '@/features/mudur/MudurOgretmenler';
+import { MudurGenel } from '@/features/mudur/MudurGenel';
+import { MudurSinif } from '@/features/mudur/MudurSinif';
+import { MudurAyarlar } from '@/features/mudur/MudurAyarlar';
+
+/** Müdürün analiz ve onam ekranlarından dönüş: o sınıfın sayfası. */
+const mudurSinifi = (id: string) => `/mudur/siniflar/${id}`;
 // Tasarım vitrini nadiren açılır ve büyüktür; ayrı parçaya alınıyor.
 const TasarimSistemi = lazy(() =>
   import('@/pages/TasarimSistemi').then((m) => ({ default: m.TasarimSistemi })),
@@ -121,16 +127,19 @@ function Yonlendirme() {
   }
 
   if (oturum.rol === 'mudur') {
-    // Müdür yalnız izler: sınıf özetleri, öğretmen etkinliği, sınıf
-    // analizi ve onam dökümü. Yazma yolu yok — sunucu da yazan her
-    // uç için 'ogretmen' rolünü istiyor (0060).
+    // Müdür yalnız izler (0060/0061): genel bakış, sınıflar ve öğrenci
+    // notları, öğretmen etkinliği, sınıf analizi, onam dökümü. Değiştirdiği
+    // tek şey kendi PIN'i; sunucu yazan her uç için 'ogretmen' rolünü istiyor.
     return (
       <Routes>
         <Route path="/mudur" element={<MudurKabuk />}>
-          <Route index element={<MudurSiniflar />} />
+          <Route index element={<MudurGenel />} />
+          <Route path="siniflar" element={<MudurSiniflar />} />
+          <Route path="siniflar/:id" element={<MudurSinif />} />
+          <Route path="siniflar/:id/analiz" element={<SinifAnalizi geriYol={mudurSinifi} />} />
+          <Route path="siniflar/:id/onam" element={<OnamDokumu geriYol={mudurSinifi} />} />
           <Route path="ogretmenler" element={<MudurOgretmenler />} />
-          <Route path="sinif/:id" element={<SinifAnalizi geriYol="/mudur" />} />
-          <Route path="sinif/:id/onam" element={<OnamDokumu geriYol="/mudur" />} />
+          <Route path="ayarlar" element={<MudurAyarlar />} />
         </Route>
         <Route path="*" element={<Navigate to="/mudur" replace />} />
       </Routes>
