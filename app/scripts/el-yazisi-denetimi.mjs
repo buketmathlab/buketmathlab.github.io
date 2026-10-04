@@ -102,6 +102,7 @@ const { b, p } = await kur('/ogrenci/odev/a1');
       [/soruların üzerine çöz/, 'tablette soruların üzerine'],
       [/Bilgisayarda yazılmış/, 'bilgisayar yazısı kabul edilmez'],
       [/yapay zekâ/, 'yapay zekâ kabul edilmez'],
+      [/ödevin kabul edilmez/, 'sonuç: "ödevin kabul edilmez"'],
     ];
     for (const [r, ad] of bek) (r.test(k) ? tamam : bozuk)(`kartta ${ad}`);
   }
@@ -118,6 +119,8 @@ console.log('--- E2. Onaysız gönderme: sunucuya gitmez, uyarı çıkar ---');
 {
   await p.locator('input[type=file]').setInputFiles({ name: 'cozum.png', mimeType: 'image/png', buffer: PNG });
   await p.waitForTimeout(500);
+  const etiket = await p.locator('label').filter({ has: kutu(p) }).innerText();
+  (/Aksi durumda ödevimin kabul edilmeyeceğini biliyorum/.test(etiket) ? tamam : bozuk)('onay metni: "Aksi durumda ödevimin kabul edilmeyeceğini biliyorum."');
   if (await kutu(p).isChecked()) bozuk('onay kutusu baştan işaretli');
   else tamam('onay kutusu baştan boş');
   const dugme = p.getByRole('button', { name: 'Ödevi gönder' });

@@ -36,13 +36,15 @@ export const YOLLAR: ReadonlyArray<{ baslik: string; metin: string }> = [
   },
 ];
 
+/** Sonuç açıkça yazılı (öğretmenin isteği): kurala uymayan ödev kabul
+ *  edilmez. Bunu öğrenci göndermeden ÖNCE bilsin. */
 export const KABUL_EDILMEYEN =
   'Bilgisayarda yazılmış, başkasından kopyalanmış ya da yapay zekâya ' +
-  'yaptırılmış çözümler kabul edilmez. Böyle bir durumda ödevi yeniden ' +
-  'yapmanı isteyebilirim.';
+  'yaptırılmış bir çözüm gönderirsen ödevin kabul edilmez.';
 
 export const ONAY =
-  'Bu ödevi kendim çözdüm; çözümüm kendi el yazımla (kâğıtta ya da tablette).';
+  'Bu ödevi kendim çözdüm; çözümüm kendi el yazımla (kâğıtta ya da tablette). ' +
+  'Aksi durumda ödevimin kabul edilmeyeceğini biliyorum.';
 
 export const ONAY_EKSIK = 'Göndermeden önce el yazısı onayını işaretle.';
 

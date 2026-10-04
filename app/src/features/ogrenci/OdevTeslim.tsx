@@ -548,7 +548,7 @@ function OdevIcerigi({
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-[13px] text-muted">{EL_YAZISI.KABUL_EDILMEYEN}</p>
+            <p className="mt-3 text-[14px] font-semibold text-ink">{EL_YAZISI.KABUL_EDILMEYEN}</p>
           </section>
 
           {/* SINIR 1 → BUGÜNKÜ TEK ALAN, DOKUNULMADAN (0054). Çok sayfalı

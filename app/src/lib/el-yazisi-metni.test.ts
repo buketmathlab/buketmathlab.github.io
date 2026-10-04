@@ -25,6 +25,11 @@ describe('el yazısı kuralı metni', () => {
     expect(KABUL_EDILMEYEN).toMatch(/yapay zekâ/);
   });
 
+  it('sonuç açık: kurala uymayan ödev kabul edilmez — kart ve onay ikisi de söylüyor', () => {
+    expect(KABUL_EDILMEYEN).toMatch(/ödevin kabul edilmez/);
+    expect(ONAY).toMatch(/Aksi durumda ödevimin kabul edilmeyeceğini biliyorum/);
+  });
+
   it('onay iki yolu da kapsıyor — tabletle çözen kendini dışarıda sanmasın', () => {
     expect(ONAY).toMatch(/kâğıtta ya da tablette/);
   });

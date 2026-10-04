@@ -5760,6 +5760,9 @@ el yazısı sayılıyor.
   çıkıyor, düğme kapatılmıyor. Gönderilmiş ödevde kart ve onay yok.
 - Onay SAKLANMIYOR; sunucu ve şema değişmedi. Bu, öğrencinin verdiği söz.
   Asıl denetim öğretmenin elinde: "Gönderimi yeniden aç" (0056).
+- Sonuç açıkça yazılı (öğretmenin isteği): kartta "…bir çözüm gönderirsen
+  ödevin kabul edilmez." (koyu, soluk değil); onay metni "Aksi durumda
+  ödevimin kabul edilmeyeceğini biliyorum." ile bitiyor.
 - `el-yazisi-denetimi.mjs`: kart ve iki yol, onaysız gönderimde çağrı ve
   yükleme yok, uyarı görünüyor, onaylıyken gönderim gidiyor, çok sayfalı yol,
   gönderilmiş ödev, 360 px. Kusur provası: onay şartı kaldırılınca 5 sapma.
