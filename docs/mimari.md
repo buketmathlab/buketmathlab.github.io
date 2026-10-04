@@ -5623,3 +5623,53 @@ faydası var:
 - `mudur-denetimi.mjs` M10.
   - Kusur provası: sınıf sayfasındaki bağlantı sabit `/mudur`'a
     çevrilince kırmızıya döndü.
+
+## 0063 — Ortak Sınıflar sayfası, seviyelere göre konular, konu_karnesi erişimi
+
+Öğretmenin istekleri:
+- müdürün Genel sayfasında zorlanılan konular sınıf seviyelerine göre
+  gösterilsin;
+- öğretmen ve müdür Sınıflar sayfaları "aynı düzende, aynı özelliklerde"
+  olsun. Seçimi: ikisinin birleşimi.
+
+**Sunucu:**
+- `_sinif_kart_ozetleri(p_idler, p_ogretmen)`: kart sayılarının tek kaynağı.
+  - `sinif_kartlari` (öğretmen) ve `mudur_paneli.siniflar` buradan okuyor.
+  - Öğretmende `_odeve_erisir` uygulanıyor; müdürde sınıfın bütün
+    ödevleri sayılıyor.
+- `mudur_paneli.seviyeler[].eksik_konular`: her seviyenin ilk 5 konusu.
+  Okul geneli liste kalktı.
+- `sinif_not_cizelgesi(p_token, p_sinif_id, p_onizleme)`.
+  - Ödev kapsamı:
+    - müdür → bütün ödevler;
+    - sahip ve `p_onizleme` → bütün ödevler;
+    - öğretmen → `_odeve_erisir`.
+  - Öğrenciye `sinif_ogrencileri` ile birebir alanlar: `yapti`, `yapmadi`,
+    `ortalama_yapan`, `ortalama_tum`.
+  - Sıra 0044 kuralıyla; arşivdeki sınıf da açılıyor.
+- `konu_karnesi`: **açık kapandı.**
+  - 0033'ten beri yalnız rol bakılıyordu; bir öğretmen başka öğretmenin
+    sınıfının ya da öğrencisinin karnesini okuyabiliyordu.
+  - Artık sınıf yolu `_sinif_okuyucusu`, öğrenci yolu `_ogrenci_sahibi`
+    ile korunuyor.
+
+**İstemci:**
+- `features/siniflar/SinifKartlari.tsx` ve `SinifSayfasi.tsx`: öğretmen ve
+  müdür aynı bileşenleri kullanıyor.
+  - Öğretmende bunlara ek olarak Sınıf ekle, Arşivle, öğrenci adı
+    bağlantısı ve ortak sınıfta kapsam notu var.
+- Sınıf sayfasının bölümleri:
+  - öğrenci kartları (yaptı/yapmadı, "Yaptıkları" ve "Genel", aç/kapa
+    puan grafiği);
+  - aylık gelişim;
+  - ödevler ve soru sayıları;
+  - konu karnesi.
+- `SinifDetay` ve `MudurSinif` artık ince sarmalayıcı.
+
+**Testler:**
+- `mudur_testleri.sql` 13. grup.
+  - Kusur provası: `konu_karnesi` kontrolü kaldırılınca 13e kırmızıya
+    döndü.
+  - Kusur provası: öğretmen kapsamı kaldırılınca 13b kırmızıya döndü.
+- `mudur-denetimi.mjs`: M6 seviye blokları, M7 ortak sınıf sayfası, M11
+  öğretmen tarafı.

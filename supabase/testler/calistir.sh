@@ -242,7 +242,7 @@ echo "==> Mesajda öğretmen seçimi testleri (0058)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/mesaj_ogretmen_secimi_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
-echo "==> Müdür hesabı testleri (0060, 0061, 0062)"
+echo "==> Müdür hesabı ve ortak sınıf sayfası testleri (0060–0063)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/mudur_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
