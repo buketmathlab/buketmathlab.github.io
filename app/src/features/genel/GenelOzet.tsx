@@ -12,8 +12,9 @@ const AY_UZUN = new Intl.DateTimeFormat('tr-TR', {
 });
 
 /** Müdür ve öğretmen Genel sayfasının ortak gövdesindeki açıklama. */
-export const GENEL_ACIKLAMA =
-  'Okulun bugüne kadarki ödev, soru ve not özeti. Özel ders grupları dahil değil.';
+// Özel ders burada ANILMIYOR (öğretmenin isteği: sahip dışındaki hesaplarda
+// özel derse ait hiçbir yazı olmamalı). Kapsam yine okul sınıfları.
+export const GENEL_ACIKLAMA = 'Okulun bugüne kadarki ödev, soru ve not özeti.';
 
 /**
  * OKULUN GENEL ÖZETİ — müdürün Genel sekmesi (0061) ve öğretmenin Genel

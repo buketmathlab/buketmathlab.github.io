@@ -5904,3 +5904,28 @@ kişi 50 soruluk ödevi gönderdiyse sayı 1400.
     kırmızıya dönüyor.
   - Ekran denetimleri: `genel-denetimi` G3 ve `mudur-denetimi` (alan
     yokken kutucuk yok).
+
+## Özel ders yalnız sahipte — yazı da (istemci)
+
+Öğretmenin isteği: "Benim dışımdaki diğer öğretmenlerin (müdür dahil)
+hesaplarının hiçbir yerinde özel derse ait bir yazı ya da detaya yer
+verilmemeli."
+
+Veri tarafı zaten kapalıydı. Özel ders öğrencileri ve grubu yalnız sahibe
+dönüyor: `_ogretmenin_ogrencisi`, `_sinif_okuyucusu` ve `mudur_paneli`
+özel grubu dışarıda bırakıyor. Öğrenci eklemek de yalnız sahibe açık
+(`ogrenci_ekle` → `_yonetici`). Kalan dört SABİT yazı kaldırıldı:
+
+- `GENEL_ACIKLAMA` (öğretmen ve müdür Genel sayfası): "Özel ders grupları
+  dahil değil." cümlesi çıkarıldı.
+- `Ogrenciler.tsx`: "Öğrenci ekle" penceresindeki "Öğrenci türü / Özel ders
+  öğrencisi" seçimi yalnız sahipte görünüyor.
+- `SikSayisiSecimi`: ipucu "Okul sınıflarında genellikle 5 şık; 4 şıklı test
+  için değiştirebilirsiniz." oldu.
+- `Mesajlar.tsx`: sınıfı olmayan öğrencide "Özel ders" yedek yazısı yerine
+  satır boş.
+
+`ozel-ders-gizlilik-denetimi.mjs`: sahip olmayan öğretmenin Genel,
+Öğrenciler (ekleme penceresiyle), Yeni ödev (4 şık açık) ve Duyurular
+sayfalarında, müdürün Genel bakış sayfasında "özel ders" yazısı yok;
+sahipte seçenek duruyor. Kusur provası: eski yazılarla 5 sapma.

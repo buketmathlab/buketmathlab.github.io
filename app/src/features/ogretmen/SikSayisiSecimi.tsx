@@ -55,7 +55,7 @@ export function SikSayisiSecimi({ deger, onDegis }: Props) {
   return (
     <Field
       etiket="Şık sayısı"
-      ipucu="Okul sınıflarında hep 5 şık; özel ders öğrencilerinde ikisi de olabilir."
+      ipucu="Okul sınıflarında genellikle 5 şık; 4 şıklı test için değiştirebilirsiniz."
     >
       {(k) => (
         <Select {...k} value={deger} onChange={(e) => onDegis(e.target.value as SonSecenek)}>

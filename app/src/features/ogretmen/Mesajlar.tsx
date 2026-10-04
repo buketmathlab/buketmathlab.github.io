@@ -239,9 +239,13 @@ function AramaSonuclari({ arama, kanal }: { arama: string; kanal: MesajKanali })
                 >
                   <span className="min-w-0">
                     <span className="block font-semibold text-ink">{o.ad}</span>
-                    <span className="block text-[13px] text-muted">
-                      {o.sinif ?? 'Özel ders'}
-                    </span>
+                    {/* Sınıfsız öğrencide satır boş: "Özel ders" yazısı
+                        sahip dışındaki hesaplarda geçmemeli (öğretmenin
+                        isteği); özel ders öğrencisinin sınıfı zaten
+                        "Özel ders" adlı gerçek grup. */}
+                    {o.sinif && (
+                      <span className="block text-[13px] text-muted">{o.sinif}</span>
+                    )}
                   </span>
                 </button>
               </li>
