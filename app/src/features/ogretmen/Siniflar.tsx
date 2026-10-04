@@ -5,6 +5,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useToast } from '@/components/ui/toast-baglam';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
@@ -34,6 +35,9 @@ export function Siniflar() {
   const [sube, setSube] = useState('');
   const [kaydediyor, setKaydediyor] = useState(false);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
+  const { ben } = useBenKimim();
+  const [silinecek, setSilinecek] = useState<SinifKarti | null>(null);
+  const [siliniyor, setSiliniyor] = useState(false);
 
   /**
    * Liste HER ZAMAN arşivdekilerle birlikte çekiliyor, süzme istemcide.
@@ -92,11 +96,34 @@ export function Siniflar() {
     }
   }
 
+  /**
+   * BOŞ SINIFI SİLME (0068 — öğretmenin kararı: "Boş sınıf silinebilsin").
+   * Düğme yalnız sahipte ve kartta öğrenci ve ödev sıfırken çıkıyor. Kart
+   * sayıları pasif öğrenciyi ve taslak ödevi göstermiyor; o durumda sunucu
+   * reddediyor ve nedenini söylüyor ("…arşivleyebilirsiniz").
+   */
+  async function sil() {
+    if (!silinecek) return;
+    setSiliniyor(true);
+    try {
+      await rpc('sinif_sil', { p_token: oturum?.token, p_id: silinecek.id });
+      bildir(`${silinecek.ad} silindi`, 'basari');
+      yenile();
+    } catch (e) {
+      bildir(e instanceof Error ? e.message : 'Sınıf silinemedi.', 'hata');
+    } finally {
+      setSiliniyor(false);
+      setSilinecek(null);
+    }
+  }
+  const silinebilir = (s: SinifKarti) =>
+    ben?.sahip === true && !s.ozel && s.ogrenci_sayisi === 0 && s.odev_sayisi === 0;
+
   return (
     <>
       <SayfaBasligi
         baslik="Sınıflar"
-        aciklama="Arşivlenen sınıf hiçbir listede görünmez; hiçbir şey silinmez, geri alabilirsiniz."
+        aciklama="Arşivlenen sınıf hiçbir listede görünmez; geri alabilirsiniz. Öğrencisi ve ödevi olmayan sınıf silinebilir."
         eylem={<Button onClick={() => setEkleAcik(true)}>Sınıf ekle</Button>}
       />
 
@@ -142,13 +169,31 @@ export function Siniflar() {
                 Bu grup arşivlenemez — arşivlenirse özel ders öğrencilerinize ödev veremezsiniz.
               </p>
             ) : (
-              <Button tur="sade" olcu="sm" onClick={() => void arsivle(s)}>
-                {s.arsiv ? 'Geri al' : 'Arşivle'}
-              </Button>
+              <>
+                <Button tur="sade" olcu="sm" onClick={() => void arsivle(s)}>
+                  {s.arsiv ? 'Geri al' : 'Arşivle'}
+                </Button>
+                {silinebilir(s) && (
+                  <Button tur="tehlike" olcu="sm" onClick={() => setSilinecek(s)}>
+                    Sil
+                  </Button>
+                )}
+              </>
             )
           }
         />
       </AsyncBoundary>
+
+      <Dialog
+        acik={silinecek !== null}
+        onKapat={() => setSilinecek(null)}
+        baslik={`${silinecek?.ad ?? ''} silinsin mi?`}
+        aciklama="Sınıfta öğrenci ve ödev yok. Bu işlem geri alınamaz."
+        onayEtiketi="Sil"
+        onayTuru="tehlike"
+        onOnay={() => void sil()}
+        onayYukleniyor={siliniyor}
+      />
 
       <Dialog
         acik={ekleAcik}

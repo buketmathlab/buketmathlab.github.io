@@ -49,6 +49,7 @@
     "genel-denetim": "node scripts/genel-denetimi.mjs",
     "duyuru-denetim": "node scripts/duyuru-denetimi.mjs",
     "ozel-ders-gizlilik-denetim": "node scripts/ozel-ders-gizlilik-denetimi.mjs",
+    "sinif-silme-denetim": "node scripts/sinif-silme-denetimi.mjs",
     "el-yazisi-denetim": "node scripts/el-yazisi-denetimi.mjs",
     "kok-geri-alma": "node scripts/geri-alma-kok.mjs",
     "kapsam-geri-alma": "node scripts/geri-alma-kapsam.mjs"

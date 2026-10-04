@@ -258,6 +258,10 @@ echo "==> Okul ödevleri testleri (0067)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/okul_odevleri_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Boş sınıf silme testleri (0068)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/sinif_silme_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Anon izolasyon testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/anon_izolasyon.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
