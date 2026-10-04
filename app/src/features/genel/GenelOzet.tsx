@@ -3,6 +3,7 @@ import { CizgiGrafik } from '@/components/grafik/CizgiGrafik';
 import { CubukListesi } from '@/components/grafik/CubukListesi';
 import { Card } from '@/components/ui/Card';
 import { ayEtiketi, sayiya } from '@/lib/grafik';
+import { konuYokNedeni } from '@/lib/konu-nedeni';
 import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
 import type { OkulGeneli } from '@/types/api';
 
@@ -187,7 +188,7 @@ export function GenelOzet({
                 {v.seviye}. sınıfların en çok zorlandığı konular
               </h3>
               {v.eksik_konular.length === 0 ? (
-                <p className="text-[14px] text-muted">Henüz yeterli veri yok.</p>
+                <p className="text-[14px] text-muted">{konuYokNedeni(v.seviye, v.konu_verisi)}</p>
               ) : (
                 <CubukListesi
                   birim="%"

@@ -1,5 +1,7 @@
 /** Veritabanı RPC'lerinin dönüş tipleri. supabase/migrations ile eşleşir. */
 
+import type { KonuVerisi } from '@/lib/konu-nedeni';
+
 /** 0060: 'mudur' — okul müdürü, salt izleme. */
 export type Rol = 'ogretmen' | 'ogrenci' | 'veli' | 'mudur';
 
@@ -960,7 +962,13 @@ export type MudurPaneli = {
   okul: MudurOzeti & { sinif_sayisi: number; kontrol_edilen_soru?: number };
   /** 0063: her seviyenin en çok zorlandığı 5 konu (`eksik_konular`). */
   seviyeler: Array<
-    MudurOzeti & { seviye: number; sinif_sayisi: number; eksik_konular: EksikKonu[] }
+    MudurOzeti & {
+      seviye: number;
+      sinif_sayisi: number;
+      eksik_konular: EksikKonu[];
+      /** 0069 — konu listesi boşsa nedeni; 0069 öncesinde gelmez. */
+      konu_verisi?: KonuVerisi;
+    }
   >;
   siniflar: SinifKarti[];
   /** Ödevin son tarihinin ayı; ödevsiz ayda oran ve ortalama null. */

@@ -5989,3 +5989,21 @@ değişmedi: geçmişi olan sınıf silinmez, arşivlenir.
     çevirdi.
   - `sinif-silme-denetimi.mjs`: kusur provasında "boş" şartı kaldırılınca
     2 sapma çıkıyor.
+
+## 0069 — "En çok zorlanılan konular" boşsa nedeni
+
+Öğretmenin sorusu: "10. sınıfların en çok zorlandığı konular neden
+gösterilmiyor? Neden yeteri kadar veri yok yazıyor?" Seçimi: ekran nedeni
+söylesin.
+
+- **Sunucu:** `okul_geneli` ve `mudur_paneli` (0066'dan kopya)
+  `seviyeler[].konu_verisi` alanını döndürüyor: `test_odev`, `dolan_test`,
+  `konulu_dolan_test`, `yeterli_konu`, `en_az_cevap`. Hesap kuralı
+  değişmedi.
+- **İstemci, `lib/konu-nedeni.ts`:** neden şu sırayla seçiliyor: test ödevi
+  yok → süresi dolmadı → sorulara konu girilmemiş → konu başına yeterli cevap
+  yok → yanlış ya da boş bırakılan konu yok. Metin müdüre de gösterildiği
+  için talimat içermiyor, yalnız durumu söylüyor. Alan gelmezse (0069
+  öncesi) eski cümle.
+- **Test:** vitest; `duyuru_testleri` 1. grup (süre dolunca ve konu
+  girilince sayılar değişiyor, iki uç hâlâ eşit); `mudur-denetimi`.
