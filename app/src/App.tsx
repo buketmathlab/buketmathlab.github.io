@@ -54,9 +54,11 @@ import { MudurOgretmenler } from '@/features/mudur/MudurOgretmenler';
 import { MudurGenel } from '@/features/mudur/MudurGenel';
 import { MudurSinif } from '@/features/mudur/MudurSinif';
 import { MudurAyarlar } from '@/features/mudur/MudurAyarlar';
+import { MUDUR_KOKU, ONIZLEME_KOKU } from '@/features/mudur/mudur-baglam';
 
 /** Müdürün analiz ve onam ekranlarından dönüş: o sınıfın sayfası. */
-const mudurSinifi = (id: string) => `/mudur/siniflar/${id}`;
+const mudurSinifi = (id: string) => `${MUDUR_KOKU}/siniflar/${id}`;
+const onizlemeSinifi = (id: string) => `${ONIZLEME_KOKU}/siniflar/${id}`;
 // Tasarım vitrini nadiren açılır ve büyüktür; ayrı parçaya alınıyor.
 const TasarimSistemi = lazy(() =>
   import('@/pages/TasarimSistemi').then((m) => ({ default: m.TasarimSistemi })),
@@ -154,6 +156,17 @@ function Yonlendirme() {
 
   return (
     <Routes>
+      {/* MÜDÜR EKRANI ÖNİZLEMESİ (0062) — yalnız platform sahibi; sunucu
+          `mudur_paneli`'nde `_yonetici` ile sınırlıyor. Öğretmen kabuğunun
+          DIŞINDA: müdürün gördüğü ekran, kendi sekmeleriyle. */}
+      <Route path={ONIZLEME_KOKU} element={<MudurKabuk onizleme />}>
+        <Route index element={<MudurGenel />} />
+        <Route path="siniflar" element={<MudurSiniflar />} />
+        <Route path="siniflar/:id" element={<MudurSinif />} />
+        <Route path="siniflar/:id/analiz" element={<SinifAnalizi geriYol={onizlemeSinifi} />} />
+        <Route path="siniflar/:id/onam" element={<OnamDokumu geriYol={onizlemeSinifi} />} />
+        <Route path="ogretmenler" element={<MudurOgretmenler />} />
+      </Route>
       <Route path="/ogretmen" element={<Kabuk />}>
         <Route index element={<Pano />} />
         <Route path="bugun/:tur" element={<PanoDetay />} />

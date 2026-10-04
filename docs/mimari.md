@@ -5587,3 +5587,39 @@ yorumları, mesajlar ve özel ders yine kapalı.
 - `mudur-denetimi.mjs` M1–M9.
   - Kusur provası: ödev satırında soru sayısı gizlenince M7 kırmızıya
     döndü.
+
+## 0062 — Müdür ekranı önizlemesi (platform sahibi)
+
+Öğretmenin sorusu: "Diğer öğretmenlere onların hesapları gibi
+girebiliyordum. Müdürün kinde de öyle mi olacak?" Cevap: müdür hesabına
+vekâletle girilmiyor (0060). Bunun yerine sahip, Öğretmenler ekranında
+"Müdür ekranını gör" ile müdürün gördüğü ekranın aynısını **kendi
+oturumuyla** açıyor (`/ogretmen/mudur-onizleme`).
+
+**Neden vekâlet değil:** müdür hiçbir şeyi değiştiremediği için hesabına
+girmenin tek amacı "ne görüyor" sorusunu cevaplamak. Önizlemenin üç
+faydası var:
+- müdürün son girişi değişmiyor;
+- onam dökümünde "alan" sahibin adı oluyor;
+- müdür adına PIN değiştirme kapısı açılmıyor.
+
+**Sunucu:**
+- `mudur_paneli` müdüre ya da `_yonetici`'ye açık; yanıtta `onizleme`
+  alanı var.
+- `_sinif_okuyucusu`: sahip, vekâlette değilken, özel ders dışındaki her
+  sınıfı okuyabiliyor. Bu üç okuma ucunu etkiliyor: `sinif_analizi`,
+  `onam_dokumu`, `sinif_not_cizelgesi`.
+- Diğer öğretmenlerin kuralı değişmedi.
+
+**İstemci:**
+- `MudurKabuk onizleme`: önizleme şeridi; PIN sekmesi ve Çıkış düğmesi yok;
+  "← Öğretmenler" sahibin ekranına döndürüyor.
+- Bağlantı kökü `Outlet` bağlamından geliyor (`mudur-baglam.ts`:
+  `MUDUR_KOKU`, `ONIZLEME_KOKU`).
+
+**Testler:**
+- `mudur_testleri.sql` 12. grup.
+  - Kusur provası: sahip kuralı kaldırılınca kırmızıya döndü.
+- `mudur-denetimi.mjs` M10.
+  - Kusur provası: sınıf sayfasındaki bağlantı sabit `/mudur`'a
+    çevrilince kırmızıya döndü.

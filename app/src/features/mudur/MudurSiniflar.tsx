@@ -18,7 +18,7 @@ const SAYI = new Intl.NumberFormat('tr-TR');
  */
 export function MudurSiniflar() {
   const git = useNavigate();
-  const { veri, durum, hata, yenile } = useMudurPaneli();
+  const { veri, durum, hata, yenile, kok } = useMudurPaneli();
 
   return (
     <>
@@ -71,20 +71,20 @@ export function MudurSiniflar() {
                       )}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button olcu="sm" onClick={() => git(`/mudur/siniflar/${s.id}`)}>
+                      <Button olcu="sm" onClick={() => git(`${kok}/siniflar/${s.id}`)}>
                         Sınıfı aç
                       </Button>
                       <Button
                         tur="sade"
                         olcu="sm"
-                        onClick={() => git(`/mudur/siniflar/${s.id}/analiz`)}
+                        onClick={() => git(`${kok}/siniflar/${s.id}/analiz`)}
                       >
                         Konu analizi
                       </Button>
                       <Button
                         tur="sade"
                         olcu="sm"
-                        onClick={() => git(`/mudur/siniflar/${s.id}/onam`)}
+                        onClick={() => git(`${kok}/siniflar/${s.id}/onam`)}
                       >
                         Onam dökümü
                       </Button>

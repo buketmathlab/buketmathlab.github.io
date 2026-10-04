@@ -24,6 +24,9 @@
 -- 11. (0061) Not çizelgesi: her öğrencinin ortalaması ve yapılan/yapılmayan
 --     sayısı `sinif_ogrenci_ozeti` ile BİREBİR; puan durumları doğru;
 --     cevap/yorum/dosya yolu yok; özel ders ve başkasının sınıfı kapalı.
+-- 12. (0062) Sahip müdür ekranını KENDİ oturumuyla önizliyor: aynı sınıflar,
+--     `onizleme` işaretli; kendisine atanmamış sınıfın çizelgesini açıyor.
+--     Sıradan öğretmen ve sahibin vekâlet oturumu giremiyor.
 --
 -- İZOLASYON: kendi sınıflarını kuruyor (12MA, 12MB); tekrar çalıştırılınca
 -- önceki koşunun öğrencileri pasif, ödevleri yayın dışı bırakılıyor.
@@ -37,7 +40,7 @@ declare
   s_m uuid; s_n uuid; s_ozel uuid;
   a1 uuid; a2 uuid; a3 uuid;
   o_odev uuid; o2 uuid; o3 uuid;
-  jm2 text; beklenen integer; oz jsonb; cz jsonb;
+  jm2 text; beklenen integer; oz jsonb; cz jsonb; jv text;
   v jsonb; satir jsonb; t jsonb; m jsonb;
   ek text := to_char(clock_timestamp(), 'HH24MISSUS');
   r record; cagri text; patladi boolean; durum text;
@@ -413,6 +416,46 @@ begin
   end;
   if not patladi then raise exception '11j: başkasının sınıfı öğretmene açık'; end if;
   raise notice '11 OK — not çizelgesi: ortalama, yapılan/yapılmayan ve sıra sinif_ogrenci_ozeti ile birebir; durumlar doğru; cevap yok';
+
+  -- ---------------------------------------------------------------------------
+  -- 12. SAHİBİN ÖNİZLEMESİ (0062)
+  -- ---------------------------------------------------------------------------
+  m := public.mudur_paneli(jm);
+  t := public.mudur_paneli(jt);
+  if (m->>'onizleme')::boolean or not (t->>'onizleme')::boolean then
+    raise exception '12a: önizleme işareti yanlış: müdür %, sahip %', m->>'onizleme', t->>'onizleme';
+  end if;
+  if (m->'siniflar') <> (t->'siniflar') or (m->'okul') <> (t->'okul') or (m->'aylar') <> (t->'aylar') then
+    raise exception '12b: sahibin önizlemesi müdürün ekranından farklı';
+  end if;
+  -- Sahibe ATANMAMIŞ bir sınıf (12MB yalnız Barış'ın) önizlemede açılmalı.
+  delete from public.ogretmen_siniflari where ogretmen_id = v_ben and sinif_id = s_n;
+  m := public.sinif_not_cizelgesi(jt, s_n);
+  if m->'sinif'->>'id' <> s_n::text then raise exception '12c: sahip atanmamış sınıfı açamadı'; end if;
+  perform public.sinif_analizi(jt, s_n);
+  insert into public.ogretmen_siniflari (ogretmen_id, sinif_id) values (v_ben, s_n)
+    on conflict do nothing;
+  patladi := false;
+  begin
+    perform public.mudur_paneli(jb);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '12d: sıradan öğretmen müdür panosunu açtı'; end if;
+  -- Sahip Barış'ın hesabındayken (vekâlet) ne pano ne Barış'ın olmayan sınıf.
+  jv := (public.ogretmen_olarak_gir(jt, v_baris))->>'token';
+  patladi := false;
+  begin
+    perform public.mudur_paneli(jv);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '12e: vekâlet oturumu müdür panosunu açtı'; end if;
+  patladi := false;
+  begin
+    perform public.sinif_not_cizelgesi(jv, s_m);
+  exception when sqlstate '42501' then patladi := true;
+  end;
+  if not patladi then raise exception '12f: vekâlet oturumu başkasının sınıfını açtı'; end if;
+  raise notice '12 OK — sahip müdür ekranını kendi oturumuyla birebir görüyor; atanmamış sınıfı açıyor; öğretmen ve vekâlet giremiyor';
 
   -- ---------------------------------------------------------------------------
   -- 7. PASİFLEŞTİRİLEN MÜDÜR (en sonda: hesabı kapatıyor)

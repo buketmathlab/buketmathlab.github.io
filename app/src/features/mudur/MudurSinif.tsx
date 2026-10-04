@@ -11,6 +11,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { ayEtiketi, sayiya } from '@/lib/grafik';
 import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
 import type { GelisimSatiri, SinifNotCizelgesi } from '@/types/api';
+import { useMudurPaneli } from './mudur-baglam';
 
 const SAYI = new Intl.NumberFormat('tr-TR');
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' });
@@ -39,6 +40,7 @@ export function MudurSinif() {
   const { id = '' } = useParams();
   const git = useNavigate();
   const { oturum } = useOturum();
+  const { kok } = useMudurPaneli();
   const [acik, setAcik] = useState<string | null>(null);
 
   const { veri, durum, hata, yenile } = useVeri<SinifNotCizelgesi>('sinif_not_cizelgesi', {
@@ -51,7 +53,7 @@ export function MudurSinif() {
   return (
     <>
       <div className="mb-4">
-        <Button tur="sade" olcu="sm" onClick={() => git('/mudur/siniflar')}>
+        <Button tur="sade" olcu="sm" onClick={() => git(`${kok}/siniflar`)}>
           ← Sınıflar
         </Button>
       </div>
@@ -69,10 +71,10 @@ export function MudurSinif() {
               aciklama={`${veri.sinif.ogretmenler.join(', ') || 'Öğretmen atanmamış'} · ${veri.mevcut} öğrenci`}
               eylem={
                 <div className="flex flex-wrap gap-2">
-                  <Button tur="sade" olcu="sm" onClick={() => git(`/mudur/siniflar/${id}/analiz`)}>
+                  <Button tur="sade" olcu="sm" onClick={() => git(`${kok}/siniflar/${id}/analiz`)}>
                     Konu analizi
                   </Button>
-                  <Button tur="sade" olcu="sm" onClick={() => git(`/mudur/siniflar/${id}/onam`)}>
+                  <Button tur="sade" olcu="sm" onClick={() => git(`${kok}/siniflar/${id}/onam`)}>
                     Onam dökümü
                   </Button>
                 </div>

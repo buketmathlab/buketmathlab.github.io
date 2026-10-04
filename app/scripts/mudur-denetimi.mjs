@@ -23,6 +23,10 @@
  *  M8. PIN: `mudur_pin_degistir` çağrılıyor; yeni PIN'ler uyuşmazsa
  *      sunucuya gidilmiyor; yanlış eski PIN'de (28000) oturum düşmüyor.
  *  M9. 360 px: yeni sayfalarda yatay taşma yok.
+ *  M10. (0062) Sahip → "Müdür ekranını gör": müdürün hesabına girmeden,
+ *      kendi oturumuyla müdür ekranı; önizleme şeridi; PIN sekmesi yok;
+ *      sınıf → konu analizi → geri hep önizleme içinde; hiçbir yazma ucu
+ *      ve `ogretmen_olarak_gir` çağrılmıyor; "← Öğretmenler" geri götürüyor.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/mudur-denetimi.mjs
@@ -368,6 +372,41 @@ console.log('--- M8. PIN değiştir ---');
   const ym = await metin(y.s);
   olc('yanlış eski PIN: mesaj var, oturum düşmedi', ym.includes('Mevcut PIN doğru değil.') && y.s.url().endsWith('#/mudur/ayarlar') && !ym.includes('Giriş kodunuz'));
   await y.s.close();
+}
+
+console.log('--- M10. Sahibin önizlemesi ---');
+{
+  const { s, uclar } = await sayfa({
+    oturum: { rol: 'ogretmen', token: 't'.repeat(64) },
+    yol: '/ogretmen/ogretmenler',
+    genislik: 1024,
+  });
+  olc('"Müdür ekranını gör" yalnız müdür satırında', (await s.getByRole('button', { name: 'Müdür ekranını gör' }).count()) === 1);
+  await s.getByRole('button', { name: 'Müdür ekranını gör' }).click();
+  await s.waitForTimeout(700);
+  olc('adres /ogretmen/mudur-onizleme', s.url().endsWith('#/ogretmen/mudur-onizleme'), s.url());
+  const m = await metin(s);
+  olc('önizleme şeridi', m.includes('Müdürün gördüğü ekranın aynısı') && m.includes('müdürün hesabına girilmedi'));
+  olc('müdür Genel ekranı (1.240 soru)', m.includes('Genel bakış') && /Toplam soru\s*1\.240/.test(m));
+  olc('PIN sekmesi yok, Çıkış yok', (await s.getByRole('link', { name: 'PIN' }).count()) === 0 && (await s.getByRole('button', { name: 'Çıkış' }).count()) === 0);
+  await s.getByRole('link', { name: 'Sınıflar' }).first().click();
+  await s.waitForTimeout(400);
+  await s.getByRole('button', { name: 'Sınıfı aç' }).first().click();
+  await s.waitForTimeout(600);
+  olc('sınıf önizlemede açıldı', s.url().endsWith('#/ogretmen/mudur-onizleme/siniflar/9a'), s.url());
+  olc('öğrenci notları görünüyor', (await metin(s)).includes('Deniz Yalın'));
+  await s.getByRole('button', { name: 'Konu analizi' }).click();
+  await s.waitForTimeout(600);
+  olc('konu analizi önizlemede', s.url().endsWith('#/ogretmen/mudur-onizleme/siniflar/9a/analiz'), s.url());
+  await s.getByRole('button', { name: '← Sınıf' }).first().click();
+  await s.waitForTimeout(500);
+  olc('geri → önizlemedeki sınıf', s.url().endsWith('#/ogretmen/mudur-onizleme/siniflar/9a'), s.url());
+  await s.getByRole('button', { name: '← Öğretmenler' }).click();
+  await s.waitForTimeout(500);
+  olc('"← Öğretmenler" sahibin ekranına döndürüyor', s.url().endsWith('#/ogretmen/ogretmenler'), s.url());
+  const yazan = uclar.filter((u) => /ekle|sil|guncelle|_ata|gonder|yayinla|puanla|degistir|olarak_gir/.test(u));
+  olc('hiçbir yazma ucu ve vekâlet çağrılmadı', yazan.length === 0, yazan.join(', '));
+  await s.close();
 }
 
 console.log('--- M9. 360 px yatay taşma ---');

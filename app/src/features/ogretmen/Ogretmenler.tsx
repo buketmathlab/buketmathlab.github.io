@@ -296,6 +296,13 @@ export function Ogretmenler() {
                         Sınıfları
                       </Button>
                     )}
+                    {/* 0062: müdürün hesabına GİRİLMİYOR; sahip müdürün
+                        gördüğü ekranı kendi oturumuyla önizliyor. */}
+                    {o.mudur && (
+                      <Button tur="sade" olcu="sm" onClick={() => git('/ogretmen/mudur-onizleme')}>
+                        Müdür ekranını gör
+                      </Button>
+                    )}
                     <Button tur="sade" olcu="sm" onClick={() => setPinAcik(o)}>
                       PIN sıfırla
                     </Button>
