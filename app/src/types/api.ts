@@ -980,6 +980,8 @@ export type SinifNotCizelgesi = {
     cevap_anahtari: Record<string, string> | null;
     son_tarih: string;
     sure_doldu: boolean;
+    /** 0064 — ödevin beklediği öğrenci sayısı: bugün sınıfta olan ve o ödev ona düşen. */
+    beklenen: number;
     gonderim: number;
     ortalama: number | string | null;
   }>;
@@ -1002,7 +1004,8 @@ export type SinifNotCizelgesi = {
     puanlar: Array<{
       odev_id: string;
       puan: number | string | null;
-      durum: 'gonderdi' | 'gondermedi' | 'suresi_devam';
+      /** 'kapsam_disi' (0064): sınıfa gelmeden önce verilip süresi dolan ödev. */
+      durum: 'gonderdi' | 'gondermedi' | 'suresi_devam' | 'kapsam_disi';
     }>;
   }>;
   aylar: Array<{

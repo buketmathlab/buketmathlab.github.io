@@ -277,7 +277,7 @@ function OdevSatiri({
           </span>
           <br />
           <span className="sk-sayi">
-            {o.gonderim}/{mevcut}
+            {o.gonderim}/{o.beklenen ?? mevcut}
           </span>{' '}
           gönderdi
           {o.sure_doldu ? <> · ort. {ortalamaYazisi(o.ortalama) ?? '—'}</> : <> · süresi sürüyor</>}

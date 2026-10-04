@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useDosyaAc } from '@/components/DosyaAcici';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
 import { rpc } from '@/services/supabase';
 import { dosyaAdresi } from '@/services/dosya';
 import type { OdevSatiri, Sinif } from '@/types/api';
@@ -41,7 +42,10 @@ export function Odevler() {
   const { bildir } = useToast();
   const dosya = useDosyaAc();
   const git = useNavigate();
-  const [filtre, setFiltre] = useState<'hepsi' | 'taslak' | 'yayinda'>('hepsi');
+  // "Süresi dolan" ayrı filtre (öğretmenin isteği: teslim süresi dolan ödev
+  // "Yayında" yazmasın). Sunucu yalnız taslak/yayında ayrımını biliyor; süre
+  // ayrımı aşağıda, kartın etiketiyle aynı `gecti` kuralıyla.
+  const [filtre, setFiltre] = useState<'hepsi' | 'taslak' | 'yayinda' | 'suresi_dolan'>('hepsi');
   const [sinifId, setSinifId] = useState('');
   const [silinecek, setSilinecek] = useState<OdevSatiri | null>(null);
   const [islemde, setIslemde] = useState(false);
@@ -51,9 +55,17 @@ export function Odevler() {
     {
       p_token: oturum?.token,
       p_sinif_id: sinifId || null,
-      p_yayinda: filtre === 'hepsi' ? null : filtre === 'yayinda',
+      p_yayinda: filtre === 'hepsi' ? null : filtre !== 'taslak',
     },
     (v) => v.length === 0,
+  );
+
+  const gorunen = (veri ?? []).filter((o) =>
+    filtre === 'yayinda'
+      ? o.yayinda && !gecti(o.son_tarih)
+      : filtre === 'suresi_dolan'
+        ? o.yayinda && gecti(o.son_tarih)
+        : true,
   );
 
   const siniflar = useVeri<Sinif[]>('siniflar_listesi', {
@@ -134,12 +146,13 @@ export function Odevler() {
         </select>
       </div>
 
-      <div className="mb-4 flex gap-2" role="group" aria-label="Ödev filtresi">
+      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Ödev filtresi">
         {(
           [
             ['hepsi', 'Hepsi'],
             ['taslak', 'Taslaklar'],
             ['yayinda', 'Yayında'],
+            ['suresi_dolan', 'Süresi dolan'],
           ] as const
         ).map(([deger, etiket]) => (
           <button
@@ -178,7 +191,10 @@ export function Odevler() {
         tekrarDene={yenile}
       >
         <div className="grid gap-3 lg:grid-cols-2">
-          {veri?.map((o) => (
+          {gorunen.length === 0 && (veri?.length ?? 0) > 0 && (
+            <p className="text-[14px] text-muted">Bu filtrede ödev yok.</p>
+          )}
+          {gorunen.map((o) => (
             <Card key={o.id} vurgu={o.yayinda ? 'yok' : 'uyari'}>
               <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -216,7 +232,16 @@ export function Odevler() {
                     )}
                   </p>
                 </div>
-                <Tag tur={o.yayinda ? 'basari' : 'uyari'}>{o.yayinda ? 'Yayında' : 'Taslak'}</Tag>
+                {/* TESLİM SÜRESİ DOLAN ÖDEV "YAYINDA" YAZMIYOR (öğretmenin
+                    isteği). Hâlâ yayında — öğrenci görüyor, geç teslim açıksa
+                    gönderebiliyor — ama öğretmen için durumu "süresi doldu". */}
+                {!o.yayinda ? (
+                  <Tag tur="uyari">Taslak</Tag>
+                ) : gecti(o.son_tarih) ? (
+                  <Tag tur="notr">Süresi doldu</Tag>
+                ) : (
+                  <Tag tur="basari">Yayında</Tag>
+                )}
               </div>
 
               <p className="mb-3 text-[13px] text-muted">
@@ -266,16 +291,18 @@ export function Odevler() {
               {o.ortalama_tum !== null && (
                 <div className="mb-3 rounded-sk-sm bg-line-soft p-3">
                   <p className="text-[13px] font-bold text-muted">Ödev ortalaması</p>
-                  <p className="mt-1 text-[14px] text-ink">
-                    <span className="sk-sayi text-[18px] font-semibold">{o.ortalama_tum}</span>{' '}
-                    <span className="text-muted">— sınıfın tamamı, göndermeyen 0</span>
-                  </p>
-                  {o.ortalama_yapan !== null && (
-                    <p className="text-[13px] text-muted">
-                      <span className="sk-sayi font-semibold">{o.ortalama_yapan}</span> — yalnız
-                      gönderenler
-                    </p>
-                  )}
+                  {/* İKİ SAYI AYNI DÜZENDE, ADLARIYLA (öğretmenin istediği
+                      sözcüklerle): biri sınıfın tamamı, biri gönderenler. */}
+                  <dl className="mt-1 grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-1 text-[14px]">
+                    <dt className="text-ink">Sınıfın tamamı (göndermeyenler dahil)</dt>
+                    <dd className="sk-sayi text-right text-[18px] font-semibold text-ink">
+                      {ortalamaYazisi(o.ortalama_tum) ?? '—'}
+                    </dd>
+                    <dt className="text-ink">Yalnız gönderenler</dt>
+                    <dd className="sk-sayi text-right text-[18px] font-semibold text-ink">
+                      {ortalamaYazisi(o.ortalama_yapan) ?? '—'}
+                    </dd>
+                  </dl>
                 </div>
               )}
 
