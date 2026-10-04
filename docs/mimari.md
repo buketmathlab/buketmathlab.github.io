@@ -6026,3 +6026,40 @@ doğruydu ama yanıltıcıydı.
 - **Test:** vitest; `duyuru_testleri` 1. grup (`1m`: süresi dolmamış
   konulu test `konulu_test`'i artırıyor, `konulu_dolan_test`'i değil);
   `mudur-denetimi`.
+
+## Simsiyah çözüm yine kabul edildi (istemci, SQL yok)
+
+Gerçek olay: 4 Ekim 20:15'te bir öğrencinin çözümü yine simsiyah geldi.
+Karanlık fotoğraf denetimi o sırada 6 saattir yayındaydı. Görsel 1400×876
+boyutundaydı ve bütün pikseller tam 0'dı. Bu bir kamera fotoğrafı değildi:
+kamerada gürültü olurdu. Bugünkü fotoğraf yolu tamamen 0 olan görseli
+reddediyor. Geriye üç açık kalıyordu; üçü de kapatıldı.
+
+- **Saydam zemin:** `gorseliSikistir` görseli tuvale zeminsiz çiziyordu.
+  Tabletten saydam zeminli dışa aktarılan çözüm JPEG'de siyah zemine
+  dönüyordu. Açık renkli mürekkep denetimden geçerdi; koyu mürekkep ise
+  "karanlık" sayılıp haksız yere reddedilirdi. Şimdi önce beyaz zemin
+  çiziliyor, sonra görsel; PDF yolu bunu zaten yapıyordu.
+- **PDF yolu:** PDF'ten üretilen görselde karanlık denetimi yoktu. Şimdi
+  `jpeg()` başında `karanlikDenetle` çalışıyor. Hata
+  `KaranlikFotografHatasi` olarak yeniden atılıyor ve "PDF açılamadı"
+  hatasına dönüşmüyor.
+- **Eski sekme:** Yeni sürüm yalnız kapatılabilir bir şerit
+  gösteriyordu. Öğrencinin saatlerce açık kalan sekmesinde yeni denetim
+  hiç çalışmıyordu. Şimdi öğrenci ve velide (`lib/oto-yenileme.ts`) eski
+  sürüm kendini yeniliyor. Yalnız izin verilen ekranlarda yeniliyor: Pano,
+  Ödevler, Konular, Ödemeler. Teslim ve mesaj ekranında yenilemiyor, çünkü
+  seçilen fotoğraf ya da yazılan mesaj kaybolurdu. Orada şerit görünüyor;
+  öğrenci ekrandan çıkınca sekme yenileniyor. Aynı sürüm için yalnız bir
+  kez yenileniyor (`sessionStorage`), böylece döngü oluşmuyor. Öğretmen
+  ve müdürde şerit aynen sürüyor.
+- **Denetim:**
+  - vitest: beyaz zemin çizimden önce çiziliyor; ekran listesi; döngü
+    koruması.
+  - `el-yazisi-denetimi` E8: saydam zeminli, koyu mürekkepli PNG gidiyor;
+    yüklenen JPEG'in ortalama parlaklığı 251.
+  - E9: simsiyah PDF reddediliyor.
+  - E10: eski sekmede Pano bir kez yenileniyor; teslim ve mesaj ekranında
+    yenilenmiyor; teslimden çıkınca yenileniyor.
+  - Üç mutasyon kanıtı var: beyaz zemin yokken E8 düşüyor, PDF denetimi
+    yokken E9 düşüyor, oto-yenileme yokken E10 düşüyor.

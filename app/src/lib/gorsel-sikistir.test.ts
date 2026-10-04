@@ -15,6 +15,8 @@ type SahteTuval = {
 };
 
 const tuvaller: SahteTuval[] = [];
+/** Bağlam çağrılarının sırası: beyaz zemin çizimden ÖNCE mi? */
+let cagrilar: string[] = [];
 let sonTur: string | undefined;
 let sonKalite: number | undefined;
 
@@ -44,7 +46,11 @@ function ortamKur(opts: { en: number; boy: number; yuklenir?: boolean; blob?: Bl
       width: 0,
       height: 0,
       getContext: () => ({
-        drawImage: () => undefined,
+        set fillStyle(v: string) {
+          cagrilar.push(`fillStyle=${v}`);
+        },
+        fillRect: () => void cagrilar.push('fillRect'),
+        drawImage: () => void cagrilar.push('drawImage'),
         // Tek renkli 10×10 görsel: parlaklık testten seçiliyor.
         getImageData: () => ({ data: new Uint8ClampedArray(400).fill(parlaklik) }),
       }),
@@ -63,6 +69,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   tuvaller.length = 0;
+  cagrilar = [];
   sonTur = undefined;
   sonKalite = undefined;
 });
@@ -108,6 +115,12 @@ describe('gorseliSikistir', () => {
   it('sıkıştırma başarısızsa ham dosyaya düşmez', async () => {
     ortamKur({ en: 2000, boy: 2000, blob: null });
     await expect(gorseliSikistir(dosya())).rejects.toThrow(/işlenemedi/);
+  });
+
+  it('önce beyaz zemin, sonra görsel: saydam zeminli tablet çıktısı siyaha dönmez', async () => {
+    ortamKur({ en: 1400, boy: 876 });
+    await gorseliSikistir(dosya());
+    expect(cagrilar).toEqual(['fillStyle=#ffffff', 'fillRect', 'drawImage']);
   });
 
   it('karanlık (siyah) fotoğrafı gönderime almaz, ne yapacağını söyler', async () => {

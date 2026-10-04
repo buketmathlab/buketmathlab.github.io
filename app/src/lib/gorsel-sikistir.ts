@@ -45,6 +45,12 @@ export async function gorseliSikistir(dosya: File): Promise<File> {
     tuval.height = boy;
     const ctx = tuval.getContext('2d');
     if (!ctx) throw new Error('Fotoğraf işlenemedi. Sayfayı yenileyip tekrar deneyin.');
+    // BEYAZ ZEMİN ÖNCE. Tabletten dışa aktarılan çözüm (ör. saydam zeminli
+    // PNG, koyu mürekkep) JPEG'e çevrilirken saydam yer SİYAHA dönüyordu ve
+    // çözüm simsiyah görünüyordu — gerçek olay: 4 Ekim, tamamı 0 olan
+    // 1400×876 görsel. PDF yolu bunu zaten yapıyordu (`pdf-gorsel.ts`).
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, en, boy);
     ctx.drawImage(img, 0, 0, en, boy);
 
     // Çözüm görünmeyen (siyah) fotoğraf gönderilmesin — `karanlik-fotograf.ts`.

@@ -15,6 +15,7 @@ import {
   cokSayfaMetni,
   tekGorselDuzeni,
 } from '@/lib/pdf-cozum';
+import { KaranlikFotografHatasi, karanlikMi } from '@/lib/karanlik-fotograf';
 import { EN_BUYUK_BOYUT } from './dosya';
 import { pdfIleCalis, type PdfBelgesi } from './pdf-metin';
 
@@ -56,7 +57,20 @@ async function sayfayiCiz(sayfa: Sayfa, ctx: CanvasRenderingContext2D, en: numbe
   }
 }
 
+/**
+ * Karanlık (siyah) sayfa gönderilmesin — fotoğraf yoluyla aynı kural
+ * (`gorsel-sikistir.ts`). PDF içine konmuş siyah bir fotoğraf bu yoldan
+ * kontrolsüz geçiyordu.
+ */
+function karanlikDenetle(tuval: HTMLCanvasElement) {
+  const ctx = tuval.getContext('2d');
+  if (ctx && karanlikMi(ctx.getImageData(0, 0, tuval.width, tuval.height).data)) {
+    throw new KaranlikFotografHatasi();
+  }
+}
+
 async function jpeg(tuval: HTMLCanvasElement, ad: string): Promise<File> {
+  karanlikDenetle(tuval);
   // Depo sınırı 10 MB; uzun bir birleşik görsel sınırı aşarsa kalite düşer.
   for (const kalite of [KALITE, 0.6, 0.5]) {
     const blob = await new Promise<Blob | null>((c) => tuval.toBlob(c, 'image/jpeg', kalite));
@@ -104,6 +118,7 @@ export async function pdfiTekGorsele(dosya: File): Promise<{ dosya: File; sayfaS
       }
     });
   } catch (e) {
+    if (e instanceof KaranlikFotografHatasi) throw e;
     if (e instanceof Error && /sayfa; tek görsele|çok büyük/.test(e.message)) throw e;
     throw acmaHatasi(e);
   }
@@ -136,6 +151,7 @@ export async function pdfSayfalariniGorsele(
       return { dosyalar, toplam: belge.numPages };
     });
   } catch (e) {
+    if (e instanceof KaranlikFotografHatasi) throw e;
     if (e instanceof Error && /çok büyük/.test(e.message)) throw e;
     throw acmaHatasi(e);
   }
