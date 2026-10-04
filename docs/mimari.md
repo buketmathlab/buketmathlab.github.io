@@ -5831,6 +5831,9 @@ yapılacaksa o sınıfın öğrencilerine o duyuru gitsin."
     gönderimler de tek kutuda dar satırlarla.
   - Özet ayrı bir uçtan geliyor. Uç yoksa bölüm hiç çizilmiyor; beklenmeyen
     bir yanıt sayfayı düşürmüyor.
+  - Bugün bölümü yeniden KUTU (öğretmenin isteği: "kutu içinde daha
+    güzeldi … daha küçük minimal kutular"): telefonda ikişerli, 44–72 px.
+    Son gönderimler tek satır (ad, sınıf, kısaltılmış ödev adı, etiket).
   - "Verinizin yedeği" kartı Genel'den **Ayarlar**'a taşındı (öğretmenin
     isteği), yine yalnız sahipte. `docs/yedekleme.md` güncellendi;
     `genel-denetimi` G8 bunu ölçüyor.
@@ -5879,3 +5882,50 @@ yapılacaksa o sınıfın öğrencilerine o duyuru gitsin."
     kaldırıldı, her biri testi kırmızıya çevirdi.
   - `genel-denetimi.mjs` ve `duyuru-denetimi.mjs` (Chromium).
   - `erisilebilirlik-denetimi` taklitlerine `okul_geneli` eklendi.
+
+## 0066 — Kontrol edilen soru
+
+Öğretmenin isteği: "Gönderilen toplam soru ile kontrol edilen toplam soru
+ayrımı olsun." Seçimi: yalnız gönderenler sayılıyor. 30 kişilik şubede 28
+kişi 50 soruluk ödevi gönderdiyse sayı 1400.
+
+- **Sunucu:** `okul_geneli` ve `mudur_paneli` aynı alanı döndürüyor:
+  `okul.kontrol_edilen_soru`. Bu, yayındaki ödevlere bugün sınıfta olan
+  aktif öğrencilerin gönderdiği çözümlerdeki soru sayısının toplamı.
+  Süresi dolmamış ödevler de sayılıyor. Soru sayısı girilmemiş ödev
+  sayılmıyor.
+- **İstemci:** `GenelOzet`'te "Toplam soru" etiketi "Gönderilen soru" oldu;
+  seviye kartlarında da aynı. Yanında "Kontrol edilen soru" kutucuğu var.
+  Alan gelmezse (0066 öncesi) bu kutucuk çizilmiyor.
+- **Test:**
+  - `duyuru_testleri` 1. grup: 5 soruluk ödev, iki öğrenciden biri
+    gönderdi; sayı +5 artıyor. İki uç hâlâ birebir eşit.
+  - Kusur provası: "ödev verilen herkes" sayılınca sayı +10 artıyor ve test
+    kırmızıya dönüyor.
+  - Ekran denetimleri: `genel-denetimi` G3 ve `mudur-denetimi` (alan
+    yokken kutucuk yok).
+
+## Özel ders yalnız sahipte — yazı da (istemci)
+
+Öğretmenin isteği: "Benim dışımdaki diğer öğretmenlerin (müdür dahil)
+hesaplarının hiçbir yerinde özel derse ait bir yazı ya da detaya yer
+verilmemeli."
+
+Veri tarafı zaten kapalıydı. Özel ders öğrencileri ve grubu yalnız sahibe
+dönüyor: `_ogretmenin_ogrencisi`, `_sinif_okuyucusu` ve `mudur_paneli`
+özel grubu dışarıda bırakıyor. Öğrenci eklemek de yalnız sahibe açık
+(`ogrenci_ekle` → `_yonetici`). Kalan dört SABİT yazı kaldırıldı:
+
+- `GENEL_ACIKLAMA` (öğretmen ve müdür Genel sayfası): "Özel ders grupları
+  dahil değil." cümlesi çıkarıldı.
+- `Ogrenciler.tsx`: "Öğrenci ekle" penceresindeki "Öğrenci türü / Özel ders
+  öğrencisi" seçimi yalnız sahipte görünüyor.
+- `SikSayisiSecimi`: ipucu "Okul sınıflarında genellikle 5 şık; 4 şıklı test
+  için değiştirebilirsiniz." oldu.
+- `Mesajlar.tsx`: sınıfı olmayan öğrencide "Özel ders" yedek yazısı yerine
+  satır boş.
+
+`ozel-ders-gizlilik-denetimi.mjs`: sahip olmayan öğretmenin Genel,
+Öğrenciler (ekleme penceresiyle), Yeni ödev (4 şık açık) ve Duyurular
+sayfalarında, müdürün Genel bakış sayfasında "özel ders" yazısı yok;
+sahipte seçenek duruyor. Kusur provası: eski yazılarla 5 sapma.

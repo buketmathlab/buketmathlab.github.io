@@ -12,8 +12,9 @@ const AY_UZUN = new Intl.DateTimeFormat('tr-TR', {
 });
 
 /** Müdür ve öğretmen Genel sayfasının ortak gövdesindeki açıklama. */
-export const GENEL_ACIKLAMA =
-  'Okulun bugüne kadarki ödev, soru ve not özeti. Özel ders grupları dahil değil.';
+// Özel ders burada ANILMIYOR (öğretmenin isteği: sahip dışındaki hesaplarda
+// özel derse ait hiçbir yazı olmamalı). Kapsam yine okul sınıfları.
+export const GENEL_ACIKLAMA = 'Okulun bugüne kadarki ödev, soru ve not özeti.';
 
 /**
  * OKULUN GENEL ÖZETİ — müdürün Genel sekmesi (0061) ve öğretmenin Genel
@@ -28,23 +29,36 @@ export const GENEL_ACIKLAMA =
  * (kutucuklar), aylar içinde nasıl gidiyor (grafik), seviyeler ve şubeler
  * nerede duruyor, okul hangi konularda zorlanıyor.
  *
- * "Toplam soru" bir ödevi kaç şubeye verildiyse o kadar sayıyor: 9A'ya ve
+ * "Gönderilen soru" bir ödevi kaç şubeye verildiyse o kadar sayıyor: 9A'ya ve
  * 9B'ye verilen 20 soruluk ödev 40 soru. Şube toplamlarıyla tutarlı olan bu.
  */
 export function GenelOzet({ veri }: { veri: OkulGeneli }) {
+  const kontrol = veri.okul.kontrol_edilen_soru;
   return (
     <div className="flex flex-col gap-4">
-      {/* KUTUCUKLAR */}
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {/* KUTUCUKLAR. 0066: "Gönderilen soru" (ödevlerde verilen) ile
+          "Kontrol edilen soru" (öğrencilerin gönderdiği çözümlerdeki)
+          AYRI — öğretmenin isteği. Kontrol edilen alanı 0066 öncesinde
+          gelmiyor; o zaman kutucuk çizilmiyor. */}
+      <dl
+        className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${kontrol === undefined ? 'lg:grid-cols-5' : ''}`}
+      >
         <Kutucuk ad="Öğrenci" deger={SAYI.format(veri.okul.ogrenci_sayisi)} />
         <Kutucuk ad="Yayınlanan ödev" deger={SAYI.format(veri.okul.odev_sayisi)} />
         <Kutucuk
-          ad="Toplam soru"
+          ad="Gönderilen soru"
           deger={SAYI.format(veri.okul.soru_toplami)}
           {...(veri.okul.soru_sayisiz > 0
             ? { not: `+${veri.okul.soru_sayisiz} ödevde soru sayısı yok` }
             : {})}
         />
+        {kontrol !== undefined && (
+          <Kutucuk
+            ad="Kontrol edilen soru"
+            deger={SAYI.format(kontrol)}
+            not="öğrencilerin gönderdiği çözümlerde"
+          />
+        )}
         <Kutucuk
           ad="Gönderim oranı"
           deger={veri.okul.gonderim_orani === null ? '—' : `%${veri.okul.gonderim_orani}`}
@@ -104,7 +118,7 @@ export function GenelOzet({ veri }: { veri: OkulGeneli }) {
               <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[14px]">
                 <dt className="text-muted">Ödev</dt>
                 <dd className="sk-sayi text-right font-semibold text-ink">{v.odev_sayisi}</dd>
-                <dt className="text-muted">Toplam soru</dt>
+                <dt className="text-muted">Gönderilen soru</dt>
                 <dd className="sk-sayi text-right font-semibold text-ink">
                   {SAYI.format(v.soru_toplami)}
                 </dd>

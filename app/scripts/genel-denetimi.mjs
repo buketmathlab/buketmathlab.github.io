@@ -7,9 +7,12 @@
  * gösterilsin."
  *
  *  G1. Öğretmen sekme çubuğunda "Genel" var, "Pano" yok; sayfa başlığı Genel.
- *  G2. Bugün: dört DAR satır (her biri ≤ 64 px yüksek, ≥ 44 px dokunma) ve
- *      satır tıklanınca ayrıntıya gidiyor.
- *  G3. Okulun genel durumu: müdürün Genel sekmesindeki bölümler (Aylık
+ *  G2. Bugün: dört KÜÇÜK KUTU ("kutu içinde daha güzeldi … daha küçük
+ *      minimal kutular"): her biri 44–72 px, telefonda ikişerli; kutu
+ *      tıklanınca ayrıntıya gidiyor. Son gönderimler TEK SATIR (≤ 52 px).
+ *  G3. (0066: "Gönderilen soru" ve "Kontrol edilen soru" ayrı kutucuk;
+ *      alan gelmezse ikincisi yok.)
+ *      Okulun genel durumu: müdürün Genel sekmesindeki bölümler (Aylık
  *      gelişim, Sınıf seviyeleri, Şubelerin ortalaması, En çok zorlanılan
  *      konular) ve okul kutucukları `okul_geneli` verisiyle.
  *  G4. "Duyuru yap" bağlantısı duyurular sayfasına gidiyor.
@@ -42,7 +45,7 @@ const OZET = (o) => ({ ogrenci_sayisi: 56, odev_sayisi: 12, soru_toplami: 240, s
   gonderim_orani: 82, ortalama: 71.4, ...o });
 const GENEL = {
   yil_baslangici: '2026-09-01',
-  okul: OZET({ sinif_sayisi: 2 }),
+  okul: OZET({ sinif_sayisi: 2, kontrol_edilen_soru: 1400 }),
   seviyeler: [{ ...OZET({}), seviye: 9, sinif_sayisi: 2,
     eksik_konular: [{ konu: 'Mutlak Değer', toplam: 40, dogru: 18, oran: 45 }] }],
   siniflar: [
@@ -93,13 +96,21 @@ console.log('--- G1. Sekme adı ve başlık ---');
   olc('sekmede "Pano" yok', !adlar.some((t) => t.startsWith('Pano')), adlar.join(' | '));
   olc('sayfa başlığı "Genel"', (await p.locator('h1').first().innerText()).trim() === 'Genel');
 
-  console.log('--- G2. Dar Bugün satırları ---');
-  const satirlar = p.getByRole('button', { name: /^(Ödev verilen öğrenci|Açık ödev|Göndermeyen|Puan bekliyor)/ });
-  olc('dört satır', (await satirlar.count()) === 4, String(await satirlar.count()));
-  const boylar = await satirlar.evaluateAll((l) => l.map((e) => e.getBoundingClientRect().height));
-  olc('her satır 44–64 px (dar ama dokunulabilir)', boylar.every((h) => h >= 44 && h <= 64), boylar.join(', '));
+  console.log('--- G2. Küçük Bugün kutuları, tek satır gönderimler ---');
+  const satirlar = p.getByRole('main').getByRole('button', { name: /(Ödev verilen öğrenci|Açık ödev|Göndermeyen|Puan bekliyor)$/ });
+  olc('dört kutu', (await satirlar.count()) === 4, String(await satirlar.count()));
+  const kutular = await satirlar.evaluateAll((l) => l.map((e) => {
+    const r = e.getBoundingClientRect();
+    return { h: Math.round(r.height), y: Math.round(r.top), w: Math.round(r.width) };
+  }));
+  olc('her kutu 44–72 px (küçük ama dokunulabilir)', kutular.every((k) => k.h >= 44 && k.h <= 72), JSON.stringify(kutular));
+  olc('telefonda ikişerli (iki sıra)', new Set(kutular.map((k) => k.y)).size === 2, JSON.stringify(kutular));
+  olc('kutu çerçeveli', await satirlar.first().evaluate((e) => getComputedStyle(e).borderTopWidth !== '0px'));
   const goster = await satirlar.nth(2).innerText();
-  olc('satırda etiket ve sayı', /Göndermeyen[\s\S]*3/.test(goster), goster);
+  olc('kutuda sayı ve etiket', /3[\s\S]*Göndermeyen/.test(goster), goster);
+  const gonderimBoy = await p.getByRole('heading', { name: 'Son gönderimler' })
+    .evaluate((h) => Math.round(h.nextElementSibling.querySelector('li').getBoundingClientRect().height));
+  olc(`son gönderim tek satır (${gonderimBoy} px ≤ 52)`, gonderimBoy <= 52);
 
   console.log('--- G3. Okulun genel durumu ---');
   const m = await p.locator('main').innerText();
@@ -107,7 +118,9 @@ console.log('--- G1. Sekme adı ve başlık ---');
     'En çok zorlanılan konular', '9. sınıfların en çok zorlandığı konular', 'Mutlak Değer', 'Okul ortalaması']) {
     olc(`"${parca}" görünüyor`, m.includes(parca));
   }
-  olc('okul kutucukları okul_geneli verisiyle (240 soru)', /Toplam soru\s*240/.test(m), m.slice(0, 400));
+  olc('"Gönderilen soru 240" (0066)', /Gönderilen soru\s*240/.test(m), m.slice(0, 400));
+  olc('"Kontrol edilen soru 1.400" ayrı kutucuk (0066)', /Kontrol edilen soru\s*1\.400/.test(m), m.slice(0, 500));
+  olc('eski "Toplam soru" etiketi yok', !m.includes('Toplam soru'));
   const sira = m.indexOf('Bugün') < m.indexOf('Okulun genel durumu');
   olc('Bugün üstte, okul özeti altında', sira);
 

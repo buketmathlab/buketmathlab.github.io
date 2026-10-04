@@ -334,11 +334,13 @@ console.log('--- M6. Genel: soru toplamı, seviyeler, grafik, konular ---');
 {
   const { s } = await sayfa({ oturum: MUDUR, yol: '/mudur', genislik: 1024 });
   const m = await metin(s);
-  olc('Toplam soru kutucuğu 1.240', /Toplam soru\s*1\.240/.test(m), m.slice(0, 400));
+  olc('Gönderilen soru kutucuğu 1.240', /Gönderilen soru\s*1\.240/.test(m), m.slice(0, 400));
+  // 0066 öncesi sunucu: `kontrol_edilen_soru` gelmiyor → kutucuk çizilmiyor.
+  olc('alan yokken "Kontrol edilen soru" kutucuğu yok', !m.includes('Kontrol edilen soru'));
   olc('soru sayısı girilmemiş ödev notu', m.includes('+1 ödevde soru sayısı yok'));
   olc('okul gönderim ve ortalama', m.includes('%84') && /72,5/.test(m));
   olc('seviye kartları: 9. ve 10. sınıflar', m.includes('9. sınıflar') && m.includes('10. sınıflar'));
-  olc('9. sınıflar toplam soru 1.240', /9\. sınıflar[\s\S]*?Toplam soru\s*1\.240/.test(m));
+  olc('9. sınıflar gönderilen soru 1.240', /9\. sınıflar[\s\S]*?Gönderilen soru\s*1\.240/.test(m));
   const grafik = s.getByRole('img', { name: /Okulun aylık ortalaması/ });
   olc('aylık grafik çizildi', (await grafik.count()) === 1);
   const ortNokta = await grafik.locator('g[data-seri="Ortalama"] circle[data-nokta]').count();
@@ -465,7 +467,7 @@ console.log('--- M10. Sahibin önizlemesi ---');
   olc('adres /ogretmen/mudur-onizleme', s.url().endsWith('#/ogretmen/mudur-onizleme'), s.url());
   const m = await metin(s);
   olc('önizleme şeridi', m.includes('Müdürün gördüğü ekranın aynısı') && m.includes('müdürün hesabına girilmedi'));
-  olc('müdür Genel ekranı (1.240 soru)', m.includes('Genel bakış') && /Toplam soru\s*1\.240/.test(m));
+  olc('müdür Genel ekranı (1.240 soru)', m.includes('Genel bakış') && /Gönderilen soru\s*1\.240/.test(m));
   olc('PIN sekmesi yok, Çıkış yok', (await s.getByRole('link', { name: 'PIN' }).count()) === 0 && (await s.getByRole('button', { name: 'Çıkış' }).count()) === 0);
   await s.getByRole('link', { name: 'Sınıflar' }).first().click();
   await s.waitForTimeout(400);

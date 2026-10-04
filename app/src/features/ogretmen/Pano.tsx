@@ -10,18 +10,18 @@ import { useVeri } from '@/hooks/useVeri';
 import { GENEL_ACIKLAMA, GenelOzet } from '@/features/genel/GenelOzet';
 import type { OkulGeneli, Pano as PanoVerisi } from '@/types/api';
 
-/** `Card`'ın görünümü, iç boşluksuz: satırlar kenara kadar uzansın. */
+/** `Card`'ın görünümü, iç boşluksuz: satırlar kenara kadar uzansın (Son gönderimler). */
 const LISTE_KUTUSU = 'overflow-hidden rounded-sk-md border border-line bg-surface shadow-sk-sm';
 
 /**
- * BUGÜN SATIRI — dar (0065, öğretmenin isteği: "üstte kalsın fakat daha
- * dar satırlarda gösterilsin"). Eskiden dört büyük kutuydu; sayfanın
- * altına okulun genel özeti eklenince kutular ekranın yarısını alıyordu.
+ * BUGÜN KUTUSU — küçük ve sade (öğretmenin isteği: "kutu içinde daha
+ * güzeldi. Yine kutu içinde yap ama daha küçük minimal kutular olsun").
+ * 0065'in ilk hâlinde dar satırlardı; ondan önce dört büyük karttı.
  *
- * Satırın TAMAMI düğme ve listenin kapısı ("11 öğrenci göndermemiş"
+ * Kutunun TAMAMI düğme ve listenin kapısı ("11 öğrenci göndermemiş"
  * bilgisi o on bir ismi açmalı); 44 px dokunma yüksekliği korunuyor.
  */
-function BugunSatiri({
+function BugunKutusu({
   deger,
   etiket,
   vurgu,
@@ -39,19 +39,16 @@ function BugunSatiri({
         ? 'text-warning'
         : 'text-ink';
   return (
-    <li>
+    <li className="min-w-0">
       <button
         type="button"
         onClick={onAc}
-        className="flex min-h-[44px] w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
+        className="flex h-full min-h-[44px] w-full flex-col justify-center rounded-sk-sm border border-line bg-surface px-3 py-2 text-left transition-colors hover:border-ink-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
       >
-        <span className="text-[15px] text-ink">{etiket}</span>
-        <span className="flex items-center gap-2">
-          <span className={`sk-sayi font-display text-[20px] font-semibold ${renk}`}>{deger}</span>
-          <span aria-hidden="true" className="text-muted">
-            ›
-          </span>
+        <span className={`sk-sayi font-display text-[20px] font-semibold leading-none ${renk}`}>
+          {deger}
         </span>
+        <span className="mt-1 text-[12px] leading-tight text-muted">{etiket}</span>
       </button>
     </li>
   );
@@ -64,7 +61,7 @@ function BugunSatiri({
  * pano sayfasında olsun. Öğretmenlerin Pano sayfasının adı 'genel' olarak
  * değiştirilsin." Kapsam okulun tamamı (öğretmenin seçimi).
  *
- * Üstte hâlâ "bugün neye bakmalıyım?" (dar satırlarla), altında okulun
+ * Üstte hâlâ "bugün neye bakmalıyım?" (küçük kutular), altında okulun
  * genel özeti — müdürün Genel sekmesiyle AYNI bileşen (`GenelOzet`).
  * İki ayrı uç ve iki ayrı yükleme: özet yavaş ya da hatalıysa bugünün
  * işleri yine görünür.
@@ -124,34 +121,32 @@ export function Pano() {
         {veri && (
           <>
             <h2 className="mb-2 text-[18px] text-ink">Bugün</h2>
-            <div className={LISTE_KUTUSU}>
-              <ul className="divide-y divide-line">
-                {/* Ödev verilen öğrenci: TOPLAM değil, sistemin ulaştığı
-                    öğrenci — öğretmenin isteği. */}
-                <BugunSatiri
-                  deger={veri.odev_verilen_ogrenci}
-                  etiket="Ödev verilen öğrenci"
-                  onAc={() => git('/ogretmen/bugun/ogrenci')}
-                />
-                <BugunSatiri
-                  deger={veri.acik_odev}
-                  etiket="Açık ödev"
-                  onAc={() => git('/ogretmen/bugun/acik_odev')}
-                />
-                <BugunSatiri
-                  deger={veri.gecikmis_eksik}
-                  etiket="Göndermeyen"
-                  vurgu="tehlike"
-                  onAc={() => git('/ogretmen/bugun/gondermeyen')}
-                />
-                <BugunSatiri
-                  deger={veri.bekleyen_degerlendirme}
-                  etiket="Puan bekliyor"
-                  vurgu="uyari"
-                  onAc={() => git('/ogretmen/bugun/puan_bekleyen')}
-                />
-              </ul>
-            </div>
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {/* Ödev verilen öğrenci: TOPLAM değil, sistemin ulaştığı
+                  öğrenci — öğretmenin isteği. */}
+              <BugunKutusu
+                deger={veri.odev_verilen_ogrenci}
+                etiket="Ödev verilen öğrenci"
+                onAc={() => git('/ogretmen/bugun/ogrenci')}
+              />
+              <BugunKutusu
+                deger={veri.acik_odev}
+                etiket="Açık ödev"
+                onAc={() => git('/ogretmen/bugun/acik_odev')}
+              />
+              <BugunKutusu
+                deger={veri.gecikmis_eksik}
+                etiket="Göndermeyen"
+                vurgu="tehlike"
+                onAc={() => git('/ogretmen/bugun/gondermeyen')}
+              />
+              <BugunKutusu
+                deger={veri.bekleyen_degerlendirme}
+                etiket="Puan bekliyor"
+                vurgu="uyari"
+                onAc={() => git('/ogretmen/bugun/puan_bekleyen')}
+              />
+            </ul>
 
             {/* Burada İKİNCİ bir Ewalu YOK. Başlıkta zaten konuşuyor;
                 aynı ekranda ikinci bir figür karakteri süse çevirir
@@ -178,26 +173,34 @@ export function Pano() {
               <div className={LISTE_KUTUSU}>
                 <ul className="divide-y divide-line">
                   {veri.son_gonderimler.map((g, i) => (
-                    <li
-                      key={i}
-                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2"
-                    >
-                      <div className="min-w-0 flex-1">
-                        {/* AD + SINIF, ADA TIKLAYINCA ÇÖZÜM (0055). Alanlar
-                            0055 öncesinde gelmiyor: o zaman ad düz metin. */}
-                        {g.gonderim_id ? (
-                          <CozumDugmesi
-                            gonderimId={g.gonderim_id}
-                            etiket={g.ogrenci}
-                            erisilebilirAd={`${g.ogrenci} — çözümü aç`}
-                          />
-                        ) : (
-                          <span className="font-semibold text-ink">{g.ogrenci}</span>
-                        )}
-                        {g.sinif && <span className="ml-2 text-[13px] text-muted">{g.sinif}</span>}
-                        <p className="truncate text-[13px] text-muted">{g.odev}</p>
-                      </div>
-                      <div className="flex flex-wrap justify-end gap-1">
+                    // TEK SATIR (öğretmenin isteği: "son gönderimlerin
+                    // satırlarını daralt, çok yer kaplamamalı"). Ad, sınıf,
+                    // ödev adı (sığmazsa kısaltılır) ve etiket yan yana;
+                    // satır yüksekliği adın 44 px dokunma alanı kadar.
+                    <li key={i} className="flex flex-wrap items-center gap-x-2 px-3 text-[14px]">
+                      {/* AD + SINIF, ADA TIKLAYINCA ÇÖZÜM (0055). Alanlar
+                          0055 öncesinde gelmiyor: o zaman ad düz metin. */}
+                      {g.gonderim_id ? (
+                        <CozumDugmesi
+                          gonderimId={g.gonderim_id}
+                          etiket={g.ogrenci}
+                          erisilebilirAd={`${g.ogrenci} — çözümü aç`}
+                        />
+                      ) : (
+                        <span className="flex min-h-[44px] items-center font-semibold text-ink">
+                          {g.ogrenci}
+                        </span>
+                      )}
+                      {g.sinif && (
+                        <span className="shrink-0 text-[13px] text-muted">{g.sinif}</span>
+                      )}
+                      <span
+                        className="min-w-0 flex-1 truncate text-[13px] text-muted"
+                        title={g.odev}
+                      >
+                        {g.odev}
+                      </span>
+                      <span className="ml-auto flex shrink-0 gap-1">
                         {g.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
                         {g.puan === null ? (
                           <Tag tur="uyari">Puan bekliyor</Tag>
@@ -208,7 +211,7 @@ export function Pano() {
                             <span className="sk-sayi">{g.puan} puan</span>
                           </Tag>
                         )}
-                      </div>
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -11,6 +11,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { KodKutusu } from '@/components/ui/KodKutusu';
 import { useOturum } from '@/hooks/oturum-baglam';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import {
@@ -34,6 +35,7 @@ import {
 } from '@/lib/ogrenci-numarasi';
 
 export function Ogrenciler() {
+  const { ben } = useBenKimim();
   const { oturum } = useOturum();
   const git = useNavigate();
 
@@ -302,18 +304,24 @@ export function Ogrenciler() {
         <Field etiket="Ad Soyad" zorunlu>
           {(k) => <Input {...k} value={ad} onChange={(e) => setAd(e.target.value)} />}
         </Field>
-        <Field etiket="Öğrenci türü">
-          {(k) => (
-            <Select
-              {...k}
-              value={tur}
-              onChange={(e) => setTur(e.target.value as 'okul' | 'ozel')}
-            >
-              <option value="okul">Okul öğrencisi</option>
-              <option value="ozel">Özel ders öğrencisi</option>
-            </Select>
-          )}
-        </Field>
+        {/* ÖZEL DERS SEÇENEĞİ YALNIZ SAHİPTE (öğretmenin isteği: sahip
+            dışındaki hesaplarda özel derse ait hiçbir yazı olmamalı). Sunucu
+            zaten yalnız sahibe öğrenci ekletiyor (`ogrenci_ekle` →
+            `_yonetici`); diğerlerinde tür hep "okul". */}
+        {ben?.sahip === true && (
+          <Field etiket="Öğrenci türü">
+            {(k) => (
+              <Select
+                {...k}
+                value={tur}
+                onChange={(e) => setTur(e.target.value as 'okul' | 'ozel')}
+              >
+                <option value="okul">Okul öğrencisi</option>
+                <option value="ozel">Özel ders öğrencisi</option>
+              </Select>
+            )}
+          </Field>
+        )}
         {tur === 'okul' && (
           <Field etiket="Sınıf" zorunlu {...(formHatasi ? { hata: formHatasi } : {})}>
             {(k) => (
