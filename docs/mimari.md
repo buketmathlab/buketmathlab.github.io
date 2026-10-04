@@ -5796,3 +5796,86 @@ hatası değildi (çizim başarısız olsaydı gürültüsüz, tam 0 çıkardı)
 - Denetim: vitest (eşik ve sıkıştırıcı) ve `el-yazisi-denetimi.mjs` E7.
   E7'de 0–13 gürültülü 1400×1050 JPEG uyarı veriyor ve gitmiyor; aydınlık
   fotoğraf gidiyor.
+
+## 0065 — Öğretmenin Genel sayfası; öğretmenden şubeye tek yönlü duyuru
+
+Öğretmenin isteği: "Müdürün genel sekmesinde olan bilgiler öğretmenlerin
+pano sayfasında olsun. Öğretmenlerin Pano sayfasının adı 'genel' olarak
+değiştirilsin. Acil durumlarda sadece öğretmenlerin tek taraflı bildirimde
+bulunabileceği bir duyuru panosu oluştur. Sadece hangi sınıfa duyuru
+yapılacaksa o sınıfın öğrencilerine o duyuru gitsin."
+
+Öğretmenin kararları:
+
+- Genel bilgiler okulun tamamı için hesaplanıyor.
+- "Bugün" kartları üstte kalıyor, ama dar satırlarla.
+- Duyuruyu yalnız öğrenciler görüyor.
+- Bir duyuru birden çok şubeye gidebiliyor.
+
+### Genel sayfası
+
+- **`okul_geneli(p_token)`:** Her öğretmen çağırabiliyor (`_ogretmen`).
+  Hesap, `mudur_paneli` (0064) hesabının aynısı; yalnız okul, seviyeler,
+  aylar ve şubeler dönüyor.
+  - Öğretmen başına etkinlik listesi ve şube kartlarındaki öğretmen adları
+    yalnız müdürde.
+  - `mudur_paneli` değişmedi. `duyuru_testleri.sql` 1. grup, iki ucun
+    okul, seviyeler ve aylar alanlarının birebir eşit olduğunu ölçüyor;
+    hesaplar ayrışırsa test kırmızı.
+- **İstemci:**
+  - `features/genel/GenelOzet.tsx`: müdürün Genel sekmesinin gövdesi,
+    ortak bileşen. `MudurGenel` ve öğretmenin `Pano.tsx`'i onu kullanıyor.
+  - Öğretmen sekmesinin adı "Genel"; yol aynı (`/ogretmen`). Öğrenci ve
+    velide "Pano" kaldı.
+  - Bugün bölümü dört dar satır (44–64 px, satırın tamamı düğme). Son
+    gönderimler de tek kutuda dar satırlarla.
+  - Özet ayrı bir uçtan geliyor. Uç yoksa bölüm hiç çizilmiyor; beklenmeyen
+    bir yanıt sayfayı düşürmüyor.
+  - "Verinizin yedeği" kartı Genel'den **Ayarlar**'a taşındı (öğretmenin
+    isteği), yine yalnız sahipte. `docs/yedekleme.md` güncellendi;
+    `genel-denetimi` G8 bunu ölçüyor.
+
+### Duyurular
+
+- **Tablolar:** `duyurular` (yumuşak kaldırma: `kaldirildi`),
+  `duyuru_siniflari` ve `duyuru_okundu` (öğrencinin duyuruları en son
+  gördüğü an). Üçünde de RLS zorunlu ve doğrudan erişim yok.
+- **Tek kural, `_ogrencinin_duyurusu`:** Duyuru öğrenciye şu koşulların
+  hepsi sağlanınca düşer: öğrencinin şubesine yapılmış, kaldırılmamış, son
+  30 günde yapılmış, öğrenci sınıfa geldikten sonra yapılmış (0064'teki
+  `sinif_giris` mantığı).
+- **Yazma (`duyuru_yayinla`):**
+  - Şube yalnız öğretmenin kendi şubesi olabilir; arşivdeki şube
+    reddediliyor.
+  - Özel ders grubuna yalnız yönetici yazabiliyor.
+  - Metin 1–1000 karakter.
+  - Vekâletle yazılamıyor (`mesaj_gonder` kuralı).
+  - Her gönderim denetim izine yazılıyor.
+- **Kaldırma (`duyuru_kaldir`):** yalnız duyuruyu yazan öğretmen.
+- **Okuma:**
+  - `ogretmen_duyurulari`: öğretmenin kendi duyuruları ve şube başına
+    "gören / mevcut" sayısı.
+  - `ogrenci_duyurulari` ve `duyurulari_okudum`: yalnız öğrenci; velinin
+    jetonu 42501 alıyor.
+  - `ogrenci_odevleri` artık `okunmamis_duyuru` da döndürüyor; öğrencinin
+    Pano sekmesindeki rozet bu sayı.
+- **Öğretmen arayüzü:**
+  - Sekme çubuğu dolu, yedinci sekme sığmıyor. Duyurulara Genel sayfasının
+    başındaki ve Mesajlar başlığındaki "Duyuru yap" bağlantısıyla
+    gidiliyor.
+  - Gönderimden önce onay penceresi çıkıyor: "9A, 9B — 56 öğrenci.
+    Öğrenciler bu duyuruya yanıt veremez. Gönderilsin mi?"
+- **Öğrenci arayüzü:**
+  - Pano'nun en başında Duyurular kartı; yanıt alanı yok.
+  - Pano açılınca duyurular okunmuş sayılıyor ve rozet hemen düşüyor
+    (`OZET_YENILE` olayı).
+  - `useKendiOzet` artık uygulama öne gelince ve 10 dakikada bir de
+    yenileniyor.
+- **Sınır:** Telefona bildirim (push) yok; servis çalışanı bilerek yazılmadı
+  (yukarıda). Öğrenci duyuruyu uygulamayı açınca görüyor.
+- **Denetim:**
+  - `duyuru_testleri.sql`: 6 grup; kusur provası için şube yetkisi, şube
+    filtresi, vekâlet, `okul_geneli` kapısı ve kaldırma kuralı tek tek
+    kaldırıldı, her biri testi kırmızıya çevirdi.
+  - `genel-denetimi.mjs` ve `duyuru-denetimi.mjs` (Chromium).
+  - `erisilebilirlik-denetimi` taklitlerine `okul_geneli` eklendi.

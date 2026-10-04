@@ -26,7 +26,15 @@ export function OgrenciKabuk() {
   const ozet = useKendiOzet('ogrenci_odevleri');
 
   const sekmeler: SekmeTanim[] = [
-    { yol: '/ogrenci', etiket: 'Pano', ikon: SEKME_IKON.pano, sonu: true },
+    {
+      yol: '/ogrenci',
+      etiket: 'Pano',
+      ikon: SEKME_IKON.pano,
+      sonu: true,
+      // 0065: okunmamış duyuru — öğretmenin şubeye yaptığı tek yönlü duyuru.
+      rozet: ozet.okunmamis_duyuru,
+      rozetAdi: (n) => `${n} yeni duyuru`,
+    },
     { yol: '/ogrenci/odevler', etiket: 'Ödevler', ikon: SEKME_IKON.odev },
     // "Karnem" DEĞİL "Konularım": Türkiye'de "karne" okulun resmî not
     // karnesidir; o sekmeye basan bir çocuk notlarını bekler, oysa içeride

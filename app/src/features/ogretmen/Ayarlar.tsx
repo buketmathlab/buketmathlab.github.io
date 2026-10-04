@@ -10,6 +10,7 @@ import {
   KART_DUGMESI as CIKARMA_KART_DUGMESI,
 } from '@/lib/ogrenci-cikarma-metni';
 import { PinDegistirKarti } from '@/components/PinDegistirKarti';
+import { Yedek } from './Yedek';
 
 /**
  * Ayarlar — bugünlük tek işi PIN değiştirmek.
@@ -51,6 +52,20 @@ export function Ayarlar() {
       />
 
       <PinDegistirKarti uc="pin_degistir" />
+
+      {/* YEDEK BURAYA TAŞINDI (0065 — öğretmenin isteği: "Verinizin yedeği
+          kısmı ayarların içine taşınsın"). Önceden her gün açılan panonun
+          en altındaydı; eskidiğinde kart sarıya dönüp kendini hatırlatıyor.
+
+          YALNIZ SAHİPTE (0033): `disa_aktar` bütün sistemi tek dosyada
+          indiriyor; sunucu zaten reddediyor, ekran reddedilecek düğmeyi
+          göstermiyor. VARSAYILAN GÜVENLİ TARAFTA: kart yalnız "bu kişi sahip
+          DEĞİL" olduğunu BİLDİĞİMİZDE gizleniyor (`ben` null iken görünür). */}
+      {(ben === null || ben.sahip) && (
+        <div className="mt-4">
+          <Yedek />
+        </div>
+      )}
 
       {/* 0032: Ewalu'nun puan cümleleri.
           Ayrı bir ekran, çünkü beş bant × (önizleme + metin kutusu + iki

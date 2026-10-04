@@ -95,7 +95,7 @@ export function Yedek() {
 
   return (
     <Card vurgu={tazelik.uyar ? 'uyari' : 'yok'}>
-      <h2 className="mb-1 text-[18px] text-ink">Yedek</h2>
+      <h2 className="mb-1 text-[18px] text-ink">Verinizin yedeği</h2>
       <p className="mb-3 text-[14px] text-muted">{tazelik.metin}</p>
 
       <Button onClick={indir} yukleniyor={aliniyor} yuklenmeMetni="Hazırlanıyor">

@@ -28,7 +28,8 @@ export function Kabuk() {
   const sekmeler: SekmeTanim[] = [
     {
       yol: '/ogretmen',
-      etiket: 'Pano',
+      // 0065: öğretmenin isteğiyle "Genel" (öğrenci ve velide "Pano" kalıyor).
+      etiket: 'Genel',
       ikon: SEKME_IKON.pano,
       sonu: true,
     },
@@ -76,7 +77,7 @@ export function Kabuk() {
             yedincisi 360 px'de alt çubuğa sığmıyor (ölçüldü). PIN
             değiştirmek de nadir ve kasıtlı bir iş — her gün görünmesi
             gereken bir şey değil. Dar ekranda yan menü gizli olduğu için
-            aynı yere Pano'nun altından da geliniyor. */}
+            aynı yere Genel sayfasının altından da geliniyor. */}
         <div className="mt-auto flex flex-col gap-2 pt-4">
           {/* ÖĞRETMENLER SEKME DEĞİL, alt bağlantı — ve yalnız sahipte.
               Menü zaten altı sekme; yedincisi 360 px'de alt çubuğa

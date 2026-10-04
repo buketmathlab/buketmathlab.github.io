@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
@@ -57,7 +57,19 @@ export function Mesajlar() {
 
   return (
     <>
-      <SayfaBasligi baslik="Mesajlar" aciklama={SAYFA_ACIKLAMASI} />
+      <SayfaBasligi
+        baslik="Mesajlar"
+        aciklama={SAYFA_ACIKLAMASI}
+        // 0065: şubeye tek yönlü duyuru — mesajla karışmasın diye ayrı sayfa.
+        eylem={
+          <Link
+            to="/ogretmen/duyurular"
+            className="inline-flex min-h-[44px] items-center rounded-sk-md border border-line bg-surface px-4 text-[15px] font-semibold text-ink hover:border-ink-soft"
+          >
+            Duyuru yap
+          </Link>
+        }
+      />
 
       {/* KANAL DÜĞMELERİ — sekme çubuğuna YENİ SEKME eklemek yerine.
           Öğretmenin kararı: "ikisi de, ama ayrı bölümde." */}
