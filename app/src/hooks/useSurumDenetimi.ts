@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { otoYenilemeIsaretle, otoYenilemeYapildiMi, otoYenilenebilir } from '@/lib/oto-yenileme';
 
 /**
  * Yeni sürüm denetimi — `?y=22` zahmetinin sonu.
@@ -58,12 +59,26 @@ export type SurumDurumu = {
   yenile: () => void;
 };
 
+/**
+ * Adrese sürüm ekleyip değiştirir. `location.reload()` YETMEZ: önbellekteki
+ * HTML'i yine getirebilir ve kullanıcı "yeniledim ama değişmedi" derdi.
+ * Öğretmenin elle yaptığı şeyin aynısı, artık uygulamanın kendisi yapıyor.
+ */
+function surumeGec(surum: string | null) {
+  const u = new URL(window.location.href);
+  u.searchParams.set('s', surum ?? String(Date.now()));
+  window.location.replace(u.toString());
+}
+
 export function useSurumDenetimi(): SurumDurumu {
   const [yeniSurum, setYeniSurum] = useState<string | null>(null);
+  /** Şerit kapatılmış olsa bile bilinen yeni sürüm (oto-yenileme için). */
+  const [yayindaki, setYayindaki] = useState<string | null>(null);
 
   const bak = useCallback(async () => {
     const yayin = await yayindakiSurum();
     if (!yayin || yayin === __SEKIZ_SURUM__) return;
+    setYayindaki(yayin);
     // Kapatılmış olan sürümü tekrar göstermiyoruz; ama DAHA YENİSİ
     // çıkarsa gösteriyoruz — bu yüzden karşılaştırma eşitlik üzerinden.
     let yoksayilan: string | null = null;
@@ -88,6 +103,20 @@ export function useSurumDenetimi(): SurumDurumu {
     };
   }, [bak]);
 
+  // Öğrenci ve velide şerit beklemeden yenile — `lib/oto-yenileme.ts`.
+  // Teslim ya da mesaj ekranındaysa o ekrandan çıkınca (hashchange).
+  useEffect(() => {
+    if (!yayindaki) return;
+    const dene = () => {
+      if (!otoYenilenebilir(window.location.hash) || otoYenilemeYapildiMi(yayindaki)) return;
+      otoYenilemeIsaretle(yayindaki);
+      surumeGec(yayindaki);
+    };
+    dene();
+    window.addEventListener('hashchange', dene);
+    return () => window.removeEventListener('hashchange', dene);
+  }, [yayindaki]);
+
   const yoksay = useCallback(() => {
     if (yeniSurum) {
       try {
@@ -99,15 +128,7 @@ export function useSurumDenetimi(): SurumDurumu {
     setYeniSurum(null);
   }, [yeniSurum]);
 
-  const yenile = useCallback(() => {
-    // `location.reload()` YETMEZ: önbellekteki HTML'i yine getirebilir ve
-    // kullanıcı "yeniledim ama değişmedi" derdi. Adrese sürüm ekleyip
-    // değiştiriyoruz — öğretmenin elle yaptığı şeyin aynısı, artık
-    // uygulamanın kendisi yapıyor.
-    const u = new URL(window.location.href);
-    u.searchParams.set('s', yeniSurum ?? String(Date.now()));
-    window.location.replace(u.toString());
-  }, [yeniSurum]);
+  const yenile = useCallback(() => surumeGec(yeniSurum), [yeniSurum]);
 
   return { yeniSurum, yoksay, yenile };
 }

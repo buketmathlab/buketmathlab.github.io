@@ -14,6 +14,13 @@
  *  E6. 360 px'de yatay taşma yok.
  *  E7. Karanlık (siyah) fotoğraf: seçilince uyarı, gönderilmiyor; aydınlık
  *      fotoğraf sorunsuz (gerçek olay: 10C'den tamamen siyah bir çözüm).
+ *  E8. Saydam zeminli, koyu mürekkepli PNG (tablet çıktısı) kabul ediliyor
+ *      ve yüklenen JPEG BEYAZ zeminli — siyaha dönmüyor (gerçek olay:
+ *      4 Ekim 20:15, 9. sınıftan tamamı 0 olan 1400×876 çözüm).
+ *  E9. Simsiyah sayfalı PDF: uyarı görünüyor, gönderilmiyor.
+ *  E10. Yeni sürüm yayındayken öğrencinin eski sekmesi KENDİNİ yeniliyor
+ *      (bir kez, döngü yok); teslim ve mesaj ekranında yenilemiyor, şerit
+ *      görünüyor; teslim ekranından çıkınca yeniliyor.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/el-yazisi-denetimi.mjs
@@ -43,19 +50,35 @@ const ODEVLER = {
   dersler: [], okunmamis_mesaj: 0,
 };
 
-async function kur(yol, { sinir = 1, en = 390 } = {}) {
+async function kur(yol, { sinir = 1, en = 390, surum = null } = {}) {
   const b = await chromium.launch();
   const s = await b.newContext({ viewport: { width: en, height: 900 } });
+  if (surum) {
+    await s.route('**/surum.json', (r) =>
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ surum }) }));
+  }
   await s.addInitScript(({ ODEVLER, sinir }) => {
     localStorage.setItem('sekiz_oturum', JSON.stringify({ rol: 'ogrenci', token: 't'.repeat(64),
       ogrenci: { id: 'o1', ad: 'Duru Dilara Aygün', tur: 'okul', sinif: '9C' } }));
     window.__cagrilar = [];
     window.__yuklenen = 0;
+    // Bu sekmede sayfa kaç kez yüklendi (E10: oto-yenileme döngüsü yok).
+    sessionStorage.setItem('__yukleme', String(Number(sessionStorage.getItem('__yukleme') ?? 0) + 1));
     const asil = window.fetch;
     const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { 'Content-Type': 'application/json' } });
     window.fetch = async (u, o) => {
       const url = String(typeof u === 'string' ? u : u.url);
-      if (url.startsWith('https://depo.sahte/')) { window.__yuklenen++; return new Response('{}', { status: 200 }); }
+      if (url.startsWith('https://depo.sahte/')) {
+        window.__yuklenen++;
+        if (o?.body instanceof Blob) {
+          window.__sonVeri = await new Promise((c) => {
+            const f = new FileReader();
+            f.onload = () => c(String(f.result).split(',')[1]);
+            f.readAsDataURL(o.body);
+          });
+        }
+        return new Response('{}', { status: 200 });
+      }
       let govde = null;
       try { govde = JSON.parse(String(o?.body ?? 'null')); } catch { /* yok */ }
       if (/functions\/v1\/dosya-url/.test(url)) {
@@ -68,6 +91,7 @@ async function kur(yol, { sinir = 1, en = 390 } = {}) {
         case 'ogrenci_odevleri': return json(ODEVLER);
         case 'odev_sayfa_siniri': return json(sinir);
         case 'ewalu_mesajlari': return json([]);
+        case 'ogrenci_mesajlari': return json({ mesajlar: [], son_gorulme: null, ogretmenler: [] });
         case 'odev_gonder': return json({ id: 'g1', durum: 'incelemede' });
         default: return json({});
       }
@@ -203,6 +227,91 @@ console.log('--- E7. Karanlık fotoğraf ---');
   await bas(p);
   ((await gonderimler(p)).length === 1 ? tamam : bozuk)('aydınlık fotoğraf gönderildi');
   await b.close();
+}
+
+console.log('--- E8. Saydam zeminli tablet çıktısı (koyu mürekkep) ---');
+{
+  const en = 1400, boy = 876;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${en}" height="${boy}">` +
+    `<text x="100" y="300" font-size="120" font-family="sans-serif" fill="#1a1a1a">x² + 3x = 10</text>` +
+    `<path d="M100 500 L1200 500" stroke="#1a1a1a" stroke-width="8"/></svg>`;
+  const saydam = await sharp(Buffer.from(svg)).png().toBuffer();
+  const meta = await sharp(saydam).stats();
+  if (meta.isOpaque) bozuk('test görseli saydam değil');
+  const { b, p } = await kur('/ogrenci/odev/a1');
+  await p.locator('input[type=file]').setInputFiles({ name: 'cozum.png', mimeType: 'image/png', buffer: saydam });
+  await p.waitForTimeout(800);
+  if (/çok karanlık/.test(await metin(p))) bozuk('saydam zeminli çözüm KARANLIK sayıldı');
+  else tamam('saydam zeminli çözüm kabul edildi');
+  await kutu(p).check();
+  await bas(p);
+  ((await gonderimler(p)).length === 1 ? tamam : bozuk)('gönderildi');
+  const veri = await p.evaluate(() => window.__sonVeri);
+  if (!veri) bozuk('yüklenen veri yakalanamadı');
+  else {
+    const st = await sharp(Buffer.from(veri, 'base64')).stats();
+    const ort = st.channels.slice(0, 3).reduce((t, c) => t + c.mean, 0) / 3;
+    const enKoyu = Math.min(...st.channels.slice(0, 3).map((c) => c.min));
+    (ort > 200 ? tamam : bozuk)(`yüklenen JPEG beyaz zeminli (ortalama parlaklık ${ort.toFixed(0)})`);
+    (enKoyu < 80 ? tamam : bozuk)(`mürekkep görünüyor (en koyu ${enKoyu})`);
+  }
+  await b.close();
+}
+
+console.log('--- E9. Simsiyah sayfalı PDF ---');
+{
+  const icerik = '0 g 0 0 595 842 re f';
+  const nesne = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R >>',
+    `<< /Length ${icerik.length} >>\nstream\n${icerik}\nendstream`,
+  ];
+  let g = '%PDF-1.4\n';
+  const yer = [];
+  nesne.forEach((o, i) => { yer.push(g.length); g += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const x = g.length;
+  g += `xref\n0 ${nesne.length + 1}\n0000000000 65535 f \n` +
+    yer.map((y) => `${String(y).padStart(10, '0')} 00000 n \n`).join('') +
+    `trailer\n<< /Size ${nesne.length + 1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF\n`;
+  const pdf = Buffer.from(g, 'latin1');
+  const { b, p } = await kur('/ogrenci/odev/a1');
+  await p.locator('input[type=file]').setInputFiles({ name: 'cozum.pdf', mimeType: 'application/pdf', buffer: pdf });
+  await p.waitForTimeout(2500);
+  (/Fotoğraf çok karanlık; çözümün okunmuyor/.test(await metin(p)) ? tamam : bozuk)('siyah PDF sayfasında uyarı görünüyor');
+  await kutu(p).check();
+  await bas(p);
+  if ((await gonderimler(p)).length || (await p.evaluate(() => window.__yuklenen))) bozuk('SİYAH PDF GÖNDERİLDİ');
+  else tamam('siyah PDF gönderilmedi, yüklenmedi');
+  await b.close();
+}
+
+console.log('--- E10. Eski sekme kendini yeniliyor (öğrenci) ---');
+{
+  const YENI = 'denetim-yeni-surum';
+  const yukleme = (p) => p.evaluate(() => Number(sessionStorage.getItem('__yukleme')));
+  {
+    const { b, p } = await kur('/ogrenci', { surum: YENI });
+    await p.waitForTimeout(2500);
+    (p.url().includes(`s=${YENI}`) ? tamam : bozuk)(`Pano: kendiliğinden yenilendi (${p.url().split('/yeni/')[1]})`);
+    const n = await yukleme(p);
+    (n === 2 ? tamam : bozuk)(`yalnız bir kez yenilendi, döngü yok (${n} yükleme)`);
+    ((await p.getByText('Yeni sürüm hazır.').count()) === 1 ? tamam : bozuk)('yenilemeden sonra hâlâ eskiyse şerit görünüyor');
+    await b.close();
+  }
+  for (const yol of ['/ogrenci/odev/a1', '/ogrenci/mesajlar']) {
+    const { b, p } = await kur(yol, { surum: YENI });
+    await p.waitForTimeout(1500);
+    const n = await yukleme(p);
+    (n === 1 && !p.url().includes('s=') ? tamam : bozuk)(`${yol}: yenilemedi (${n} yükleme)`);
+    ((await p.getByText('Yeni sürüm hazır.').count()) === 1 ? tamam : bozuk)(`${yol}: şerit görünüyor`);
+    if (yol === '/ogrenci/odev/a1') {
+      await p.evaluate(() => { location.hash = '#/ogrenci/odevler'; });
+      await p.waitForTimeout(2000);
+      (p.url().includes(`s=${YENI}`) ? tamam : bozuk)('teslim ekranından çıkınca yenilendi');
+    }
+    await b.close();
+  }
 }
 
 console.log('');
