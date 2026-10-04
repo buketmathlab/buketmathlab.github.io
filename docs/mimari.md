@@ -5768,3 +5768,24 @@ el yazısı sayılıyor.
   gönderilmiş ödev, 360 px. Kusur provası: onay şartı kaldırılınca 5 sapma.
   `pdf-cozum`, `sayfa-siniri` ve `yeniden-acma` denetimleri artık göndermeden
   önce onayı işaretliyor.
+
+## Karanlık fotoğraf gönderilmiyor (istemci)
+
+Gerçek olay: 10C'den bir öğrencinin çözümü tamamen siyah geldi. Görsel
+1400×1050 boyutundaydı, yani sistemin sıkıştırmasından geçmişti. Parlaklığı
+0–13 arasında, ortalaması 4'tü ve renkli kamera gürültüsü taşıyordu. Bu,
+karanlıkta ya da objektif kapalıyken çekilmiş gerçek bir fotoğraftı; sistem
+hatası değildi (çizim başarısız olsaydı gürültüsüz, tam 0 çıkardı).
+
+- `lib/karanlik-fotograf.ts`: `karanlikMi(rgba)` en parlak %2'lik dilime
+  bakıyor; o dilim de 40'ın altındaysa fotoğrafta okunacak bir şey yok.
+  Kâğıt, loş odada bile bu eşiğin çok üstünde kalıyor. Kâğıdın küçük bir
+  köşesi görünen fotoğraf da reddedilmiyor.
+- `gorseliSikistir`: çizimden sonra bu denetimi yapıyor ve
+  `KaranlikFotografHatasi` fırlatıyor. Öğrenci şu uyarıyı görüyor:
+  "Fotoğraf çok karanlık, çözümün görünmüyor. Işıklı bir yerde yeniden
+  çek." Fotoğraf seçilmemiş sayılıyor; gönderim ve yükleme yapılmıyor.
+  Çok sayfalı yolda dosyanın adıyla birlikte aynı uyarı çıkıyor.
+- Denetim: vitest (eşik ve sıkıştırıcı) ve `el-yazisi-denetimi.mjs` E7.
+  E7'de 0–13 gürültülü 1400×1050 JPEG uyarı veriyor ve gitmiyor; aydınlık
+  fotoğraf gidiyor.

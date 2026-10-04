@@ -12,21 +12,22 @@
  *  E4. Çok sayfalı yolda (sınır 3) da kart ve onay var.
  *  E5. Gönderilmiş ödevde kart ve onay YOK.
  *  E6. 360 px'de yatay taşma yok.
+ *  E7. Karanlık (siyah) fotoğraf: seçilince uyarı, gönderilmiyor; aydınlık
+ *      fotoğraf sorunsuz (gerçek olay: 10C'den tamamen siyah bir çözüm).
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/el-yazisi-denetimi.mjs
  */
 const { chromium } = await import('/opt/node22/lib/node_modules/playwright/index.mjs');
+const { default: sharp } = await import('sharp');
 
 let hata = 0;
 const tamam = (m) => console.log(`  ✓ ${m}`);
 const bozuk = (m) => { hata++; console.log(`  ✗ ${m}`); };
 const KOK = 'http://127.0.0.1:8788/yeni/';
 
-const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-  'base64',
-);
+// Açık renkli kâğıt: E7'deki karanlık fotoğraf denetimine takılmasın.
+const PNG = await sharp({ create: { width: 600, height: 800, channels: 3, background: '#f2efe8' } }).png().toBuffer();
 const odev = (id, gonderim) => ({
   id, baslik: 'Açık uçlu ödev', aciklama: null, tur: 'acik', son_tarih: '2099-10-02',
   soru_sayisi: null, gec_teslim: true, sik_sayisi: 5, sinif_arsiv: false, odev_yolu: 'odev/x/sorular.pdf',
@@ -175,6 +176,31 @@ console.log('--- E6. 360 px ---');
   const { b, p } = await kur('/ogrenci/odev/a1', { en: 360 });
   const tasma = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   (tasma <= 0 ? tamam : bozuk)(`yatay taşma yok (${tasma} px)`);
+  await b.close();
+}
+
+console.log('--- E7. Karanlık fotoğraf ---');
+{
+  // Gerçek olaydaki gibi: 1400×1050, parlaklık 0–13 arası kamera gürültüsü.
+  const en = 1400, boy = 1050, ham = Buffer.alloc(en * boy * 3);
+  for (let i = 0; i < ham.length; i++) ham[i] = (i * 7919) % 14;
+  const siyah = await sharp(ham, { raw: { width: en, height: boy, channels: 3 } }).jpeg().toBuffer();
+  const kagit = await sharp({ create: { width: 800, height: 600, channels: 3, background: '#e8e4dc' } }).jpeg().toBuffer();
+
+  const { b, p } = await kur('/ogrenci/odev/a1');
+  await p.locator('input[type=file]').setInputFiles({ name: 'cozum.jpg', mimeType: 'image/jpeg', buffer: siyah });
+  await p.waitForTimeout(800);
+  const m = await metin(p);
+  (/Fotoğraf çok karanlık, çözümün görünmüyor\. Işıklı bir yerde yeniden çek\./.test(m) ? tamam : bozuk)('siyah fotoğrafta uyarı görünüyor');
+  await kutu(p).check();
+  await bas(p);
+  if ((await gonderimler(p)).length || (await p.evaluate(() => window.__yuklenen))) bozuk('SİYAH FOTOĞRAF GÖNDERİLDİ');
+  else tamam('siyah fotoğraf gönderilmedi, yüklenmedi');
+  await p.locator('input[type=file]').setInputFiles({ name: 'cozum2.jpg', mimeType: 'image/jpeg', buffer: kagit });
+  await p.waitForTimeout(800);
+  if (/çok karanlık/.test(await metin(p))) bozuk('aydınlık fotoğrafta uyarı kalmış');
+  await bas(p);
+  ((await gonderimler(p)).length === 1 ? tamam : bozuk)('aydınlık fotoğraf gönderildi');
   await b.close();
 }
 

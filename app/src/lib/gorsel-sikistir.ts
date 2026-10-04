@@ -14,6 +14,8 @@
  * birkaç katı boyutta saklar.
  */
 
+import { KaranlikFotografHatasi, karanlikMi } from './karanlik-fotograf';
+
 const EN_BUYUK_KENAR = 1400;
 const KALITE = 0.72;
 
@@ -44,6 +46,9 @@ export async function gorseliSikistir(dosya: File): Promise<File> {
     const ctx = tuval.getContext('2d');
     if (!ctx) throw new Error('Fotoğraf işlenemedi. Sayfayı yenileyip tekrar deneyin.');
     ctx.drawImage(img, 0, 0, en, boy);
+
+    // Çözüm görünmeyen (siyah) fotoğraf gönderilmesin — `karanlik-fotograf.ts`.
+    if (karanlikMi(ctx.getImageData(0, 0, en, boy).data)) throw new KaranlikFotografHatasi();
 
     const blob = await new Promise<Blob | null>((c) =>
       tuval.toBlob(c, 'image/jpeg', KALITE),

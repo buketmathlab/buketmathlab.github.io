@@ -20,6 +20,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
+import { KARANLIK_METNI, KaranlikFotografHatasi } from '@/lib/karanlik-fotograf';
 import { birlesimNotu, pdfMi } from '@/lib/pdf-cozum';
 import { sureDurumu } from '@/lib/son-tarih';
 import {
@@ -180,6 +181,7 @@ export function OdevTeslim() {
     const alinacak = dosyalar.slice(0, yer);
     const hazir: Sayfa[] = [];
     const okunamayan: string[] = [];
+    const karanlik: string[] = [];
 
     // PDF'in fazladan sayfaları: sınıra sığmayanlar hiç çizilmiyor.
     let pdfTasan = 0;
@@ -198,8 +200,8 @@ export function OdevTeslim() {
             continue;
           }
           hazir.push({ id: crypto.randomUUID(), dosya: await gorseliSikistir(d) });
-        } catch {
-          okunamayan.push(d.name);
+        } catch (e) {
+          (e instanceof KaranlikFotografHatasi ? karanlik : okunamayan).push(d.name);
         }
       }
     } finally {
@@ -216,6 +218,7 @@ export function OdevTeslim() {
     if (okunamayan.length > 0) {
       sorunlar.push(`Okunamayan görsel: ${okunamayan.join(', ')}. Başka bir fotoğraf seçebilirsin.`);
     }
+    if (karanlik.length > 0) sorunlar.push(`${karanlik.join(', ')}: ${KARANLIK_METNI}`);
     if (sorunlar.length > 0) setFotoHatasi(sorunlar.join(' '));
   }
 
