@@ -28,6 +28,7 @@ export function MudurSiniflar() {
             baglanti={{
               sinif: (id) => `${kok}/siniflar/${id}`,
               analiz: (id) => `${kok}/siniflar/${id}/analiz`,
+              odevler: (id) => `${kok}/siniflar/${id}/odevler`,
               onam: (id) => `${kok}/siniflar/${id}/onam`,
             }}
           />

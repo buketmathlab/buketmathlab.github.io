@@ -53,6 +53,7 @@ async function ac(yol, { rol = 'ogretmen', sahip = false } = {}) {
         soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null })),
       ogretmen_duyurulari: [],
       mudur_paneli: { ...GENEL, ad: 'Ayşe Kaya', ogretmenler: [] },
+      okul_odevleri: [],
     }[uc] ?? {};
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
   });
@@ -64,7 +65,7 @@ async function ac(yol, { rol = 'ogretmen', sahip = false } = {}) {
 const metin = (p) => p.evaluate(() => document.body.innerText);
 
 console.log('--- Ö1. Sahip olmayan öğretmen ---');
-for (const yol of ['/ogretmen', '/ogretmen/duyurular']) {
+for (const yol of ['/ogretmen', '/ogretmen/duyurular', '/ogretmen/okul-odevleri']) {
   const { b, p } = await ac(yol);
   const m = await metin(p);
   olc(`${yol}: özel ders yazısı yok`, !YASAK.test(m), m.match(YASAK)?.[0]);

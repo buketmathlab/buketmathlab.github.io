@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { CizgiGrafik } from '@/components/grafik/CizgiGrafik';
 import { CubukListesi } from '@/components/grafik/CubukListesi';
 import { Card } from '@/components/ui/Card';
@@ -32,7 +33,14 @@ export const GENEL_ACIKLAMA = 'Okulun bugüne kadarki ödev, soru ve not özeti.
  * "Gönderilen soru" bir ödevi kaç şubeye verildiyse o kadar sayıyor: 9A'ya ve
  * 9B'ye verilen 20 soruluk ödev 40 soru. Şube toplamlarıyla tutarlı olan bu.
  */
-export function GenelOzet({ veri }: { veri: OkulGeneli }) {
+export function GenelOzet({
+  veri,
+  odevlerYolu,
+}: {
+  veri: OkulGeneli;
+  /** 0067: verilirse "Yayınlanan ödev" kutucuğu şube şube ödev sayfasını açar. */
+  odevlerYolu?: string;
+}) {
   const kontrol = veri.okul.kontrol_edilen_soru;
   return (
     <div className="flex flex-col gap-4">
@@ -44,7 +52,17 @@ export function GenelOzet({ veri }: { veri: OkulGeneli }) {
         className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${kontrol === undefined ? 'lg:grid-cols-5' : ''}`}
       >
         <Kutucuk ad="Öğrenci" deger={SAYI.format(veri.okul.ogrenci_sayisi)} />
-        <Kutucuk ad="Yayınlanan ödev" deger={SAYI.format(veri.okul.odev_sayisi)} />
+        <Kutucuk
+          ad="Yayınlanan ödev"
+          deger={SAYI.format(veri.okul.odev_sayisi)}
+          {...(odevlerYolu
+            ? {
+                yol: odevlerYolu,
+                yolAdi: 'Yayınlanan ödevler — şube şube aç',
+                not: 'Şubelere göre gör ›',
+              }
+            : {})}
+        />
         <Kutucuk
           ad="Gönderilen soru"
           deger={SAYI.format(veri.okul.soru_toplami)}
@@ -190,14 +208,43 @@ export function GenelOzet({ veri }: { veri: OkulGeneli }) {
   );
 }
 
-function Kutucuk({ ad, deger, not }: { ad: string; deger: string; not?: string }) {
+function Kutucuk({
+  ad,
+  deger,
+  not,
+  yol,
+  yolAdi,
+}: {
+  ad: string;
+  deger: string;
+  not?: string;
+  /** 0067: kutucuğun tamamı bu sayfaya giden bağlantı (gerilmiş bağlantı). */
+  yol?: string;
+  yolAdi?: string;
+}) {
   return (
-    <div className="rounded-sk-md border border-line bg-surface p-3">
+    <div
+      className={`relative rounded-sk-md border border-line bg-surface p-3 ${
+        yol ? 'transition-colors focus-within:border-ink hover:border-ink-soft' : ''
+      }`}
+    >
       <dt className="text-[13px] text-muted">{ad}</dt>
       <dd className="sk-sayi mt-1 font-display text-[26px] font-semibold leading-none text-ink">
         {deger}
       </dd>
-      {not && <dd className="mt-1 text-[12px] text-muted">{not}</dd>}
+      {yol ? (
+        <dd className="mt-1 text-[12px]">
+          <Link
+            to={yol}
+            aria-label={yolAdi}
+            className="font-semibold text-link underline-offset-4 after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-none"
+          >
+            {not}
+          </Link>
+        </dd>
+      ) : (
+        not && <dd className="mt-1 text-[12px] text-muted">{not}</dd>
+      )}
     </div>
   );
 }

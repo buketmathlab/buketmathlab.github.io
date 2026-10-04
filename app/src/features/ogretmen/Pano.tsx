@@ -236,7 +236,9 @@ export function Pano() {
                   tekrarDene={genel.yenile}
                 >
                   {/* Beklenmeyen yanıt (ör. eski sunucu) bütün sayfayı düşürmesin. */}
-                  {genel.veri?.okul && <GenelOzet veri={genel.veri} />}
+                  {genel.veri?.okul && (
+                    <GenelOzet veri={genel.veri} odevlerYolu="/ogretmen/okul-odevleri" />
+                  )}
                 </AsyncBoundary>
               </section>
             )}

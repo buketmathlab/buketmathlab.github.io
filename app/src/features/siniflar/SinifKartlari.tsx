@@ -11,6 +11,8 @@ const SAYI = new Intl.NumberFormat('tr-TR');
 export type SinifBaglantilari = {
   sinif: (id: string) => string;
   analiz: (id: string) => string;
+  /** 0067: şubenin ödevleri ve cevap anahtarları. */
+  odevler: (id: string) => string;
   onam: (id: string) => string;
 };
 
@@ -97,6 +99,12 @@ export function SinifKartlari({
                 </Button>
                 <Button tur="sade" olcu="sm" onClick={() => git(baglanti.analiz(s.id))}>
                   Konu analizi
+                </Button>
+                {/* SIRA öğretmenin isteği: "sınıfı aç, konu analizi
+                    kutucuklarından sonra ödevler cevap anahtarları
+                    kutucukları gelsin, en son onam dökümü" (0067). */}
+                <Button tur="sade" olcu="sm" onClick={() => git(baglanti.odevler(s.id))}>
+                  Ödevler ve cevap anahtarları
                 </Button>
                 <Button tur="sade" olcu="sm" onClick={() => git(baglanti.onam(s.id))}>
                   Onam dökümü

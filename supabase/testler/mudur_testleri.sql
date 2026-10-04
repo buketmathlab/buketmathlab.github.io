@@ -52,7 +52,9 @@ declare
   -- `cikis` müdüre de açık (kendi oturumunu kapatır) — ve döngüde çağrılsaydı
   -- jetonu düşürüp sonraki bütün uçları "oturum geçersiz"le geçirirdi.
   izinli text[] := array['mudur_paneli', 'sinif_analizi', 'onam_dokumu', 'cikis',
-                          'mudur_pin_degistir', 'sinif_not_cizelgesi'];
+                          'mudur_pin_degistir', 'sinif_not_cizelgesi',
+                          -- 0067: şube şube ödevler ve cevap anahtarları.
+                          'okul_odevleri'];
   acik text[] := '{}';
   sayi integer := 0;
 begin

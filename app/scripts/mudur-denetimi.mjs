@@ -23,6 +23,11 @@
  *  M8. PIN: `mudur_pin_degistir` çağrılıyor; yeni PIN'ler uyuşmazsa
  *      sunucuya gidilmiyor; yanlış eski PIN'de (28000) oturum düşmüyor.
  *  M9. 360 px: yeni sayfalarda yatay taşma yok.
+ *  M12. (0067) Kartta düğme sırası: Sınıfı aç → Konu analizi → Ödevler ve
+ *       cevap anahtarları → Onam dökümü. "Ödevler ve cevap anahtarları"
+ *       şubenin ödev sayfasını açıyor, anahtar harfleri görünüyor. Genel'de
+ *       "Yayınlanan ödev" kutucuğu şube şube ödev sayfasını açıyor
+ *       (`okul_odevleri`), orada da soru PDF'i ve anahtar var.
  *  M11. (0063) Öğretmenin Sınıflar sayfası müdürünkiyle AYNI bileşen:
  *      kartlarda toplam soru, gönderim, ortalama; Arşivle ve Sınıf ekle
  *      duruyor; sınıf sayfasında aynı bölümler, öğrenci adı bağlantı,
@@ -165,7 +170,7 @@ const KARTLAR = [
 /** Müdür oturumunda çağrılabilecek uçlar — sunucudaki `izinli` ile aynı. */
 const MUDUR_UCLARI = new Set([
   'giris', 'mudur_paneli', 'sinif_analizi', 'onam_dokumu', 'sinif_not_cizelgesi', 'konu_karnesi',
-  'mudur_pin_degistir', 'cikis',
+  'mudur_pin_degistir', 'cikis', 'okul_odevleri',
 ]);
 
 const tarayici = await chromium.launch();
@@ -193,6 +198,7 @@ async function sayfa({ oturum, yol, genislik = 390, pinYaniti = null }) {
           ? CIZELGE_OGRETMEN
           : CIZELGE
       : uc === 'konu_karnesi' ? KARNE
+      : uc === 'okul_odevleri' ? [{ sinif_id: '9a', sinif: '9A', seviye: 9, odevler: CIZELGE.odevler }]
       : uc === 'sinif_kartlari' ? KARTLAR
       : uc === 'mudur_pin_degistir' ? { durum: 'tamam' }
       : uc === 'ben_kimim' ? { id: 's1', ad: 'Buket Topuzoğlu', sahip: true, vekalet: false, vekil: null }
@@ -531,11 +537,13 @@ console.log('--- M11. Öğretmenin Sınıflar sayfası müdürünkiyle aynı ---
 
 console.log('--- M9. 360 px yatay taşma ---');
 {
-  for (const yol of ['/mudur', '/mudur/siniflar', '/mudur/siniflar/9a', '/mudur/ogretmenler', '/mudur/ayarlar']) {
+  for (const yol of ['/mudur', '/mudur/siniflar', '/mudur/siniflar/9a', '/mudur/ogretmenler', '/mudur/ayarlar',
+    '/mudur/siniflar/9a/odevler', '/mudur/odevler']) {
     const s = await tarayici.newPage({ viewport: { width: 360, height: 800 } });
     await s.route('**/rest/v1/rpc/*', (r) => {
       const uc = r.request().url().split('/').pop().split('?')[0];
-      const govde = uc === 'mudur_paneli' ? PANEL : uc === 'sinif_not_cizelgesi' ? CIZELGE : uc === 'konu_karnesi' ? KARNE : {};
+      const govde = uc === 'mudur_paneli' ? PANEL : uc === 'sinif_not_cizelgesi' ? CIZELGE : uc === 'konu_karnesi' ? KARNE
+        : uc === 'okul_odevleri' ? [{ sinif_id: '9a', sinif: '9A', seviye: 9, odevler: CIZELGE.odevler }] : {};
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
     });
     await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)), MUDUR);
@@ -549,6 +557,42 @@ console.log('--- M9. 360 px yatay taşma ---');
     olc(`${yol}: taşma yok`, tasma <= 0, `${tasma}px`);
     await s.close();
   }
+}
+
+console.log('--- M12. Ödevler ve cevap anahtarları (0067) ---');
+{
+  const { s, uclar } = await sayfa({ oturum: MUDUR, yol: '/mudur/siniflar' });
+  const kart = s.locator('main li').filter({ hasText: '9A' }).first();
+  const dugmeler = (await kart.getByRole('button').allInnerTexts()).map((t) => t.trim()).filter((t) => t !== '9A' && !t.startsWith('9A'));
+  const sira = ['Sınıfı aç', 'Konu analizi', 'Ödevler ve cevap anahtarları', 'Onam dökümü'];
+  olc('kartta düğme sırası', JSON.stringify(dugmeler.slice(-4)) === JSON.stringify(sira), JSON.stringify(dugmeler));
+  await kart.getByRole('button', { name: 'Ödevler ve cevap anahtarları' }).click();
+  await s.waitForTimeout(500);
+  olc('şubenin ödev sayfası açıldı', s.url().endsWith('#/mudur/siniflar/9a/odevler'), s.url());
+  let m = await metin(s);
+  olc('başlık "9A — Ödevler ve cevap anahtarları"', m.includes('9A — Ödevler ve cevap anahtarları'), m.slice(0, 200));
+  await s.getByRole('button', { name: /Cevap anahtarı/ }).first().click();
+  await s.waitForTimeout(200);
+  m = await metin(s);
+  olc('cevap anahtarı harfleri görünüyor', /1\.\s*A/.test(m) && /2\.\s*C/.test(m), m.slice(0, 600));
+  olc('"Soruları aç (PDF)" var', (await s.getByRole('button', { name: 'Soruları aç (PDF)' }).count()) > 0);
+  olc('yalnız müdür uçları', yalnizMudurUclari(uclar), uclar.join(','));
+  await s.close();
+}
+{
+  const { s, uclar } = await sayfa({ oturum: MUDUR, yol: '/mudur' });
+  await s.getByRole('link', { name: 'Yayınlanan ödevler — şube şube aç' }).click();
+  await s.waitForTimeout(600);
+  olc('Genel → "Yayınlanan ödev" şube şube sayfasını açtı', s.url().endsWith('#/mudur/odevler'), s.url());
+  olc('okul_odevleri çağrıldı', uclar.includes('okul_odevleri'), uclar.join(','));
+  await s.locator('summary').filter({ hasText: '9A' }).click();
+  await s.waitForTimeout(200);
+  await s.getByRole('button', { name: /Cevap anahtarı/ }).first().click();
+  await s.waitForTimeout(200);
+  const m = await metin(s);
+  olc('şube şube sayfada anahtar görünüyor', /1\.\s*A/.test(m), m.slice(0, 600));
+  olc('şube özeti "3 ödev"', /9A[\s\S]*3 ödev/.test(m), m.slice(0, 300));
+  await s.close();
 }
 
 await tarayici.close();

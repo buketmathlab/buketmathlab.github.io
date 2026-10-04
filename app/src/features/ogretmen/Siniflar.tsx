@@ -129,6 +129,7 @@ export function Siniflar() {
           baglanti={{
             sinif: (id) => `/ogretmen/siniflar/${id}`,
             analiz: (id) => `/ogretmen/siniflar/${id}/analiz`,
+            odevler: (id) => `/ogretmen/siniflar/${id}/odevler`,
             onam: (id) => `/ogretmen/veliler/sinif/${id}/onam`,
           }}
           eylem={(s) =>

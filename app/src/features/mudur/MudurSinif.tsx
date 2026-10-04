@@ -18,6 +18,7 @@ export function MudurSinif() {
       baglanti={{
         geri: `${kok}/siniflar`,
         analiz: (s) => `${kok}/siniflar/${s}/analiz`,
+        odevler: (s) => `${kok}/siniflar/${s}/odevler`,
         onam: (s) => `${kok}/siniflar/${s}/onam`,
       }}
     />
