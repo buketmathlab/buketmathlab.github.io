@@ -6007,3 +6007,22 @@ söylesin.
   öncesi) eski cümle.
 - **Test:** vitest; `duyuru_testleri` 1. grup (süre dolunca ve konu
   girilince sayılar değişiyor, iki uç hâlâ eşit); `mudur-denetimi`.
+
+## 0070 — Konu nedeni ayrıntısı: konusu girilmiş testlerin süresi dolmadıysa
+
+Öğretmenin bildirimi: "Sorulara konu girdiğim halde konu girilmediği için en
+çok zorlanılan konu gösterilmiyor yazıyor."
+
+Konu analizi yalnız süresi dolmuş testlerden yapılıyor; bu kural
+değişmedi. 0069'un "süresi dolan testlerde sorulara konu girilmemiş" yazısı,
+konular süresi henüz dolmamış testlere girildiğinde de çıkıyordu. Yazı
+doğruydu ama yanıltıcıydı.
+
+- **Sunucu:** `konu_verisi.konulu_test` eklendi: süresine bakılmadan,
+  konusu girilmiş yayındaki test sayısı. Gövdeler 0069'dan kopya.
+- **İstemci:** Süresi dolan testlerde konu yok ama konulu test varsa yazı
+  "konusu girilmiş testlerin süresi henüz dolmadı. Son tarih geçince konular
+  burada görünür." Alan gelmezse 0069'daki davranış sürüyor.
+- **Test:** vitest; `duyuru_testleri` 1. grup (`1m`: süresi dolmamış
+  konulu test `konulu_test`'i artırıyor, `konulu_dolan_test`'i değil);
+  `mudur-denetimi`.

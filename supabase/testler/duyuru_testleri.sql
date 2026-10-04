@@ -122,6 +122,15 @@ begin
                           and once ? 'yeterli_konu' and once ? 'en_az_cevap') then
     raise exception '1i: konu_verisi eksik: %', once;
   end if;
+  -- 0070: süresi dolmamış testte konu → konulu_test +1, konulu_dolan_test aynı.
+  update public.odevler set konular = '{"1":"Limit"}'::jsonb where id = h1;
+  v := (select sv->'konu_verisi' from jsonb_array_elements(public.okul_geneli(jd)->'seviyeler') sv
+         where (sv->>'seviye')::int = 12);
+  if (v->>'konulu_test')::int - (once->>'konulu_test')::int <> 1
+     or (v->>'konulu_dolan_test')::int <> (once->>'konulu_dolan_test')::int then
+    raise exception '1m: süresi dolmamış konulu test yanlış sayıldı: önce % sonra %', once, v;
+  end if;
+  update public.odevler set konular = null where id = h1;
   update public.odevler set son_tarih = current_date - 1 where id = h1;
   v := (select sv->'konu_verisi' from jsonb_array_elements(public.okul_geneli(jd)->'seviyeler') sv
          where (sv->>'seviye')::int = 12);
@@ -139,7 +148,7 @@ begin
   if public.okul_geneli(jd)->'seviyeler' <> public.mudur_paneli(jm)->'seviyeler' then
     raise exception '1l: konu nedeni iki uçta ayrıştı';
   end if;
-  raise notice '1 OK — okul_geneli: müdürle aynı rakamlar, öğretmen listesi yok; müdür/öğrenci/veli 42501; kontrol edilen soru yalnız gönderenler (+5); konu nedeni sayıları doğru (0069)';
+  raise notice '1 OK — okul_geneli: müdürle aynı rakamlar, öğretmen listesi yok; müdür/öğrenci/veli 42501; kontrol edilen soru yalnız gönderenler (+5); konu nedeni sayıları doğru (0069, 0070)';
 
   -- ---------------------------------------------------------------------------
   -- 2. Duyuru yalnız seçilen şubeye

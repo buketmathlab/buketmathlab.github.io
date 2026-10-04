@@ -65,7 +65,7 @@ const PANEL = {
       ],
     },
     { seviye: 10, sinif_sayisi: 1, ogrenci_sayisi: 31, odev_sayisi: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null, eksik_konular: [],
-      konu_verisi: { test_odev: 2, dolan_test: 0, konulu_dolan_test: 0, yeterli_konu: 0, en_az_cevap: 5 } },
+      konu_verisi: { test_odev: 2, dolan_test: 1, konulu_dolan_test: 0, konulu_test: 1, yeterli_konu: 0, en_az_cevap: 5 } },
   ],
   siniflar: [
     {
@@ -365,8 +365,12 @@ console.log('--- M6. Genel: soru toplamı, seviyeler, grafik, konular ---');
   olc('konular seviyelere göre: 9. sınıflar', /9\. sınıfların en çok zorlandığı konular\s*Limit[\s\S]*doğru: 15 \/ 48 cevap[\s\S]*Üslü Sayılar/.test(m));
   // 0069: genel cümle yerine NEDEN (öğretmenin sorusu: "neden yeteri kadar
   // veri yok yazıyor?").
-  olc('10. sınıflarda nedeni yazıyor (süresi dolmadı)',
-    /10\. sınıfların en çok zorlandığı konular\s*10\. sınıflarda test ödevlerinin süresi henüz dolmadı/.test(m), m.slice(-700));
+  // 0070: konular süresi dolmamış testte → "konusu girilmiş testlerin
+  // süresi henüz dolmadı" (öğretmenin bildirimi: "konu girdiğim halde konu
+  // girilmedi yazıyor").
+  olc('10. sınıflarda nedeni yazıyor (konulu testlerin süresi dolmadı)',
+    /10\. sınıfların en çok zorlandığı konular\s*10\. sınıflarda konusu girilmiş testlerin süresi henüz dolmadı/.test(m), m.slice(-700));
+  olc('"konu girilmemiş" yazmıyor', !m.includes('konu girilmemiş'));
   olc('eski genel cümle yok', !m.includes('Henüz yeterli veri yok'));
   olc('okul geneli tek liste kalktı', !m.includes('Okulun en çok zorlandığı konular'));
   await s.close();
