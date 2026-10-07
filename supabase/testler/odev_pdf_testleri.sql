@@ -5,6 +5,8 @@
 --
 --   odev_url     → sınıfındaki öğrenci, YAYINDAKİ ödevde, teslim etmeden görür
 --   anahtar_url  → öğrenci YALNIZ teslim ettikten sonra; veli asla
+--   odev_url     → 0071: veli de, çocuğun sınıfındaki YAYINDAKİ ödevde
+--                  (dosya depoda olmak şartıyla); anahtar yine asla
 --
 -- Ayrıca imza değişikliğinin güvenlik sonucu ölçülüyor: eski `odev_olustur`
 -- sürümü ortada kalmamalı, çünkü 0005'te ona EXECUTE hakkı verilmişti.
@@ -24,6 +26,8 @@ declare
   v_baska    uuid;
   r          jsonb;
   d_odev     jsonb;
+  d_veli     jsonb;
+  t_onamsiz  text;
   n          integer;
 begin
   raise notice '--- Kurulum ---';
@@ -127,14 +131,60 @@ begin
   raise notice '    başka sınıfın soru PDF''i kapalı: OK';
 
   ------------------------------------------------------------------
-  raise notice '--- 6. VELİ hiçbir PDF''i açamamalı ---';
+  raise notice '--- 6. VELİ soru PDF''ini açar, ANAHTARI ASLA (0071) ---';
+  -- Dosya depoda yokken: izin yok (veli bu kapıdan dosya oluşturamasın).
   if public.dosya_erisim_izni(t_veli, 'odev/turev-sorular.pdf') then
-    raise exception 'HATA: veli soru PDF''ini açabiliyor!';
+    raise exception 'HATA: veli depoda OLMAYAN soru PDF''ine izin aldı!';
   end if;
+  raise notice '    depoda olmayan dosyaya izin yok: OK';
+
+  insert into storage.objects (bucket_id, name) values
+    ('odev-dosyalari', 'odev/turev-sorular.pdf'),
+    ('odev-dosyalari', 'anahtar/turev-anahtar.pdf'),
+    ('odev-dosyalari', 'odev/limit-sorular.pdf'),
+    ('odev-dosyalari', 'odev/baska-sorular.pdf');
+
+  if not public.dosya_erisim_izni(t_veli, 'odev/turev-sorular.pdf') then
+    raise exception 'HATA: veli çocuğunun sınıfındaki soru PDF''ini açamıyor!';
+  end if;
+  raise notice '    veli soru PDF''ini açabiliyor: OK';
   if public.dosya_erisim_izni(t_veli, 'anahtar/turev-anahtar.pdf') then
     raise exception 'HATA: VELİ CEVAP ANAHTARINI AÇABİLİYOR! (Kural 6 ihlali)';
   end if;
-  raise notice '    veli ikisini de açamıyor: OK';
+  raise notice '    veli anahtarı açamıyor: OK';
+  if public.dosya_erisim_izni(t_veli, 'odev/limit-sorular.pdf') then
+    raise exception 'HATA: veli TASLAK ödevin soru PDF''ini açabiliyor!';
+  end if;
+  if public.dosya_erisim_izni(t_veli, 'odev/baska-sorular.pdf') then
+    raise exception 'HATA: veli BAŞKA SINIFIN soru PDF''ini açabiliyor!';
+  end if;
+  raise notice '    taslak ve başka sınıf kapalı: OK';
+
+  -- veli_paneli yolu gönderiyor; anahtardan hiçbir şey göndermiyor.
+  select e into d_veli
+  from jsonb_array_elements(public.veli_paneli(t_veli) -> 'odevler') e
+  where e ->> 'baslik' = 'PDFTEST Türev';
+  if (d_veli ->> 'odev_yolu') is distinct from 'odev/turev-sorular.pdf' then
+    raise exception 'HATA: veli_paneli soru PDF yolunu göndermiyor! (%)', d_veli ->> 'odev_yolu';
+  end if;
+  if (d_veli -> 'cozum_yollari') is distinct from '[]'::jsonb then
+    raise exception 'HATA: teslim yokken çözüm yolu var! (%)', d_veli -> 'cozum_yollari';
+  end if;
+  if d_veli::text ilike '%anahtar%' then
+    raise exception 'HATA: veli_paneli satırında ANAHTAR izi var! (%)', d_veli;
+  end if;
+  raise notice '    veli_paneli: odev_yolu var, çözüm boş, anahtar izi yok: OK';
+
+  -- Onam vermemiş veli hiçbir dosyayı açamaz (onam kapısı).
+  r := public.ogrenci_ekle(t_ogretmen, 'PDF Onamsız Öğrenci', 'okul', v_sinif_a);
+  t_onamsiz := (public.giris(r ->> 'veli_kodu')) ->> 'token';
+  begin
+    if public.dosya_erisim_izni(t_onamsiz, 'odev/turev-sorular.pdf') then
+      raise exception 'HATA: ONAMSIZ veli soru PDF''ini açabiliyor!';
+    end if;
+  exception when insufficient_privilege then null;
+  end;
+  raise notice '    onamsız veli açamıyor: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 7. Teslimden SONRA anahtar açılmalı, soru PDF''i kalmalı ---';
@@ -152,6 +202,22 @@ begin
     raise exception 'HATA: teslimden sonra anahtar PDF''i hâlâ kapalı!';
   end if;
   raise notice '    teslim sonrası ikisi de açık: OK';
+
+  -- 0071: veli çocuğun gönderdiği çözümü görür; anahtar yine kapalı.
+  select e into d_veli
+  from jsonb_array_elements(public.veli_paneli(t_veli) -> 'odevler') e
+  where e ->> 'baslik' = 'PDFTEST Türev';
+  if (d_veli -> 'cozum_yollari') is distinct from
+     jsonb_build_array('cozum/' || v_odev || '/' || v_ogrenci || '.jpg') then
+    raise exception 'HATA: veli_paneli çözüm yolunu göndermiyor! (%)', d_veli -> 'cozum_yollari';
+  end if;
+  if not public.dosya_erisim_izni(t_veli, d_veli -> 'cozum_yollari' ->> 0) then
+    raise exception 'HATA: veli çocuğunun çözümünü açamıyor!';
+  end if;
+  if public.dosya_erisim_izni(t_veli, 'anahtar/turev-anahtar.pdf') or d_veli::text ilike '%anahtar%' then
+    raise exception 'HATA: TESLİMDEN SONRA VELİYE ANAHTAR AÇILDI! (Kural 6)';
+  end if;
+  raise notice '    veli çözümü görüyor, anahtar teslimden sonra da kapalı: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 8. Öğretmen her ikisini de açabilmeli ---';

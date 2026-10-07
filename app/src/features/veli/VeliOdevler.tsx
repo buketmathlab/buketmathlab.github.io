@@ -7,6 +7,7 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { VeliPaneli } from '@/types/api';
+import { VeliOdevDosyalari } from './VeliOdevDosyalari';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
 const ZAMAN = new Intl.DateTimeFormat('tr-TR', {
@@ -20,7 +21,9 @@ const ZAMAN = new Intl.DateTimeFormat('tr-TR', {
  * Velinin ödev listesi.
  *
  * Velinin gördüğü SÜREÇ: çocuğun ödevini yapıp yapmadığı, aldığı puan,
- * hangi konuda ve hangi soruda eksik kaldığı. ÇÖZÜMLER DEĞİL.
+ * hangi konuda ve hangi soruda eksik kaldığı. 0071'den beri ödevin soru
+ * PDF'i ve ÇOCUĞUN KENDİ çözüm kâğıdı da açılıyor (öğretmenin isteği);
+ * cevap anahtarı hâlâ yok.
  *
  * KURAL 6 iki kademede: cevap anahtarı `veli_paneli`'nden hiç gelmiyor,
  * ve gelen "yanlış sorular" bilgisi yalnız NUMARA — ne çocuğun
@@ -85,6 +88,13 @@ export function VeliOdevler() {
                       )}
                     </div>
                   </div>
+
+                  {/* `?? null` / `?? []`: 0071 çalışmadan bu alanlar gelmez;
+                      o hâlde düğme de çizilmez. */}
+                  <VeliOdevDosyalari
+                    odevYolu={o.odev_yolu ?? null}
+                    cozumYollari={o.cozum_yollari ?? []}
+                  />
 
                   {/* KIYAS (0047) — sınıf ve seviye ortalaması.
                       Öğrencinin ödev sonuç ekranındaki kartın aynısı,
