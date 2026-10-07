@@ -693,6 +693,13 @@ export type VeliOdevi = {
    */
   yanlis_sorular: number[];
   bos_sorular: number[];
+  /**
+   * 0071 — veli soruları ve çocuğun çözümünü açabiliyor. Yalnız YOL;
+   * imzalı adres `dosya-url`'den her dokunuşta. Anahtar yolu YOK (Kural 6).
+   * Opsiyonel: 0071 çalıştırılmadan önce gelmiyor.
+   */
+  odev_yolu?: string | null;
+  cozum_yollari?: string[];
 };
 
 export type VeliPaneli = {

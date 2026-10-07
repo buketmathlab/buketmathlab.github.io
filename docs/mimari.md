@@ -6063,3 +6063,40 @@ reddediyor. Geriye üç açık kalıyordu; üçü de kapatıldı.
     yenilenmiyor; teslimden çıkınca yenileniyor.
   - Üç mutasyon kanıtı var: beyaz zemin yokken E8 düşüyor, PDF denetimi
     yokken E9 düşüyor, oto-yenileme yokken E10 düşüyor.
+
+## 0071 — Veli ödev kartından soru PDF'i ve çocuğun çözümü
+
+Öğretmen veli hesabında ödev kartına dokundu, hiçbir şey açılmadı. Kart
+yalnız puanı, yanlış ve boş soru numaralarını ve eksik konuları
+gösteriyordu. Öğretmenin kararı "Çözüm + soru PDF'i" oldu: veli ikisini de
+açabilsin, cevap anahtarını asla (Kural 6).
+
+- **`dosya_erisim_izni` (kopya: 0063):** veli dalına soru PDF'i eklendi.
+  Şartlar:
+  - ödev çocuğun sınıfında ve yayında;
+  - `_odev_ogrenciye_dusar` sağlanıyor (veli listesiyle aynı kapsam);
+  - dosya depoda var.
+
+  Depo şartının gerekçesi müdür dalındakiyle aynı. Edge Function aynı
+  izinle yükleme adresi de üretebiliyor; upsert olmadığı için var olan
+  dosyaya yükleme reddediliyor. Bu yüzden veli bu kapıdan dosya
+  oluşturamıyor. `anahtar_url` veli dalında hiç geçmiyor. Çözüm
+  sayfalarına izin zaten vardı.
+- **`veli_paneli` (kopya: 0064):** her satıra `odev_yolu` ve
+  `cozum_yollari` eklendi. `cozum_yollari`, `foto_yolu` ile
+  `ek_sayfa_yollari`'nın sırasını koruyor. Yalnız yol gidiyor; imzalı adres
+  her dokunuşta `dosya-url`'den alınıyor.
+- **İstemci (`veli/VeliOdevDosyalari.tsx`):** kartta "Soruları aç (PDF)"
+  ve "Çözümü aç" düğmeleri var. Tek sayfa doğrudan açılıyor; çok sayfada
+  "1. sayfa …" düğmeleri çıkıyor. Alanlar gelmezse (0071 öncesi) düğme
+  çizilmiyor.
+- **Testler:**
+  - `odev_pdf_testleri` 6–7. bölümler. "Veli soru PDF'ini açamıyor"
+    beklentisi öğretmenin kararıyla tersine döndü. Ölçülenler: depoda
+    olmayan dosya, taslak, başka sınıf, onamsız veli ve anahtar
+    (teslimden önce ve sonra) kapalı. `veli_paneli` satırında anahtar izi
+    yok.
+  - `sayfa_siniri_testleri` 11. bölüm: üç sayfa sırayla geliyor.
+  - `veli-odev-dosyalari-denetimi` V1–V6.
+  - Mutasyon kanıtları: depo şartı kaldırılınca, veliye anahtar izni
+    eklenince ve düğmeler kaldırılınca ilgili test düşüyor.

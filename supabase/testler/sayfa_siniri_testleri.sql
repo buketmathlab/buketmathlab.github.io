@@ -285,6 +285,17 @@ begin
   end if;
   raise notice '    sahibi ve velisi açık; başka veli ve sınıf arkadaşı kapalı: OK';
 
+  -- 0071: veli_paneli çözüm sayfalarını öğretmenin gördüğü SIRAYLA veriyor.
+  select e -> 'cozum_yollari' into r
+    from jsonb_array_elements(public.veli_paneli(t_veli_ali) -> 'odevler') e
+   where e ->> 'baslik' = 'Üç sayfa';
+  if r is distinct from jsonb_build_array('cozum/' || v_uc || '/' || v_ali || '.jpg',
+                                          'cozum/' || v_uc || '/' || v_ali || '-2.jpg',
+                                          'cozum/' || v_uc || '/' || v_ali || '-3.jpg') then
+    raise exception 'HATA: veli_paneli çözüm sayfalarını sırayla vermiyor: %', r;
+  end if;
+  raise notice '    veli_paneli 3 sayfayı sırayla veriyor (0071): OK';
+
   ------------------------------------------------------------------
   raise notice '--- 12. Veli hâlâ ANAHTARA erişemiyor (Kural 6) ---';
   if public.dosya_erisim_izni(t_veli_ali, 'odev/sayfa-test/anahtar.pdf') then
