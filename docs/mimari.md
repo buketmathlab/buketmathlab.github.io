@@ -6090,6 +6090,8 @@ açabilsin, cevap anahtarını asla (Kural 6).
   ve "Çözümü aç" düğmeleri var. Tek sayfa doğrudan açılıyor; çok sayfada
   "1. sayfa …" düğmeleri çıkıyor. Alanlar gelmezse (0071 öncesi) düğme
   çizilmiyor.
+  Düğmenin adı "Çocuğunuzun çözümünü aç". Öğretmen, velinin çıplak
+  "Çözümü aç" düğmesini cevap anahtarı sanmasını istemedi.
 - **Testler:**
   - `odev_pdf_testleri` 6–7. bölümler. "Veli soru PDF'ini açamıyor"
     beklentisi öğretmenin kararıyla tersine döndü. Ölçülenler: depoda
