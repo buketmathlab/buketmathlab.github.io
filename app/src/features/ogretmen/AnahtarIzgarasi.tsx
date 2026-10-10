@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
-import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
+import { SikListesi, SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
 import type { Cikarim, SonSecenek } from '@/lib/cevap-anahtari';
 
 type Props = {
@@ -121,7 +121,7 @@ export function AnahtarIzgarasi({ soruSayisi, sonSecenek, anahtar, cikarim, onDe
             </div>
           )}
 
-          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <SikListesi sutun={3}>
             {Array.from({ length: soruSayisi }, (_, i) => i + 1).map((no) => (
               <SikSatiri
                 key={no}
@@ -132,7 +132,7 @@ export function AnahtarIzgarasi({ soruSayisi, sonSecenek, anahtar, cikarim, onDe
                 onDegis={onDegis}
               />
             ))}
-          </ul>
+          </SikListesi>
         </>
       )}
     </div>
