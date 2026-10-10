@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
+import { iptalMi } from '@/lib/soru-iptali';
 import type { SinifNotCizelgesi } from '@/types/api';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' });
@@ -100,7 +101,9 @@ export function OdevSatiri({
                   key={no}
                   className="sk-sayi rounded border border-line bg-surface px-2 py-1 text-center text-[13px] text-ink"
                 >
-                  <span className="text-muted">{no}.</span> <strong>{sik}</strong>
+                  {/* 0072: iptal edilen soru harf olarak değil "iptal" olarak. */}
+                  <span className="text-muted">{no}.</span>{' '}
+                  {iptalMi(sik) ? <span className="text-muted">iptal</span> : <strong>{sik}</strong>}
                 </li>
               ))}
             </ol>

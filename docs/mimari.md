@@ -6125,3 +6125,54 @@ altındaki satırı 2 sanıyordu.
 - **Denetim:** `optik-sira-denetimi` O1–O5, satırların ekrandaki konumunu
   ölçüyor. Mutasyon kanıtı: eski `grid-cols` geri konunca sütunlar
   "1 3 5… | 2 4 6…" çıkıyor ve O1, O2 ve O4 düşüyor.
+
+## 0072 — Soru iptali: değerlendirme dışı
+
+Gerçek olay: 10. sınıflara verilen 65 soruluk testte 8. ve 35. soruların
+şıkları baskıda çıkmadı ve öğrenciler bu soruları boş bırakmak zorunda
+kaldı. Öğretmenin kararları:
+
+- iptal edilen soru **değerlendirme dışı**: puan doğru ÷ 63 × 100, kimse
+  kazanmıyor, kimse kaybetmiyor;
+- kapsam **aynı ödevin bütün şubeleri**.
+
+Bugüne kadar anahtardan soruyu silmek adil değildi: `_puanla` anahtarsız
+soruyu "boş" sayıp paydada tutuyordu.
+
+- **İşaret anahtarın içinde:** `"8": "IPTAL:B"`. Asıl harf saklanıyor, iptal
+  geri alınabiliyor. Ayrı sütun yerine bu yol seçildi, çünkü anahtarı
+  taşıyan her şey (odev_guncelle'nin yeniden puanlaması, kardeşlere yayma,
+  geç teslimde odev_gonder) işareti olduğu gibi taşıyor.
+- Soru bazlı bütün hesap üç yardımcıdan geçiyor; değişen yalnız onlar:
+  - `_puanla`: iptal sayaçlara girmiyor, paydadan düşüyor.
+  - `_konu_analizi`: iptal konu toplamına girmiyor.
+  - `_soru_dokumu`: iptal yanlış/boş listesinde yok; ayrı `iptal`
+    listesinde. Veli de "Boş: 8, 35" görmüyor.
+- **`sorulari_iptal_et` / `soru_iptalini_geri_al`:**
+  - Yalnız ödevi veren öğretmen çağırabiliyor (kardeş yaymadaki kural).
+  - Ödevi ve arşivde olmayan bütün kardeşlerini işliyor; arşivdeki şube
+    atlanıp raporlanıyor.
+  - Not değişikliğinin izi: ödev başına `soru_iptal_edildi` (sebep dahil),
+    gönderim başına `yeniden_puanlandi`.
+  - Elle düzeltilmiş puan (`ogretmen_puan`) korunuyor ve raporda
+    listeleniyor.
+  - Bütün soruların iptali reddediliyor, çünkü payda 0 olurdu.
+- **İstemci:**
+  - `SoruIptali` kartı (ödev düzenleme): numaralar, sebep, onay penceresi
+    ve şube şube rapor. Rapor üst bileşende tutuluyor; iptalden sonra
+    sayfa yenilenince kart yeniden kuruluyor ve rapor kayboluyordu
+    (denetimde yakalandı).
+  - Izgarada iptal edilen satırda şık düğmesi yok: bir harfe dokunmak
+    iptali sessizce bozardı.
+  - Öğrenci sonuç ekranında "8 ve 35. sorular iptal edildi; puanın 63 soru
+    üzerinden hesaplandı." yazıyor.
+  - `OdevSatiri` iptal edilen soruyu "iptal" olarak çiziyor.
+- **Bilerek dışarıda kalan:** teslim etmemiş öğrencinin optiğinde iptal
+  görünmüyor, çünkü anahtar teslimden önce gitmiyor. O soruyu boş bıraksa
+  da cezalandırılmıyor.
+- **Testler:**
+  - `soru_iptali_testleri.sql`.
+  - `soru-iptali-denetimi` İ1–İ5.
+  - Mutasyon kanıtları: paydadan düşme kaldırılınca öz-denetim düşüyor;
+    kardeş döngüsü kaldırılınca 1d düşüyor; ızgara kilidi kaldırılınca İ3
+    düşüyor.

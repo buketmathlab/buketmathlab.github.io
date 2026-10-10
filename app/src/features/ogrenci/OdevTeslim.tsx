@@ -23,6 +23,7 @@ import { gorseliSikistir } from '@/lib/gorsel-sikistir';
 import { KARANLIK_METNI, KaranlikFotografHatasi } from '@/lib/karanlik-fotograf';
 import { birlesimNotu, pdfMi } from '@/lib/pdf-cozum';
 import { sureDurumu } from '@/lib/son-tarih';
+import { iptalMi, iptalSorulari, numaraListesi } from '@/lib/soru-iptali';
 import {
   cozumSayfaYolu,
   oncedenYuklenenMetni,
@@ -677,6 +678,9 @@ function Sonuc({
 
   const anahtar = odev.cevap_anahtari;
   const puan = g.ogretmen_puan ?? g.puan;
+  // 0072 — iptal edilen sorular (anahtarda "IPTAL:<harf>"). Anahtar
+  // teslimden SONRA geliyor; bu ekran da yalnız teslimden sonra çiziliyor.
+  const iptaller = iptalSorulari(anahtar);
 
   return (
     <>
@@ -729,6 +733,11 @@ function Sonuc({
             <span className="sk-sayi font-semibold">{g.bos}</span> boş
           </p>
         )}
+        {iptaller.length > 0 && odev.soru_sayisi !== null && (
+          <p className="mt-1 text-[13px] text-muted">
+            {`${numaraListesi(iptaller)}. ${iptaller.length > 1 ? 'sorular' : 'soru'} iptal edildi; puanın ${odev.soru_sayisi - iptaller.length} soru üzerinden hesaplandı.`}
+          </p>
+        )}
 
         {g.ogretmen_yorum && (
           <p className="mt-3 rounded-sk-sm bg-line-soft p-3 text-[14px] text-ink">
@@ -775,6 +784,20 @@ function Sonuc({
               .sort((a, b) => a[0] - b[0])
               .map(([no, dogru]) => {
                 const benim = g.cevaplar?.[String(no)] ?? null;
+                if (iptalMi(dogru)) {
+                  return (
+                    <li
+                      key={no}
+                      className="flex items-center gap-2 rounded-sk-sm border border-line px-2 py-1 text-[14px]"
+                    >
+                      <span className="sk-sayi w-7 shrink-0 text-right font-bold text-muted">
+                        {no}
+                      </span>
+                      <span className="text-muted">{benim ?? '—'}</span>
+                      <span className="ml-auto text-muted">iptal edildi</span>
+                    </li>
+                  );
+                }
                 // ÜÇ DURUM, ikisi değil. Boş bırakmak yanlış cevap vermekle
                 // aynı şey değil: puanlama da ikisini ayırıyor (`_puanla`),
                 // ekran da ayırmalı. Her boşluğu kırmızıya boyamak öğrenciye
