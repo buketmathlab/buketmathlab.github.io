@@ -59,10 +59,12 @@ const EWALU = [
     // Öğretmenin seçimi (dürüstlük kartı): tanıtım görseli, "bayrak da
     // gözükecek şekilde" ve "boydan gözüksün". Kare, görselin TAM yüksekliği
     // (1008): Ewalu baştan ayakkabıya, Türk bayrağı ve Atatürk büstü (yarım
-    // kesilmesin diye bütün) birlikte. Gözle doğrulandı.
+    // kesilmesin diye bütün) birlikte. Sol kenar 190: bayrak sekizgenin
+    // köşesine değil İÇİNE düşüyor (260'ta köşe bayrağı kesiyordu). Gözle
+    // doğrulandı.
     ad: 'okul',
     dosya: 'ewalu-tanitim-kare.jpg',
-    kirp: { left: 260, top: 0, width: 1008, height: 1008 },
+    kirp: { left: 190, top: 0, width: 1008, height: 1008 },
     alt: 'Ewalu okulun önünde; arkada Türk bayrağı ve Atatürk büstü',
   },
 ];

@@ -19,11 +19,11 @@ export function DurustlukKarti() {
     <Card>
       <section aria-labelledby="durustluk-baslik">
         {/* Ewalu SEKİZGENDE, başlığın solunda (öğretmenin isteği: okul
-            önündeki görsel, bayrak görünsün, Ewalu boydan). 96 px: boydan figür
-            daha küçükte seçilmiyor. Panonun
+            önündeki görsel, bayrak görünsün, Ewalu boydan). 128 px: boydan
+            figürde bayrak daha küçükte seçilmiyor. Panonun
             "Merhaba" satırıyla aynı düzen. Dekoratif: anlamı başlık taşıyor. */}
         <div className="flex items-center gap-3">
-          <EwaluFigure poz="okul" boyut={96} dekoratif className="shrink-0" />
+          <EwaluFigure poz="okul" boyut={128} dekoratif className="shrink-0" />
           <h2 id="durustluk-baslik" className="font-display text-[18px] font-semibold text-ink">
             {BASLIK}
           </h2>

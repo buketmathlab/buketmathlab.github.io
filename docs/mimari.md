@@ -6181,11 +6181,11 @@ soruyu "boş" sayıp paydada tutuyordu.
 
 Başlık sonradan öğretmenin seçimiyle **"Yapay değil, kendi zekâm"** oldu.
 Amaç liselilerin ilgisini çekmek; "yapay zekâ"ya doğrudan cevap veriyor.
-Başlığın solunda sekizgen içinde 96 px, boydan Ewalu var (yeni `okul` pozu, öğretmenin
+Başlığın solunda sekizgen içinde 128 px, boydan Ewalu var (yeni `okul` pozu, öğretmenin
 seçimi). Kaynak, tanıtım görseli `ewalu-tanitim-kare.jpg`. Kırpma görselin tam
 yüksekliğinde; Ewalu baştan ayakkabıya görünüyor, Türk bayrağı ve Atatürk büstü
-bütün olarak kadrajda; büst yarım kesilmiyor, bayrak sekizgenin
-köşesine düşmüyor.
+bütün olarak kadrajda; büst yarım kesilmiyor. Sol kenar 190: bayrak sekizgenin
+köşesine değil içine düşüyor (öğretmen: "bayrak da gözükmeli").
 
 Öğretmenin cümlesi: "Bizim açımızdan en kritik konu öğrencilerin ödevleri
 eksik ya da yanlış yapmaları değil, yapay zekâ gibi kısa yollara
