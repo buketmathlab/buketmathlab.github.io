@@ -61,7 +61,8 @@ console.log('--- D1–D3. Öğrenci Pano ---');
     [/eksiklerini gizler/, 'eksiklerini gizler'],
     [/kimse görmezken de doğru olanı/, 'dürüstlük tanımı'],
     [/Ödevlerimi kendi bilgim ve emeğimle yaparım\./, '1. ilke'],
-    [/Takıldığım yeri öğretmenime sorarım/, '3. ilke'],
+    [/Ödevimi gönderdikten sonra takıldığım soruları çözümlü cevap anahtarından inceler/, '3. ilke: önce çözümlü anahtar'],
+    [/yine anlamadığım yeri öğretmenime sorarım/, '3. ilke: sonra öğretmen'],
     [/kusur değil, birlikte çalışacağımız yerin işaretidir/, 'kapanış'],
   ]) (r.test(m) ? tamam : bozuk)(`metinde ${ad}`);
   ((await k.getByRole('listitem').count()) === 3 ? tamam : bozuk)('üç ilke');

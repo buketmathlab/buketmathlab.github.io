@@ -35,6 +35,13 @@ describe('Dürüst çalışma ilkemiz', () => {
     expect(PARAGRAFLAR.join(' ')).toMatch(/kendi emeğinle/);
   });
 
+  it('önce çözümlü cevap anahtarı, sonra öğretmen (öğretmenin düzeltmesi)', () => {
+    const son = ILKELER[2] ?? '';
+    expect(son).toMatch(/gönderdikten sonra/);
+    expect(son.indexOf('çözümlü cevap anahtarı')).toBeGreaterThan(-1);
+    expect(son.indexOf('çözümlü cevap anahtarı')).toBeLessThan(son.indexOf('öğretmenime'));
+  });
+
   it('kısa kalıyor: telefonda bir kart', () => {
     expect(tum.length).toBeLessThan(1200);
   });
