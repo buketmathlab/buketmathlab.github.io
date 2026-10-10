@@ -6187,8 +6187,10 @@ profesyonel ve pedagojik" olmalı.
 
 - **Metin (`lib/durustluk-metni.ts`):**
   - başlık, üç paragraf (puan yol gösterir; kısa yol eksikleri gizler;
-    dürüstlüğün tanımı), birinci tekil şahısla üç ilke ve bir kapanış
-    cümlesi;
+    dürüstlüğün tanımı) ve birinci tekil şahısla üç ilke. Üçüncü ilke
+    öğretmenin kendi cümlesi: önce çözümlü cevap anahtarı (ödev
+    gönderildikten sonra açılıyor), sonra öğretmen. Kapanış cümlesi
+    öğretmenin isteğiyle kaldırıldı;
   - dil kuralları vitest'le ölçülüyor: tehdit ve suçlama yok, yanlış ve
     boş "öğrenmenin parçası", kart kısa;
   - yaptırım cümlesi ödev gönderme ekranında kalıyor

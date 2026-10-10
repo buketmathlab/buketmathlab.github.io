@@ -38,13 +38,8 @@ export const PARAGRAFLAR: readonly string[] = [
 export const ILKELER: readonly string[] = [
   'Ödevlerimi kendi bilgim ve emeğimle yaparım.',
   'Bilmediğim soruyu yanlış yapmaktan ya da boş bırakmaktan çekinmem; bunlar öğrenmemin bir parçasıdır.',
-  // Öğretmenin düzeltmesi: önce sistemdeki çözümlü cevap anahtarı, yine
-  // anlaşılmazsa öğretmen. Anahtar öğrenciye ödevi GÖNDERDİKTEN SONRA
-  // açılıyor (Kural 6); cümle bu sırayı söylüyor: önce kendi emeğin, sonra
-  // çözümler.
-  'Ödevimi gönderdikten sonra takıldığım soruları çözümlü cevap anahtarından inceler, ' +
-    'anlamaya çalışırım; yine anlamadığım yeri öğretmenime sorarım.',
+  // Öğretmenin kendi cümlesi. Çözümlü anahtar öğrenciye ödevi GÖNDERDİKTEN
+  // sonra açılıyor (Kural 6); sıra da bu: önce kendi emeği, sonra çözüm.
+  'Ödevimi gönderdikten sonra takıldığım soruları çözümlü cevap anahtarından incelerim; ' +
+    'anlamadığım yeri öğretmenime sorarım.',
 ];
-
-export const KAPANIS =
-  'Eksiklerin bizim için bir kusur değil, birlikte çalışacağımız yerin işaretidir.';

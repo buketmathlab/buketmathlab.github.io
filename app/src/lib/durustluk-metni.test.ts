@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { BASLIK, ILKELER, KAPANIS, PARAGRAFLAR } from './durustluk-metni';
+import { BASLIK, ILKELER, PARAGRAFLAR } from './durustluk-metni';
 
-const tum = [BASLIK, ...PARAGRAFLAR, ...ILKELER, KAPANIS].join(' ');
+const tum = [BASLIK, ...PARAGRAFLAR, ...ILKELER].join(' ');
 
 describe('Dürüst çalışma ilkemiz', () => {
   it('öğretmenin istediği üç fikri taşıyor: kısa yol yok, puan yol gösterir, eksik görünür', () => {
@@ -27,7 +27,6 @@ describe('Dürüst çalışma ilkemiz', () => {
 
   it('yanlış ve boş suç değil, öğrenmenin parçası', () => {
     expect(ILKELER.join(' ')).toMatch(/yanlış yapmaktan ya da boş bırakmaktan çekinmem/);
-    expect(KAPANIS).toMatch(/kusur değil/);
   });
 
   it('ilkeler birinci tekil şahıs, paragraflar öğrenciye "sen" diye', () => {
@@ -35,11 +34,11 @@ describe('Dürüst çalışma ilkemiz', () => {
     expect(PARAGRAFLAR.join(' ')).toMatch(/kendi emeğinle/);
   });
 
-  it('önce çözümlü cevap anahtarı, sonra öğretmen (öğretmenin düzeltmesi)', () => {
-    const son = ILKELER[2] ?? '';
-    expect(son).toMatch(/gönderdikten sonra/);
-    expect(son.indexOf('çözümlü cevap anahtarı')).toBeGreaterThan(-1);
-    expect(son.indexOf('çözümlü cevap anahtarı')).toBeLessThan(son.indexOf('öğretmenime'));
+  it('üçüncü ilke öğretmenin kendi cümlesi', () => {
+    expect(ILKELER[2]).toBe(
+      'Ödevimi gönderdikten sonra takıldığım soruları çözümlü cevap anahtarından incelerim; ' +
+        'anlamadığım yeri öğretmenime sorarım.',
+    );
   });
 
   it('kısa kalıyor: telefonda bir kart', () => {

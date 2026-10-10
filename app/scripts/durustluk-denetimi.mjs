@@ -2,7 +2,8 @@
  * DÜRÜST ÇALIŞMA İLKEMİZ — öğrenci panosunda sabit kart (Chromium, taklit RPC)
  *
  *  D1. Öğrenci Pano: "Dürüst çalışma ilkemiz" kartı var (başlık h2, bölüm
- *      başlığa bağlı); üç paragraf, üç ilke ve kapanış cümlesi görünüyor.
+ *      başlığa bağlı); üç paragraf ve üç ilke görünüyor (kapanış cümlesi
+ *      öğretmenin isteğiyle kaldırıldı).
  *  D2. Sabit: kartın içinde hiçbir düğme yok (kapatılamaz); sayfa
  *      yenilenince yine orada.
  *  D3. Yeri: "Yaklaşan ödev" ve "Son puanın" kartlarından SONRA.
@@ -61,9 +62,8 @@ console.log('--- D1–D3. Öğrenci Pano ---');
     [/eksiklerini gizler/, 'eksiklerini gizler'],
     [/kimse görmezken de doğru olanı/, 'dürüstlük tanımı'],
     [/Ödevlerimi kendi bilgim ve emeğimle yaparım\./, '1. ilke'],
-    [/Ödevimi gönderdikten sonra takıldığım soruları çözümlü cevap anahtarından inceler/, '3. ilke: önce çözümlü anahtar'],
-    [/yine anlamadığım yeri öğretmenime sorarım/, '3. ilke: sonra öğretmen'],
-    [/kusur değil, birlikte çalışacağımız yerin işaretidir/, 'kapanış'],
+    [/Ödevimi gönderdikten sonra takıldığım soruları çözümlü cevap anahtarından incelerim; anlamadığım yeri öğretmenime sorarım\./, '3. ilke'],
+    [/^(?![\s\S]*kusur değil)/, 'kapanış cümlesi yok'],
   ]) (r.test(m) ? tamam : bozuk)(`metinde ${ad}`);
   ((await k.getByRole('listitem').count()) === 3 ? tamam : bozuk)('üç ilke');
   ((await k.getByRole('button').count()) === 0 ? tamam : bozuk)('kartta düğme yok (kapatılamaz)');

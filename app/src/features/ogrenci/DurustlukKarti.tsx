@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/Card';
-import { BASLIK, ILKELER, KAPANIS, PARAGRAFLAR } from '@/lib/durustluk-metni';
+import { BASLIK, ILKELER, PARAGRAFLAR } from '@/lib/durustluk-metni';
 
 /**
  * "Dürüst çalışma ilkemiz" — öğrenci panosunda SABİT kart.
@@ -30,7 +30,6 @@ export function DurustlukKarti() {
             <li key={i}>{i}</li>
           ))}
         </ul>
-        <p className="mt-3 text-[14px] font-semibold text-ink">{KAPANIS}</p>
       </section>
     </Card>
   );
