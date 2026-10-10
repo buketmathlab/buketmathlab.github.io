@@ -29,6 +29,7 @@ import { SayfaSiniriSecimi } from './SayfaSiniriSecimi';
 import { sayfaSiniriniOku } from '@/lib/cozum-sayfalari';
 import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
 import { KardeslereYayma } from './KardeslereYayma';
+import { SoruIptali, type SubeRaporu } from './SoruIptali';
 import { sunucudanOku, sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
 import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
 import type { KardesDetay, Sinif } from '@/types/api';
@@ -109,6 +110,7 @@ export function OdevDuzenle() {
   const [okumaHatasi, setOkumaHatasi] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
   const [degisenler, setDegisenler] = useState<PuanDegisimi[] | null>(null);
+  const [iptalRaporu, setIptalRaporu] = useState<SubeRaporu[] | null>(null);
 
   const { veri: detay, durum, hata, yenile } = useVeri<OdevDetay>('odev_detay', {
     p_token: oturum?.token,
@@ -392,6 +394,29 @@ export function OdevDuzenle() {
                   </p>
                 </Card>
               )
+            )}
+
+            {/* 0072 — SORU İPTALİ. Yalnız test ödevinde; kayıt düğmesinden
+                ayrı bir işlem (kendi onayı, sebebi ve raporu var). Kapsam
+                bu ödev + arşivde olmayan kardeşleri: sunucu da aynısını
+                yapıyor. */}
+            {detay.tur === 'test' && (detay.soru_sayisi ?? 0) > 1 && (
+              <SoruIptali
+                odevId={detay.id}
+                soruSayisi={detay.soru_sayisi ?? 0}
+                anahtar={detay.cevap_anahtari}
+                subeler={[
+                  detay.sinif,
+                  ...(detay.kardes_detay
+                    ? detay.kardes_detay.filter((k) => !k.arsiv).map((k) => k.sinif)
+                    : (detay.kardesler ?? [])),
+                ]}
+                rapor={iptalRaporu}
+                onDegisti={(r) => {
+                  setIptalRaporu(r);
+                  yenile();
+                }}
+              />
             )}
 
             <Card>

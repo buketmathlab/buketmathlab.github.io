@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { iptalMi } from '@/lib/soru-iptali';
 
 type Props = {
   no: number;
@@ -36,34 +37,44 @@ export function SikSatiri({ no, siklar, secili, vurgu = 'yok', onDegis }: Props)
       <span className="sk-sayi w-7 shrink-0 text-right text-[13px] font-bold text-muted">
         {no}
       </span>
-      <div className="flex flex-wrap gap-1">
-        {siklar.map((s) => {
-          const aktif = secili === s;
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => onDegis(no, aktif ? null : s)}
-              aria-pressed={aktif}
-              aria-label={`${no}. soru, ${s} şıkkı`}
-              // 44 px: ürünün kendi dokunma hedefi kuralı. Önce 36 px'di ve
-              // erişilebilirlik denetimi bunu öğrenci ekranında yakaladı —
-              // öğrenci bir testte bu düğmeye onlarca kez basıyor, en çok
-              // dokunulan öğede kuralı esnetmek yanlış yerde tasarruftu.
-              className={
-                'min-h-[44px] min-w-[44px] rounded-sk-sm border text-[14px] font-semibold ' +
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ' +
-                'focus-visible:outline-ink ' +
-                (aktif
-                  ? 'border-ink bg-ink text-paper'
-                  : 'border-line bg-surface text-muted hover:border-ink-soft')
-              }
-            >
-              {s}
-            </button>
-          );
-        })}
-      </div>
+      {/* 0072 — İPTAL EDİLEN SORU (öğretmenin anahtar ızgarası): şık
+          düğmesi yok. Bir harfe dokunmak iptali sessizce bozardı; geri alma
+          "Soru iptali" kartındaki düğmeyle. Öğrencinin `secili`'si hiçbir
+          zaman iptal işareti değil, onun ızgarası etkilenmiyor. */}
+      {iptalMi(secili) ? (
+        <span className="min-h-[44px] content-center text-[13px] font-semibold text-muted">
+          İptal edildi · değerlendirme dışı
+        </span>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {siklar.map((s) => {
+            const aktif = secili === s;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => onDegis(no, aktif ? null : s)}
+                aria-pressed={aktif}
+                aria-label={`${no}. soru, ${s} şıkkı`}
+                // 44 px: ürünün kendi dokunma hedefi kuralı. Önce 36 px'di ve
+                // erişilebilirlik denetimi bunu öğrenci ekranında yakaladı —
+                // öğrenci bir testte bu düğmeye onlarca kez basıyor, en çok
+                // dokunulan öğede kuralı esnetmek yanlış yerde tasarruftu.
+                className={
+                  'min-h-[44px] min-w-[44px] rounded-sk-sm border text-[14px] font-semibold ' +
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ' +
+                  'focus-visible:outline-ink ' +
+                  (aktif
+                    ? 'border-ink bg-ink text-paper'
+                    : 'border-line bg-surface text-muted hover:border-ink-soft')
+                }
+              >
+                {s}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </li>
   );
 }
