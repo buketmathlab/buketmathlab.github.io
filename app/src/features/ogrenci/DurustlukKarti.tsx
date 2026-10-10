@@ -1,8 +1,9 @@
 import { Card } from '@/components/ui/Card';
+import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { BASLIK, ILKELER, PARAGRAFLAR } from '@/lib/durustluk-metni';
 
 /**
- * "Dürüst çalışma ilkemiz" — öğrenci panosunda SABİT kart.
+ * Dürüstlük kartı ("Yapay değil, kendi zekâm") — öğrenci panosunda SABİT.
  *
  * KAPATMA DÜĞMESİ YOK (öğretmenin isteği: "sabit kalacağı bir yazı").
  * Duyuru gibi okunup geçilen bir haber değil; her açılışta aynı yerde
@@ -17,9 +18,16 @@ export function DurustlukKarti() {
   return (
     <Card>
       <section aria-labelledby="durustluk-baslik">
-        <h2 id="durustluk-baslik" className="font-display text-[18px] font-semibold text-ink">
-          {BASLIK}
-        </h2>
+        {/* Ewalu SEKİZGENDE, başlığın solunda (öğretmenin isteği: okul
+            önündeki görsel, bayrak görünsün, Ewalu boydan). 128 px: boydan
+            figürde bayrak daha küçükte seçilmiyor. Panonun
+            "Merhaba" satırıyla aynı düzen. Dekoratif: anlamı başlık taşıyor. */}
+        <div className="flex items-center gap-3">
+          <EwaluFigure poz="okul" boyut={128} dekoratif className="shrink-0" />
+          <h2 id="durustluk-baslik" className="font-display text-[18px] font-semibold text-ink">
+            {BASLIK}
+          </h2>
+        </div>
         <div className="mt-2 space-y-2 text-[14px] leading-relaxed text-ink">
           {PARAGRAFLAR.map((p) => (
             <p key={p.slice(0, 24)}>{p}</p>

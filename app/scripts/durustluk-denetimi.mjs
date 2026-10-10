@@ -1,9 +1,10 @@
 /**
  * DÜRÜST ÇALIŞMA İLKEMİZ — öğrenci panosunda sabit kart (Chromium, taklit RPC)
  *
- *  D1. Öğrenci Pano: "Dürüst çalışma ilkemiz" kartı var (başlık h2, bölüm
+ *  D1. Öğrenci Pano: "Yapay değil, kendi zekâm" kartı var (başlık h2, bölüm
  *      başlığa bağlı); üç paragraf ve üç ilke görünüyor (kapanış cümlesi
  *      öğretmenin isteğiyle kaldırıldı).
+ *      Başlığın solunda sekizgen içinde okul önündeki Ewalu (128 px, boydan, bayrak görünür).
  *  D2. Sabit: kartın içinde hiçbir düğme yok (kapatılamaz); sayfa
  *      yenilenince yine orada.
  *  D3. Yeri: "Yaklaşan ödev" ve "Son puanın" kartlarından SONRA.
@@ -47,14 +48,14 @@ async function ac({ rol = 'ogrenci', yol = '/ogrenci', en = 390, odevler = [ODEV
   await p.waitForTimeout(500);
   return { b, p };
 }
-const bolum = (p) => p.getByRole('region', { name: 'Dürüst çalışma ilkemiz' });
+const bolum = (p) => p.getByRole('region', { name: 'Yapay değil, kendi zekâm' });
 
 console.log('--- D1–D3. Öğrenci Pano ---');
 {
   const { b, p } = await ac();
   const k = bolum(p);
   ((await k.count()) === 1 ? tamam : bozuk)('kart var (bölüm başlığa bağlı)');
-  ((await p.getByRole('heading', { level: 2, name: 'Dürüst çalışma ilkemiz' }).count()) === 1 ? tamam : bozuk)('başlık h2');
+  ((await p.getByRole('heading', { level: 2, name: 'Yapay değil, kendi zekâm' }).count()) === 1 ? tamam : bozuk)('başlık h2');
   const m = (await k.count()) ? await k.innerText() : '';
   for (const [r, ad] of [
     [/çalışma programı/, 'puan → çalışma programı'],
@@ -67,6 +68,17 @@ console.log('--- D1–D3. Öğrenci Pano ---');
   ]) (r.test(m) ? tamam : bozuk)(`metinde ${ad}`);
   ((await k.getByRole('listitem').count()) === 3 ? tamam : bozuk)('üç ilke');
   ((await k.getByRole('button').count()) === 0 ? tamam : bozuk)('kartta düğme yok (kapatılamaz)');
+  // Öğretmenin isteği: başlığın yanında sekizgen içinde okul önündeki Ewalu.
+  const gorsel = k.locator('img[src*="/ewalu/okul-portre-"]');
+  ((await gorsel.count()) === 1 ? tamam : bozuk)('başlığın yanında okul önündeki Ewalu (sekizgen)');
+  const yan = await p.evaluate(() => {
+    const h = document.getElementById('durustluk-baslik');
+    const img = h?.parentElement?.querySelector('img[src*="/ewalu/okul-portre-"]');
+    if (!h || !img) return null;
+    const a = img.getBoundingClientRect(), b = h.getBoundingClientRect();
+    return { solunda: a.right <= b.left + 1, hiza: Math.abs((a.top + a.bottom) / 2 - (b.top + b.bottom) / 2) < 20, en: Math.round(a.width) };
+  });
+  (yan?.solunda && yan?.hiza && yan?.en === 128 ? tamam : bozuk)(`görsel başlığın solunda, aynı hizada, 128 px (${JSON.stringify(yan)})`);
 
   const sira = await p.evaluate(() => {
     const kart = document.getElementById('durustluk-baslik');
