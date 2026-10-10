@@ -4,7 +4,7 @@
  *  D1. Öğrenci Pano: "Yapay değil, kendi zekâm" kartı var (başlık h2, bölüm
  *      başlığa bağlı); üç paragraf ve üç ilke görünüyor (kapanış cümlesi
  *      öğretmenin isteğiyle kaldırıldı).
- *      Başlığın solunda sekizgen içinde okul önündeki Ewalu (64 px).
+ *      Başlığın solunda sekizgen içinde okul önündeki Ewalu (96 px, boydan).
  *  D2. Sabit: kartın içinde hiçbir düğme yok (kapatılamaz); sayfa
  *      yenilenince yine orada.
  *  D3. Yeri: "Yaklaşan ödev" ve "Son puanın" kartlarından SONRA.
@@ -78,7 +78,7 @@ console.log('--- D1–D3. Öğrenci Pano ---');
     const a = img.getBoundingClientRect(), b = h.getBoundingClientRect();
     return { solunda: a.right <= b.left + 1, hiza: Math.abs((a.top + a.bottom) / 2 - (b.top + b.bottom) / 2) < 20, en: Math.round(a.width) };
   });
-  (yan?.solunda && yan?.hiza && yan?.en === 64 ? tamam : bozuk)(`görsel başlığın solunda, aynı hizada, 64 px (${JSON.stringify(yan)})`);
+  (yan?.solunda && yan?.hiza && yan?.en === 96 ? tamam : bozuk)(`görsel başlığın solunda, aynı hizada, 96 px (${JSON.stringify(yan)})`);
 
   const sira = await p.evaluate(() => {
     const kart = document.getElementById('durustluk-baslik');
