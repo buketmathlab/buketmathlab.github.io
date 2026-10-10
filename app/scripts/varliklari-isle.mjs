@@ -55,6 +55,16 @@ const EWALU = [
     kirp: { left: 250, top: 10, width: 540, height: 540 },
     alt: 'Ewalu, ceketi ve kalemiyle defterine yazıyor',
   },
+  {
+    // Öğretmenin seçimi (dürüstlük kartı): tanıtım görseli, "bayrak da
+    // gözükecek şekilde". Kırpma Türk bayrağını, Atatürk büstünü (yarım
+    // kesilmesin diye bütün) ve Ewalu'yu birlikte alıyor; bayrak sekizgenin
+    // köşesine düşmesin diye kutu geniş tutuldu (gözle doğrulandı).
+    ad: 'okul',
+    dosya: 'ewalu-tanitim-kare.jpg',
+    kirp: { left: 280, top: 0, width: 800, height: 800 },
+    alt: 'Ewalu okulun önünde; arkada Türk bayrağı ve Atatürk büstü',
+  },
 ];
 
 const PORTRE_BOYUTLARI = [128, 256, 512];

@@ -29,6 +29,11 @@ export const EWALU_POZLARI = {
     alt: 'Ewalu, ceketi ve kalemiyle defterine yazıyor',
     nerede: 'Ödev hatırlatması, değerlendirme bekleniyor, çalışma bağlamı',
   },
+  okul: {
+    ad: 'Okul',
+    alt: 'Ewalu okulun önünde; arkada Türk bayrağı ve Atatürk büstü',
+    nerede: 'Dürüstlük kartı (öğrenci panosu) — öğretmenin seçimi',
+  },
 } as const;
 
 export type EwaluPoz = keyof typeof EWALU_POZLARI;
