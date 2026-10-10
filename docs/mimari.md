@@ -6090,6 +6090,8 @@ açabilsin, cevap anahtarını asla (Kural 6).
   ve "Çözümü aç" düğmeleri var. Tek sayfa doğrudan açılıyor; çok sayfada
   "1. sayfa …" düğmeleri çıkıyor. Alanlar gelmezse (0071 öncesi) düğme
   çizilmiyor.
+  Düğmenin adı "Çocuğunuzun çözümünü aç". Öğretmen, velinin çıplak
+  "Çözümü aç" düğmesini cevap anahtarı sanmasını istemedi.
 - **Testler:**
   - `odev_pdf_testleri` 6–7. bölümler. "Veli soru PDF'ini açamıyor"
     beklentisi öğretmenin kararıyla tersine döndü. Ölçülenler: depoda
@@ -6100,3 +6102,26 @@ açabilsin, cevap anahtarını asla (Kural 6).
   - `veli-odev-dosyalari-denetimi` V1–V6.
   - Mutasyon kanıtları: depo şartı kaldırılınca, veliye anahtar izni
     eklenince ve düğmeler kaldırılınca ilgili test düşüyor.
+
+## Cevap optiği: numaralar yukarıdan aşağı (istemci, SQL yok)
+
+Öğretmenin bildirimi: "Öğrenci cevap optiklerinde numaralandırma yukarıdan
+aşağıya olsun. Yatay olunca öğrenciler yanlış işaretliyorlar." Tablet ve
+bilgisayarda ızgara satır satır ilerliyordu (1 2 / 3 4 …). Öğrenci 1'in
+altındaki satırı 2 sanıyordu.
+
+- **`SikListesi` (`components/ui/SikSatiri.tsx`):** CSS çok sütunu
+  kullanıyor (`sm:columns-2`, öğretmende ayrıca `lg:columns-3`), sıra
+  kâğıt optik gibi: 1. sütun 1–10, 2. sütun 11–20. Sütunları tarayıcı
+  dengeliyor (21 soru → 11 / 10).
+  - Satır arası boşluk `[&>li]:mb-2`; `space-y` olsaydı ikinci sütunun ilk
+    satırı 8 px aşağı kayardı.
+  - `break-inside-avoid` bir satırın iki sütuna bölünmesini engelliyor.
+  - DOM sırası 1…n olduğu için klavye ve ekran okuyucu sırası görsel
+    sırayla aynı.
+- Öğretmenin kararıyla öğrenci ekranı (`OdevTeslim`) ve öğretmenin anahtar
+  ızgarası (`AnahtarIzgarasi`) aynı bileşeni kullanıyor. Telefonda tek
+  sütun, değişiklik yok.
+- **Denetim:** `optik-sira-denetimi` O1–O5, satırların ekrandaki konumunu
+  ölçüyor. Mutasyon kanıtı: eski `grid-cols` geri konunca sütunlar
+  "1 3 5… | 2 4 6…" çıkıyor ve O1, O2 ve O4 düşüyor.

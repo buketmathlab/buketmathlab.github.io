@@ -4,7 +4,10 @@ import { useDosyaAc } from '@/components/DosyaAcici';
 import { dosyaAdresi } from '@/services/dosya';
 
 /**
- * Veli ödev kartı: "Soruları aç (PDF)" ve "Çözümü aç" (0071).
+ * Veli ödev kartı: "Soruları aç (PDF)" ve "Çocuğunuzun çözümünü aç" (0071).
+ *
+ * AD "ÇOCUĞUNUZUN": öğretmenin isteği — veli düğmeyi cevap anahtarı
+ * sanmasın. Açılan şey çocuğun kendi gönderdiği kâğıt; ad bunu söylüyor.
  *
  * Öğretmenin isteği: veli ödeve dokununca soru PDF'ini ve çocuğunun
  * gönderdiği çözümü açabilsin. CEVAP ANAHTARI YOK (Kural 6): `veli_paneli`
@@ -32,7 +35,7 @@ export function VeliOdevDosyalari({
     void dosya.ac(() => dosyaAdresi(yol), { hataMetni });
 
   function cozumuAc() {
-    if (cozumYollari.length === 1) ac(cozumYollari[0]!, 'Çözüm açılamadı.');
+    if (cozumYollari.length === 1) ac(cozumYollari[0]!, 'Çocuğunuzun çözümü açılamadı.');
     else setSayfalarAcik((a) => !a);
   }
 
@@ -51,7 +54,7 @@ export function VeliOdevDosyalari({
             onClick={cozumuAc}
             {...(cozumYollari.length > 1 ? { 'aria-expanded': sayfalarAcik } : {})}
           >
-            Çözümü aç
+            Çocuğunuzun çözümünü aç
           </Button>
         )}
       </div>
@@ -59,13 +62,13 @@ export function VeliOdevDosyalari({
         <div
           className="mt-2 flex flex-wrap items-center gap-2"
           role="group"
-          aria-label="Çözüm sayfaları"
+          aria-label="Çocuğunuzun çözüm sayfaları"
         >
           <span className="text-[13px] text-muted">
             <span className="sk-sayi">{cozumYollari.length}</span> sayfa:
           </span>
           {cozumYollari.map((y, i) => (
-            <Button key={y} tur="sade" olcu="sm" onClick={() => ac(y, 'Çözüm açılamadı.')}>
+            <Button key={y} tur="sade" olcu="sm" onClick={() => ac(y, 'Çocuğunuzun çözümü açılamadı.')}>
               {`${i + 1}. sayfa`}
             </Button>
           ))}

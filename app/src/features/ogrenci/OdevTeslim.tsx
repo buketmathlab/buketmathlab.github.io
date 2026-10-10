@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { Field, Input } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
+import { SikListesi, SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
 import { KonuListesi } from '@/components/ui/KonuListesi';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { KiyasKarti } from '@/components/KiyasKarti';
@@ -516,7 +516,7 @@ function OdevIcerigi({
                   <span className="sk-sayi">{`${soruSayisi - bosSayisi}/${soruSayisi} soru işaretlendi`}</span>
                 </Tag>
               </div>
-              <ul className="grid gap-2 sm:grid-cols-2">
+              <SikListesi sutun={2}>
                 {Array.from({ length: soruSayisi }, (_, i) => i + 1).map((no) => (
                   <SikSatiri
                     key={no}
@@ -526,7 +526,7 @@ function OdevIcerigi({
                     onDegis={onCevap}
                   />
                 ))}
-              </ul>
+              </SikListesi>
               <p className="mt-3 text-[13px] text-muted">
                 Boş bıraktığın sorular yanlış sayılmaz, boş sayılır.
               </p>

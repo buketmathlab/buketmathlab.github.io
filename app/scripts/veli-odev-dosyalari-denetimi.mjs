@@ -4,13 +4,14 @@
  * Öğretmen veli hesabında ödev kartına dokundu, hiçbir şey açılmadı.
  * Kararı: "Çözüm + soru PDF'i" — veli ikisini de açabilsin, anahtarı asla.
  *
- *  V1. Gönderilmiş ödev: "Soruları aç (PDF)" soru yolunu, "Çözümü aç" tek
+ *  V1. Gönderilmiş ödev: "Soruları aç (PDF)" soru yolunu, "Çocuğunuzun çözümünü aç" tek
  *      sayfalık çözümün yolunu istiyor; sekme imzalı adrese gidiyor.
- *  V2. Üç sayfalık çözüm: "Çözümü aç" sayfa düğmelerini açıyor (1., 2., 3.),
+ *  V2. Üç sayfalık çözüm: "Çocuğunuzun çözümünü aç" sayfa düğmelerini açıyor (1., 2., 3.),
  *      her biri kendi yolunu istiyor.
  *  V3. Gönderilmemiş ödev: yalnız "Soruları aç (PDF)".
  *  V4. 0071 öncesi (alanlar yok): ekran hatasız, düğme yok.
- *  V5. Ekranda "anahtar" yazısı yok; hiçbir istek anahtar yolu istemiyor.
+ *  V5. Ekranda "anahtar" yazısı yok; hiçbir istek anahtar yolu istemiyor;
+ *      düğmenin adı "Çocuğunuzun çözümünü aç" — çıplak "Çözümü aç" yok.
  *  V6. 360 px'de yatay taşma yok.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
@@ -97,23 +98,23 @@ const { b, s, p } = await kur(TAM);
 {
   const k = kart(p, 'Üslü sayılar');
   const sor = k.getByRole('button', { name: 'Soruları aç (PDF)' });
-  const coz = k.getByRole('button', { name: 'Çözümü aç' });
+  const coz = k.getByRole('button', { name: 'Çocuğunuzun çözümünü aç' });
   ((await sor.count()) === 1 && (await coz.count()) === 1 ? tamam : bozuk)('iki düğme var');
   const a1 = await basVeSekme(s, sor);
   const y1 = (await yollar(p)).at(-1);
   (a1 === IMZALI && y1 === 'odev/us/sorular.pdf' ? tamam : bozuk)(`"Soruları aç (PDF)" → ${y1}, sekme ${a1 ? 'açıldı' : 'YOK'}`);
   const a2 = await basVeSekme(s, coz);
   const y2 = (await yollar(p)).at(-1);
-  (a2 === IMZALI && y2 === 'cozum/us/c.jpg' ? tamam : bozuk)(`"Çözümü aç" → ${y2}, sekme ${a2 ? 'açıldı' : 'YOK'}`);
+  (a2 === IMZALI && y2 === 'cozum/us/c.jpg' ? tamam : bozuk)(`"Çocuğunuzun çözümünü aç" → ${y2}, sekme ${a2 ? 'açıldı' : 'YOK'}`);
 }
 
 console.log('--- V2. Üç sayfalık çözüm ---');
 {
   const k = kart(p, 'Köklü sayılar');
   const once = (await yollar(p)).length;
-  await k.getByRole('button', { name: 'Çözümü aç' }).click();
+  await k.getByRole('button', { name: 'Çocuğunuzun çözümünü aç' }).click();
   await p.waitForTimeout(300);
-  const grup = p.getByRole('group', { name: 'Çözüm sayfaları' });
+  const grup = p.getByRole('group', { name: 'Çocuğunuzun çözüm sayfaları' });
   const adlar = await grup.getByRole('button').allInnerTexts();
   (adlar.join('|') === '1. sayfa|2. sayfa|3. sayfa' ? tamam : bozuk)(`sayfa düğmeleri: ${adlar.join(', ')}`);
   ((await yollar(p)).length === once ? tamam : bozuk)('çözüm düğmesi toplu sekme açmadı');
@@ -128,11 +129,13 @@ console.log('--- V3. Gönderilmemiş ödev ---');
 {
   const k = kart(p, 'Sayı aralıkları');
   ((await k.getByRole('button', { name: 'Soruları aç (PDF)' }).count()) === 1 ? tamam : bozuk)('soru düğmesi var');
-  ((await k.getByRole('button', { name: 'Çözümü aç' }).count()) === 0 ? tamam : bozuk)('çözüm düğmesi yok');
+  ((await k.getByRole('button', { name: 'Çocuğunuzun çözümünü aç' }).count()) === 0 ? tamam : bozuk)('çözüm düğmesi yok');
 }
 
 console.log('--- V5. Anahtar yok ---');
 {
+  // Sahibi belli olmayan "Çözümü aç" düğmesi yok (veli anahtar sanmasın).
+  ((await p.getByRole('button', { name: 'Çözümü aç', exact: true }).count()) === 0 ? tamam : bozuk)('çıplak "Çözümü aç" düğmesi yok');
   const m = await p.evaluate(() => document.body.innerText);
   (!/anahtar/i.test(m) ? tamam : bozuk)('ekranda "anahtar" yazısı yok');
   const y = await yollar(p);
@@ -145,14 +148,14 @@ console.log('--- V4. 0071 öncesi: alan yok ---');
   const { b, p } = await kur(ESKI);
   const m = await p.evaluate(() => document.body.innerText);
   (m.includes('Üslü sayılar') ? tamam : bozuk)('ekran açıldı');
-  ((await p.getByRole('button', { name: /Soruları aç|Çözümü aç/ }).count()) === 0 ? tamam : bozuk)('düğme yok');
+  ((await p.getByRole('button', { name: /Soruları aç|çözümünü aç/ }).count()) === 0 ? tamam : bozuk)('düğme yok');
   await b.close();
 }
 
 console.log('--- V6. 360 px ---');
 {
   const { b, p } = await kur(TAM, 360);
-  await p.getByRole('button', { name: 'Çözümü aç' }).nth(1).click();
+  await p.getByRole('button', { name: 'Çocuğunuzun çözümünü aç' }).nth(1).click();
   await p.waitForTimeout(300);
   const tasma = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   (tasma <= 0 ? tamam : bozuk)(`yatay taşma yok (${tasma} px)`);
