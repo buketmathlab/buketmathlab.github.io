@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/Card';
 import { BASLIK, ILKELER, PARAGRAFLAR } from '@/lib/durustluk-metni';
 
 /**
- * "Dürüst çalışma ilkemiz" — öğrenci panosunda SABİT kart.
+ * Dürüstlük kartı ("Yapay değil, kendi zekâm") — öğrenci panosunda SABİT.
  *
  * KAPATMA DÜĞMESİ YOK (öğretmenin isteği: "sabit kalacağı bir yazı").
  * Duyuru gibi okunup geçilen bir haber değil; her açılışta aynı yerde

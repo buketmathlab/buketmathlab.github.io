@@ -3,7 +3,11 @@ import { BASLIK, ILKELER, PARAGRAFLAR } from './durustluk-metni';
 
 const tum = [BASLIK, ...PARAGRAFLAR, ...ILKELER].join(' ');
 
-describe('Dürüst çalışma ilkemiz', () => {
+describe('Yapay değil, kendi zekâm (dürüstlük kartı)', () => {
+  it('başlık öğretmenin seçtiği cümle', () => {
+    expect(BASLIK).toBe('Yapay değil, kendi zekâm');
+  });
+
   it('öğretmenin istediği üç fikri taşıyor: kısa yol yok, puan yol gösterir, eksik görünür', () => {
     expect(tum).toMatch(/Yapay zekâ/);
     expect(tum).toMatch(/çalışma programı/);

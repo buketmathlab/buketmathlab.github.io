@@ -1,7 +1,7 @@
 /**
  * DÜRÜST ÇALIŞMA İLKEMİZ — öğrenci panosunda sabit kart (Chromium, taklit RPC)
  *
- *  D1. Öğrenci Pano: "Dürüst çalışma ilkemiz" kartı var (başlık h2, bölüm
+ *  D1. Öğrenci Pano: "Yapay değil, kendi zekâm" kartı var (başlık h2, bölüm
  *      başlığa bağlı); üç paragraf ve üç ilke görünüyor (kapanış cümlesi
  *      öğretmenin isteğiyle kaldırıldı).
  *  D2. Sabit: kartın içinde hiçbir düğme yok (kapatılamaz); sayfa
@@ -47,14 +47,14 @@ async function ac({ rol = 'ogrenci', yol = '/ogrenci', en = 390, odevler = [ODEV
   await p.waitForTimeout(500);
   return { b, p };
 }
-const bolum = (p) => p.getByRole('region', { name: 'Dürüst çalışma ilkemiz' });
+const bolum = (p) => p.getByRole('region', { name: 'Yapay değil, kendi zekâm' });
 
 console.log('--- D1–D3. Öğrenci Pano ---');
 {
   const { b, p } = await ac();
   const k = bolum(p);
   ((await k.count()) === 1 ? tamam : bozuk)('kart var (bölüm başlığa bağlı)');
-  ((await p.getByRole('heading', { level: 2, name: 'Dürüst çalışma ilkemiz' }).count()) === 1 ? tamam : bozuk)('başlık h2');
+  ((await p.getByRole('heading', { level: 2, name: 'Yapay değil, kendi zekâm' }).count()) === 1 ? tamam : bozuk)('başlık h2');
   const m = (await k.count()) ? await k.innerText() : '';
   for (const [r, ad] of [
     [/çalışma programı/, 'puan → çalışma programı'],

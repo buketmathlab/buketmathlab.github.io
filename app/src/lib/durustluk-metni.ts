@@ -1,5 +1,5 @@
 /**
- * DÜRÜST ÇALIŞMA İLKEMİZ — öğrenci panosunda SABİT duran kart.
+ * "YAPAY DEĞİL, KENDİ ZEKÂM" — öğrenci panosunda SABİT duran dürüstlük kartı.
  * React'siz, doğrudan test edilebilir (`el-yazisi-metni.ts` deseni).
  *
  * Öğretmenin cümlesi: "Bizim açımızdan en kritik konu öğrencilerin
@@ -20,7 +20,10 @@
  *  - Öğrenciye "sen" diye, sıcak ama ciddi.
  */
 
-export const BASLIK = 'Dürüst çalışma ilkemiz';
+// Öğretmenin seçimi (liselilerin ilgisini çeksin): "Yapay Değil, Kendi Zekam".
+// Ekranda yalnız ilk harf büyük ve "zekâm" şapkalı: kartın metnindeki
+// "yapay zekâ" ile ve uygulamanın diğer başlıklarıyla tutarlı.
+export const BASLIK = 'Yapay değil, kendi zekâm';
 
 export const PARAGRAFLAR: readonly string[] = [
   'Her ödev, nerede olduğunu birlikte görebilmemiz için bir fırsattır. Aldığın puan, ' +

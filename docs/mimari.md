@@ -6179,6 +6179,9 @@ soruyu "boş" sayıp paydada tutuyordu.
 
 ## Dürüst çalışma ilkemiz — öğrenci panosunda sabit kart (istemci, SQL yok)
 
+Başlık sonradan öğretmenin seçimiyle **"Yapay değil, kendi zekâm"** oldu.
+Amaç liselilerin ilgisini çekmek; "yapay zekâ"ya doğrudan cevap veriyor.
+
 Öğretmenin cümlesi: "Bizim açımızdan en kritik konu öğrencilerin ödevleri
 eksik ya da yanlış yapmaları değil, yapay zekâ gibi kısa yollara
 başvurmadan hazır, emeksiz cevaplar göndermemeleri." İstediği yazı hem ödev
