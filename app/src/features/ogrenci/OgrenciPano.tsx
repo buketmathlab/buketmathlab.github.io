@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { DuyuruKarti } from './DuyuruKarti';
+import { DurustlukKarti } from './DurustlukKarti';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
@@ -186,6 +187,12 @@ export function OgrenciPano() {
                 </Card>
               </li>
             )}
+
+            {/* DÜRÜST ÇALIŞMA İLKEMİZ — SABİT, kapatılamaz (öğretmenin
+                isteği). Günlük işlerin ardından; gerekçe bileşende. */}
+            <li>
+              <DurustlukKarti />
+            </li>
           </ul>
 
           {/* KOD YENİLEME — panonun EN ALTINDA (0046).

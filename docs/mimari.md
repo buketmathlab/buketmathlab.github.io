@@ -6176,3 +6176,27 @@ soruyu "boş" sayıp paydada tutuyordu.
   - Mutasyon kanıtları: paydadan düşme kaldırılınca öz-denetim düşüyor;
     kardeş döngüsü kaldırılınca 1d düşüyor; ızgara kilidi kaldırılınca İ3
     düşüyor.
+
+## Dürüst çalışma ilkemiz — öğrenci panosunda sabit kart (istemci, SQL yok)
+
+Öğretmenin cümlesi: "Bizim açımızdan en kritik konu öğrencilerin ödevleri
+eksik ya da yanlış yapmaları değil, yapay zekâ gibi kısa yollara
+başvurmadan hazır, emeksiz cevaplar göndermemeleri." İstediği yazı hem ödev
+yapımına hem dürüstlük ve şahsiyet kazanmaya katkı sağlamalı; "çok
+profesyonel ve pedagojik" olmalı.
+
+- **Metin (`lib/durustluk-metni.ts`):**
+  - başlık, üç paragraf (puan yol gösterir; kısa yol eksikleri gizler;
+    dürüstlüğün tanımı), birinci tekil şahısla üç ilke ve bir kapanış
+    cümlesi;
+  - dil kuralları vitest'le ölçülüyor: tehdit ve suçlama yok, yanlış ve
+    boş "öğrenmenin parçası", kart kısa;
+  - yaptırım cümlesi ödev gönderme ekranında kalıyor
+    (`el-yazisi-metni.ts`).
+- **Kart (`DurustlukKarti`):**
+  - kapatma düğmesi yok, yani sabit;
+  - yeri günlük işlerden (yaklaşan ödev, son puan) sonra; ilk satırı
+    kaplasaydı öğrenci her gün kaydırıp görmez olurdu;
+  - yalnız öğrenci panosunda.
+- **Denetim:** `durustluk-denetimi` D1–D6. Mutasyon kanıtı: kart
+  kaldırılınca 13 ölçüm düşüyor.
