@@ -6210,3 +6210,44 @@ profesyonel ve pedagojik" olmalı.
   - yalnız öğrenci panosunda.
 - **Denetim:** `durustluk-denetimi` D1–D6. Mutasyon kanıtı: kart
   kaldırılınca 13 ölçüm düşüyor.
+
+## 0073 — Deneme öğrenci ve deneme veli hesabı
+
+Öğretmenin isteği: "Bir tane deneme yapmak için gerçek olmayan bir öğrenci
+için öğrenci hesabı ve aynı şekilde veli hesabı olsun. Gerçek öğrenci ve
+velilerin tüm özellikleri birebir olsun. Gerekirse ödev de gönderebileyim."
+
+- **Birebir:** "Deneme Öğrenci" gerçek bir okul sınıfında, gerçek öğrenci
+  gibi duruyor: öğrenci kodu, veli kodu, ödev, gönderim, puan, mesaj ve
+  onam. Öğrenci ve veli ekranlarında hiçbir değişiklik yok.
+- **Hiçbir sayıya girmiyor (`ogrenciler.deneme`):** 21 fonksiyon 0073'e
+  kopyalandı; her birinde tek değişiklik deneme filtresi. Öğrenci sayan
+  yerde `(x.aktif and not x.deneme)`; öğrenciye bağlanmadan gönderim
+  sayan yerde `and not _deneme_mi(g.ogrenci_id)`.
+  - Kapsadığı sayılar: sınıf kartları, Genel, müdür paneli, sınıf
+    analizi, not çizelgesi, sınıf özeti, konu karnesi, kıyas, öğretmen
+    panosu, ödev listesi ve detayı, onam dökümü, okul bilgilendirmesi,
+    duyuru mevcudu.
+  - E-okul eşitlemesi deneme öğrenciyi "listede yok" diye
+    pasifleştirmiyor.
+- **Listeler:** öğrenciler, veliler ve ödev gönderimleri satırlarında
+  deneme yalnız sahipte görünüyor (`_deneme_gorur`). Öğrenciler
+  listesinde "Deneme" etiketi var.
+- **Uçlar (yalnız sahip):** `deneme_hesabi`, `deneme_hesabi_olustur`,
+  `deneme_sinifi_degistir`, `deneme_sifirla`, `deneme_hesabi_sil`. Hepsi
+  denetim izine yazıyor.
+- **Sıfırlama:** hesabı silip aynı kodlarla yeniden kuruyor. Gönderim
+  satırını silmek yetmiyordu: depodaki eski fotoğraf SQL'den silinmiyor ve
+  aynı yola yeniden gönderimde istemci eskisini kullanıyor (0056 notu).
+- **Bilinçli:** yedek (`disa_aktar`) deneme satırını da taşıyor; yedek
+  eksiksiz kalmalı.
+- **Testler:**
+  - `deneme_hesabi_testleri.sql`: 18 uç deneme öncesi ve sonrası birebir
+    aynı. Ayrıca yetki, birebir giriş ve gönderim, listeler, eşitleme,
+    sıfırlama ve silme ölçülüyor.
+  - Mutasyon kanıtları: Genel'den filtre kaldırılınca 3a düşüyor;
+    gönderim satırı herkese açılınca 4c düşüyor.
+  - `deneme-hesabi-denetimi` H1–H6.
+- **Yakalanan hata:** üretici, 0018'de kaldırılmış `sinif_kodlari`
+  fonksiyonunu yeniden canlandırıyordu; mevcut test bunu yakaladı ve
+  fonksiyon listeden çıkarıldı.
