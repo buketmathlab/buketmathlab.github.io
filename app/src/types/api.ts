@@ -54,6 +54,8 @@ export type OgrenciSatiri = {
   ogrenci_no: string | null;
   tur: 'okul' | 'ozel';
   sinif: string | null;
+  /** 0073: platform sahibinin deneme hesabı (listede yalnız sahibe gelir). */
+  deneme?: boolean;
 };
 
 export type OgrenciListesi = {

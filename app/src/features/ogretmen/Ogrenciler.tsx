@@ -488,6 +488,7 @@ function AramaSonuclari({
                       {o.ad}
                     </Link>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
+                      {o.deneme && <Tag tur="bilgi">Deneme</Tag>}
                       {o.tur === 'ozel' ? (
                         <Tag tur="uyari">Özel ders</Tag>
                       ) : (
