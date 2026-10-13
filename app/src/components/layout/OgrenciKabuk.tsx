@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { Button } from '@/components/ui/Button';
+import { DenemeSeridi } from '@/components/layout/DenemeSeridi';
 import { SekmeCubugu, type SekmeTanim } from '@/components/layout/SekmeCubugu';
 import { SEKME_IKON } from '@/components/layout/sekme-ikonlari';
 import { useKendiOzet } from '@/hooks/useKendiOzet';
@@ -51,6 +52,8 @@ export function OgrenciKabuk() {
 
   return (
     <div className="min-h-dvh">
+      {/* Yalnız sahibin tek tıkla açtığı deneme oturumunda görünür. */}
+      <DenemeSeridi />
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex w-full max-w-[880px] items-center justify-between gap-3 px-4 py-3">
           {/* Öğretmen imzası bilinçli olarak YOK (`bicim="sade"`): 360 px'de

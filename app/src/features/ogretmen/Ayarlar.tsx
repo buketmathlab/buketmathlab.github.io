@@ -11,7 +11,6 @@ import {
 } from '@/lib/ogrenci-cikarma-metni';
 import { PinDegistirKarti } from '@/components/PinDegistirKarti';
 import { Yedek } from './Yedek';
-import { DenemeHesabi } from './DenemeHesabi';
 
 /**
  * Ayarlar — bugünlük tek işi PIN değiştirmek.
@@ -67,10 +66,6 @@ export function Ayarlar() {
           <Yedek />
         </div>
       )}
-
-      {/* DENEME HESABI (0073) — yalnız sahipte. Uçlar `_yonetici`; ekran
-          reddedilecek kartı göstermiyor (Yedek kartıyla aynı kural). */}
-      {(ben === null || ben.sahip) && <DenemeHesabi />}
 
       {/* 0032: Ewalu'nun puan cümleleri.
           Ayrı bir ekran, çünkü beş bant × (önizleme + metin kutusu + iki

@@ -6251,3 +6251,28 @@ velilerin tüm özellikleri birebir olsun. Gerekirse ödev de gönderebileyim."
 - **Yakalanan hata:** üretici, 0018'de kaldırılmış `sinif_kodlari`
   fonksiyonunu yeniden canlandırıyordu; mevcut test bunu yakaladı ve
   fonksiyon listeden çıkarıldı.
+
+### Deneme hesabına tek tıkla geçiş (SQL yok)
+
+Öğretmenin isteği: "Öğretmen ve müdür hesaplarının olduğu yerden deneme
+hesabı açabileyim ve oradan tıklayınca anında deneme hesaplarına giriş
+yapabileyim."
+
+- **Yer:** Deneme hesabı kartı Ayarlar'dan Öğretmenler sayfasına,
+  hesap listesinin altına taşındı. Yalnız sahipte; vekâletteyken gizli.
+- **"Öğrenci olarak gir" / "Veli olarak gir":** gerçek girişin aynısı.
+  `giris` deneme koduyla çağrılıyor ve sunucu sıradan bir öğrenci ya da
+  veli oturumu açıyor. Sunucuda yeni bir kapı yok.
+- **Dönüş:** sahibin jetonu vekâletteki gibi `sessionStorage`'da
+  (`lib/deneme-oturumu.ts`), yanında deneme öğrencinin kimliği.
+  - Öğrenci ve veli kabuğunda kapatılamayan `DenemeSeridi` var. Yalnız o
+    kimlikteki oturumda çıkıyor, gerçek öğrenci görmüyor.
+  - "Öğretmen hesabına dön" deneme oturumunu sunucuda kapatıyor (`cikis`),
+    sahibin oturumunu yazıp Öğretmenler sayfasını yeniden yüklüyor.
+- **Neden tam yenileme:** rotalar role göre ayrı ağaçlar. Rol değişince
+  öğrenci ağacının `*` yönlendirmesi `git`i eziyordu ve sahip Pano'ya
+  düşüyordu; H7 yakaladı.
+- **Denetim:** `deneme-hesabi-denetimi` H7–H9.
+  - H7: tek tıkla giriş, şerit, yenileme, dönüş.
+  - H8: gerçek öğrencide şerit yok.
+  - H9: Ayarlar'da kart yok.
