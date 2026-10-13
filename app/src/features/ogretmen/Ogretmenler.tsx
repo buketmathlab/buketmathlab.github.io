@@ -8,11 +8,13 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Field, Input } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useToast } from '@/components/ui/toast-baglam';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { sahipJetonunuSakla } from '@/lib/vekalet';
 import { rpc } from '@/services/supabase';
 import type { OgretmenSatiri, Sinif } from '@/types/api';
+import { DenemeHesabi } from './DenemeHesabi';
 
 /**
  * ÖĞRETMENLER — yalnız platform sahibinin gördüğü ekran.
@@ -34,9 +36,14 @@ import type { OgretmenSatiri, Sinif } from '@/types/api';
  * hesabına girilemez; PIN'ini kendisi değiştirir (0061), unutursa sahip
  * sıfırlar. Bu yüzden müdür satırında
  * yalnız "PIN sıfırla" ve "Çıkar"/"Geri al" var.
+ *
+ * DENEME HESABI (0073) de burada, hesapların yanında: öğretmenin isteği
+ * "öğretmen ve müdür hesaplarının olduğu yerden deneme hesabı açabileyim
+ * ve oradan tıklayınca anında deneme hesaplarına giriş yapabileyim".
  */
 export function Ogretmenler() {
   const { oturum, girisYap } = useOturum();
+  const { ben } = useBenKimim();
   const { bildir } = useToast();
   const git = useNavigate();
 
@@ -329,6 +336,15 @@ export function Ogretmenler() {
           ))}
         </div>
       </AsyncBoundary>
+
+      {/* Yalnız sahipte; uçlar `_yonetici`. Vekâletteyken (`ben.sahip`
+          false) gizli. VARSAYILAN GÖRÜNÜR, `ben` gelene kadar: Ayarlar'daki
+          Yedek kartıyla aynı kural. */}
+      {(ben === null || ben.sahip) && (
+        <div className="mt-4">
+          <DenemeHesabi />
+        </div>
+      )}
 
       {/* --- Öğretmen ekle --- */}
       <Dialog

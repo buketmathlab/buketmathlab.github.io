@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Dialog } from '@/components/ui/Dialog';
@@ -6,8 +7,9 @@ import { Field, Select } from '@/components/ui/Field';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { denemeyeGecildi } from '@/lib/deneme-oturumu';
 import { rpc } from '@/services/supabase';
-import type { Sinif } from '@/types/api';
+import type { GirisSonucu, Sinif } from '@/types/api';
 
 export type DenemeHesabiDurumu =
   | { var: false }
@@ -34,10 +36,17 @@ export type DenemeHesabiDurumu =
  *
  * "Denemeyi sıfırla" hesabı silip AYNI kodlarla yeniden kuruyor: depodaki
  * eski çözüm fotoğrafı yeni gönderime karışmasın diye (gerekçe 0073'te).
+ *
+ * TEK TIKLA GİRİŞ. Kart, öğretmen ve müdür hesaplarının yanında
+ * (Öğretmenler sayfası) duruyor. "Öğrenci olarak gir" / "Veli olarak gir",
+ * gerçek bir girişin aynısı: `giris` ucu deneme koduyla çağrılıyor; sahibin
+ * jetonu dönüş için saklanıyor ve öğrenci/veli ekranında kapatılamayan
+ * `DenemeSeridi` çıkıyor.
  */
 export function DenemeHesabi() {
-  const { oturum } = useOturum();
+  const { oturum, girisYap } = useOturum();
   const { bildir } = useToast();
+  const git = useNavigate();
   const durum = useVeri<DenemeHesabiDurumu>('deneme_hesabi', { p_token: oturum?.token });
   const siniflar = useVeri<Sinif[]>('siniflar_listesi', { p_token: oturum?.token, p_arsiv: false });
   const [secili, setSecili] = useState('');
@@ -47,7 +56,7 @@ export function DenemeHesabi() {
   // 0073 panelde çalıştırılmadıysa uç yok: kart bozulmasın, ne yapılacağını söylesin.
   const ucYok = durum.hata !== null && /could not find the function|schema cache/i.test(durum.hata);
   // `Array.isArray`: beklenmeyen bir yanıt (eski panel, taklit) kartı
-  // düşürmesin — Ayarlar'ın tamamı beyaz kalırdı.
+  // düşürmesin — sayfanın tamamı beyaz kalırdı.
   const okulSiniflari = (Array.isArray(siniflar.veri) ? siniflar.veri : []).filter(
     (s) => !s.ozel && !s.arsiv,
   );
@@ -67,6 +76,23 @@ export function DenemeHesabi() {
     }
   }
 
+  async function olarakGir(kod: string) {
+    if (!oturum?.token) return;
+    setCalisiyor(true);
+    try {
+      const s = await rpc<GirisSonucu>('giris', { p_kod: kod });
+      if (s.rol !== 'ogrenci' && s.rol !== 'veli') {
+        throw new Error('Deneme hesabına girilemedi. Denemeyi sıfırlayıp yeniden deneyin.');
+      }
+      denemeyeGecildi(oturum.token, s.ogrenci.id);
+      girisYap({ rol: s.rol, token: s.token, ogrenci: s.ogrenci });
+      git(s.rol === 'ogrenci' ? '/ogrenci' : '/veli', { replace: true });
+    } catch (e) {
+      bildir(e instanceof Error ? e.message : 'Deneme hesabına girilemedi.', 'hata');
+      setCalisiyor(false);
+    }
+  }
+
   const sinifSecimi = (etiket: string, varsayilan: string) => (
     <Field etiket={etiket}>
       {(p) => (
@@ -82,7 +108,7 @@ export function DenemeHesabi() {
   );
 
   return (
-    <Card className="mt-4">
+    <Card>
       <h2 className="mb-1 text-[18px] text-ink">Deneme hesabı</h2>
       <p className="mb-3 text-[14px] text-muted">
         Gerçek olmayan bir öğrenci ve velisiyle sistemi öğrencinin ve velinin gözünden birebir
@@ -126,9 +152,26 @@ export function DenemeHesabi() {
             <dt className="text-muted">Veli kodu</dt>
             <dd className="sk-sayi font-semibold tracking-wider text-ink">{d.veli_kodu ?? '—'}</dd>
           </dl>
+          <div className="mb-2 flex flex-wrap gap-2">
+            <Button
+              olcu="sm"
+              disabled={calisiyor || !d.ogrenci_kodu}
+              onClick={() => d.ogrenci_kodu && void olarakGir(d.ogrenci_kodu)}
+            >
+              Öğrenci olarak gir
+            </Button>
+            <Button
+              olcu="sm"
+              disabled={calisiyor || !d.veli_kodu}
+              onClick={() => d.veli_kodu && void olarakGir(d.veli_kodu)}
+            >
+              Veli olarak gir
+            </Button>
+          </div>
           <p className="mb-3 text-[13px] text-muted">
-            Öğrenci gibi denemek için çıkış yapıp öğrenci koduyla, veli gibi denemek için veli
-            koduyla girin. Veli ilk girişte onam metnini onaylar; gerçek veli gibi.
+            Tek tıkla geçersiniz; üstteki “Öğretmen hesabına dön” sizi buraya getirir. Başka bir
+            cihazda öğrenci koduyla ya da veli koduyla da girebilirsiniz. Veli ilk girişte onam
+            metnini onaylar; gerçek veli gibi.
           </p>
           {sinifSecimi('Sınıfını değiştir', d.sinif_id)}
           <div className="flex flex-wrap gap-2">
