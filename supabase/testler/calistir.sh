@@ -266,7 +266,7 @@ echo "==> Soru iptali testleri (0072)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/soru_iptali_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
-echo "==> Deneme hesabı testleri (0073)"
+echo "==> Deneme hesabı testleri (0073, 0074)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/deneme_hesabi_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
