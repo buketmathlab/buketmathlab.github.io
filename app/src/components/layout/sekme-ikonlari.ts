@@ -26,6 +26,9 @@ export const SEKME_IKON = {
     'M4 20h16v2H4v-2Zm2-8h3v7H6v-7Zm4.5-6h3v13h-3V6ZM15 9h3v10h-3V9Z',
   mesaj:
     'M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-6 4V6a2 2 0 0 1 2-2Zm3 5h10v2H7V9Zm0 4h7v2H7v-2Z',
+  // Proje raporu (0075): belge üstünde çubuklar.
+  rapor:
+    'M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm2 16h2v-5H8v5Zm3.5 0h2V10h-2v8Zm3.5 0h2v-3h-2v3Z',
   // Ödeme ikonu yalnız VELİDE ve yalnız özel derste çıkıyor.
   odeme:
     'M3 6h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Zm1 3v6h16V9H4Zm2 1h4v2H6v-2Z',

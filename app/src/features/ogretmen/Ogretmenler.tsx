@@ -14,6 +14,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { sahipJetonunuSakla } from '@/lib/vekalet';
 import { rpc } from '@/services/supabase';
 import type { OgretmenSatiri, Sinif } from '@/types/api';
+import { ONIZLEME_KOKU } from '@/features/mudur/mudur-baglam';
 import { DenemeHesabi } from './DenemeHesabi';
 
 /**
@@ -251,6 +252,11 @@ export function Ogretmenler() {
         aciklama="Platformu kimlerin kullandığı, kimin hangi sınıfa girdiği ve erişim yönetimi."
         eylem={
           <div className="flex flex-wrap gap-2">
+            {/* 0075: Okul Gelişim Projesi raporu — müdür ekranının "Rapor"
+                sekmesi; sahip onu önizlemede, kendi oturumuyla açıyor. */}
+            <Button tur="sade" onClick={() => git(`${ONIZLEME_KOKU}/rapor`)}>
+              Proje raporu
+            </Button>
             <Button tur="sade" onClick={() => ekleAc('mudur')}>
               Müdür ekle
             </Button>

@@ -209,7 +209,7 @@ export function GenelOzet({
   );
 }
 
-function Kutucuk({
+export function Kutucuk({
   ad,
   deger,
   not,

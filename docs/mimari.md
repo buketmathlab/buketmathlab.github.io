@@ -6328,3 +6328,40 @@ düzeyin bütün şubelerine birlikte veriyor. Hesaplar düzey başına ayrı.
       düşüyor;
     - oluşturmada `sinif_giris` bugüne çekilince 7b düşüyor.
   - `deneme-hesabi-denetimi` H1–H9 çoklu hesaba göre güncellendi.
+
+## 0075 — Proje raporu (Okul Gelişim Projesi izleme-değerlendirme)
+
+Öğretmenin isteği: proje ProIz'e işlendi ve izleme-değerlendirme
+komisyonu dayanak belgesi istiyor. Talep edilen sayılar: kaç ödev
+hazırlandığı, kontrol edilen soru, başarı ve veli onamı.
+
+- **Uç:** `proje_raporu(p_token)`, yalnız sahip (`_yonetici`) ve müdür
+  (`_mudur`).
+  - Kapsam Genel sayfasıyla aynı: okul sınıfları, aktif öğrenciler,
+    deneme hesapları hariç.
+  - Yalnız toplu sayılar döner, öğrenci adı yok.
+  - Projeye özgü alanlar:
+    - kayıt, giriş yapan öğrenci ve veli (alt sınır), veli onamı;
+    - hazırlanan ödev (`grup_id` başına bir) ve şubelere ulaşan ödev;
+    - çözümlü cevap anahtarı, soru dosyası, konu etiketi;
+    - kontrol edilen soru (`okul_geneli` ile aynı tanım) ve otomatik
+      puanlanan soru;
+    - doğru, yanlış, boş; çözüme ulaşan gönderim;
+    - aylara, düzeylere ve öğretmenlere göre kırılımlar.
+- **Sayfa:**
+  - Müdür kabuğunda "Rapor" sekmesi. Sahip, Öğretmenler sayfasındaki
+    "Proje raporu" düğmesiyle sayfayı müdür önizlemesinde açıyor.
+  - Altta okulun genel özeti (`GenelOzet`, kabuğun çektiği `mudur_paneli`).
+  - "Yazdır / PDF" ile A4 çıktı; kâğıtta okul ve proje başlığı var.
+- **Yakalanan hata:** Rapor başlığı `header` etiketiyle yazılmıştı.
+  Yazdırma kuralı kabuğun `header`'ını gizlediği için başlık da kâğıttan
+  düşüyordu; denetim R3 yakaladı ve başlık `div` yapıldı.
+- **Testler:**
+  - `proje_raporu_testleri.sql`: önce ve sonra farkı fikstürle ölçülüyor.
+    20 alan birebir tutuyor, deneme hesabı hiçbir alana girmiyor.
+  - Aynı testte yetki, aylık ve düzey satırları, Genel ile tutarlılık
+    ölçülüyor.
+  - `mudur_testleri` izin listesine `proje_raporu` eklendi.
+  - Mutasyon kanıtları: deneme filtresi kaldırılınca ve grup tekilleştirmesi
+    kaldırılınca test düşüyor.
+  - Tarayıcı denetimi `proje-raporu-denetimi` R1–R6.

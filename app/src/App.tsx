@@ -57,6 +57,7 @@ import { MudurKabuk } from '@/features/mudur/MudurKabuk';
 import { MudurSiniflar } from '@/features/mudur/MudurSiniflar';
 import { MudurOgretmenler } from '@/features/mudur/MudurOgretmenler';
 import { MudurGenel } from '@/features/mudur/MudurGenel';
+import { ProjeRaporu } from '@/features/rapor/ProjeRaporu';
 import { MudurSinif } from '@/features/mudur/MudurSinif';
 import { MudurSinifOdevleri } from '@/features/mudur/MudurSinifOdevleri';
 import { MudurOkulOdevleri } from '@/features/mudur/MudurOkulOdevleri';
@@ -150,6 +151,7 @@ function Yonlendirme() {
           <Route path="odevler" element={<MudurOkulOdevleri />} />
           <Route path="siniflar/:id/onam" element={<OnamDokumu geriYol={mudurSinifi} />} />
           <Route path="ogretmenler" element={<MudurOgretmenler />} />
+          <Route path="rapor" element={<ProjeRaporu />} />
           <Route path="ayarlar" element={<MudurAyarlar />} />
         </Route>
         <Route path="*" element={<Navigate to="/mudur" replace />} />
@@ -177,6 +179,7 @@ function Yonlendirme() {
         <Route path="odevler" element={<MudurOkulOdevleri />} />
         <Route path="siniflar/:id/onam" element={<OnamDokumu geriYol={onizlemeSinifi} />} />
         <Route path="ogretmenler" element={<MudurOgretmenler />} />
+        <Route path="rapor" element={<ProjeRaporu />} />
       </Route>
       <Route path="/ogretmen" element={<Kabuk />}>
         <Route index element={<Pano />} />

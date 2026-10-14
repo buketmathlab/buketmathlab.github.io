@@ -1083,3 +1083,58 @@ export type OkulOdevleri = Array<{
   seviye: number;
   odevler: SinifNotCizelgesi['odevler'];
 }>;
+
+/** 0075 — `proje_raporu`: Okul Gelişim Projesi izleme-değerlendirme sayıları. */
+export type ProjeRaporu = {
+  rapor_zamani: string;
+  yil_baslangici: string;
+  kayit: {
+    sube_sayisi: number;
+    ogrenci_sayisi: number;
+    giris_yapan_ogrenci: number;
+    giris_yapan_veli: number;
+    veli_onami: number;
+    ilk_veli_onami: string | null;
+    ogretmen_hesabi: number;
+    mudur_hesabi: number;
+  };
+  odev: {
+    hazirlanan: number;
+    subeye_ulasan: number;
+    hazirlanan_soru: number;
+    subeye_ulasan_soru: number;
+    test: number;
+    acik_uclu: number;
+    cozumlu_anahtar: number;
+    soru_dosyasi: number;
+    konu_etiketli: number;
+  };
+  gonderim: {
+    toplam: number;
+    gonderen_ogrenci: number;
+    kontrol_edilen_soru: number;
+    otomatik_puanlanan_soru: number;
+    dogru: number;
+    yanlis: number;
+    bos: number;
+    cozume_ulasan: number;
+    ortalama: number | string | null;
+  };
+  aylar: Array<{
+    ay: string;
+    hazirlanan: number;
+    subeye_ulasan: number;
+    gonderim: number;
+    ortalama: number | string | null;
+  }>;
+  seviyeler: Array<{
+    seviye: number;
+    sube_sayisi: number;
+    ogrenci_sayisi: number;
+    veli_onami: number;
+    hazirlanan: number;
+    gonderim: number;
+    ortalama: number | string | null;
+  }>;
+  ogretmenler: Array<{ ad: string; hazirlanan: number; soru: number; sube: number }>;
+};
