@@ -48,7 +48,7 @@ export function DenemeSeridi() {
       className="flex flex-wrap items-center justify-between gap-3 border-b border-warning bg-warning-bg px-4 py-2"
     >
       <p className="text-[14px] font-semibold text-ink">
-        Deneme hesabındasınız.{' '}
+        Deneme hesabındasınız{oturum?.ogrenci?.sinif ? ` · ${oturum.ogrenci.sinif}` : ''}.{' '}
         <span className="font-normal text-muted">
           {oturum?.rol === 'veli' ? 'Velinin' : 'Öğrencinin'} gördüğünün aynısı.
         </span>

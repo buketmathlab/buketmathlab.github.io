@@ -6276,3 +6276,55 @@ yapabileyim."
   - H7: tek tıkla giriş, şerit, yenileme, dönüş.
   - H8: gerçek öğrencide şerit yok.
   - H9: Ayarlar'da kart yok.
+
+## 0074 — Her düzeye ayrı deneme hesabı; geçmiş ödevlerin hepsi açık
+
+Öğretmenin isteği: "Deneme hesabını 9. sınıf olarak seçtiğimde ve deneme
+hesabına girdiğimde 9. sınıflara en başından beri verdiğim tüm ödevler
+gözüksün. Diğer sınıf düzeyleri için de aynı şey olsun… Ödevlere de
+cevap, ödev gönderebilecek şekilde açılsın."
+
+Kararları: görünen ödevler seçilen şubenin bütün ödevleri, çünkü ödevi
+düzeyin bütün şubelerine birlikte veriyor. Hesaplar düzey başına ayrı.
+
+- **Kök neden:** `sinif_giris` varsayılanı bugün (0064). 0073'te oluşturma
+  ve sıfırlama bu alanı boşaltmıyordu; `_odev_ogrenciye_dusar` de
+  oluşturulmadan önce dolan ödevleri gizliyordu. Artık deneme satırında
+  `sinif_giris` hep NULL, mevcut satır da bir kez güncellendi. Veli paneli
+  ve dosya izni aynı kuralı okuduğu için onlar da açıldı.
+- **Süresi geçmiş ödev:**
+  - `odev_gonder` (0056 kopyası) deneme hesabında süre kontrolünü
+    atlıyor.
+  - `ogrenci_odevleri` (0065 kopyası) deneme hesabında `gec_teslim` true
+    dönüyor; arayüzdeki üç "teslim kapandı" kapısı bu alanı okuyor.
+  - Gerçek öğrenci için ikisi de birebir aynı.
+  - Kayıt dürüst: süresi geçmiş ödevdeki deneme gönderimi `gecikmeli`
+    görünüyor.
+- **Düzey başına bir hesap:**
+  - Tek-deneme indeksi kaldırıldı. Kural `_deneme_duzeyi_bos` içinde ve
+    eşzamanlı tıklamaya karşı advisory lock alıyor.
+  - Eski tek-hesap uçları kaldırıldı. Yeni uçlar: `deneme_hesaplari`,
+    `deneme_sinifi_degistir(p_id, p_sinif)`, `deneme_sifirla(p_id)`,
+    `deneme_hesabi_sil(p_id)`. Hepsinde koşul `where id = p_id and deneme`.
+- **Kart (Öğretmenler):**
+  - Her hesap için bir satır: kendi kodları, "Öğrenci olarak gir" ve
+    "Veli olarak gir", sınıf değiştirme, sıfırlama, silme.
+  - "Her düzeye oluştur" ya da "Kalan düzeylere oluştur" düğmesi, eksik
+    her düzeyin ilk şubesinde hesap açıyor.
+  - Deneme şeridi hangi sınıfta olunduğunu yazıyor.
+- **Testler:**
+  - `deneme_hesabi_testleri.sql` 7. grup:
+    - aynı düzeyde ikinci hesap açılmıyor;
+    - yetki;
+    - gerçek öğrencinin kimliğiyle silme, sıfırlama ve taşıma hiçbir şey
+      yapmıyor;
+    - 10 gün önce verilip dün dolan ödev deneme öğrencide ve velide
+      görünüyor, bugün gelen gerçek öğrencide görünmüyor;
+    - geç teslimi kapalı, süresi dolmuş ödeve deneme gönderip puan alıyor,
+      gerçek öğrenci reddediliyor;
+    - sıfırlama yalnız o hesabı etkiliyor.
+  - Mutasyon kanıtları:
+    - `odev_gonder` istisnası kaldırılınca test "süresi doldu" hatasıyla
+      düşüyor;
+    - oluşturmada `sinif_giris` bugüne çekilince 7b düşüyor.
+  - `deneme-hesabi-denetimi` H1–H9 çoklu hesaba göre güncellendi.
