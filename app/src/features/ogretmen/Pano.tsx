@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { AnketKarti } from '@/features/anket/AnketKarti';
 import { Card } from '@/components/ui/Card';
 import { useBenKimim } from '@/hooks/useBenKimim';
 import { CozumDugmesi } from './CozumDugmesi';
@@ -110,6 +111,9 @@ export function Pano() {
           Duyuru yap
         </Link>
       </div>
+
+      {/* 0076: isimsiz anket daveti — öğretmenin kendi görüşü. */}
+      <AnketKarti yol="/ogretmen/anket" />
 
       <AsyncBoundary
         durum={durum}

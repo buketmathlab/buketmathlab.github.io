@@ -164,6 +164,14 @@ export function GirisEkrani({ onGiris, onKurulum }: Props) {
         >
           SEKİZ nedir?
         </a>
+        <span aria-hidden="true" className="mx-2 text-muted">·</span>
+        {/* KVKK aydınlatma metni: giriş yapmadan okunabilmeli. */}
+        <a
+          href="/yeni/aydinlatma/"
+          className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-ink underline"
+        >
+          Aydınlatma metni
+        </a>
       </p>
 
       {/* 7 — Ewalu ve mesajı */}

@@ -57,6 +57,24 @@ Onam metninden bu rakam **çıkarıldı** (sürüm 4): veliye bir şey
 anlatmıyordu, yalnız yanlış anlaşılıyordu. Metin artık ne olduğunu ve ne
 olmadığını birlikte söylüyor.
 
+## Aydınlatma metni ve isimsiz anket (0076)
+
+- **Aydınlatma metni:** ayrı ve herkese açık bir sayfa:
+  `/yeni/aydinlatma/` (`app/src/lib/aydinlatma-metni.ts`).
+  - Onam metnini tamamlıyor: veri sorumlusu (okul müdürlüğü), öğrenci
+    numarası, müdürün salt izleme erişimi, barındırma, KVKK m.11
+    hakları ve başvuru yolu.
+  - Onam sürümü DEĞİŞMEDİ; mevcut onamlar geçerli.
+  - **Açık karar:** saklama süresini okul müdürlüğü belirleyecek
+    (`SAKLAMA_SURESI`, şimdilik boş). Veri sorumlusunun okul müdürlüğü
+    olduğu müdürle teyit edilmeli.
+- **İsimsiz anket:**
+  - Yanıtta kimlik ve saat tutulmuyor; katılım tablosu yalnız tuzlanmış
+    özet tutuyor.
+  - Bir grupta 5 yanıt olmadan sonuç gösterilmiyor.
+  - Açık uçlu yanıtta kişi kendi adını yazabilir. Ekranda "Ad ya da
+    kişisel bilgi yazmayın" uyarısı var.
+
 ## Barındırma ve yurt dışı aktarım
 
 Supabase projesi **Zürih (eu-central-2)** bölgesinde — öğretmen tarafından

@@ -6365,3 +6365,50 @@ hazırlandığı, kontrol edilen soru, başarı ve veli onamı.
   - Mutasyon kanıtları: deneme filtresi kaldırılınca ve grup tekilleştirmesi
     kaldırılınca test düşüyor.
   - Tarayıcı denetimi `proje-raporu-denetimi` R1–R6.
+
+## 0076 — İsimsiz paydaş anketi ve KVKK aydınlatma metni
+
+Denetim öncesi inceleme iki eksik buldu:
+- en güçlü eksik kanıt paydaş görüşüydü;
+- onam metninde veri sorumlusu, haklar, başvuru yolu ve saklama süresi
+  yoktu.
+
+Öğretmenin kararları: anket uygulamanın içinde olacak; onam sürümü
+değişmeyecek, eksikler ayrı bir aydınlatma metninde tamamlanacak.
+
+- **Anonimlik sunucuda kuruluyor:**
+  - `anket_katilimlari` yalnız tekrarı engelliyor ve kimlik yerine
+    tuzlanmış sha256 özeti tutuyor.
+  - `anket_yanitlari`'nda kimlik ve saat yok, yalnız haftanın başı var.
+  - Yanıt denetim izine bilerek yazılmıyor; iz saati, son görülme saatiyle
+    birlikte yanıtı bir kişiye bağlayabilirdi.
+  - Sonuçlar grup başına en az 5 yanıt olmadan dönmüyor.
+- **Kim yanıtlar:**
+  - öğrenci, veli (yalnız onam vermişse) ve öğretmen;
+  - müdür ve vekâlet oturumu reddediliyor;
+  - deneme hesabının yanıtı kaydedilmiyor.
+- **Arayüz:**
+  - panolarda davet kartı ("Şimdi değil" kartı bu cihazda gizliyor);
+  - erişilebilir anket sayfası: `fieldset` + `legend`, radyo düğmeleri;
+  - sahip Ayarlar'dan açıp kapatıyor;
+  - sonuçlar Proje raporunda "Paydaş görüşleri" bölümünde.
+- **Aydınlatma metni:**
+  - Herkese açık, oturumsuz sayfa: `/yeni/aydinlatma/`. Üçüncü giriş
+    noktası; sunucuya istek atmıyor.
+  - Giriş ekranından, onam ekranından ve sahibin Ayarlar'ından
+    bağlantılı.
+  - Yazdırılınca imza bloğu çıkıyor.
+  - Okulun karar vereceği saklama süresi sabit (`SAKLAMA_SURESI`); boş
+    olduğu sürece metin "belirlenecek" diyor.
+  - Onam metni ve sürümü (2026-09-7) değişmedi.
+- **Testler:**
+  - `anket_testleri.sql`: kapalı anket, doğrulama, tek seferlik,
+    anonimlik, onamsız veli ve müdür reddi, deneme, n<5 eşiği ve
+    dağılım.
+  - Mutasyon kanıtları: eşik ve onam kapısı kaldırılınca test düşüyor.
+  - `guvenlik_denetimi`: iki yanıtlama ucu gerekçeli beyaz listede.
+    Sonuç ve aç/kapat uçları listede değil, öğrenci ve veliyi
+    reddetmeye devam ediyor.
+  - Chromium denetimleri: `anket-denetimi` A1–A7, `aydinlatma-denetimi`
+    K1–K5.
+  - Vitest: soru sayıları ve aydınlatma metninin içeriği.

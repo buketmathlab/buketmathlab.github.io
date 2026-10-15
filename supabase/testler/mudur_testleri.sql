@@ -56,7 +56,9 @@ declare
                           -- 0067: şube şube ödevler ve cevap anahtarları.
                           'okul_odevleri',
                           -- 0075: Okul Gelişim Projesi raporu (toplu sayılar).
-                          'proje_raporu'];
+                          'proje_raporu',
+                          -- 0076: anonim anket sonuçları (n ≥ 5 eşiğiyle).
+                          'anket_sonuclari'];
   acik text[] := '{}';
   sayi integer := 0;
 begin

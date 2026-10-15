@@ -139,6 +139,15 @@ begin
                -- YOK. Velinin reddedildiği `duyuru_testleri.sql` 2. ve 4.
                -- grupta ayrıca ölçülüyor.
                'ogrenci_duyurulari', 'duyurulari_okudum',
+               -- 0076: anonim anket ÖĞRENCİ, VELİ VE ÖĞRETMENİN kendi uçları —
+               -- kişi yalnız KENDİ görüşünü bildiriyor; yanıtta kimlik yok.
+               -- Bu liste anket kapalıyken çağırdığı için `anket_yanitla`
+               -- P0002 ("açık anket yok") dönüyor. Muafiyet dar: SONUÇ ve
+               -- AÇ/KAPAT uçları (`anket_sonuclari`, `anket_ac_kapat`)
+               -- listede YOK, yani öğrenci/veliyi reddettikleri burada
+               -- ölçülmeye devam ediyor. Müdürün ve onamsız velinin
+               -- reddedildiği `anket_testleri.sql` 4. grupta ayrıca ölçülüyor.
+               'anket_durumu', 'anket_yanitla',
                -- rol şartı taşımayan üçlü (1c ayrıca sayıyor)
                'giris', 'cikis', 'pin_ayarla'
              )
@@ -249,7 +258,10 @@ begin
      -- 0060: `_mudur(` (yalnız müdür) ve `_sinif_okuyucusu(` (öğretmen
      -- kendi sınıfı / müdür) de rol şartı — ikisi de `_oturum`u okuyup
      -- rolü denetliyor (`mudur_testleri.sql` 5. grup ayrıca ölçüyor).
-   where pg_get_functiondef(h.oid) !~ '_ogretmen\(|_oturum\(|_yonetici\(|_mudur\(|_sinif_okuyucusu\(';
+     -- 0076: `_anket_yanitlayan(` da öyle: `_oturum`u okuyup yalnız
+     -- öğrenci/veli/öğretmene izin veriyor, müdürü ve vekâleti reddediyor
+     -- (`anket_testleri.sql` 4. grup ölçüyor).
+   where pg_get_functiondef(h.oid) !~ '_ogretmen\(|_oturum\(|_yonetici\(|_mudur\(|_sinif_okuyucusu\(|_anket_yanitlayan\(';
 
   if sayac <> 3 then
     raise exception '1c BAŞARISIZ — rol şartı taşımayan uç sayısı 3 değil, %. Yeni bir uç şartsız kalmış olabilir.', sayac;

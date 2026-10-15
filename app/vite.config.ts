@@ -63,6 +63,8 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         tanitim: fileURLToPath(new URL('./tanitim/index.html', import.meta.url)),
+        // KVKK aydınlatma metni: herkese açık, oturumsuz → /yeni/aydinlatma/
+        aydinlatma: fileURLToPath(new URL('./aydinlatma/index.html', import.meta.url)),
       },
     },
     // Faz 0'da paket boyutunu görünür tutuyoruz; büyüdükçe uyarı alalım.

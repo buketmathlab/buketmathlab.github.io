@@ -1138,3 +1138,31 @@ export type ProjeRaporu = {
   }>;
   ogretmenler: Array<{ ad: string; hazirlanan: number; soru: number; sube: number }>;
 };
+
+/** 0076 — `anket_durumu`: pano daveti ve anket sayfası. */
+export type AnketDurumu =
+  | { acik: false }
+  | {
+      acik: true;
+      anket: string;
+      rol: 'ogrenci' | 'veli' | 'ogretmen';
+      madde_sayisi: number;
+      katildi: boolean;
+      deneme: boolean;
+    };
+
+/** 0076 — `anket_sonuclari`: sahip ve müdür; grup başına n < eşik ise boş. */
+export type AnketSonucu = {
+  anket: string;
+  baslik: string;
+  acik: boolean;
+  esik: number;
+  gruplar: Array<{
+    rol: 'ogrenci' | 'veli' | 'ogretmen';
+    katilim: number;
+    yanit: number;
+    yeterli: boolean;
+    maddeler: Array<{ madde: string; dagilim: number[]; ortalama: number | string | null }>;
+    gorusler: string[];
+  }>;
+};

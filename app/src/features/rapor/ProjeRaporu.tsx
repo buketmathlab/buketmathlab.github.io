@@ -2,6 +2,7 @@ import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
+import { AnketSonuclari } from '@/features/anket/AnketSonuclari';
 import { GenelOzet, Kutucuk } from '@/features/genel/GenelOzet';
 import { listeDurumu, useMudurPaneli } from '@/features/mudur/mudur-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
@@ -91,6 +92,12 @@ export function ProjeRaporu() {
           {r && <RaporGovdesi r={r} />}
         </AsyncBoundary>
       )}
+
+      {/* 0076: paydaş görüşleri — isimsiz anket, n ≥ 5 eşiğiyle. */}
+      <section className="sk-rapor-bolum mt-6">
+        <h2 className="mb-3 text-[20px] text-ink">Paydaş görüşleri</h2>
+        <AnketSonuclari />
+      </section>
 
       <section className="sk-rapor-bolum mt-6">
         <h2 className="mb-3 text-[20px] text-ink">Okulun genel özeti</h2>

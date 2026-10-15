@@ -274,6 +274,10 @@ echo "==> Proje raporu testleri (0075)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/proje_raporu_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Anket testleri (0076)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/anket_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Anon izolasyon testleri"
 psql_ -d "$DB" -f "$KOK/supabase/testler/anon_izolasyon.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

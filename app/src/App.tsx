@@ -58,6 +58,7 @@ import { MudurSiniflar } from '@/features/mudur/MudurSiniflar';
 import { MudurOgretmenler } from '@/features/mudur/MudurOgretmenler';
 import { MudurGenel } from '@/features/mudur/MudurGenel';
 import { ProjeRaporu } from '@/features/rapor/ProjeRaporu';
+import { AnketSayfasi } from '@/features/anket/AnketSayfasi';
 import { MudurSinif } from '@/features/mudur/MudurSinif';
 import { MudurSinifOdevleri } from '@/features/mudur/MudurSinifOdevleri';
 import { MudurOkulOdevleri } from '@/features/mudur/MudurOkulOdevleri';
@@ -110,6 +111,7 @@ function Yonlendirme() {
           {/* Teslim ekranı SEKME DEĞİL: bir ödevin içi. Sekme çubuğu
               üstte duruyor, öğrenci Ödevler'e tek dokunuşla dönüyor. */}
           <Route path="odev/:id" element={<OdevTeslim />} />
+          <Route path="anket" element={<AnketSayfasi donus="/ogrenci" />} />
         </Route>
         <Route path="*" element={<Navigate to="/ogrenci" replace />} />
       </Routes>
@@ -130,6 +132,7 @@ function Yonlendirme() {
               zaten sunucuda: okul öğrencisinde `odemeler` boş geliyor. */}
           <Route path="odemeler" element={<VeliOdemeler />} />
           <Route path="mesajlar" element={<VeliMesajlar />} />
+          <Route path="anket" element={<AnketSayfasi donus="/veli" />} />
         </Route>
         <Route path="*" element={<Navigate to="/veli" replace />} />
       </Routes>
@@ -254,6 +257,8 @@ function Yonlendirme() {
         <Route path="ayarlar/okul" element={<OkulBilgilendirme />} />
         {/* 0041: kurulum defteri. Sahiplik kapısı sunucuda. */}
         <Route path="ayarlar/surumler" element={<SurumDefteri />} />
+        {/* 0076: isimsiz paydaş anketi (öğretmenin kendi görüşü). */}
+        <Route path="anket" element={<AnketSayfasi donus="/ogretmen" />} />
         <Route path="veliler/yazisma/:id" element={<VeliYazismasi />} />
       </Route>
       <Route
