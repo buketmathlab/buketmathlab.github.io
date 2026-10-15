@@ -585,15 +585,19 @@ for (const w of [360, 768, 1280]) {
 }
 
 // ---------------------------------------------------------------------------
-// 7 — YAN MENÜDE ÖĞRETMENLER, AYARLAR, ÇIKIŞ YUKARIDA MI
+// 7 — YAN MENÜDE ÖĞRETMENLER, AYARLAR, ÇIKIŞ: EKRANIN ALTINDA, KAYDIRMADAN
 //
-// Öğretmenin isteği: "Öğretmenler, ayarlar, çıkış çok altlarda kalıyor."
-// Grup `mt-auto` ile yan menünün dibine itiliyordu; yan menü içerikle aynı
-// boya uzadığı için UZUN bir sayfada üçü de sayfanın en altına düşüyordu.
-// Ölçüm bu yüzden içeriği bilerek uzatıyor (3000 px'lik blok): kısa bir
-// Genel sayfasında kusur görünmezdi.
+// Öğretmenin istekleri: önce "çok altlarda kalıyor" (grup yan menünün
+// dibindeydi, menü içerikle aynı boya uzadığı için uzun sayfada sayfanın
+// en sonuna düşüyordu), sonra sekmelerin altına alınınca "çok yukarda
+// olmuş… ekranın altında ama kaydırmayacak şekilde". Menü artık ekran
+// boyunda ve yapışkan; grup ekranın dibinde.
+//
+// Ölçüm içeriği bilerek uzatıyor (3000 px'lik blok): kısa bir Genel
+// sayfasında eski kusur görünmezdi. İki ölçüm noktası: sayfanın başı ve
+// sayfanın sonuna kaydırılmış hâli (menü yapışkan kalmalı).
 // ---------------------------------------------------------------------------
-console.log('\n7 — YAN MENÜ: ÖĞRETMENLER / AYARLAR / ÇIKIŞ SEKMELERİN ALTINDA (1280 × 800)');
+console.log('\n7 — YAN MENÜ: ÖĞRETMENLER / AYARLAR / ÇIKIŞ EKRANIN ALTINDA (1280 × 800)');
 {
   const s = await tarayici.newPage({ viewport: { width: 1280, height: 800 } });
   await s.route('**/rest/v1/rpc/*', (r) => {
@@ -609,32 +613,45 @@ console.log('\n7 — YAN MENÜ: ÖĞRETMENLER / AYARLAR / ÇIKIŞ SEKMELERİN AL
     OTURUM.ogretmen());
   await s.goto(KOK + '/ogretmen', { waitUntil: 'networkidle' });
   await s.waitForTimeout(800);
-  const o = await s.evaluate(() => {
+  await s.evaluate(() => {
     const uzun = document.createElement('div');
     uzun.style.height = '3000px';
     document.querySelector('main').append(uzun);
+  });
+  const olcum = () => s.evaluate(() => {
     const aside = document.querySelector('aside');
     const bul = (sec, metin) => [...aside.querySelectorAll(sec)]
       .find((e) => e.textContent.trim() === metin)?.getBoundingClientRect();
-    const sekmeler = [...aside.querySelectorAll('a')].filter((e) => /Mesajlar/.test(e.textContent));
-    const sonSekme = sekmeler[0]?.getBoundingClientRect();
     return {
       sayfa: document.documentElement.scrollHeight,
-      sonSekmeAlt: sonSekme ? Math.round(sonSekme.bottom) : null,
+      ekran: window.innerHeight,
       ogel: ['Öğretmenler', 'Ayarlar', 'Çıkış'].map((m) => {
         const r = bul(m === 'Çıkış' ? 'button' : 'a', m);
         return r ? { m, ust: Math.round(r.top), alt: Math.round(r.bottom), boy: Math.round(r.height) } : { m };
       }),
     };
   });
+  const bas = await olcum();
+  await s.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await s.waitForTimeout(200);
+  const son = await olcum();
   await s.close();
-  olc('içerik uzun (ölçüm anlamlı)', o.sayfa > 2000, `${o.sayfa} px`);
-  for (const e of o.ogel) {
-    olc(`"${e.m}" kaydırmadan görünüyor`, e.alt !== undefined && e.alt <= 800, `alt kenar ${e.alt} px`);
-    olc(`"${e.m}" sekmelerin hemen altında`, e.ust !== undefined && o.sonSekmeAlt !== null
-        && e.ust - o.sonSekmeAlt < 200, `son sekmeden ${e.ust - o.sonSekmeAlt} px aşağıda`);
-    olc(`"${e.m}" 44 px+`, e.boy >= 44, `${e.boy} px`);
+
+  olc('içerik uzun (ölçüm anlamlı)', bas.sayfa > 2000, `${bas.sayfa} px`);
+  for (const [ad, o] of [['sayfa başında', bas], ['sayfa sonunda', son]]) {
+    for (const e of o.ogel) {
+      olc(`${ad}: "${e.m}" kaydırmadan görünüyor`, e.alt !== undefined && e.ust >= 0 && e.alt <= o.ekran,
+          `${e.ust}–${e.alt} px / ekran ${o.ekran}`);
+    }
+    // EKRANIN ALTINDA: Çıkış ekranın dibine 40 px'ten yakın; üç bağlantı da
+    // ekranın alt yarısında (sekmelerin hemen altında DEĞİL).
+    const cikis = o.ogel.find((e) => e.m === 'Çıkış');
+    olc(`${ad}: "Çıkış" ekranın dibinde`, cikis.alt !== undefined && cikis.alt <= o.ekran && o.ekran - cikis.alt <= 40,
+        `dibe ${o.ekran - cikis.alt} px`);
+    olc(`${ad}: üçü de ekranın alt yarısında`, o.ogel.every((e) => e.ust >= o.ekran / 2),
+        o.ogel.map((e) => `${e.m} ${e.ust}`).join(', '));
   }
+  for (const e of bas.ogel) olc(`"${e.m}" 44 px+`, e.boy >= 44, `${e.boy} px`);
 }
 
 await tarayici.close();

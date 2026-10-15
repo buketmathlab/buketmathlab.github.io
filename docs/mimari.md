@@ -6568,3 +6568,28 @@ Kusur provası: `mt-auto` geri konunca 6 ölçüm kırmızı.
 **Ayrıca:** onam ekranındaki "KVKK aydınlatma metnini" bağlantısı 44 px
 yapıldı. Bağlantı 40 px kalıyordu ve `onam-denetimi` 9. grup ana dalda da
 kırmızıydı.
+
+### İkinci tur: grup ekranın altında, kaydırmadan görünür
+
+Öğretmen, grup sekmelerin altına alınınca şöyle dedi: "Çok yukarda olmuş.
+Aşağıda ekranın altında ama ekranı kaydırmayacak şekilde yerleştirilsin."
+
+**Ne değişti?**
+- Yan menü ekran boyunda ve yapışkan
+  (`lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto`).
+- Grup yeniden `mt-auto` ile menünün dibinde. Menü ekran boyunda olduğu
+  için menünün dibi artık ekranın dibi.
+- Sayfa ne kadar uzun olursa olsun, üç bağlantı ekranın altında görünüyor.
+  Sayfa kaydırıldığında da yerinde kalıyor.
+- Kısa ekranda menü kendi içinde kayıyor.
+
+**Denetim:** `kabuk-denetimi` 7. grup yeniden yazıldı. İçerik 3000 px
+uzatılıyor, ölçüm 1280×800'de yapılıyor. Ölçülenler:
+- sayfanın başında da sonunda da üç bağlantı ekranda;
+- Çıkış ekranın dibine 40 px'ten yakın;
+- üçü de ekranın alt yarısında;
+- her biri 44 px+.
+
+Kusur provaları:
+- yapışkan menü kalkınca 4 ölçüm kırmızı (eski "en dipte" hâli);
+- `mt-auto` kalkınca 2 ölçüm kırmızı (bir önceki "çok yukarıda" hâli).
