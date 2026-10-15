@@ -13,6 +13,8 @@ function sekmeler(kok: string, onizleme: boolean): SekmeTanim[] {
     { yol: kok, etiket: 'Genel', ikon: SEKME_IKON.pano, sonu: true },
     { yol: `${kok}/siniflar`, etiket: 'Sınıflar', ikon: SEKME_IKON.sinif },
     { yol: `${kok}/ogretmenler`, etiket: 'Öğretmenler', ikon: SEKME_IKON.ogrenci },
+    // 0075: Okul Gelişim Projesi izleme-değerlendirme raporu.
+    { yol: `${kok}/rapor`, etiket: 'Rapor', ikon: SEKME_IKON.rapor },
   ];
   // Önizlemede PIN sekmesi YOK: o müdürün kendi PIN'i, sahibin değil.
   if (!onizleme) s.push({ yol: `${kok}/ayarlar`, etiket: 'PIN', ikon: SEKME_IKON.kod });

@@ -88,6 +88,23 @@ export function OnamEkrani({ onaylandi }: { onaylandi: () => void }) {
         ))}
       </div>
 
+      {/* KVKK AYDINLATMA METNİ — onam metnini TAMAMLAYAN ayrı belge (veri
+          sorumlusu, haklar, başvuru). Onam metninin dışında, yani hash
+          kilidine ve onam sürümüne dokunmuyor. Yeni sekmede: onam ekranı
+          yerinde kalsın. */}
+      <p className="mt-4 text-[14px] text-muted">
+        Veri sorumlusu, haklarınız ve başvuru yolu için{' '}
+        <a
+          href="/yeni/aydinlatma/"
+          target="_blank"
+          rel="noopener"
+          className="font-semibold text-ink underline"
+        >
+          KVKK aydınlatma metnini
+        </a>{' '}
+        okuyabilirsiniz.
+      </p>
+
       {hata && (
         <p role="alert" className="mt-4 text-[15px] text-danger">
           {hata}

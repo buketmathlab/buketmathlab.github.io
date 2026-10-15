@@ -3,6 +3,7 @@ import { SayfaBasligi } from '@/components/layout/Kabuk';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SurumDefteriDugmesi } from '@/features/ogretmen/SurumDefteri';
+import { AnketSonuclari } from '@/features/anket/AnketSonuclari';
 import { useBenKimim } from '@/hooks/useBenKimim';
 import {
   KART_ACIKLAMASI as CIKARMA_KART_ACIKLAMASI,
@@ -121,9 +122,33 @@ export function Ayarlar() {
             nerede saklandığını anlatan, yazdırılıp imzalatılabilen bir belge.
             Sayılar her yazdırmada o günkü duruma göre hesaplanır.
           </p>
-          <Button tur="ikincil" onClick={() => git('/ogretmen/ayarlar/okul')}>
-            Belgeyi hazırla
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button tur="ikincil" onClick={() => git('/ogretmen/ayarlar/okul')}>
+              Belgeyi hazırla
+            </Button>
+            {/* KVKK aydınlatma metni: herkese açık sayfa, imza bloklu yazdırma. */}
+            <a
+              href="/yeni/aydinlatma/"
+              target="_blank"
+              rel="noopener"
+              className="inline-flex min-h-[44px] items-center rounded-sk-md border border-line bg-surface px-4 text-[15px] font-semibold text-ink hover:border-ink-soft"
+            >
+              KVKK aydınlatma metni
+            </a>
+          </div>
+        </Card>
+      )}
+
+      {/* 0076: PAYDAŞ ANKETİ — YALNIZ SAHİP açar/kapatır. Sonuçlar müdürde de
+          (Rapor sekmesi); burada aç/kapat düğmesiyle birlikte. */}
+      {ben?.sahip && (
+        <Card className="mt-4">
+          <h2 className="mb-1 text-[18px] text-ink">Paydaş anketi</h2>
+          <p className="mb-3 text-[14px] text-muted">
+            Öğrenci, veli ve öğretmenler için isimsiz kısa anket. Açınca panolarında davet
+            görünür; yanıtlar kimlikle birlikte saklanmaz.
+          </p>
+          <AnketSonuclari yonetim />
         </Card>
       )}
 

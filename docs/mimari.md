@@ -6328,3 +6328,87 @@ düzeyin bütün şubelerine birlikte veriyor. Hesaplar düzey başına ayrı.
       düşüyor;
     - oluşturmada `sinif_giris` bugüne çekilince 7b düşüyor.
   - `deneme-hesabi-denetimi` H1–H9 çoklu hesaba göre güncellendi.
+
+## 0075 — Proje raporu (Okul Gelişim Projesi izleme-değerlendirme)
+
+Öğretmenin isteği: proje ProIz'e işlendi ve izleme-değerlendirme
+komisyonu dayanak belgesi istiyor. Talep edilen sayılar: kaç ödev
+hazırlandığı, kontrol edilen soru, başarı ve veli onamı.
+
+- **Uç:** `proje_raporu(p_token)`, yalnız sahip (`_yonetici`) ve müdür
+  (`_mudur`).
+  - Kapsam Genel sayfasıyla aynı: okul sınıfları, aktif öğrenciler,
+    deneme hesapları hariç.
+  - Yalnız toplu sayılar döner, öğrenci adı yok.
+  - Projeye özgü alanlar:
+    - kayıt, giriş yapan öğrenci ve veli (alt sınır), veli onamı;
+    - hazırlanan ödev (`grup_id` başına bir) ve şubelere ulaşan ödev;
+    - çözümlü cevap anahtarı, soru dosyası, konu etiketi;
+    - kontrol edilen soru (`okul_geneli` ile aynı tanım) ve otomatik
+      puanlanan soru;
+    - doğru, yanlış, boş; çözüme ulaşan gönderim;
+    - aylara, düzeylere ve öğretmenlere göre kırılımlar.
+- **Sayfa:**
+  - Müdür kabuğunda "Rapor" sekmesi. Sahip, Öğretmenler sayfasındaki
+    "Proje raporu" düğmesiyle sayfayı müdür önizlemesinde açıyor.
+  - Altta okulun genel özeti (`GenelOzet`, kabuğun çektiği `mudur_paneli`).
+  - "Yazdır / PDF" ile A4 çıktı; kâğıtta okul ve proje başlığı var.
+- **Yakalanan hata:** Rapor başlığı `header` etiketiyle yazılmıştı.
+  Yazdırma kuralı kabuğun `header`'ını gizlediği için başlık da kâğıttan
+  düşüyordu; denetim R3 yakaladı ve başlık `div` yapıldı.
+- **Testler:**
+  - `proje_raporu_testleri.sql`: önce ve sonra farkı fikstürle ölçülüyor.
+    20 alan birebir tutuyor, deneme hesabı hiçbir alana girmiyor.
+  - Aynı testte yetki, aylık ve düzey satırları, Genel ile tutarlılık
+    ölçülüyor.
+  - `mudur_testleri` izin listesine `proje_raporu` eklendi.
+  - Mutasyon kanıtları: deneme filtresi kaldırılınca ve grup tekilleştirmesi
+    kaldırılınca test düşüyor.
+  - Tarayıcı denetimi `proje-raporu-denetimi` R1–R6.
+
+## 0076 — İsimsiz paydaş anketi ve KVKK aydınlatma metni
+
+Denetim öncesi inceleme iki eksik buldu:
+- en güçlü eksik kanıt paydaş görüşüydü;
+- onam metninde veri sorumlusu, haklar, başvuru yolu ve saklama süresi
+  yoktu.
+
+Öğretmenin kararları: anket uygulamanın içinde olacak; onam sürümü
+değişmeyecek, eksikler ayrı bir aydınlatma metninde tamamlanacak.
+
+- **Anonimlik sunucuda kuruluyor:**
+  - `anket_katilimlari` yalnız tekrarı engelliyor ve kimlik yerine
+    tuzlanmış sha256 özeti tutuyor.
+  - `anket_yanitlari`'nda kimlik ve saat yok, yalnız haftanın başı var.
+  - Yanıt denetim izine bilerek yazılmıyor; iz saati, son görülme saatiyle
+    birlikte yanıtı bir kişiye bağlayabilirdi.
+  - Sonuçlar grup başına en az 5 yanıt olmadan dönmüyor.
+- **Kim yanıtlar:**
+  - öğrenci, veli (yalnız onam vermişse) ve öğretmen;
+  - müdür ve vekâlet oturumu reddediliyor;
+  - deneme hesabının yanıtı kaydedilmiyor.
+- **Arayüz:**
+  - panolarda davet kartı ("Şimdi değil" kartı bu cihazda gizliyor);
+  - erişilebilir anket sayfası: `fieldset` + `legend`, radyo düğmeleri;
+  - sahip Ayarlar'dan açıp kapatıyor;
+  - sonuçlar Proje raporunda "Paydaş görüşleri" bölümünde.
+- **Aydınlatma metni:**
+  - Herkese açık, oturumsuz sayfa: `/yeni/aydinlatma/`. Üçüncü giriş
+    noktası; sunucuya istek atmıyor.
+  - Giriş ekranından, onam ekranından ve sahibin Ayarlar'ından
+    bağlantılı.
+  - Yazdırılınca imza bloğu çıkıyor.
+  - Okulun karar vereceği saklama süresi sabit (`SAKLAMA_SURESI`); boş
+    olduğu sürece metin "belirlenecek" diyor.
+  - Onam metni ve sürümü (2026-09-7) değişmedi.
+- **Testler:**
+  - `anket_testleri.sql`: kapalı anket, doğrulama, tek seferlik,
+    anonimlik, onamsız veli ve müdür reddi, deneme, n<5 eşiği ve
+    dağılım.
+  - Mutasyon kanıtları: eşik ve onam kapısı kaldırılınca test düşüyor.
+  - `guvenlik_denetimi`: iki yanıtlama ucu gerekçeli beyaz listede.
+    Sonuç ve aç/kapat uçları listede değil, öğrenci ve veliyi
+    reddetmeye devam ediyor.
+  - Chromium denetimleri: `anket-denetimi` A1–A7, `aydinlatma-denetimi`
+    K1–K5.
+  - Vitest: soru sayıları ve aydınlatma metninin içeriği.

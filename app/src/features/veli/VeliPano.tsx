@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card';
+import { AnketKarti } from '@/features/anket/AnketKarti';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { KodYenilemeKarti } from '@/components/KodYenilemeKarti';
 import { SonPuanKarti } from '@/components/SonPuanKarti';
@@ -73,6 +74,9 @@ export function VeliPano() {
               </p>
             </div>
           </div>
+
+          {/* 0076: isimsiz anket daveti (onam verilmişse; sunucu kapısı). */}
+          <AnketKarti yol="/veli/anket" />
 
           <div className="grid grid-cols-3 gap-3">
             <Kutu deger={gonderdi} etiket="Gönderdi" />

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { DuyuruKarti } from './DuyuruKarti';
+import { AnketKarti } from '@/features/anket/AnketKarti';
 import { DurustlukKarti } from './DurustlukKarti';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
@@ -117,6 +118,8 @@ export function OgrenciPano() {
           <ul className="grid gap-3 [&>li]:min-w-0">
             {/* DUYURULAR EN BAŞTA (0065): acil olabilir. */}
             <DuyuruKarti />
+            {/* 0076: isimsiz anket daveti — yalnız açıkken ve yanıtlanmadıysa. */}
+            <AnketKarti yol="/ogrenci/anket" liste />
             <li>
               <Card vurgu={siradaki && sureDurumu(siradaki.son_tarih).acil ? 'uyari' : 'yok'}>
                 <p className="text-[13px] font-bold uppercase tracking-wide text-muted">

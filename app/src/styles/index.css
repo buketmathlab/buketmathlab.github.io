@@ -292,3 +292,16 @@
     height: 14mm !important;
   }
 }
+
+/* PROJE RAPORU (0075) — A4'te bölümler sayfa ortasından bölünmesin; kutucuk
+   ve tablolar kâğıtta da okunaklı kalsın. */
+@media print {
+  .sk-rapor .sk-rapor-bolum,
+  .sk-rapor tr,
+  .sk-rapor dl > div {
+    break-inside: avoid;
+  }
+  .sk-rapor .sk-rapor-baslik {
+    border-bottom: 1.5px solid #000;
+  }
+}

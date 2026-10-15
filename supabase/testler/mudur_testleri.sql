@@ -54,7 +54,11 @@ declare
   izinli text[] := array['mudur_paneli', 'sinif_analizi', 'onam_dokumu', 'cikis',
                           'mudur_pin_degistir', 'sinif_not_cizelgesi',
                           -- 0067: şube şube ödevler ve cevap anahtarları.
-                          'okul_odevleri'];
+                          'okul_odevleri',
+                          -- 0075: Okul Gelişim Projesi raporu (toplu sayılar).
+                          'proje_raporu',
+                          -- 0076: anonim anket sonuçları (n ≥ 5 eşiğiyle).
+                          'anket_sonuclari'];
   acik text[] := '{}';
   sayi integer := 0;
 begin
