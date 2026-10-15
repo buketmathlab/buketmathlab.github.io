@@ -98,7 +98,9 @@ export function OnamEkrani({ onaylandi }: { onaylandi: () => void }) {
           href="/yeni/aydinlatma/"
           target="_blank"
           rel="noopener"
-          className="font-semibold text-ink underline"
+          // 44 px dokunma hedefi (onam denetimi 9. grup): metin içindeki
+          // bağlantı tek başına 40 px kalıyordu.
+          className="inline-flex min-h-[44px] items-center font-semibold text-ink underline"
         >
           KVKK aydınlatma metnini
         </a>{' '}

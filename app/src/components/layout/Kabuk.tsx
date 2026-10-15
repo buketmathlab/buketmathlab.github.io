@@ -73,12 +73,17 @@ export function Kabuk() {
           <SekizWordmark boyut="sm" />
         </div>
         <SekmeCubugu sekmeler={sekmeler} bicim="yan" />
-        {/* Ayarlar SEKME DEĞİL, alt bağlantı. Menü zaten altı sekme;
-            yedincisi 360 px'de alt çubuğa sığmıyor (ölçüldü). PIN
-            değiştirmek de nadir ve kasıtlı bir iş — her gün görünmesi
-            gereken bir şey değil. Dar ekranda yan menü gizli olduğu için
-            aynı yere Genel sayfasının altından da geliniyor. */}
-        <div className="mt-auto flex flex-col gap-2 pt-4">
+        {/* Ayarlar SEKME DEĞİL, ayrı bağlantı. Menü zaten altı sekme;
+            yedincisi 360 px'de alt çubuğa sığmıyor (ölçüldü). Dar ekranda
+            yan menü gizli olduğu için aynı yere Genel sayfasının altından
+            da geliniyor.
+
+            SEKMELERİN HEMEN ALTINDA, menünün dibinde DEĞİL (öğretmenin
+            isteği: "çok altlarda kalıyor"). Önceden `mt-auto` ile dibe
+            itiliyordu; yan menü içerikle aynı boya uzadığı için uzun bir
+            sayfada üçü de sayfanın en altına düşüyor, görmek için aşağı
+            kaydırmak gerekiyordu. Kabuk denetimi 7. grupta ölçülüyor. */}
+        <div className="mt-4 flex flex-col gap-2 border-t border-line pt-4">
           {/* ÖĞRETMENLER SEKME DEĞİL, alt bağlantı — ve yalnız sahipte.
               Menü zaten altı sekme; yedincisi 360 px'de alt çubuğa
               sığmıyor (ölçüldü). Öğretmen yönetimi de nadir bir iş. */}
@@ -103,7 +108,8 @@ export function Kabuk() {
             to="/ogretmen/ayarlar"
             className={({ isActive }) =>
               cn(
-                'rounded-sk-sm px-3 py-2 text-[14px] text-muted hover:bg-line-soft',
+                // 44 px — Öğretmenler bağlantısıyla aynı dokunma hedefi.
+                'flex min-h-[44px] items-center rounded-sk-sm px-3 text-[14px] text-muted hover:bg-line-soft',
                 isActive && 'bg-line-soft font-semibold text-ink',
               )
             }
