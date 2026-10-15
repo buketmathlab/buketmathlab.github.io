@@ -212,7 +212,9 @@ console.log('\n--- 4. 0031 çalıştırılmadıysa ekran bozulmuyor (Part VIII) 
 {
   const { b, p } = await kur(false);
   const t = await metin(p);
-  de(!/uygula/i.test(t), 'YAYMA DÜĞMESİ HİÇ ÇIKMIYOR');
+  // Düğmeye bakılıyor, sayfa metnine değil: geç teslim seçimindeki "Kural
+  // sunucuda uygulanır" cümlesi metin aramasını yanıltıyordu.
+  de(!(await p.getByRole('button', { name: /uygula/i }).count()), 'YAYMA DÜĞMESİ HİÇ ÇIKMIYOR');
   de(/ayrı ayrı düzenleyin/.test(t), '0030’un uyarısı yerinde duruyor');
   de(/birlikte verildi/.test(t), 'ödev yine kardeşli olduğunu söylüyor');
   de(!/schema cache|Could not find/i.test(t), 'İngilizce PostgREST hatası ekranda yok');
