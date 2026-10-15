@@ -8,8 +8,9 @@
 --  3. ESKİ ödev (tum_sayfalar false) eski kuralla sürüyor: sınırın altında
 --     gönderim kabul.
 --  4. 40 sayfa: kısıt, yol kalıbı (-40 açık, -41 kapalı), 41 reddediliyor.
---  5. Gönderim varken sayfa sayısı DEĞİŞMİYOR; gönderim yokken değişiyor.
---     Kardeş yaymada bayrak taşınıyor; gönderimi olan kardeşte korunuyor.
+--  5. Sayfa sayısı güncelleniyor; kardeş yaymada bayrak taşınıyor. (0078'de
+--     gönderim varken kilitliydi; 0079'dan beri kilit yok — ayrıntısı
+--     `sayfa_duzenleme_testleri.sql`.)
 --  6. `odev_sayfa_kurali` yetkisi: başka sınıf, veli ve öğretmen 42501.
 --  7. Deneme hesabında da aynı kural.
 --
@@ -180,13 +181,7 @@ begin
   raise notice '    -40 açık, -41 ve -1 kapalı, 40/40 kabul, 41 reddedildi: OK';
 
   ------------------------------------------------------------------
-  raise notice '--- 5. Gönderim varken sayfa sayısı kilitli; kardeş yayma ---';
-  begin
-    perform public.odev_guncelle(p_token => t_ogr, p_id => v_dort, p_baslik => 'Dört sayfa',
-                                 p_aciklama => null, p_sinif_id => v_sinif,
-                                 p_son_tarih => current_date + 5, p_sayfa_limiti => 5::smallint);
-    raise exception 'HATA: gönderimi olan ödevin sayfa sayısı değişti!';
-  exception when invalid_parameter_value then null; end;
+  raise notice '--- 5. Sayfa sayısı güncelleme; kardeş yayma ---';
   -- Aynı sayıyı yeniden yazmak serbest (form her kayıtta sayıyı gönderiyor).
   perform public.odev_guncelle(p_token => t_ogr, p_id => v_dort, p_baslik => 'Dört sayfa (yeni başlık)',
                                p_aciklama => null, p_sinif_id => v_sinif,
@@ -218,13 +213,14 @@ begin
                                p_aciklama => null, p_sinif_id => v_sinif,
                                p_son_tarih => current_date + 5, p_sayfa_limiti => 5::smallint);
   perform public.odev_kardeslere_yay(t_ogr, v_ka);
-  if (select sayfa_limiti from public.odevler where id = v_kb) <> 3 then
-    raise exception 'HATA: gönderimi olan kardeşin sayfa sayısı değişti!';
+  -- 0079: gönderimi olan kardeşe de taşınıyor.
+  if (select sayfa_limiti from public.odevler where id = v_kb) <> 5 then
+    raise exception 'HATA: kardeşin sayfa sayısı taşınmadı!';
   end if;
   if (select baslik from public.odevler where id = v_kb) <> 'Kardeş' then
     raise exception 'HATA: kardeş yayma içerik taşımadı!';
   end if;
-  raise notice '    kilit, serbest güncelleme, çoklu oluşturma, kardeşte koruma: OK';
+  raise notice '    güncelleme, çoklu oluşturma, kardeşe taşıma: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 6. odev_sayfa_kurali yetkisi ---';

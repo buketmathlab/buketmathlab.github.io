@@ -1,44 +1,52 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { SayfaBasligi } from '@/components/layout/Kabuk';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Tag } from '@/components/ui/Tag';
-import { AsyncBoundary } from '@/components/ui/Durumlar';
-import { useToast } from '@/components/ui/toast-baglam';
-import { useDosyaAc } from '@/components/DosyaAcici';
-import { useOturum } from '@/hooks/oturum-baglam';
-import { useVeri } from '@/hooks/useVeri';
-import { rpc } from '@/services/supabase';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { SayfaBasligi } from "@/components/layout/Kabuk";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Tag } from "@/components/ui/Tag";
+import { AsyncBoundary } from "@/components/ui/Durumlar";
+import { useToast } from "@/components/ui/toast-baglam";
+import { useDosyaAc } from "@/components/DosyaAcici";
+import { useOturum } from "@/hooks/oturum-baglam";
+import { useVeri } from "@/hooks/useVeri";
+import { rpc } from "@/services/supabase";
 import {
   ODEV_PDF_EN_BUYUK,
   dosyaAdresi,
   dosyaYukle,
   odevDosyaYolu,
   dosyayiDenetle,
-} from '@/services/dosya';
-import { pdfSatirlariniOku, pdfSayfaSayisi } from '@/services/pdf-metin';
-import { anahtarOku } from '@/services/anahtar-oku';
-import { anahtarFarki, anahtarlariBirlestir, type Cikarim } from '@/lib/cevap-anahtari';
-import { YukluDosya } from './YukluDosya';
-import { AnahtarIzgarasi } from './AnahtarIzgarasi';
-import { KonuAtama } from './KonuAtama';
-import { PdfOnerileri } from './PdfOnerileri';
-import { GecTeslimSecimi } from './GecTeslimSecimi';
-import { SayfaSayisi } from './SayfaSayisi';
-import { EN_FAZLA_SAYFA, sayfaSayisiHatasi, sayfaSiniriniOku } from '@/lib/cozum-sayfalari';
-import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
-import { KardeslereYayma } from './KardeslereYayma';
-import { SoruIptali, type SubeRaporu } from './SoruIptali';
-import { sunucudanOku, sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
-import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
-import type { KardesDetay, Sinif } from '@/types/api';
+} from "@/services/dosya";
+import { pdfSatirlariniOku, pdfSayfaSayisi } from "@/services/pdf-metin";
+import { anahtarOku } from "@/services/anahtar-oku";
+import {
+  anahtarFarki,
+  anahtarlariBirlestir,
+  type Cikarim,
+} from "@/lib/cevap-anahtari";
+import { YukluDosya } from "./YukluDosya";
+import { AnahtarIzgarasi } from "./AnahtarIzgarasi";
+import { KonuAtama } from "./KonuAtama";
+import { PdfOnerileri } from "./PdfOnerileri";
+import { GecTeslimSecimi } from "./GecTeslimSecimi";
+import { SayfaSayisi } from "./SayfaSayisi";
+import {
+  EN_FAZLA_SAYFA,
+  sayfaSayisiHatasi,
+  sayfaSiniriniOku,
+} from "@/lib/cozum-sayfalari";
+import { OdevFormAlanlari, type OdevFormDegerleri } from "./OdevFormAlanlari";
+import { KardeslereYayma } from "./KardeslereYayma";
+import { SoruIptali, type SubeRaporu } from "./SoruIptali";
+import { sunucudanOku, sunucuyaHazirla, type Konular } from "@/lib/konu-atama";
+import { odevPdfOzeti, type PdfOzeti } from "@/lib/odev-pdf-ozeti";
+import type { KardesDetay, Sinif } from "@/types/api";
 
 type OdevDetay = {
   id: string;
   baslik: string;
   aciklama: string | null;
-  tur: 'test' | 'acik';
+  tur: "test" | "acik";
   sinif_id: string;
   sinif: string;
   son_tarih: string;
@@ -68,7 +76,11 @@ type OdevDetay = {
   tum_sayfalar?: boolean;
 };
 
-type PuanDegisimi = { ogrenci: string; eski_puan: number | null; yeni_puan: number };
+type PuanDegisimi = {
+  ogrenci: string;
+  eski_puan: number | null;
+  yeni_puan: number;
+};
 
 /**
  * Ödev düzenleme.
@@ -82,53 +94,63 @@ type PuanDegisimi = { ogrenci: string; eski_puan: number | null; yeni_puan: numb
  * listeleniyor (denetim izine de yazılıyor).
  */
 export function OdevDuzenle() {
-  const { id = '' } = useParams();
+  const { id = "" } = useParams();
   const { oturum } = useOturum();
   const { bildir } = useToast();
   const dosya = useDosyaAc();
   const git = useNavigate();
 
   const [form, setForm] = useState<OdevFormDegerleri>({
-    baslik: '',
-    aciklama: '',
-    sinifId: '',
-    sonTarih: '',
-    soruSayisi: '',
-    sonSecenek: 'E',
+    baslik: "",
+    aciklama: "",
+    sinifId: "",
+    sonTarih: "",
+    soruSayisi: "",
+    sonSecenek: "E",
   });
   const [gecTeslim, setGecTeslim] = useState(true);
-  // ÖDEVİN SAYFA SAYISI (0078) — yalnız her sayfası zorunlu ödevde
-  // düzenleniyor; eski ödevde yalnız bilgi olarak yazıyor.
-  const [sayfaSayisi, setSayfaSayisi] = useState('');
+  // ÖDEVİN SAYFA SAYISI (0078). 0079'dan beri HER ödevde düzenleniyor,
+  // gönderim olsa da: eski ödev kaydedilince her sayfa zorunlu kurala geçer.
+  const [sayfaSayisi, setSayfaSayisi] = useState("");
   const [pdfSayfa, setPdfSayfa] = useState<number | null>(null);
   const [sayfaHatasi, setSayfaHatasi] = useState<string | null>(null);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
   const [konular, setKonular] = useState<Konular>({});
   const [pdfOzet, setPdfOzet] = useState<PdfOzeti | null>(null);
-  const [onerilenKonu, setOnerilenKonu] = useState<string | undefined>(undefined);
+  const [onerilenKonu, setOnerilenKonu] = useState<string | undefined>(
+    undefined,
+  );
   const [cikarim, setCikarim] = useState<Cikarim | null>(null);
   const [yeniAnahtarPdf, setYeniAnahtarPdf] = useState<File | null>(null);
   const [yeniOdevPdf, setYeniOdevPdf] = useState<File | null>(null);
   const [okuyor, setOkuyor] = useState(false);
   const [ilerleme, setIlerleme] = useState<string | null>(null);
   // Yeni anahtar PDF'i okunmadan önceki cevaplar: "Vazgeç" bunlara döner.
-  const [anahtarOncesi, setAnahtarOncesi] = useState<Record<number, string> | null>(null);
+  const [anahtarOncesi, setAnahtarOncesi] = useState<Record<
+    number,
+    string
+  > | null>(null);
   const [okumaHatasi, setOkumaHatasi] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
   const [degisenler, setDegisenler] = useState<PuanDegisimi[] | null>(null);
   const [iptalRaporu, setIptalRaporu] = useState<SubeRaporu[] | null>(null);
 
-  const { veri: detay, durum, hata, yenile } = useVeri<OdevDetay>('odev_detay', {
+  const {
+    veri: detay,
+    durum,
+    hata,
+    yenile,
+  } = useVeri<OdevDetay>("odev_detay", {
     p_token: oturum?.token,
     p_id: id,
   });
 
-  const { veri: siniflar } = useVeri<Sinif[]>('siniflar_listesi', {
+  const { veri: siniflar } = useVeri<Sinif[]>("siniflar_listesi", {
     p_token: oturum?.token,
     p_arsiv: false,
   });
 
-  const { veri: konuOnerileri } = useVeri<string[]>('konu_onerileri', {
+  const { veri: konuOnerileri } = useVeri<string[]>("konu_onerileri", {
     p_token: oturum?.token,
   });
 
@@ -138,13 +160,13 @@ export function OdevDuzenle() {
     if (!detay) return;
     setForm({
       baslik: detay.baslik,
-      aciklama: detay.aciklama ?? '',
+      aciklama: detay.aciklama ?? "",
       sinifId: detay.sinif_id,
       sonTarih: detay.son_tarih,
-      soruSayisi: String(detay.soru_sayisi ?? ''),
+      soruSayisi: String(detay.soru_sayisi ?? ""),
       // Şık sayısı artık kayıtta (0010). Önceden her açılışta 'E' varsayılıyordu;
       // A–D'lik bir ödevi düzenleyen öğretmen seçimini yeniden yapmak zorundaydı.
-      sonSecenek: detay.sik_sayisi === 4 ? 'D' : 'E',
+      sonSecenek: detay.sik_sayisi === 4 ? "D" : "E",
     });
     setGecTeslim(detay.gec_teslim);
     setSayfaSayisi(String(sayfaSiniriniOku(detay.sayfa_limiti)));
@@ -158,9 +180,12 @@ export function OdevDuzenle() {
   }, [detay]);
 
   const n = Number(form.soruSayisi) || 0;
-  const testMi = detay?.tur === 'test';
+  const testMi = detay?.tur === "test";
 
-  function alanDegis<A extends keyof OdevFormDegerleri>(alan: A, deger: OdevFormDegerleri[A]) {
+  function alanDegis<A extends keyof OdevFormDegerleri>(
+    alan: A,
+    deger: OdevFormDegerleri[A],
+  ) {
     setForm((f) => ({ ...f, [alan]: deger }));
   }
 
@@ -169,11 +194,11 @@ export function OdevDuzenle() {
    * engellemez; öneri kutusu çıkmaz, ekran bugünkü gibi çalışır.
    */
   async function odevPdfiniOku(dosya: File) {
-    // Yeni soru PDF'i: sayfa sayısı ÖNERİLİYOR (gönderim yoksa kutuya
-    // yazılıyor). Gönderim varken sayı kilitli; sunucu da reddediyor.
+    // Yeni soru PDF'i: sayfa sayısı kutuya ÖNERİLİYOR; öğretmen düzeltebilir.
+    // 0079: gönderim olsa da (sayı artık kilitli değil).
     void pdfSayfaSayisi(dosya).then((sayi) => {
       setPdfSayfa(sayi);
-      if (sayi !== null && detay?.tum_sayfalar && (detay.gonderim_sayisi ?? 0) === 0) {
+      if (sayi !== null) {
         setSayfaSayisi(String(Math.min(sayi, EN_FAZLA_SAYFA)));
         setSayfaHatasi(null);
       }
@@ -218,7 +243,7 @@ export function OdevDuzenle() {
       setAnahtarOncesi(onceki);
       setAnahtar(anahtarlariBirlestir(onceki, sonuc.anahtar));
     } catch (e) {
-      setOkumaHatasi(e instanceof Error ? e.message : 'PDF okunamadı.');
+      setOkumaHatasi(e instanceof Error ? e.message : "PDF okunamadı.");
       setCikarim(null);
     } finally {
       setOkuyor(false);
@@ -227,32 +252,33 @@ export function OdevDuzenle() {
   }
 
   /** Yüklü dosyayı açar. Yol istemcide tutulmuyor; imzalı adres her seferinde. */
-  function yukluDosyayiAc(tur: 'odev' | 'anahtar') {
+  function yukluDosyayiAc(tur: "odev" | "anahtar") {
     // Sekme dokunuş anında açılıyor (`useDosyaAc`).
     void dosya.ac(
       async () => {
-        const { yol } = await rpc<{ yol: string | null }>('odev_dosya_yolu', {
+        const { yol } = await rpc<{ yol: string | null }>("odev_dosya_yolu", {
           p_token: oturum?.token,
           p_id: id,
           p_tur: tur,
         });
         return yol ? dosyaAdresi(yol) : null;
       },
-      { yokMetni: 'Bu ödevde o dosya yok.' },
+      { yokMetni: "Bu ödevde o dosya yok." },
     );
   }
 
-  const degisenCevaplar = anahtarOncesi ? anahtarFarki(anahtarOncesi, anahtar) : [];
+  const degisenCevaplar = anahtarOncesi
+    ? anahtarFarki(anahtarOncesi, anahtar)
+    : [];
 
   async function kaydet() {
     if (!detay) return;
-    // 0078: sayfa sayısı dosyalar yüklenmeden ÖNCE denetleniyor.
-    if (detay?.tum_sayfalar) {
-      const sorun = sayfaSayisiHatasi(sayfaSayisi);
-      if (sorun) {
-        setSayfaHatasi(sorun);
-        return;
-      }
+    // 0078: sayfa sayısı dosyalar yüklenmeden ÖNCE denetleniyor (0079:
+    // her ödevde — eski ödev de kaydedilince sayıyı gönderiyor).
+    const sorun = sayfaSayisiHatasi(sayfaSayisi);
+    if (sorun) {
+      setSayfaHatasi(sorun);
+      return;
     }
     setKaydediyor(true);
     setDegisenler(null);
@@ -261,37 +287,50 @@ export function OdevDuzenle() {
       let anahtarYolu = detay.anahtar_yolu;
 
       if (yeniOdevPdf) {
-        bildir('Ödev PDF’i yükleniyor…');
-        odevYolu = await dosyaYukle(yeniOdevPdf, odevDosyaYolu('sorular', yeniOdevPdf.name), ODEV_PDF_EN_BUYUK);
+        bildir("Ödev PDF’i yükleniyor…");
+        odevYolu = await dosyaYukle(
+          yeniOdevPdf,
+          odevDosyaYolu("sorular", yeniOdevPdf.name),
+          ODEV_PDF_EN_BUYUK,
+        );
       }
       if (yeniAnahtarPdf) {
-        bildir('Cevap anahtarı yükleniyor…');
-        anahtarYolu = await dosyaYukle(yeniAnahtarPdf, odevDosyaYolu('anahtar', yeniAnahtarPdf.name), ODEV_PDF_EN_BUYUK);
+        bildir("Cevap anahtarı yükleniyor…");
+        anahtarYolu = await dosyaYukle(
+          yeniAnahtarPdf,
+          odevDosyaYolu("anahtar", yeniAnahtarPdf.name),
+          ODEV_PDF_EN_BUYUK,
+        );
       }
 
-      // 0078: yalnız her sayfası zorunlu ödevde ve DEĞİŞTİYSE gönderiliyor
-      // (null sunucuda "dokunma"). Eski ödevin sınırına dokunulmuyor.
-      const zorunluOdev = detay.tum_sayfalar === true;
+      // Sayfa sayısı DEĞİŞTİYSE gönderiliyor (yoksa sunucuda "dokunma").
+      // 0079: ESKİ ödevde her kayıtta gönderiliyor — sayı gelince sunucu
+      // ödevi her sayfa zorunlu kurala geçiriyor (öğretmenin kararı).
+      const eskiOdev = detay.tum_sayfalar !== true;
       const sinirDegisti =
-        zorunluOdev && Number(sayfaSayisi) !== sayfaSiniriniOku(detay.sayfa_limiti);
-      const sonuc = await rpc<{ yeniden_puanlanan: PuanDegisimi[] }>('odev_guncelle', {
-        p_token: oturum?.token,
-        p_id: detay.id,
-        p_baslik: form.baslik.trim(),
-        p_aciklama: form.aciklama.trim() || null,
-        p_sinif_id: form.sinifId,
-        p_son_tarih: form.sonTarih,
-        p_soru_sayisi: testMi ? n : null,
-        p_cevap_anahtari: testMi ? anahtar : null,
-        p_anahtar_yolu: anahtarYolu,
-        p_odev_yolu: odevYolu,
-        p_gec_teslim: gecTeslim,
-        p_sik_sayisi: testMi ? (form.sonSecenek === 'D' ? 4 : 5) : null,
-        // BOŞ NESNE GÖNDERİLİYOR, null DEĞİL: sunucuda null "değiştirme"
-        // demek. Öğretmen bütün konuları sildiyse silme kaydedilsin.
-        p_konular: testMi ? sunucuyaHazirla(konular, n) : null,
-        ...(sinirDegisti ? { p_sayfa_limiti: Number(sayfaSayisi) } : {}),
-      });
+        eskiOdev ||
+        Number(sayfaSayisi) !== sayfaSiniriniOku(detay.sayfa_limiti);
+      const sonuc = await rpc<{ yeniden_puanlanan: PuanDegisimi[] }>(
+        "odev_guncelle",
+        {
+          p_token: oturum?.token,
+          p_id: detay.id,
+          p_baslik: form.baslik.trim(),
+          p_aciklama: form.aciklama.trim() || null,
+          p_sinif_id: form.sinifId,
+          p_son_tarih: form.sonTarih,
+          p_soru_sayisi: testMi ? n : null,
+          p_cevap_anahtari: testMi ? anahtar : null,
+          p_anahtar_yolu: anahtarYolu,
+          p_odev_yolu: odevYolu,
+          p_gec_teslim: gecTeslim,
+          p_sik_sayisi: testMi ? (form.sonSecenek === "D" ? 4 : 5) : null,
+          // BOŞ NESNE GÖNDERİLİYOR, null DEĞİL: sunucuda null "değiştirme"
+          // demek. Öğretmen bütün konuları sildiyse silme kaydedilsin.
+          p_konular: testMi ? sunucuyaHazirla(konular, n) : null,
+          ...(sinirDegisti ? { p_sayfa_limiti: Number(sayfaSayisi) } : {}),
+        },
+      );
 
       const degisti = sonuc.yeniden_puanlanan ?? [];
       // KARDEŞİ VARSA SAYFADA KALINIYOR. Yayma kararı kaydetmenin ARDINDAN
@@ -303,19 +342,22 @@ export function OdevDuzenle() {
         // Not değiştiyse sayfada kal ve göster — bildirim kaybolur, bu bilgi
         // kaybolmamalı.
         setDegisenler(degisti);
-        bildir(`Kaydedildi — ${degisti.length} öğrencinin puanı değişti`, 'basari');
+        bildir(
+          `Kaydedildi — ${degisti.length} öğrencinin puanı değişti`,
+          "basari",
+        );
         yenile();
       } else if (kardesVar) {
-        bildir('Ödev güncellendi', 'basari');
+        bildir("Ödev güncellendi", "basari");
         // `anahtar_ayni` yeniden ölçülsün: kaydetmeden önceki değere bakıp
         // "anahtar aynı" demek yanlış bilgi olurdu.
         yenile();
       } else {
-        bildir('Ödev güncellendi', 'basari');
-        git('/ogretmen/odevler');
+        bildir("Ödev güncellendi", "basari");
+        git("/ogretmen/odevler");
       }
     } catch (e) {
-      bildir(e instanceof Error ? e.message : 'Kaydedilemedi.', 'hata');
+      bildir(e instanceof Error ? e.message : "Kaydedilemedi.", "hata");
     } finally {
       setKaydediyor(false);
     }
@@ -328,8 +370,8 @@ export function OdevDuzenle() {
         baslik="Ödevi düzenle"
         aciklama={
           detay?.yayinda
-            ? 'Bu ödev yayında. Cevap anahtarını değiştirirseniz gönderenler yeniden puanlanır.'
-            : 'Taslak ödev. Yayınlamadan istediğiniz kadar değiştirebilirsiniz.'
+            ? "Bu ödev yayında. Cevap anahtarını değiştirirseniz gönderenler yeniden puanlanır."
+            : "Taslak ödev. Yayınlamadan istediğiniz kadar değiştirebilirsiniz."
         }
       />
       {/* ÖĞRETMENİN İSTEĞİ: "Neyi düzenlemek istiyorsam yalnız onu
@@ -337,7 +379,8 @@ export function OdevDuzenle() {
           kayıttan dolu geliyor) ama bunu SÖYLEMİYORDU; boş dosya alanları
           tersini düşündürüyordu. */}
       <p className="-mt-2 mb-4 text-[14px] text-ink">
-        Yalnız değiştirmek istediğiniz alanı değiştirin; diğer her şey olduğu gibi kalır.
+        Yalnız değiştirmek istediğiniz alanı değiştirin; diğer her şey olduğu
+        gibi kalır.
       </p>
 
       <AsyncBoundary
@@ -357,10 +400,14 @@ export function OdevDuzenle() {
                 <ul className="mb-2 space-y-1">
                   {degisenler.map((d) => (
                     <li key={d.ogrenci} className="text-[14px] text-ink">
-                      {d.ogrenci}:{' '}
-                      <span className="sk-sayi text-muted">{d.eski_puan ?? '—'}</span>
-                      {' → '}
-                      <span className="sk-sayi font-semibold">{d.yeni_puan}</span>
+                      {d.ogrenci}:{" "}
+                      <span className="sk-sayi text-muted">
+                        {d.eski_puan ?? "—"}
+                      </span>
+                      {" → "}
+                      <span className="sk-sayi font-semibold">
+                        {d.yeni_puan}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -396,13 +443,16 @@ export function OdevDuzenle() {
               detay.kardesler.length > 0 && (
                 <Card vurgu="uyari" className="mb-4">
                   <p className="text-[15px] text-ink">
-                    Bu ödev <strong>{[detay.sinif, ...detay.kardesler].join(', ')}</strong>{' '}
+                    Bu ödev{" "}
+                    <strong>
+                      {[detay.sinif, ...detay.kardesler].join(", ")}
+                    </strong>{" "}
                     sınıflarına birlikte verildi.
                   </p>
                   <p className="mt-1 text-[14px] text-muted">
-                    Buradaki değişiklik yalnız <strong>{detay.sinif}</strong> sınıfını
-                    etkiler. Diğerlerini de değiştirmek isterseniz onları ayrı ayrı
-                    düzenleyin.
+                    Buradaki değişiklik yalnız <strong>{detay.sinif}</strong>{" "}
+                    sınıfını etkiler. Diğerlerini de değiştirmek isterseniz
+                    onları ayrı ayrı düzenleyin.
                   </p>
                 </Card>
               )
@@ -412,7 +462,7 @@ export function OdevDuzenle() {
                 ayrı bir işlem (kendi onayı, sebebi ve raporu var). Kapsam
                 bu ödev + arşivde olmayan kardeşleri: sunucu da aynısını
                 yapıyor. */}
-            {detay.tur === 'test' && (detay.soru_sayisi ?? 0) > 1 && (
+            {detay.tur === "test" && (detay.soru_sayisi ?? 0) > 1 && (
               <SoruIptali
                 odevId={detay.id}
                 soruSayisi={detay.soru_sayisi ?? 0}
@@ -420,7 +470,9 @@ export function OdevDuzenle() {
                 subeler={[
                   detay.sinif,
                   ...(detay.kardes_detay
-                    ? detay.kardes_detay.filter((k) => !k.arsiv).map((k) => k.sinif)
+                    ? detay.kardes_detay
+                        .filter((k) => !k.arsiv)
+                        .map((k) => k.sinif)
                     : (detay.kardesler ?? [])),
                 ]}
                 rapor={iptalRaporu}
@@ -433,8 +485,8 @@ export function OdevDuzenle() {
 
             <Card>
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Tag tur={detay.yayinda ? 'basari' : 'uyari'}>
-                  {detay.yayinda ? 'Yayında' : 'Taslak'}
+                <Tag tur={detay.yayinda ? "basari" : "uyari"}>
+                  {detay.yayinda ? "Yayında" : "Taslak"}
                 </Tag>
                 {detay.gonderim_sayisi > 0 && (
                   <Tag tur="bilgi">
@@ -459,12 +511,12 @@ export function OdevDuzenle() {
                 baslik="Soru dosyası"
                 ayrinti="Öğrencilerin çözeceği sorular"
                 yuklu={!!detay.odev_yolu}
-                onAc={() => void yukluDosyayiAc('odev')}
+                onAc={() => void yukluDosyayiAc("odev")}
                 secilen={yeniOdevPdf}
                 onSec={(f) => {
                   // Boyut SEÇERKEN denetleniyor (bkz. OdevOlustur).
                   const sorun = f ? dosyayiDenetle(f, ODEV_PDF_EN_BUYUK) : null;
-                  if (sorun) return bildir(sorun, 'hata');
+                  if (sorun) return bildir(sorun, "hata");
                   setYeniOdevPdf(f);
                   if (f) void odevPdfiniOku(f);
                   else {
@@ -474,24 +526,27 @@ export function OdevDuzenle() {
                 }}
               />
 
-              {detay.tum_sayfalar ? (
-                <SayfaSayisi
-                  deger={sayfaSayisi}
-                  onDegis={(v) => {
-                    setSayfaSayisi(v);
-                    setSayfaHatasi(null);
-                  }}
-                  pdfSayfa={pdfSayfa}
-                  hata={sayfaHatasi}
-                  kilitli={(detay.gonderim_sayisi ?? 0) > 0}
-                />
-              ) : (
-                <p className="mb-4 rounded-sk-sm bg-line-soft p-3 text-[13px] text-muted">
-                  Bu ödev önceki düzende verildi: öğrenciler en fazla{' '}
-                  <span className="sk-sayi">{sayfaSiniriniOku(detay.sayfa_limiti)}</span> sayfa
-                  gönderebilir. Yeni ödevlerde öğrenciler ödevin her sayfasını göndermek zorundadır.
+              {!detay.tum_sayfalar && (
+                <p className="mb-3 rounded-sk-sm bg-line-soft p-3 text-[13px] text-ink">
+                  Bu ödev önceki düzende verildi: öğrenciler en fazla{" "}
+                  <span className="sk-sayi">
+                    {sayfaSiniriniOku(detay.sayfa_limiti)}
+                  </span>{" "}
+                  sayfa gönderebiliyor. Kaydettiğinizde bu ödevde de öğrenciler,
+                  aşağıdaki sayı kadar sayfanın her birini göndermek zorunda
+                  olur.
                 </p>
               )}
+              <SayfaSayisi
+                deger={sayfaSayisi}
+                onDegis={(v) => {
+                  setSayfaSayisi(v);
+                  setSayfaHatasi(null);
+                }}
+                pdfSayfa={pdfSayfa}
+                hata={sayfaHatasi}
+                gonderimSayisi={detay.gonderim_sayisi ?? 0}
+              />
 
               {pdfOzet && (
                 <PdfOnerileri
@@ -499,9 +554,9 @@ export function OdevDuzenle() {
                   mevcutSoruSayisi={n}
                   secililer={[form.sinifId]}
                   siniflar={siniflar ?? []}
-                  onSoruSayisi={(x) => alanDegis('soruSayisi', String(x))}
+                  onSoruSayisi={(x) => alanDegis("soruSayisi", String(x))}
                   onKonu={setOnerilenKonu}
-                  onSinif={(id) => alanDegis('sinifId', id)}
+                  onSinif={(id) => alanDegis("sinifId", id)}
                 />
               )}
 
@@ -512,40 +567,45 @@ export function OdevDuzenle() {
                   ayrinti={
                     Object.keys(detay.cevap_anahtari ?? {}).length > 0
                       ? `${Object.keys(detay.cevap_anahtari ?? {}).length} sorunun cevabı kayıtlı`
-                      : 'Çözümler ve doğru şıklar'
+                      : "Çözümler ve doğru şıklar"
                   }
                   yuklu={!!detay.anahtar_yolu}
-                  onAc={() => void yukluDosyayiAc('anahtar')}
+                  onAc={() => void yukluDosyayiAc("anahtar")}
                   secilen={yeniAnahtarPdf}
                   onSec={(f) => void anahtarPdfSecildi(f)}
                   kilitli={okuyor}
                   ipucu={
-                    'Yeni PDF’ten okunan cevaplar mevcut cevapların üstüne yazılır; ' +
-                    'PDF’te bulunamayan sorular olduğu gibi kalır.' +
+                    "Yeni PDF’ten okunan cevaplar mevcut cevapların üstüne yazılır; " +
+                    "PDF’te bulunamayan sorular olduğu gibi kalır." +
                     (detay.gonderim_sayisi > 0
-                      ? ' Anahtar değişirse gönderen öğrenciler yeniden puanlanır.'
-                      : '')
+                      ? " Anahtar değişirse gönderen öğrenciler yeniden puanlanır."
+                      : "")
                   }
                   {...(okumaHatasi ? { hata: okumaHatasi } : {})}
                 />
               )}
               {okuyor && (
                 <p className="mb-4 text-[13px] text-muted" role="status">
-                  {ilerleme ? `PDF okunuyor… ${ilerleme}` : 'PDF okunuyor…'}
+                  {ilerleme ? `PDF okunuyor… ${ilerleme}` : "PDF okunuyor…"}
                 </p>
               )}
 
               {/* DEĞİŞEN CEVAPLAR GÖRÜNÜR. Yeni PDF yalnız bulduğu soruları
                   değiştiriyor; hangileri değişti, kaydetmeden önce burada. */}
               {anahtarOncesi && !okuyor && (
-                <Card vurgu={degisenCevaplar.length > 0 ? 'uyari' : 'yok'} className="mb-4">
+                <Card
+                  vurgu={degisenCevaplar.length > 0 ? "uyari" : "yok"}
+                  className="mb-4"
+                >
                   <p className="mb-1 text-[14px] text-ink">
                     {cikarim && cikarim.bulunan.length > 0
                       ? `PDF’ten ${cikarim.bulunan.length} sorunun cevabı okundu.`
-                      : 'Bu PDF’ten cevap okunamadı; kayıtlı cevaplar olduğu gibi duruyor.'}
+                      : "Bu PDF’ten cevap okunamadı; kayıtlı cevaplar olduğu gibi duruyor."}
                   </p>
                   {degisenCevaplar.length === 0 ? (
-                    <p className="text-[14px] text-ink">Kayıtlı cevaplardan farklı cevap yok.</p>
+                    <p className="text-[14px] text-ink">
+                      Kayıtlı cevaplardan farklı cevap yok.
+                    </p>
                   ) : (
                     <>
                       <p className="mb-1 text-[14px] font-semibold text-ink">
@@ -553,13 +613,17 @@ export function OdevDuzenle() {
                       </p>
                       <p className="text-[14px] text-ink">
                         {degisenCevaplar
-                          .map((d) => `${d.no}. soru: ${d.eski ?? '—'} → ${d.yeni ?? '—'}`)
-                          .join(' · ')}
+                          .map(
+                            (d) =>
+                              `${d.no}. soru: ${d.eski ?? "—"} → ${d.yeni ?? "—"}`,
+                          )
+                          .join(" · ")}
                       </p>
                     </>
                   )}
                   <p className="mt-1 text-[13px] text-muted">
-                    Kaydetmeden hiçbir şey değişmez. Vazgeçerseniz eski cevaplar geri gelir.
+                    Kaydetmeden hiçbir şey değişmez. Vazgeçerseniz eski cevaplar
+                    geri gelir.
                   </p>
                 </Card>
               )}
@@ -596,7 +660,11 @@ export function OdevDuzenle() {
               )}
 
               <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                <Button tur="sade" onClick={() => git('/ogretmen/odevler')} tamGenislik>
+                <Button
+                  tur="sade"
+                  onClick={() => git("/ogretmen/odevler")}
+                  tamGenislik
+                >
                   Vazgeç
                 </Button>
                 <Button

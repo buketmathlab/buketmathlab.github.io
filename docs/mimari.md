@@ -6466,6 +6466,7 @@ Sunucu (`0078_tum_sayfalar_zorunlu.sql`):
   sayfa eksik)."). Fazla sayfa eski mesajla reddediliyor.
 - `odev_guncelle`: yeni düzendeki ödeve gönderim yapıldıysa sayfa sayısı
   değiştirilemiyor — öğrenciler arasında farklı kural olmasın.
+  **0079'dan beri bu kilit yok** (aşağıya bakın).
 - `odev_kardeslere_yay`: bayrak taşınıyor; gönderim yapılmış kardeşte
   eski sayı ve bayrak korunuyor.
 - `odev_detay` bayrağı döndürüyor. Yeni uç `odev_sayfa_kurali` → `{sayfa,
@@ -6490,3 +6491,53 @@ mutasyon kanıtı: eksik sayfa denetimi ve kilit kaldırılınca düşüyor),
 `sayfa_siniri_testleri.sql` 1–40'a uyarlandı, `guvenlik_denetimi`
 beyaz listesinde `odev_sayfa_kurali`. Chromium: `sayfa-zorunlu`
 (Z1–Z4), `pdf-cozum` (P1–P8, gerçek 20 sayfalık PDF), `sayfa-siniri`.
+
+## 0079 — Sayfa sayısı düzenlemede her zaman değiştirilebilir
+
+Öğretmenin isteği: "Öğrencilerin gönderebileceği çözüm sayfa sayısı
+süresi dolmayan ödevler için de geçerli olsun. Ya da düzenleme yaparken
+sayfa sayılarını da düzenleyebilelim… ödevi gönderdikten sonra."
+
+Öğretmenin iki kararı:
+- **Eski ödev düzenlenince geçer.** Sayfa sayısı yazılıp kaydedilen ödev
+  "her sayfa zorunlu" olur. Hiçbir ödev kendiliğinden değişmez; 0079 veri
+  güncellemiyor.
+- **Gönderenler olduğu gibi kalır.** Gönderilmiş çözümler ve puanlar
+  değişmez. Yeni sayı henüz göndermeyenler için geçerli. Gerekirse
+  "Gönderimi yeniden aç" (0056) kullanılır.
+
+Sunucu (`0079_sayfa_sayisi_duzenleme.sql`, 0078'den mekanik kopya):
+- `odev_guncelle`:
+  - 0078'deki kilit kalktı.
+  - `p_sayfa_limiti` geldiyse `tum_sayfalar = true` yazılıyor.
+- `odev_kardeslere_yay`: gönderimli kardeşte eski kuralı geri yazan blok
+  kalktı. Sayı ve bayrak bütün kardeşlere taşınıyor.
+- Görüntüleyiciler sayfaları gönderimin kendi `ek_sayfa_yollari`ndan
+  okuyor. Sayı küçülse de gönderilmiş sayfalar görünüyor.
+
+İstemci:
+- `SayfaSayisi` her ödevin düzenleme ekranında görünüyor ve kilitlenmiyor.
+  Gönderim varsa "gönderilmiş çözümler ve puanlar değişmez" uyarısı
+  çıkıyor.
+- Eski ödevde not "Kaydettiğinizde … her birini göndermek zorunda olur"
+  diyor. Eski ödevde sayı her kayıtta gönderiliyor (geçiş için); yeni
+  ödevde yalnız değiştiyse.
+- Yeni soru PDF'i seçilince sayı, gönderim olsa da kutuya öneriliyor.
+
+Testler ve denetimler:
+- `sayfa_duzenleme_testleri.sql`, 5 grup:
+  - gönderimli ödevde sayı değişiyor, önceki gönderim aynı kalıyor;
+  - yeni sayı göndermeyene uygulanıyor, sayı büyüyünce de küçülünce de;
+  - eski ödev sayıyla kaydedilince geçiyor, sayısız kaydedilince geçmiyor;
+  - kardeşe taşınıyor;
+  - yeniden açılan gönderim yeni sayıya uyuyor.
+- Mutasyon kanıtları: kilit, bayrak ve kardeş koruması geri konunca test
+  düşüyor.
+- `sayfa_zorunlu_testleri.sql` 5. grup yeni kurala çevrildi.
+- Chromium:
+  - `sayfa-duzenleme` A1–A2 (gövde farkı) ve D1–D2 (360 px, eski ödev,
+    gönderim uyarısı);
+  - `sayfa-siniri` B7 yeni kurala çevrildi.
+- `kardes-yayma` 4. bölümdeki önceden kalma yanlış alarm düzeltildi. Sayfa
+  metninde "uygula" aranıyordu; geç teslim seçimindeki "Kural sunucuda
+  uygulanır" cümlesi bu aramayı yanıltıyordu. Artık düğmeye bakılıyor.

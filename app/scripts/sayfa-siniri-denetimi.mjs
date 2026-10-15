@@ -694,44 +694,50 @@ for (const sayi of ['', '3']) {
 }
 
 // ---------------------------------------------------------------------------
-console.log('--- B7. Öğretmen, DÜZENLE (0078): kilit, değişen sayı, eski ödev ---');
+console.log('--- B7. Öğretmen, DÜZENLE (0079): gönderim varken de değişir, eski ödev geçer ---');
 {
   const { b, p } = await kur({ rol: 'ogretmen', detaySinir: 3, detayZorunlu: true, gonderimSayisi: 4 }, '/ogretmen/odevler/a1');
   await bekle(p);
   const k = p.getByLabel(/Ödevin sayfa sayısı/);
-  if (!(await k.count()) || (await k.inputValue()) !== '3' || !(await k.isDisabled())) bozuk('gönderimli ödevde sayı kilitli değil');
-  else if (!(await metin(p)).includes('sayfa sayısı artık değiştirilemez')) bozuk('kilidin nedeni yazmıyor');
-  else tamam('gönderim varken sayı 3, kilitli, nedeni yazıyor');
+  const m = await metin(p);
+  if (!(await k.count()) || (await k.inputValue()) !== '3' || (await k.isDisabled())) bozuk('gönderimli ödevde sayı açık değil');
+  else if (!m.includes('gönderilmiş çözümler ve puanlar değişmez') || !m.includes('Gönderimi yeniden aç')
+           || m.includes('artık değiştirilemez')) bozuk('gönderimli ödevin uyarısı yanlış');
+  else tamam('gönderim varken sayı 3, AÇIK; "gönderilmiş çözümler ve puanlar değişmez" yazıyor');
+  await k.fill('5');
   await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
   await bekle(p, 800);
   const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
-  if (!c.length || 'p_sayfa_limiti' in c[0].govde) bozuk('kilitli sayı ağa gitti');
-  else tamam('kilitli sayı gönderilmedi');
+  if (!c.length || c[0].govde.p_sayfa_limiti !== 5) bozuk(`gönderimli ödevde 3 → 5 gitmedi: ${c[0]?.govde.p_sayfa_limiti}`);
+  else tamam('gönderim varken 3 → 5: `p_sayfa_limiti: 5` gönderildi');
   await b.close();
 }
 {
   const { b, p } = await kur({ rol: 'ogretmen', detaySinir: 3, detayZorunlu: true, gonderimSayisi: 0 }, '/ogretmen/odevler/a1');
   await bekle(p);
-  await p.getByLabel(/Ödevin sayfa sayısı/).fill('5');
+  if ((await metin(p)).includes('gönderim yapıldı')) bozuk('gönderimsiz ödevde gönderim uyarısı çıktı');
   await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
   await bekle(p, 800);
   const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
-  if (!c.length || c[0].govde.p_sayfa_limiti !== 5) bozuk('gönderimsiz ödevde değişen sayı gönderilmedi');
-  else tamam('gönderim yokken 3 → 5: `p_sayfa_limiti: 5` gönderildi');
+  if (!c.length || 'p_sayfa_limiti' in c[0].govde) bozuk('değişmeyen sayı ağa gitti');
+  else tamam('yeni ödevde sayı değişmediyse gönderilmiyor');
   await b.close();
 }
 for (const [detaySinir, beklenen] of [[3, 3], [undefined, 1]]) {
   const { b, p } = await kur({ rol: 'ogretmen', detaySinir }, '/ogretmen/odevler/a1');
   await bekle(p);
   const m = await metin(p);
+  const k = p.getByLabel(/Ödevin sayfa sayısı/);
   if (!m.includes('önceki düzende') || !m.includes(`en fazla\n${beklenen}\nsayfa`) && !m.includes(`en fazla ${beklenen} sayfa`)
-      || (await p.getByLabel(/Ödevin sayfa sayısı/).count()) || /tek görsel/.test(m)) {
-    bozuk(`eski ödev (${detaySinir}) notu yanlış`);
-  } else tamam(`eski ödev (sınır ${detaySinir ?? 'yok'}) → "önceki düzende: en fazla ${beklenen} sayfa", kutu yok`);
+      || !m.includes('Kaydettiğinizde') || !(await k.count()) || (await k.inputValue()) !== String(beklenen)
+      || /tek görsel/.test(m)) {
+    bozuk(`eski ödev (${detaySinir}) notu ya da kutusu yanlış`);
+  } else tamam(`eski ödev (sınır ${detaySinir ?? 'yok'}) → not + kutuda ${beklenen}`);
   await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
   await bekle(p, 800);
   const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
-  if (!c.length || 'p_sayfa_limiti' in c[0].govde) bozuk('eski ödevin sınırı ağa gitti');
+  if (!c.length || c[0].govde.p_sayfa_limiti !== beklenen) bozuk(`eski ödev kaydedilince sayı gitmedi: ${c[0]?.govde.p_sayfa_limiti}`);
+  else tamam(`eski ödev kaydedilince \`p_sayfa_limiti: ${beklenen}\` gitti (yeni kurala geçiş)`);
   await b.close();
 }
 
