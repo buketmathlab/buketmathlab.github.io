@@ -6412,3 +6412,23 @@ değişmeyecek, eksikler ayrı bir aydınlatma metninde tamamlanacak.
   - Chromium denetimleri: `anket-denetimi` A1–A7, `aydinlatma-denetimi`
     K1–K5.
   - Vitest: soru sayıları ve aydınlatma metninin içeriği.
+
+## 0077 — Anket sonuçlarında alt sınır yok
+
+Öğretmenin kararı: "Biz toplamda 4 öğretmeniz… alt sınır olmasın. Bir
+kişi bile yorum yazsa gösterilsin. Öğrenci ve velilerde de aynı şey
+olsun." 0076'nın 5 yanıt eşiğiyle öğretmen anketi hiç görünmezdi.
+
+- Değişen tek fonksiyon `anket_sonuclari` (0076 kopyası, eşik 1). Tek yanıt
+  da dağılımıyla ve görüşüyle gösteriliyor; yanıtsız grupta "Henüz yanıt
+  yok" yazıyor.
+- Yanıt tarafındaki anonimlik aynen duruyor: yanıtta kimlik ve saat yok,
+  katılım tablosunda tuzlanmış özet var.
+- Bilinen sonuç öğretmene söylendi: küçük grupta yanıtlayan kişi tahmin
+  edilebilir.
+- Testler:
+  - `anket_testleri.sql` 5. grup: tek yanıtta dağılım ve görüş var,
+    yanıtsız grup boş.
+  - Mutasyon kanıtı: eşik 5'e geri alınınca test düşüyor.
+  - `anket-denetimi` A5: tek öğretmen yanıtı görünüyor, alt sınır
+    yazısı yok.

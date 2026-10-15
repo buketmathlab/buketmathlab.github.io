@@ -93,7 +93,7 @@ export function ProjeRaporu() {
         </AsyncBoundary>
       )}
 
-      {/* 0076: paydaş görüşleri — isimsiz anket, n ≥ 5 eşiğiyle. */}
+      {/* 0076: paydaş görüşleri — isimsiz anket; 0077: alt sınır yok. */}
       <section className="sk-rapor-bolum mt-6">
         <h2 className="mb-3 text-[20px] text-ink">Paydaş görüşleri</h2>
         <AnketSonuclari />

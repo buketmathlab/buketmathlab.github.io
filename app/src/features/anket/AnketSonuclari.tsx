@@ -21,9 +21,9 @@ function ortalama5(v: number | string | null): string | null {
  * PAYDAŞ GÖRÜŞLERİ (0076) — Proje raporunun bölümü; sahip ve müdür.
  *
  * Her madde için 1–5 dağılımı METİN olarak yazılı (n ve yüzde); çubuk onun
- * görsel karşılığı. Grup başına yanıt sayısı eşiğin (5) altındaysa sunucu
- * dağılım göndermiyor ve burada "henüz yeterli yanıt yok" yazıyor —
- * küçük grupta ortalama bir kişiyi işaret ederdi.
+ * görsel karşılığı. 0077: ALT SINIR YOK (öğretmenin kararı: okulda 4
+ * öğretmen var, eşik 5 olsaydı öğretmen anketi hiç görünmezdi); tek yanıt
+ * da gösteriliyor, yanıtsız grupta "Henüz yanıt yok".
  *
  * `yonetim`: yalnız sahipte "Anketi aç / kapat" düğmesi (sunucuda
  * `_yonetici`).
@@ -68,8 +68,8 @@ export function AnketSonuclari({ yonetim = false }: { yonetim?: boolean }) {
         <div className="min-w-0">
           <p className="text-[15px] font-semibold text-ink">{a.baslik}</p>
           <p className="text-[13px] text-muted">
-            {a.acik ? 'Açık — panolarda davet görünüyor.' : 'Kapalı.'} İsimsiz; bir grupta en az{' '}
-            {a.esik} yanıt olmadan sonuç gösterilmez.
+            {a.acik ? 'Açık — panolarda davet görünüyor.' : 'Kapalı.'} İsimsiz; yanıtlar kimlikle
+            birlikte saklanmaz.
           </p>
         </div>
         {yonetim && (
@@ -93,9 +93,7 @@ export function AnketSonuclari({ yonetim = false }: { yonetim?: boolean }) {
             </span>
           </h3>
           {!g.yeterli ? (
-            <p className="mt-1 text-[14px] text-muted">
-              Henüz yeterli yanıt yok (en az {a.esik}). Sonuçlar eşik aşılınca görünür.
-            </p>
+            <p className="mt-1 text-[14px] text-muted">Henüz yanıt yok.</p>
           ) : (
             <ol className="mt-3 flex flex-col gap-3">
               {g.maddeler.map((m, i) => {

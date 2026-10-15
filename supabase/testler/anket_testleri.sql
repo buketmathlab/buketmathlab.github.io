@@ -1,13 +1,14 @@
 -- =============================================================================
--- SEKİZ — 0076 ANONİM ANKET TESTLERİ
+-- SEKİZ — 0076/0077 ANONİM ANKET TESTLERİ
 --
 --  1. Kapalıyken: durum "açık değil", yanıt reddediliyor.
 --  2. Yanıt: doğrulama (eksik madde, aralık dışı, 300+ karakter); tek seferlik.
 --  3. ANONİMLİK: yanıt satırında kimlik ve saat yok; özet kimliği taşımıyor.
 --  4. Kim: onamsız veli reddediliyor; müdür yanıtlayamıyor; deneme hesabı
 --     yanıtlıyor ama KAYIT YOK.
---  5. Sonuçlar: sahip ve müdür görür, öğretmen/öğrenci görmez; n < 5 ise
---     dağılım ve görüş YOK; n ≥ 5 ise dağılım doğru.
+--  5. Sonuçlar: sahip ve müdür görür, öğretmen/öğrenci görmez. 0077: ALT
+--     SINIR YOK — tek yanıtta da dağılım ve görüş görünüyor; dağılım doğru;
+--     yanıtı olmayan grup "yeterli değil" ve boş.
 -- =============================================================================
 \set ON_ERROR_STOP on
 
@@ -121,7 +122,7 @@ begin
   raise notice '    onamsız veli ve müdür reddedildi; deneme kaydedilmedi: OK';
 
   -- ===========================================================================
-  raise notice '--- 5. Sonuçlar ve eşik ---';
+  raise notice '--- 5. Sonuçlar (0077: alt sınır yok) ---';
   begin perform public.anket_sonuclari(jo);
     raise exception '5a: ÖĞRETMEN SONUÇLARI GÖRDÜ';
   exception when insufficient_privilege then null; end;
@@ -131,9 +132,18 @@ begin
   select g into ogr from jsonb_array_elements(public.anket_sonuclari(jm)) a,
          jsonb_array_elements(a->'gruplar') g
    where a->>'anket' = 'test-anket' and g->>'rol' = 'ogrenci';
-  if (ogr->>'yeterli')::boolean or jsonb_array_length(ogr->'maddeler') <> 0
-     or jsonb_array_length(ogr->'gorusler') <> 0 or (ogr->>'yanit')::int <> 1 then
-    raise exception '5c: n<5 iken dağılım ya da görüş gösterildi: %', ogr;
+  -- TEK yanıt: dağılım ve görüş görünmeli (öğretmenin kararı: 4 öğretmenli
+  -- okulda eşik 5 olsaydı öğretmen anketi hiç görünmezdi).
+  if not (ogr->>'yeterli')::boolean or jsonb_array_length(ogr->'maddeler') <> 7
+     or ogr->'gorusler' <> '["Çok iyi"]'::jsonb or (ogr->>'yanit')::int <> 1
+     or ogr->'maddeler'->0->'dagilim' <> '[0,0,0,0,1]'::jsonb then
+    raise exception '5c: tek yanıtta sonuç gösterilmedi: %', ogr;
+  end if;
+  select g into ogr from jsonb_array_elements(public.anket_sonuclari(jm)) a,
+         jsonb_array_elements(a->'gruplar') g
+   where a->>'anket' = 'test-anket' and g->>'rol' = 'ogretmen';
+  if (ogr->>'yeterli')::boolean or jsonb_array_length(ogr->'maddeler') <> 0 then
+    raise exception '5c: yanıtsız grupta sonuç var: %', ogr;
   end if;
   for i in 2 .. 5 loop
     perform public.anket_yanitla(tok[i], jsonb_build_object('m1', i, 'm2',3,'m3',3,'m4',3,'m5',3,'m6',3,'m7',3));
@@ -146,9 +156,9 @@ begin
   if not (ogr->>'yeterli')::boolean or dag <> '[0,1,1,1,2]'::jsonb
      or (ogr->'maddeler'->0->>'ortalama')::numeric <> 3.80
      or (ogr->>'katilim')::int <> 5 or ogr->'gorusler' <> '["Çok iyi"]'::jsonb then
-    raise exception '5d: n≥5 sonuçları yanlış: %', ogr;
+    raise exception '5d: beş yanıtta sonuçlar yanlış: %', ogr;
   end if;
-  raise notice '    yalnız sahip ve müdür; n<5 gizli; n≥5 dağılım doğru: OK';
+  raise notice '    yalnız sahip ve müdür; tek yanıt da görünüyor; dağılım doğru: OK';
 
   -- Temizlik
   delete from public.anketler where kod = 'test-anket';
