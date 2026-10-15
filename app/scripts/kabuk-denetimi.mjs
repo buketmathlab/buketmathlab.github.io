@@ -584,6 +584,59 @@ for (const w of [360, 768, 1280]) {
       `${o.gorunur} görünür bağlantı`);
 }
 
+// ---------------------------------------------------------------------------
+// 7 — YAN MENÜDE ÖĞRETMENLER, AYARLAR, ÇIKIŞ YUKARIDA MI
+//
+// Öğretmenin isteği: "Öğretmenler, ayarlar, çıkış çok altlarda kalıyor."
+// Grup `mt-auto` ile yan menünün dibine itiliyordu; yan menü içerikle aynı
+// boya uzadığı için UZUN bir sayfada üçü de sayfanın en altına düşüyordu.
+// Ölçüm bu yüzden içeriği bilerek uzatıyor (3000 px'lik blok): kısa bir
+// Genel sayfasında kusur görünmezdi.
+// ---------------------------------------------------------------------------
+console.log('\n7 — YAN MENÜ: ÖĞRETMENLER / AYARLAR / ÇIKIŞ SEKMELERİN ALTINDA (1280 × 800)');
+{
+  const s = await tarayici.newPage({ viewport: { width: 1280, height: 800 } });
+  await s.route('**/rest/v1/rpc/*', (r) => {
+    const uc = r.request().url().split('/').pop().split('?')[0];
+    const govde =
+      uc === 'ben_kimim'
+        ? { id: 's1', ad: 'Buket Topuzoğlu', sahip: true, vekalet: false, vekil: null }
+      : uc === 'ogretmen_panosu' ? PANO_OZET
+      : {};
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(govde) });
+  });
+  await s.addInitScript((o) => localStorage.setItem('sekiz_oturum', JSON.stringify(o)),
+    OTURUM.ogretmen());
+  await s.goto(KOK + '/ogretmen', { waitUntil: 'networkidle' });
+  await s.waitForTimeout(800);
+  const o = await s.evaluate(() => {
+    const uzun = document.createElement('div');
+    uzun.style.height = '3000px';
+    document.querySelector('main').append(uzun);
+    const aside = document.querySelector('aside');
+    const bul = (sec, metin) => [...aside.querySelectorAll(sec)]
+      .find((e) => e.textContent.trim() === metin)?.getBoundingClientRect();
+    const sekmeler = [...aside.querySelectorAll('a')].filter((e) => /Mesajlar/.test(e.textContent));
+    const sonSekme = sekmeler[0]?.getBoundingClientRect();
+    return {
+      sayfa: document.documentElement.scrollHeight,
+      sonSekmeAlt: sonSekme ? Math.round(sonSekme.bottom) : null,
+      ogel: ['Öğretmenler', 'Ayarlar', 'Çıkış'].map((m) => {
+        const r = bul(m === 'Çıkış' ? 'button' : 'a', m);
+        return r ? { m, ust: Math.round(r.top), alt: Math.round(r.bottom), boy: Math.round(r.height) } : { m };
+      }),
+    };
+  });
+  await s.close();
+  olc('içerik uzun (ölçüm anlamlı)', o.sayfa > 2000, `${o.sayfa} px`);
+  for (const e of o.ogel) {
+    olc(`"${e.m}" kaydırmadan görünüyor`, e.alt !== undefined && e.alt <= 800, `alt kenar ${e.alt} px`);
+    olc(`"${e.m}" sekmelerin hemen altında`, e.ust !== undefined && o.sonSekmeAlt !== null
+        && e.ust - o.sonSekmeAlt < 200, `son sekmeden ${e.ust - o.sonSekmeAlt} px aşağıda`);
+    olc(`"${e.m}" 44 px+`, e.boy >= 44, `${e.boy} px`);
+  }
+}
+
 await tarayici.close();
 console.log(`\n--- GEÇEN: ${gecen}   KALAN: ${kalan} ---`);
 process.exit(kalan === 0 ? 0 : 1);

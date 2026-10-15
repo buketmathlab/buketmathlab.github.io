@@ -6541,3 +6541,30 @@ Testler ve denetimler:
 - `kardes-yayma` 4. bölümdeki önceden kalma yanlış alarm düzeltildi. Sayfa
   metninde "uygula" aranıyordu; geç teslim seçimindeki "Kural sunucuda
   uygulanır" cümlesi bu aramayı yanıltıyordu. Artık düğmeye bakılıyor.
+
+## Yan menü: Öğretmenler, Ayarlar, Çıkış sekmelerin altında (istemci)
+
+Öğretmen: "Öğretmenler, ayarlar, çıkış çok altlarda kalıyor."
+
+**Neden aşağıdaydı?** Geniş ekranda (`lg`) bu grup `mt-auto` ile yan
+menünün dibine itiliyordu. Yan menü içerikle aynı boya uzuyor. Uzun bir
+sayfada üç bağlantı sayfanın en altına düşüyordu; ölçümde 3600 px'lik
+sayfada 3500 px'in altındaydı.
+
+**Ne değişti?**
+- Grup artık sekmelerin hemen altında, ince bir ayraçla.
+- Ayarlar bağlantısı da 44 px oldu; önceden 36 px civarındaydı.
+- Dar ekranda bir şey değişmedi: Çıkış üst çubukta, Ayarlar ve
+  Öğretmenler Genel sayfasında.
+
+**Denetim:** `kabuk-denetimi` 7. grup. İçerik 3000 px uzatılıyor, ölçüm
+1280×800'de yapılıyor. Ölçülenler:
+- üç bağlantı kaydırmadan görünüyor;
+- son sekmeden en fazla 200 px aşağıda;
+- 44 px+.
+
+Kusur provası: `mt-auto` geri konunca 6 ölçüm kırmızı.
+
+**Ayrıca:** onam ekranındaki "KVKK aydınlatma metnini" bağlantısı 44 px
+yapıldı. Bağlantı 40 px kalıyordu ve `onam-denetimi` 9. grup ana dalda da
+kırmızıydı.
