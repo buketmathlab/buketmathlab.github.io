@@ -195,6 +195,19 @@ export async function belgeSatirlari(belge: PdfBelgesi): Promise<string[]> {
 }
 
 /**
+ * PDF'in sayfa sayısı (0078: ödevin sayfa sayısı soru PDF'inden gelir).
+ * Okunamazsa null — öğretmen sayıyı elle yazar; bir kolaylığın başarısızlığı
+ * ödev oluşturmayı engellemez.
+ */
+export async function pdfSayfaSayisi(dosya: File): Promise<number | null> {
+  try {
+    return await pdfIleCalis(dosya, async (belge) => belge.numPages);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * PDF dosyasını satırlara çevirir.
  *
  * @throws Okunamayan, şifreli ya da bozuk dosyada Türkçe, eyleme dönük hata.

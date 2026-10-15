@@ -17,7 +17,7 @@ import {
   odevDosyaYolu,
   dosyayiDenetle,
 } from '@/services/dosya';
-import { pdfSatirlariniOku } from '@/services/pdf-metin';
+import { pdfSatirlariniOku, pdfSayfaSayisi } from '@/services/pdf-metin';
 import { anahtarOku } from '@/services/anahtar-oku';
 import { anahtarFarki, anahtarlariBirlestir, type Cikarim } from '@/lib/cevap-anahtari';
 import { YukluDosya } from './YukluDosya';
@@ -25,8 +25,8 @@ import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { KonuAtama } from './KonuAtama';
 import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
-import { SayfaSiniriSecimi } from './SayfaSiniriSecimi';
-import { sayfaSiniriniOku } from '@/lib/cozum-sayfalari';
+import { SayfaSayisi } from './SayfaSayisi';
+import { EN_FAZLA_SAYFA, sayfaSayisiHatasi, sayfaSiniriniOku } from '@/lib/cozum-sayfalari';
 import { OdevFormAlanlari, type OdevFormDegerleri } from './OdevFormAlanlari';
 import { KardeslereYayma } from './KardeslereYayma';
 import { SoruIptali, type SubeRaporu } from './SoruIptali';
@@ -62,8 +62,10 @@ type OdevDetay = {
    * yayma kartı hiç çizilmez.
    */
   kardes_detay?: KardesDetay[] | null;
-  /** Öğrencinin yükleyebileceği görsel sayısı (0054). 0054 çalıştırılmadıysa gelmez → 1. */
+  /** Ödevin sayfa sayısı (0054). 0054 çalıştırılmadıysa gelmez → 1. */
   sayfa_limiti?: number;
+  /** Her sayfa zorunlu mu (0078). Gelmezse ya da false ise eski kural. */
+  tum_sayfalar?: boolean;
 };
 
 type PuanDegisimi = { ogrenci: string; eski_puan: number | null; yeni_puan: number };
@@ -95,7 +97,11 @@ export function OdevDuzenle() {
     sonSecenek: 'E',
   });
   const [gecTeslim, setGecTeslim] = useState(true);
-  const [sayfaSiniri, setSayfaSiniri] = useState(1);
+  // ÖDEVİN SAYFA SAYISI (0078) — yalnız her sayfası zorunlu ödevde
+  // düzenleniyor; eski ödevde yalnız bilgi olarak yazıyor.
+  const [sayfaSayisi, setSayfaSayisi] = useState('');
+  const [pdfSayfa, setPdfSayfa] = useState<number | null>(null);
+  const [sayfaHatasi, setSayfaHatasi] = useState<string | null>(null);
   const [anahtar, setAnahtar] = useState<Record<number, string>>({});
   const [konular, setKonular] = useState<Konular>({});
   const [pdfOzet, setPdfOzet] = useState<PdfOzeti | null>(null);
@@ -141,7 +147,7 @@ export function OdevDuzenle() {
       sonSecenek: detay.sik_sayisi === 4 ? 'D' : 'E',
     });
     setGecTeslim(detay.gec_teslim);
-    setSayfaSiniri(sayfaSiniriniOku(detay.sayfa_limiti));
+    setSayfaSayisi(String(sayfaSiniriniOku(detay.sayfa_limiti)));
     const a: Record<number, string> = {};
     for (const [k, v] of Object.entries(detay.cevap_anahtari ?? {})) {
       const n = Number(k);
@@ -163,6 +169,15 @@ export function OdevDuzenle() {
    * engellemez; öneri kutusu çıkmaz, ekran bugünkü gibi çalışır.
    */
   async function odevPdfiniOku(dosya: File) {
+    // Yeni soru PDF'i: sayfa sayısı ÖNERİLİYOR (gönderim yoksa kutuya
+    // yazılıyor). Gönderim varken sayı kilitli; sunucu da reddediyor.
+    void pdfSayfaSayisi(dosya).then((sayi) => {
+      setPdfSayfa(sayi);
+      if (sayi !== null && detay?.tum_sayfalar && (detay.gonderim_sayisi ?? 0) === 0) {
+        setSayfaSayisi(String(Math.min(sayi, EN_FAZLA_SAYFA)));
+        setSayfaHatasi(null);
+      }
+    });
     try {
       setPdfOzet(odevPdfOzeti(await pdfSatirlariniOku(dosya)));
     } catch {
@@ -231,6 +246,14 @@ export function OdevDuzenle() {
 
   async function kaydet() {
     if (!detay) return;
+    // 0078: sayfa sayısı dosyalar yüklenmeden ÖNCE denetleniyor.
+    if (detay?.tum_sayfalar) {
+      const sorun = sayfaSayisiHatasi(sayfaSayisi);
+      if (sorun) {
+        setSayfaHatasi(sorun);
+        return;
+      }
+    }
     setKaydediyor(true);
     setDegisenler(null);
     try {
@@ -246,7 +269,11 @@ export function OdevDuzenle() {
         anahtarYolu = await dosyaYukle(yeniAnahtarPdf, odevDosyaYolu('anahtar', yeniAnahtarPdf.name), ODEV_PDF_EN_BUYUK);
       }
 
-      const sinirDegisti = sayfaSiniri !== sayfaSiniriniOku(detay.sayfa_limiti);
+      // 0078: yalnız her sayfası zorunlu ödevde ve DEĞİŞTİYSE gönderiliyor
+      // (null sunucuda "dokunma"). Eski ödevin sınırına dokunulmuyor.
+      const zorunluOdev = detay.tum_sayfalar === true;
+      const sinirDegisti =
+        zorunluOdev && Number(sayfaSayisi) !== sayfaSiniriniOku(detay.sayfa_limiti);
       const sonuc = await rpc<{ yeniden_puanlanan: PuanDegisimi[] }>('odev_guncelle', {
         p_token: oturum?.token,
         p_id: detay.id,
@@ -263,22 +290,7 @@ export function OdevDuzenle() {
         // BOŞ NESNE GÖNDERİLİYOR, null DEĞİL: sunucuda null "değiştirme"
         // demek. Öğretmen bütün konuları sildiyse silme kaydedilsin.
         p_konular: testMi ? sunucuyaHazirla(konular, n) : null,
-        // YALNIZ DEĞİŞTİYSE (0054). Sunucuda null "dokunma" demek; ayrıca
-        // 0054 çalıştırılmamış bir veritabanı bilinmeyen parametreyi
-        // tanımaz ve HER kaydetme düşerdi. Değişmeyen sınır hiç gitmiyor.
-        ...(sinirDegisti ? { p_sayfa_limiti: sayfaSiniri } : {}),
-      }).catch((e: unknown) => {
-        if (
-          sinirDegisti &&
-          e instanceof Error &&
-          /could not find the function|schema cache/i.test(e.message)
-        ) {
-          throw new Error(
-            'Birden fazla sayfa bu sistemde henüz açılmadı. ' +
-              'Sayfa sınırını 1 bırakarak kaydedebilirsiniz.',
-          );
-        }
-        throw e;
+        ...(sinirDegisti ? { p_sayfa_limiti: Number(sayfaSayisi) } : {}),
       });
 
       const degisti = sonuc.yeniden_puanlanan ?? [];
@@ -440,13 +452,6 @@ export function OdevDuzenle() {
                 tur={detay.tur}
               />
 
-              <SayfaSiniriSecimi deger={sayfaSiniri} onDegis={setSayfaSiniri} />
-              {sayfaSiniri < sayfaSiniriniOku(detay.sayfa_limiti) && detay.gonderim_sayisi > 0 && (
-                <p className="-mt-2 mb-4 text-[13px] text-muted">
-                  Sınırı düşürmek yapılmış gönderimleri değiştirmez; yalnız bundan sonra
-                  gönderenleri bağlar.
-                </p>
-              )}
               <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 
               <YukluDosya
@@ -462,9 +467,31 @@ export function OdevDuzenle() {
                   if (sorun) return bildir(sorun, 'hata');
                   setYeniOdevPdf(f);
                   if (f) void odevPdfiniOku(f);
-                  else setPdfOzet(null);
+                  else {
+                    setPdfOzet(null);
+                    setPdfSayfa(null);
+                  }
                 }}
               />
+
+              {detay.tum_sayfalar ? (
+                <SayfaSayisi
+                  deger={sayfaSayisi}
+                  onDegis={(v) => {
+                    setSayfaSayisi(v);
+                    setSayfaHatasi(null);
+                  }}
+                  pdfSayfa={pdfSayfa}
+                  hata={sayfaHatasi}
+                  kilitli={(detay.gonderim_sayisi ?? 0) > 0}
+                />
+              ) : (
+                <p className="mb-4 rounded-sk-sm bg-line-soft p-3 text-[13px] text-muted">
+                  Bu ödev önceki düzende verildi: öğrenciler en fazla{' '}
+                  <span className="sk-sayi">{sayfaSiniriniOku(detay.sayfa_limiti)}</span> sayfa
+                  gönderebilir. Yeni ödevlerde öğrenciler ödevin her sayfasını göndermek zorundadır.
+                </p>
+              )}
 
               {pdfOzet && (
                 <PdfOnerileri

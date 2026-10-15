@@ -304,8 +304,8 @@ console.log('\n5. Metindeki iddialar');
    * Yani puanlamayı kimin yaptığı sayfada yazılı ve kilitli. Kalkan tek
    * şey, testin SABİT KURALLARLA puanlandığının yazılı olması. */
   bak(
-    'çözüm fotoğrafının zorunlu olduğu yazıyor',
-    /fotoğraf yüklenmeden teslim tamamlanmaz/.test(metin),
+    'çözüm fotoğrafının zorunlu olduğu yazıyor (0078: her sayfa)',
+    /eksik sayfayla teslim tamamlanmaz/.test(metin),
   );
   /* Bu bir süsleme değil, ÖLÇÜLMÜŞ bir sınır: `kendi_karnem` ve
    * `veli_paneli` sınıf ortalamasını, sıralamayı ve başka öğrencinin

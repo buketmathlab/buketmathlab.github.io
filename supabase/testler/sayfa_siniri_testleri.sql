@@ -98,6 +98,13 @@ begin
   v_yabanci := (r ->> 'id')::uuid;
   perform public.odev_yayinla(t_ogretmen, v_yabanci);
 
+  -- 0078: bu dosya 0054'ün kuralını (en az 1, en fazla sınır) ölçüyor.
+  -- 0078'den sonra oluşturulan ödev her sayfası zorunlu doğuyor; buradaki
+  -- ödevler 0078 öncesi ödevleri taklit etsin. Yeni kural:
+  -- sayfa_zorunlu_testleri.sql.
+  update public.odevler set tum_sayfalar = false
+   where id in (v_bir, v_uc, v_taslak, v_yabanci);
+
   ------------------------------------------------------------------
   raise notice '--- 1. VARSAYILAN 1 — öğretmen, öğrenci ve tablo aynı şeyi söylüyor ---';
   if (select sayfa_limiti from public.odevler where id = v_bir) <> 1 then
@@ -168,7 +175,7 @@ begin
   ------------------------------------------------------------------
   raise notice '--- 6. Uydurma ek yollar reddediliyor ---';
   if public.dosya_erisim_izni(t_ali, 'cozum/' || v_uc || '/' || v_ali || '-1.jpg')    -- 1. sayfanın ikinci yazımı
-     or public.dosya_erisim_izni(t_ali, 'cozum/' || v_uc || '/' || v_ali || '-9.jpg') -- 8'in ötesi
+     or public.dosya_erisim_izni(t_ali, 'cozum/' || v_uc || '/' || v_ali || '-41.jpg') -- 40'ın ötesi (0078)
      or public.dosya_erisim_izni(t_ali, 'cozum/' || v_uc || '/' || v_ali || '-10.jpg')
      or public.dosya_erisim_izni(t_ali, 'cozum/' || v_uc || '/' || v_ali || '-2.exe')
      or public.dosya_erisim_izni(t_ali, 'cozum/' || v_uc || '/' || v_ali || '-2-3.jpg')
@@ -338,8 +345,8 @@ begin
   raise notice '    başka sınıf, veli, öğretmen 42501; taslak P0002: OK';
 
   ------------------------------------------------------------------
-  raise notice '--- 15. Sınır 1–8 dışı reddediliyor ---';
-  foreach n in array array[0, 9, -1] loop
+  raise notice '--- 15. Sınır 1–40 dışı reddediliyor (0078: 8 → 40) ---';
+  foreach n in array array[0, 41, -1] loop
     begin
       perform public.odev_olustur(p_token => t_ogretmen, p_baslik => 'X',
         p_aciklama => null, p_sinif_id => v_sinif, p_tur => 'acik',
@@ -351,11 +358,11 @@ begin
   begin
     perform public.odev_guncelle(p_token => t_ogretmen, p_id => v_uc, p_baslik => 'Üç sayfa',
       p_aciklama => null, p_sinif_id => v_sinif, p_son_tarih => current_date + 5,
-      p_sayfa_limiti => 9::smallint);
-    raise exception 'HATA: güncellemede 9 sayfa kabul edildi!';
+      p_sayfa_limiti => 41::smallint);
+    raise exception 'HATA: güncellemede 41 sayfa kabul edildi!';
   exception when invalid_parameter_value then null;
   end;
-  raise notice '    0, 9, -1 oluşturmada; 9 güncellemede reddedildi: OK';
+  raise notice '    0, 41, -1 oluşturmada; 41 güncellemede reddedildi: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 16. Güncelleme: NULL = DOKUNMA; düşürmek eski gönderime dokunmuyor ---';
@@ -418,8 +425,8 @@ begin
   ------------------------------------------------------------------
   raise notice '--- 18. Tablo kısıtları — uçları atlayan bir yazım da düşüyor ---';
   begin
-    update public.odevler set sayfa_limiti = 9 where id = v_bir;
-    raise exception 'HATA: tablo 9 sayfa sınırını kabul etti!';
+    update public.odevler set sayfa_limiti = 41 where id = v_bir;
+    raise exception 'HATA: tablo 41 sayfa sınırını kabul etti!';
   exception when check_violation then null;
   end;
   begin
@@ -430,12 +437,12 @@ begin
   end;
   begin
     update public.gonderimler
-       set ek_sayfa_yollari = array['a','b','c','d','e','f','g','h']
+       set ek_sayfa_yollari = array_fill('a'::text, array[40])
      where odev_id = v_bir and ogrenci_id = v_ali;
-    raise exception 'HATA: tablo 8 ek sayfayı (toplam 9) kabul etti!';
+    raise exception 'HATA: tablo 40 ek sayfayı (toplam 41) kabul etti!';
   exception when check_violation then null;
   end;
-  raise notice '    9 sınır, boş dizi ve 8 ek sayfa şemada da kilitli: OK';
+  raise notice '    41 sınır, boş dizi ve 40 ek sayfa şemada da kilitli: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 19. ESKİ İMZALAR DÜŞTÜ (0007 tuzağı), yenileri anon''a açık ---';

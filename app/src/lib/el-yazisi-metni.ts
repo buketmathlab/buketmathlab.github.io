@@ -52,4 +52,4 @@ export const ONAY_EKSIK = 'Ödevi göndermek için onay kutusunu işaretle.';
 /** Yükleme alanının ipucu: iki yol da geçerli. */
 export const YUKLEME_IPUCU =
   'Zorunlu. Kâğıttaki çözümünün fotoğrafı ya da iPad/tablette çözdüğün ' +
-  'sayfalar (görsel veya PDF). Birden çok sayfalı PDF tek görselde birleştirilir.';
+  "sayfalar (görsel veya PDF). Ödevin her sayfasını sırayla ekle; PDF'in her sayfası ayrı bir sayfa sayılır.";

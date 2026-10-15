@@ -6,7 +6,6 @@ import { Dialog } from '@/components/ui/Dialog';
 import { bosCevapUyarisi, type BosCevapUyarisi } from '@/lib/bos-cevap-uyarisi';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Field, Input } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SikListesi, SikSatiri, SIKLAR } from '@/components/ui/SikSatiri';
 import { KonuListesi } from '@/components/ui/KonuListesi';
@@ -21,15 +20,16 @@ import { rpc } from '@/services/supabase';
 import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
 import { KARANLIK_METNI, KaranlikFotografHatasi } from '@/lib/karanlik-fotograf';
-import { birlesimNotu, pdfMi } from '@/lib/pdf-cozum';
+import { pdfMi } from '@/lib/pdf-cozum';
 import { sureDurumu } from '@/lib/son-tarih';
 import { iptalMi, iptalSorulari, numaraListesi } from '@/lib/soru-iptali';
 import {
   cozumSayfaYolu,
+  eksikSayfaMetni,
   oncedenYuklenenMetni,
   sahnedenCikar,
   sahneyeEkle,
-  sayfaSiniriniOku,
+  sayfaKuraliniOku,
   tasmaMetni,
   yarimKalanMetni,
 } from '@/lib/cozum-sayfalari';
@@ -64,13 +64,10 @@ export function OdevTeslim() {
   const git = useNavigate();
 
   const [cevaplar, setCevaplar] = useState<Record<number, string>>({});
-  const [foto, setFoto] = useState<File | null>(null);
   const [fotoHatasi, setFotoHatasi] = useState<string | null>(null);
-  // PDF birleştirildiyse "3 sayfa tek görsele birleştirildi" notu.
-  const [fotoNotu, setFotoNotu] = useState<string | null>(null);
-  const [fotoHazirlaniyor, setFotoHazirlaniyor] = useState(false);
   const [gonderiyor, setGonderiyor] = useState(false);
-  // Çok sayfalı yol (0054) — yalnız sınır > 1 iken kullanılıyor.
+  // Çözüm sayfaları (0054). 0078'den beri TEK YOL: her ödev sayfa sayfa
+  // yükleniyor; tek görsele birleştirme kalktı (öğretmenin isteği).
   const [sayfalar, setSayfalar] = useState<Sayfa[]>([]);
   const [isliyor, setIsliyor] = useState(false);
   // Boş cevap uyarısı açıkken dolu; "Yine de gönder" onu onaylıyor.
@@ -84,21 +81,26 @@ export function OdevTeslim() {
   });
 
   /**
-   * SAYFA SINIRI (0054) — ayrı uç, `ogrenci_odevleri`'ne EKLENMEDİ (aşağıdaki
+   * SAYFA KURALI (0078) — ayrı uç, `ogrenci_odevleri`'ne EKLENMEDİ (aşağıdaki
    * iki ucun gerekçesiyle aynı: 300 satırlık gövdeyi kopyalamamak).
    *
-   * HATASI YUTULUYOR ve sınır 1 sayılıyor: uç kurulmamışsa ya da o an
-   * ulaşılamıyorsa öğrenci bugünkü tek alanı görür. 1 her ödevde geçerli;
-   * bir ayarın okunamaması ödev göndermeyi engellememeli (Part VIII).
+   * `odev_sayfa_kurali` {sayfa, tum_sayfalar} döndürüyor. Eski uç
+   * `odev_sayfa_siniri` yedek: 0078 henüz çalıştırılmamışsa sınır oradan
+   * okunuyor, her sayfa zorunlu sayılmıyor. İkisi de okunamazsa {1, false}
+   * — bir ayarın okunamaması ödev göndermeyi engellememeli (Part VIII).
    */
+  const { veri: hamKural, durum: kuralDurumu } = useVeri<unknown>('odev_sayfa_kurali', {
+    p_token: oturum?.token,
+    p_odev_id: id,
+  });
   const { veri: hamSinir, durum: sinirDurumu } = useVeri<number>('odev_sayfa_siniri', {
     p_token: oturum?.token,
     p_odev_id: id,
   });
-  const sinir = sayfaSiniriniOku(hamSinir);
-  // Sınır gelmeden alan çizilmiyor: önce tek alan gösterip sonra çok sayfalıya
-  // geçmek, öğrencinin o arada seçtiği fotoğrafı ortada bırakırdı.
-  const sinirHazir = sinirDurumu !== 'yukleniyor';
+  const { sayfa: sinir, tumSayfalar: zorunlu } = sayfaKuraliniOku(hamKural, hamSinir);
+  // Kural gelmeden alan çizilmiyor: sayfa sayısı sonradan değişirse
+  // öğrencinin o arada seçtiği sayfalar yanlış sayılırdı.
+  const sinirHazir = kuralDurumu !== 'yukleniyor' && sinirDurumu !== 'yukleniyor';
 
   /**
    * Öğretmenin yazdığı Ewalu cümleleri (0032).
@@ -145,32 +147,6 @@ export function OdevTeslim() {
     void dosya.ac(() => dosyaAdresi(yol));
   }
 
-  async function fotoSecildi(dosya: File) {
-    setFotoHatasi(null);
-    setFotoNotu(null);
-    try {
-      if (pdfMi(dosya)) {
-        // PDF (öğretmenin isteği): cihazda görsele çevriliyor; sayfalar
-        // alt alta TEK görsel. Sunucu yine yalnız görsel görüyor.
-        setFotoHazirlaniyor(true);
-        const { pdfiTekGorsele } = await import('@/services/pdf-gorsel');
-        const { dosya: gorsel, sayfaSayisi } = await pdfiTekGorsele(dosya);
-        setFoto(gorsel);
-        setFotoNotu(birlesimNotu(sayfaSayisi));
-        return;
-      }
-      // Sıkıştırma seçim anında yapılıyor: öğrenci "Gönder"e bastığında
-      // bekleyeceği süre kısalsın ve dosyanın gerçekten okunabildiği
-      // gönderimden önce anlaşılsın.
-      setFoto(await gorseliSikistir(dosya));
-    } catch (e) {
-      setFoto(null);
-      setFotoHatasi(e instanceof Error ? e.message : 'Fotoğraf işlenemedi.');
-    } finally {
-      setFotoHazirlaniyor(false);
-    }
-  }
-
   /**
    * Çok sayfalı seçim (0054). Sıkıştırma SEÇİM ANINDA — tek alanlı yolla
    * aynı gerekçe: "Gönder"de beklenen süre kısalsın, okunamayan dosya
@@ -215,7 +191,7 @@ export function OdevTeslim() {
 
     const sorunlar: string[] = [];
     const disarida = tasan + pdfTasan + (dosyalar.length - alinacak.length);
-    if (disarida > 0) sorunlar.push(tasmaMetni(sinir, disarida));
+    if (disarida > 0) sorunlar.push(tasmaMetni(sinir, disarida, zorunlu));
     if (okunamayan.length > 0) {
       sorunlar.push(`Okunamayan görsel: ${okunamayan.join(', ')}. Başka bir fotoğraf seçebilirsin.`);
     }
@@ -223,12 +199,48 @@ export function OdevTeslim() {
     if (sorunlar.length > 0) setFotoHatasi(sorunlar.join(' '));
   }
 
+  /**
+   * Bir sayfayı YERİNDE değiştirir (0078). Her sayfası zorunlu ödevde sıra
+   * sayfa numarası: yanlış çekilen 3. sayfa çıkarılıp sona eklenseydi 8.
+   * sayfa olurdu. PDF seçilirse yalnız ilk sayfası alınır — tek sayfanın
+   * yerine geçiyor.
+   */
+  async function sayfaDegistir(sira: number, d: File) {
+    setFotoHatasi(null);
+    setIsliyor(true);
+    try {
+      let yeni: File | undefined;
+      if (pdfMi(d)) {
+        const { pdfSayfalariniGorsele } = await import('@/services/pdf-gorsel');
+        yeni = (await pdfSayfalariniGorsele(d, 1)).dosyalar[0];
+      } else {
+        yeni = await gorseliSikistir(d);
+      }
+      if (!yeni) throw new Error('Görsel okunamadı.');
+      const dosya = yeni;
+      setSayfalar((s) => s.map((x, i) => (i === sira ? { id: crypto.randomUUID(), dosya } : x)));
+    } catch (e) {
+      setFotoHatasi(
+        e instanceof KaranlikFotografHatasi
+          ? `${d.name}: ${KARANLIK_METNI}`
+          : `Okunamayan görsel: ${d.name}. Başka bir fotoğraf seçebilirsin.`,
+      );
+    } finally {
+      setIsliyor(false);
+    }
+  }
+
   async function gonder(bosOnaylandi = false) {
     if (!odev || !oturum?.ogrenci) return;
-    // Sınır 1'de bugünkü tek alan; üstünde seçilen sayfalar, sırayla.
-    const dosyalar = sinir > 1 ? sayfalar.map((s) => s.dosya) : foto ? [foto] : [];
+    const dosyalar = sayfalar.map((s) => s.dosya);
     if (dosyalar.length === 0) {
       return setFotoHatasi('Çözüm fotoğrafı olmadan ödev gönderilemez.');
+    }
+    // HER SAYFA ZORUNLU (0078). Sunucu da reddediyor; burada söylemek
+    // öğrenciyi boşuna yüklemeden kurtarıyor. Düğme kapatılmıyor: öğrenci
+    // bastığında neyin eksik olduğunu görsün (el yazısı onayındaki kural).
+    if (zorunlu && dosyalar.length < sinir) {
+      return setFotoHatasi(eksikSayfaMetni(sinir - dosyalar.length));
     }
     // EL YAZISI ONAYI — sunucuya gitmeden. Düğme kapatılmıyor: öğrenci
     // bastığında neyin eksik olduğunu görsün.
@@ -330,10 +342,7 @@ export function OdevTeslim() {
         <OdevIcerigi
           odev={odev}
           cevaplar={cevaplar}
-          foto={foto}
           fotoHatasi={fotoHatasi}
-          fotoNotu={fotoNotu}
-          fotoHazirlaniyor={fotoHazirlaniyor}
           gonderiyor={gonderiyor}
           onCevap={(no, sik) =>
             setCevaplar((c) => {
@@ -343,8 +352,8 @@ export function OdevTeslim() {
               return y;
             })
           }
-          onFoto={fotoSecildi}
           sinir={sinir}
+          zorunlu={zorunlu}
           sinirHazir={sinirHazir}
           sayfalar={sayfalar}
           isliyor={isliyor}
@@ -353,6 +362,7 @@ export function OdevTeslim() {
             setFotoHatasi(null);
             setSayfalar((s) => sahnedenCikar(s, i));
           }}
+          onSayfaDegistir={(i, d) => void sayfaDegistir(i, d)}
           onGonder={() => void gonder()}
           elYazisiOnay={elYazisiOnay}
           onElYazisiOnay={(v) => {
@@ -374,21 +384,20 @@ export function OdevTeslim() {
 type IcerikProps = {
   odev: OgrenciOdev;
   cevaplar: Record<number, string>;
-  foto: File | null;
   fotoHatasi: string | null;
-  fotoNotu: string | null;
-  fotoHazirlaniyor: boolean;
   gonderiyor: boolean;
   onCevap: (no: number, sik: string | null) => void;
-  onFoto: (d: File) => void;
-  /** Öğretmenin seçtiği sayfa sınırı (0054); okunamazsa 1. */
+  /** Ödevin sayfa sayısı (0054/0078); okunamazsa 1. */
   sinir: number;
+  /** Her sayfa zorunlu mu (0078 sonrası ödev). */
+  zorunlu: boolean;
   /** Sınır yanıtı geldi mi (başarılı ya da hatalı). */
   sinirHazir: boolean;
   sayfalar: readonly Sayfa[];
   isliyor: boolean;
   onSayfaEkle: (d: File[]) => void;
   onSayfaCikar: (sira: number) => void;
+  onSayfaDegistir: (sira: number, d: File) => void;
   onGonder: () => void;
   /** Öğrencinin "kendim, el yazımla çözdüm" onayı. */
   elYazisiOnay: boolean;
@@ -406,19 +415,17 @@ type IcerikProps = {
 function OdevIcerigi({
   odev,
   cevaplar,
-  foto,
   fotoHatasi,
-  fotoNotu,
-  fotoHazirlaniyor,
   gonderiyor,
   onCevap,
-  onFoto,
   sinir,
+  zorunlu,
   sinirHazir,
   sayfalar,
   isliyor,
   onSayfaEkle,
   onSayfaCikar,
+  onSayfaDegistir,
   onGonder,
   elYazisiOnay,
   onElYazisiOnay,
@@ -555,57 +562,21 @@ function OdevIcerigi({
             <p className="mt-3 text-[14px] font-semibold text-ink">{EL_YAZISI.KABUL_EDILMEYEN}</p>
           </section>
 
-          {/* SINIR 1 → BUGÜNKÜ TEK ALAN, DOKUNULMADAN (0054). Çok sayfalı
-              seçim yalnız öğretmen sınırı yükselttiğinde çiziliyor. */}
+          {/* ÇÖZÜM SAYFALARI — tek yol (0078). Eski 1 sayfalık ödevde de aynı
+              alan, sınır 1. */}
           {!sinirHazir ? (
             <p className="mb-4 text-[13px] text-muted">Hazırlanıyor…</p>
-          ) : sinir > 1 ? (
+          ) : (
             <SayfaSahnesi
               sayfalar={sayfalar}
               sinir={sinir}
+              zorunlu={zorunlu}
               isliyor={isliyor}
               hata={fotoHatasi}
               onEkle={onSayfaEkle}
               onCikar={onSayfaCikar}
+              onDegistir={onSayfaDegistir}
             />
-          ) : (
-            <>
-              <Field
-                etiket="Çözüm fotoğrafı ya da PDF"
-                ipucu={EL_YAZISI.YUKLEME_IPUCU}
-                zorunlu
-                {...(fotoHatasi ? { hata: fotoHatasi } : {})}
-              >
-                {(k) => (
-                  <Input
-                    {...k}
-                    type="file"
-                    // `capture` BİLİNÇLİ OLARAK YOK: iOS'ta bu öznitelik doğrudan
-                    // kamerayı açar ve galeriyi seçenek olmaktan çıkarır. Öğrenci
-                    // çözümünü çoktan fotoğraflamış olabilir; onu yeniden çekmeye
-                    // zorlamak gereksiz bir engel.
-                    accept="image/*,application/pdf,.pdf"
-                    disabled={fotoHazirlaniyor}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void onFoto(f);
-                    }}
-                  />
-                )}
-              </Field>
-              {fotoHazirlaniyor && (
-                <p className="mb-4 text-[13px] text-muted" role="status">
-                  PDF hazırlanıyor…
-                </p>
-              )}
-              {foto && !fotoHazirlaniyor && (
-                <p className="mb-4 text-[13px] text-success">
-                  {fotoNotu ? 'Çözüm hazır' : 'Fotoğraf hazır'}{' '}
-                  <span className="sk-sayi">({Math.round(foto.size / 1024)} KB)</span>
-                  {fotoNotu && <span className="block text-ink">{fotoNotu}</span>}
-                </p>
-              )}
-            </>
           )}
 
           <p className="mb-4 rounded-sk-sm bg-line-soft p-3 text-[13px] text-muted">

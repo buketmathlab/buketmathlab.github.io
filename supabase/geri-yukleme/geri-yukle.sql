@@ -194,6 +194,18 @@ begin
         from jsonb_array_elements(yedek->'odevler') x), '[]'::jsonb));
   end if;
 
+  -- 0078 ÖNCESİ YEDEK: ödevlerde `tum_sayfalar` anahtarı yok. Aynı sorun
+  -- (NULL, DEFAULT uygulanmaz). false yazılıyor: 0078 öncesindeki her ödev
+  -- eski kuraldaydı (en az 1, en fazla sayfa_limiti).
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'odevler'
+                and column_name = 'tum_sayfalar') then
+    yedek := jsonb_set(yedek, '{odevler}', coalesce((
+      select jsonb_agg(case when x ? 'tum_sayfalar' then x
+                            else x || jsonb_build_object('tum_sayfalar', false) end)
+        from jsonb_array_elements(yedek->'odevler') x), '[]'::jsonb));
+  end if;
+
   if not onayliyorum then
     raise exception E'ONAY GEREKİYOR.\n'
       '  Bu script şu tabloların TAMAMINI siler ve yedekten yazar:\n'

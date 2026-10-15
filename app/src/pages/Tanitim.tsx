@@ -679,7 +679,7 @@ function Ogrenci() {
              ödevleri". Denetim ikisini de ölçüyor. */
           [
             'Teslim Akışı',
-            'Ödevini çözüm fotoğrafıyla teslim eder, fotoğraf yüklenmeden teslim tamamlanmaz.',
+            'Ödevinin her sayfasını çözüm fotoğrafıyla teslim eder; eksik sayfayla teslim tamamlanmaz.',
           ],
           [
             'Cevap Anahtarı',

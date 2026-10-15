@@ -1,36 +1,41 @@
 import { useEffect, useState } from 'react';
 import { Field, Input } from '@/components/ui/Field';
 import { Tag } from '@/components/ui/Tag';
-import { sayfaSayacMetni } from '@/lib/cozum-sayfalari';
+import { HER_SAYFA_GEREKCESI, sayfaIpucuMetni, sayfaSayacMetni } from '@/lib/cozum-sayfalari';
 
 export type Sayfa = { id: string; dosya: File };
 
 type Props = {
   sayfalar: readonly Sayfa[];
   sinir: number;
+  /** Her sayfa zorunlu mu (0078): sayaç eksik sayfayı söyler. */
+  zorunlu: boolean;
   /** Seçilen dosyalar sıkıştırılırken ekleme kapalı. */
   isliyor: boolean;
   hata: string | null;
   onEkle: (dosyalar: File[]) => void;
   onCikar: (sira: number) => void;
+  /** Bir sayfayı YERİNDE değiştirir (0078): sıra bozulmasın. */
+  onDegistir: (sira: number, dosya: File) => void;
 };
 
 /**
- * Çok sayfalı çözüm seçimi (0054) — YALNIZ öğretmen sınırı 1'in üstüne
- * çıkardığında çiziliyor. Sınırı 1 olan ödevde `OdevTeslim` bugünkü tek
- * alanını gösteriyor; bu bileşen hiç devreye girmiyor.
+ * Çözüm sayfaları (0054). 0078'den beri TEK YOL: her ödev burada sayfa
+ * sayfa yükleniyor (tek görsele birleştirme kalktı). Her sayfası zorunlu
+ * ödevde sayaç eksik sayfayı söylüyor ve gerekçe bir kez yazıyor.
  *
  * SIRA = SAYFA NUMARASI. Öğretmen sayfaları öğrencinin eklediği sırayla
  * görüyor; ortadan çıkarılan sayfa numara deliği bırakmıyor (sunucu da
- * ek sayfaları boşluksuz istiyor). Yeniden sıralama bilerek yok: çıkarıp
- * sona eklemek aynı işi görüyor ve telefonda sürükle-bırak hataya açık.
+ * ek sayfaları boşluksuz istiyor). Sürükle-bırak bilerek yok (telefonda
+ * hataya açık); bunun yerine her sayfanın "Değiştir"i var: yanlış çekilen
+ * 3. sayfa yerinde yenilenir, sıra bozulmaz.
  *
  * `capture` YOK — tek alanlı yoldaki gerekçeyle aynı: iOS'ta galeriyi
  * seçenek olmaktan çıkarıyor. `multiple` ile öğrenci hem çoktan çekmiş
  * olduğu fotoğrafları birden seçebiliyor hem de kamerayla tek tek
  * ekleyebiliyor; her seçim listeye EKLENİYOR, üzerine yazmıyor.
  */
-export function SayfaSahnesi({ sayfalar, sinir, isliyor, hata, onEkle, onCikar }: Props) {
+export function SayfaSahnesi({ sayfalar, sinir, zorunlu, isliyor, hata, onEkle, onCikar, onDegistir }: Props) {
   const dolu = sayfalar.length >= sinir;
 
   return (
@@ -47,6 +52,21 @@ export function SayfaSahnesi({ sayfalar, sinir, isliyor, hata, onEkle, onCikar }
                 <span className="text-[13px] font-semibold text-ink">
                   <span className="sk-sayi">{i + 1}</span>. sayfa
                 </span>
+                <label className="flex min-h-[44px] cursor-pointer items-center px-2 text-[13px] font-semibold text-link focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink">
+                  Değiştir
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf,.pdf"
+                    className="sr-only"
+                    aria-label={`${i + 1}. sayfayı değiştir`}
+                    disabled={isliyor}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = '';
+                      if (f) onDegistir(i, f);
+                    }}
+                  />
+                </label>
                 <button
                   type="button"
                   onClick={() => onCikar(i)}
@@ -63,19 +83,24 @@ export function SayfaSahnesi({ sayfalar, sinir, isliyor, hata, onEkle, onCikar }
 
       {/* Sayaç CANLI BÖLGE: ekran okuyucu eklenen/çıkarılan sayfayı duysun. */}
       <p className="mb-2" aria-live="polite">
-        <Tag tur={sayfalar.length === 0 ? 'bilgi' : 'basari'}>
-          <span className="sk-sayi">{sayfaSayacMetni(sayfalar.length, sinir)}</span>
+        <Tag tur={sayfalar.length === 0 ? 'bilgi' : zorunlu && !dolu ? 'uyari' : 'basari'}>
+          <span className="sk-sayi">{sayfaSayacMetni(sayfalar.length, sinir, zorunlu)}</span>
         </Tag>
       </p>
+      {zorunlu && sayfalar.length === 0 && (
+        <p className="mb-2 text-[13px] text-ink">{HER_SAYFA_GEREKCESI}</p>
+      )}
 
       {dolu ? (
         <p className="text-[13px] text-muted">
-          Sınıra ulaştın. Başka bir sayfa eklemek için önce birini çıkar.
+          {zorunlu
+            ? 'Bütün sayfalar eklendi. Bir sayfayı yenilemek istersen “Değiştir”e dokun.'
+            : 'Sınıra ulaştın. Başka bir sayfa eklemek için önce birini çıkar.'}
         </p>
       ) : (
         <Field
-          etiket={sayfalar.length === 0 ? 'Çözüm sayfaları' : 'Sayfa ekle'}
-          ipucu={`Zorunlu, en az bir sayfa. Fotoğraf ya da PDF ekleyebilirsin; PDF'in her sayfası ayrı sayfa olur. Bu ödevde en fazla ${sinir} sayfa gönderebilirsin — sırayla ekle, öğretmenin bu sırayla görecek.`}
+          etiket={sayfalar.length === 0 ? 'Çözüm sayfaları' : `${sayfalar.length + 1}. sayfayı ekle`}
+          ipucu={sayfaIpucuMetni(sinir, zorunlu)}
           zorunlu={sayfalar.length === 0}
           {...(hata ? { hata } : {})}
         >

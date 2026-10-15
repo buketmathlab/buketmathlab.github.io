@@ -19,6 +19,12 @@
  *    Ardından çok sayfalı yol: sınır, sıra, yarıda kalan yükleme ve
  *    "zaten var".
  *
+ * 0078 SONRASI: B bölümü yeni kurala göre güncellendi. Öğrenci ekranında
+ * artık TEK YOL var (sayfa sayfa; tek görsele birleştirme kalktı), yeni
+ * ödevde her sayfa zorunlu, öğretmen sayfa sayısını son adımda yazıyor ya
+ * da soru PDF'inden alıyor. Yeni kuralın ayrıntılı ölçümü:
+ * `sayfa-zorunlu-denetimi.mjs` ve `pdf-cozum-denetimi.mjs`.
+ *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/sayfa-siniri-denetimi.mjs
  */
@@ -418,6 +424,8 @@ const PNG = Buffer.from(
   'base64',
 );
 const gorsel = (ad) => ({ name: ad, mimeType: 'image/png', buffer: PNG });
+/** "Sayfa ekle" alanı; her sayfanın gizli "Değiştir" girişi aria-label taşıyor. */
+const EKLE = 'input[type=file]:not([aria-label])';
 
 const SINIFLAR = [
   { id: 's10u', ad: '10U', seviye: 10, sube: 'U', ozel: false, arsiv: false, ogrenci_sayisi: 24 },
@@ -493,6 +501,12 @@ async function kur(a, yolSon) {
             }],
             dersler: [],
           });
+        case 'odev_sayfa_kurali':
+          if (a.kural === 'yok' || a.kural === undefined) {
+            return json({ code: 'PGRST202',
+              message: 'Could not find the function public.odev_sayfa_kurali in the schema cache' }, 404);
+          }
+          return json(a.kural);
         case 'odev_sayfa_siniri':
           if (a.sinir === 'yok') {
             return json({ code: 'PGRST202',
@@ -511,9 +525,10 @@ async function kur(a, yolSon) {
             id: 'a1', baslik: 'Limit', aciklama: null, tur: 'acik', sinif_id: 's10u', sinif: '10U',
             son_tarih: '2099-12-31', soru_sayisi: null, gec_teslim: true, sik_sayisi: 5,
             cevap_anahtari: {}, konular: null, anahtar_yolu: null, odev_yolu: null,
-            yayinda: true, gonderim_sayisi: 4, kardesler: null,
+            yayinda: true, gonderim_sayisi: a.gonderimSayisi ?? 4, kardesler: null,
           };
           if (a.detaySinir !== undefined) d.sayfa_limiti = a.detaySinir;
+          if (a.detayZorunlu !== undefined) d.tum_sayfalar = a.detayZorunlu;
           return json(d);
         }
         case 'odev_guncelle': return json({ durum: 'tamam', yeniden_puanlanan: [] });
@@ -552,14 +567,13 @@ const onayla = async (p) => { const k = p.getByRole('checkbox', { name: /Bu öde
 const gonderim = async (p) => (await cagrilar(p)).filter((c) => c.ad === 'odev_gonder');
 
 // ---------------------------------------------------------------------------
-console.log('--- B1. Öğrenci, SINIR 1: ekran ve ağ çağrısı 0054 öncesiyle aynı ---');
+console.log('--- B1. Öğrenci, ESKİ 1 sayfalık ödev: tek yol, ağ çağrısı 0054 öncesiyle aynı ---');
 {
   const { b, p } = await kur({ rol: 'ogrenci', sinir: 1 }, `/ogrenci/odev/${ODEV}`);
   const m = await metin(p);
-  if (!m.includes('Çözüm fotoğrafı') || m.includes('sayfa seçildi')) bozuk('tek alan yerine çok sayfalı ekran çizildi');
-  else tamam('bugünkü tek alan çizildi, sayaç yok');
-  if (await p.locator('input[type=file][multiple]').count()) bozuk('tek alanlı yolda `multiple` var');
-  await p.locator('input[type=file]').setInputFiles(gorsel('cozum.png'));
+  if (!m.includes('0 / 1 sayfa seçildi') || /birleştir|tek görsel/i.test(m)) bozuk('eski 1 sayfalık ödevde tek yol çizilmedi');
+  else tamam('tek yol (sayfa sahnesi, sınır 1), birleştirme sözü yok');
+  await p.locator(EKLE).setInputFiles(gorsel('cozum.png'));
   await bekle(p);
   await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
@@ -575,12 +589,12 @@ console.log('--- B1. Öğrenci, SINIR 1: ekran ve ağ çağrısı 0054 öncesiyl
 }
 
 // ---------------------------------------------------------------------------
-console.log('--- B2. Öğrenci, UÇ YOK (0054 çalıştırılmamış): ekran bozulmuyor, sınır 1 ---');
+console.log('--- B2. Öğrenci, UÇLAR YOK: ekran bozulmuyor, sınır 1 ---');
 {
-  const { b, p } = await kur({ rol: 'ogrenci', sinir: 'yok' }, `/ogrenci/odev/${ODEV}`);
+  const { b, p } = await kur({ rol: 'ogrenci', sinir: 'yok', kural: 'yok' }, `/ogrenci/odev/${ODEV}`);
   const m = await metin(p);
-  if (!m.includes('Çözüm fotoğrafı') || !m.includes('Ödevi gönder')) bozuk('uç yokken teslim ekranı çizilmedi');
-  else tamam('uç yok → bugünkü tek alan, hata ekranı yok');
+  if (!m.includes('0 / 1 sayfa seçildi') || !m.includes('Ödevi gönder')) bozuk('uç yokken teslim ekranı çizilmedi');
+  else tamam('uç yok → sınır 1, hata ekranı yok');
   await b.close();
 }
 
@@ -588,20 +602,20 @@ console.log('--- B2. Öğrenci, UÇ YOK (0054 çalıştırılmamış): ekran boz
 console.log('--- B3. Öğrenci, SINIR 3: sınır, çıkarma, sıra ---');
 {
   const { b, p } = await kur({ rol: 'ogrenci', sinir: 3 }, `/ogrenci/odev/${ODEV}`);
-  if (!(await metin(p)).includes('0/3 sayfa seçildi')) bozuk('sayaç çizilmedi');
+  if (!(await metin(p)).includes('0 / 3 sayfa seçildi')) bozuk('sayaç çizilmedi');
   if (!(await p.locator('input[type=file][multiple]').count())) bozuk('çoklu seçim yok');
-  await p.locator('input[type=file]').setInputFiles(['a', 'b', 'c', 'd'].map((x) => gorsel(`${x}.png`)));
+  await p.locator(EKLE).setInputFiles(['a', 'b', 'c', 'd'].map((x) => gorsel(`${x}.png`)));
   await bekle(p, 1200);
   let m = await metin(p);
-  if (!m.includes('3/3 sayfa seçildi') || !m.includes('1 görsel eklenmedi')) {
+  if (!m.includes('3 / 3 sayfa seçildi') || !m.includes('1 görsel eklenmedi')) {
     bozuk('4 görsel seçilince 3 alınıp taşma SÖYLENMEDİ');
   } else tamam('4 seçildi → 3 alındı, "1 görsel eklenmedi" yazıldı');
-  if (await p.locator('input[type=file]').count()) bozuk('sınır doluyken ekleme alanı hâlâ açık');
+  if (await p.locator(EKLE).count()) bozuk('sınır doluyken ekleme alanı hâlâ açık');
   else tamam('sınır doluyken ekleme kapalı');
   await p.getByRole('button', { name: '2. sayfayı çıkar' }).click();
   await bekle(p, 300);
   m = await metin(p);
-  if (!m.includes('2/3 sayfa seçildi') || (await p.getByRole('button', { name: '3. sayfayı çıkar' }).count())) {
+  if (!m.includes('2 / 3 sayfa seçildi') || (await p.getByRole('button', { name: '3. sayfayı çıkar' }).count())) {
     bozuk('çıkarınca yeniden numaralanmadı');
   } else tamam('ortadan çıkarılınca 2 sayfa, boşluksuz numara');
   await onayla(p);
@@ -622,7 +636,7 @@ console.log('--- B3. Öğrenci, SINIR 3: sınır, çıkarma, sıra ---');
 console.log('--- B4. YARIDA KALAN yükleme: gönderim YOK, seçim duruyor ---');
 {
   const { b, p } = await kur({ rol: 'ogrenci', sinir: 3, bozukSayfa: 2 }, `/ogrenci/odev/${ODEV}`);
-  await p.locator('input[type=file]').setInputFiles([gorsel('a.png'), gorsel('b.png')]);
+  await p.locator(EKLE).setInputFiles([gorsel('a.png'), gorsel('b.png')]);
   await bekle(p, 1000);
   await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
@@ -632,7 +646,7 @@ console.log('--- B4. YARIDA KALAN yükleme: gönderim YOK, seçim duruyor ---');
   else tamam('2. sayfa düşünce odev_gonder çağrılmadı');
   if (!m.includes('Yüklenen sayfa: 1/2') || !m.includes('henüz gönderilmedi')) bozuk('yarıda kalma söylenmedi');
   else tamam('"Yüklenen sayfa: 1/2 … henüz gönderilmedi" yazıldı');
-  if (!m.includes('2/3 sayfa seçildi')) bozuk('seçim kayboldu');
+  if (!m.includes('2 / 3 sayfa seçildi')) bozuk('seçim kayboldu');
   else tamam('seçilen görseller duruyor');
   await b.close();
 }
@@ -641,7 +655,7 @@ console.log('--- B4. YARIDA KALAN yükleme: gönderim YOK, seçim duruyor ---');
 console.log('--- B5. "ZATEN VAR": yeniden denemede mevcut dosya kullanılıyor ---');
 {
   const { b, p } = await kur({ rol: 'ogrenci', sinir: 1, zatenVar: true }, `/ogrenci/odev/${ODEV}`);
-  await p.locator('input[type=file]').setInputFiles(gorsel('cozum.png'));
+  await p.locator(EKLE).setInputFiles(gorsel('cozum.png'));
   await bekle(p);
   await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
@@ -655,8 +669,8 @@ console.log('--- B5. "ZATEN VAR": yeniden denemede mevcut dosya kullanılıyor -
 }
 
 // ---------------------------------------------------------------------------
-console.log('--- B6. Öğretmen, OLUŞTUR: varsayılan 1 ağa HİÇ gitmiyor, 3 gidiyor ---');
-for (const sinir of [1, 3]) {
+console.log('--- B6. Öğretmen, OLUŞTUR (0078): sayfa sayısı zorunlu, her zaman gidiyor ---');
+for (const sayi of ['', '3']) {
   const { b, p } = await kur({ rol: 'ogretmen' }, '/ogretmen/odevler/yeni');
   // Seçiciler KESİN: "Son tarih" geç teslim kutusunun ("…son tarihten
   // sonra…") etiketine de uyuyor.
@@ -664,57 +678,60 @@ for (const sinir of [1, 3]) {
   await p.getByText('10U', { exact: true }).click();
   await p.locator('input[type=date]').fill('2099-12-31');
   await p.getByRole('combobox', { name: 'Tür', exact: true }).selectOption('acik');
-  const m = await metin(p);
-  if (!m.includes('tek görsel')) bozuk('varsayılan cümle ("tek görsel") yok');
-  if (sinir !== 1) {
-    await p.getByRole('button', { name: 'Birden fazla sayfaya izin ver' }).click();
-    await p.getByLabel('Sayfa sınırı').selectOption(String(sinir));
-  }
+  if (/tek görsel|birleştir/i.test(await metin(p))) bozuk('oluşturmada birleştirme sözü var');
   await p.getByRole('button', { name: 'Devam' }).click();
+  if (sayi) await p.getByLabel(/Ödevin sayfa sayısı/).fill(sayi);
   await p.getByRole('button', { name: 'Taslağı kaydet' }).click();
   await bekle(p, 1000);
   const c = (await cagrilar(p)).find((x) => x.ad === 'odevler_coklu_olustur');
-  if (!c) bozuk('odevler_coklu_olustur çağrılmadı');
-  else if (sinir === 1 && 'p_sayfa_limiti' in c.govde) bozuk('varsayılan 1 AĞA GİTTİ — 0054 öncesi veritabanı düşerdi');
-  else if (sinir === 3 && c.govde.p_sayfa_limiti !== 3) bozuk(`3 seçildi, giden: ${c.govde.p_sayfa_limiti}`);
-  else tamam(sinir === 1 ? 'sınır 1: `p_sayfa_limiti` gönderilmedi' : 'sınır 3: `p_sayfa_limiti: 3` gönderildi');
+  if (!sayi) {
+    if (c) bozuk('sayfa sayısı boşken kayıt YAPILDI');
+    else if (!(await metin(p)).includes('Ödevin sayfa sayısını yazın.')) bozuk('boş sayfa sayısı söylenmedi');
+    else tamam('PDF yok, sayı boş: kayıt yapılmadı, "Ödevin sayfa sayısını yazın."');
+  } else if (!c || c.govde.p_sayfa_limiti !== 3) bozuk(`3 yazıldı, giden: ${c?.govde.p_sayfa_limiti}`);
+  else tamam('sayı 3: `p_sayfa_limiti: 3` gönderildi');
   await b.close();
 }
 
 // ---------------------------------------------------------------------------
-console.log('--- B7. Öğretmen, DÜZENLE: kayıttaki sınır açık gelir; değişmeyen gitmez ---');
+console.log('--- B7. Öğretmen, DÜZENLE (0078): kilit, değişen sayı, eski ödev ---');
 {
-  const { b, p } = await kur({ rol: 'ogretmen', detaySinir: 3 }, '/ogretmen/odevler/a1');
+  const { b, p } = await kur({ rol: 'ogretmen', detaySinir: 3, detayZorunlu: true, gonderimSayisi: 4 }, '/ogretmen/odevler/a1');
   await bekle(p);
-  const sec = p.getByLabel('Sayfa sınırı');
-  if (!(await sec.count()) || (await sec.inputValue()) !== '3') bozuk('3 sayfalık ödevde seçim kapalı ya da yanlış');
-  else tamam('kayıttaki 3 KENDİLİĞİNDEN AÇIK ve seçili (sessizce 1\'e dönmüyor)');
-  await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
-  await bekle(p, 800);
-  let c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
-  if (!c.length || 'p_sayfa_limiti' in c[0].govde) bozuk('değişmeyen sınır ağa gitti');
-  else tamam('değişmeyen sınır gönderilmedi (null = dokunma)');
-  await b.close();
-}
-{
-  const { b, p } = await kur({ rol: 'ogretmen', detaySinir: 3 }, '/ogretmen/odevler/a1');
-  await bekle(p);
-  await p.getByLabel('Sayfa sınırı').selectOption('2');
-  if (!(await metin(p)).includes('yapılmış gönderimleri değiştirmez')) bozuk('düşürmede gönderim notu çıkmadı');
-  else tamam('düşürünce "yapılmış gönderimleri değiştirmez" notu çıktı');
+  const k = p.getByLabel(/Ödevin sayfa sayısı/);
+  if (!(await k.count()) || (await k.inputValue()) !== '3' || !(await k.isDisabled())) bozuk('gönderimli ödevde sayı kilitli değil');
+  else if (!(await metin(p)).includes('sayfa sayısı artık değiştirilemez')) bozuk('kilidin nedeni yazmıyor');
+  else tamam('gönderim varken sayı 3, kilitli, nedeni yazıyor');
   await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
   await bekle(p, 800);
   const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
-  if (!c.length || c[0].govde.p_sayfa_limiti !== 2) bozuk('değişen sınır gönderilmedi');
-  else tamam('3 → 2: `p_sayfa_limiti: 2` gönderildi');
+  if (!c.length || 'p_sayfa_limiti' in c[0].govde) bozuk('kilitli sayı ağa gitti');
+  else tamam('kilitli sayı gönderilmedi');
   await b.close();
 }
 {
-  const { b, p } = await kur({ rol: 'ogretmen' }, '/ogretmen/odevler/a1');
+  const { b, p } = await kur({ rol: 'ogretmen', detaySinir: 3, detayZorunlu: true, gonderimSayisi: 0 }, '/ogretmen/odevler/a1');
   await bekle(p);
-  if (!(await metin(p)).includes('tek görsel') || (await p.getByLabel('Sayfa sınırı').count())) {
-    bozuk('0054 öncesi detayda (alan yok) ekran bozuldu');
-  } else tamam('0054 öncesi detay (alan yok) → kapalı, "tek görsel"');
+  await p.getByLabel(/Ödevin sayfa sayısı/).fill('5');
+  await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
+  await bekle(p, 800);
+  const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
+  if (!c.length || c[0].govde.p_sayfa_limiti !== 5) bozuk('gönderimsiz ödevde değişen sayı gönderilmedi');
+  else tamam('gönderim yokken 3 → 5: `p_sayfa_limiti: 5` gönderildi');
+  await b.close();
+}
+for (const [detaySinir, beklenen] of [[3, 3], [undefined, 1]]) {
+  const { b, p } = await kur({ rol: 'ogretmen', detaySinir }, '/ogretmen/odevler/a1');
+  await bekle(p);
+  const m = await metin(p);
+  if (!m.includes('önceki düzende') || !m.includes(`en fazla\n${beklenen}\nsayfa`) && !m.includes(`en fazla ${beklenen} sayfa`)
+      || (await p.getByLabel(/Ödevin sayfa sayısı/).count()) || /tek görsel/.test(m)) {
+    bozuk(`eski ödev (${detaySinir}) notu yanlış`);
+  } else tamam(`eski ödev (sınır ${detaySinir ?? 'yok'}) → "önceki düzende: en fazla ${beklenen} sayfa", kutu yok`);
+  await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
+  await bekle(p, 800);
+  const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
+  if (!c.length || 'p_sayfa_limiti' in c[0].govde) bozuk('eski ödevin sınırı ağa gitti');
   await b.close();
 }
 
