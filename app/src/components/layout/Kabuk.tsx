@@ -67,8 +67,13 @@ export function Kabuk() {
 
   return (
     <div className="min-h-dvh lg:flex">
-      {/* Yan menü — yalnız geniş ekran */}
-      <aside className="hidden w-60 shrink-0 border-r border-line bg-surface p-4 lg:flex lg:flex-col">
+      {/* Yan menü — yalnız geniş ekran. EKRAN BOYUNDA VE YAPIŞKAN
+          (`sticky top-0 h-dvh`): içerik ne kadar uzun olursa olsun menü
+          ekranın boyunu aşmıyor, alttaki grup da ekranın dibinde kalıyor.
+          Önceden menü içerikle aynı boya uzuyordu; uzun sayfada alt grup
+          sayfanın en sonuna düşüyordu. Kısa ekranda menü kendi içinde
+          kayıyor. */}
+      <aside className="hidden w-60 shrink-0 border-r border-line bg-surface p-4 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:overflow-y-auto">
         <div className="mb-8">
           <SekizWordmark boyut="sm" />
         </div>
@@ -78,12 +83,12 @@ export function Kabuk() {
             yan menü gizli olduğu için aynı yere Genel sayfasının altından
             da geliniyor.
 
-            SEKMELERİN HEMEN ALTINDA, menünün dibinde DEĞİL (öğretmenin
-            isteği: "çok altlarda kalıyor"). Önceden `mt-auto` ile dibe
-            itiliyordu; yan menü içerikle aynı boya uzadığı için uzun bir
-            sayfada üçü de sayfanın en altına düşüyor, görmek için aşağı
-            kaydırmak gerekiyordu. Kabuk denetimi 7. grupta ölçülüyor. */}
-        <div className="mt-4 flex flex-col gap-2 border-t border-line pt-4">
+            EKRANIN ALTINDA, KAYDIRMADAN GÖRÜNÜR (öğretmenin isteği: önce
+            "çok altlarda kalıyor", sekmelerin altına alınınca "çok yukarda
+            olmuş… ekranın altında ama kaydırmayacak şekilde"). `mt-auto`
+            grubu dibe itiyor; menü ekran boyunda olduğu için dip, ekranın
+            dibi. Kabuk denetimi 7. grupta ölçülüyor. */}
+        <div className="mt-auto flex flex-col gap-2 border-t border-line pt-4">
           {/* ÖĞRETMENLER SEKME DEĞİL, alt bağlantı — ve yalnız sahipte.
               Menü zaten altı sekme; yedincisi 360 px'de alt çubuğa
               sığmıyor (ölçüldü). Öğretmen yönetimi de nadir bir iş. */}
