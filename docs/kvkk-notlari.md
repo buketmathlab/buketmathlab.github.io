@@ -71,7 +71,10 @@ olmadığını birlikte söylüyor.
 - **İsimsiz anket:**
   - Yanıtta kimlik ve saat tutulmuyor; katılım tablosu yalnız tuzlanmış
     özet tutuyor.
-  - Bir grupta 5 yanıt olmadan sonuç gösterilmiyor.
+  - 0077: Sonuçlarda alt sınır YOK (öğretmenin kararı; okulda 4 öğretmen
+    var). Tek yanıt da gösteriliyor. Bilinen sonucu: küçük grupta, özellikle
+    öğretmenlerde, yanıtlayan kişi tahmin edilebilir; kimlik yine
+    saklanmıyor.
   - Açık uçlu yanıtta kişi kendi adını yazabilir. Ekranda "Ad ya da
     kişisel bilgi yazmayın" uyarısı var.
 

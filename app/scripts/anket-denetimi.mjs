@@ -7,8 +7,9 @@
  *      görüşle gidiyor; "Teşekkür ederiz".
  *  A2. Veli: 5 madde. A3. Öğretmen: Panoda davet, 5 madde.
  *  A4. Katıldıysa ya da anket kapalıysa davet YOK; "Şimdi değil" gizliyor.
- *  A5. Proje raporu (müdür): "Paydaş görüşleri"; n < 5 grupta "Henüz
- *      yeterli yanıt yok"; yeterli grupta dağılım metni (payda ile).
+ *  A5. Proje raporu (müdür): "Paydaş görüşleri"; 0077: ALT SINIR YOK —
+ *      tek öğretmen yanıtı da görünüyor; yanıtsız grupta "Henüz yanıt yok";
+ *      dağılım metni payda ile.
  *  A6. Sahip Ayarlar: "Anketi aç" `anket_ac_kapat`ı p_acik=true ile çağırıyor.
  *  A7. 360 px'de taşma yok; ankette ad/sınıf/kod alanı yok.
  *
@@ -24,13 +25,16 @@ const KOK = 'http://127.0.0.1:8788/yeni/#';
 const OGR = { id: 'o1', ad: 'Örnek Öğrenci', tur: 'okul', sinif: '9A' };
 const DURUM = (rol, ek = {}) => ({ acik: true, anket: '2026-2027-1', rol, madde_sayisi: rol === 'ogrenci' ? 7 : 5, katildi: false, deneme: false, ...ek });
 const SONUC = [{
-  anket: '2026-2027-1', baslik: '2026-2027 1. dönem SEKİZ görüş anketi', acik: false, esik: 5,
+  anket: '2026-2027-1', baslik: '2026-2027 1. dönem SEKİZ görüş anketi', acik: false, esik: 1,
   gruplar: [
     { rol: 'ogrenci', katilim: 12, yanit: 12, yeterli: true,
       maddeler: Array.from({ length: 7 }, (_, i) => ({ madde: `m${i + 1}`, dagilim: [1, 1, 2, 4, 4], ortalama: 3.75 })),
       gorusler: ['Daha çok konu testi olsun.'] },
-    { rol: 'veli', katilim: 3, yanit: 3, yeterli: false, maddeler: [], gorusler: [] },
-    { rol: 'ogretmen', katilim: 2, yanit: 2, yeterli: false, maddeler: [], gorusler: [] },
+    { rol: 'veli', katilim: 0, yanit: 0, yeterli: false, maddeler: [], gorusler: [] },
+    // 0077: alt sınır yok — TEK öğretmen yanıtı da görünmeli.
+    { rol: 'ogretmen', katilim: 1, yanit: 1, yeterli: true,
+      maddeler: Array.from({ length: 5 }, (_, i) => ({ madde: `m${i + 1}`, dagilim: [0, 0, 0, 1, 0], ortalama: 4 })),
+      gorusler: ['Konu analizi çok işime yaradı.'] },
   ],
 }];
 
@@ -122,7 +126,9 @@ console.log('--- A5. Proje raporu: paydaş görüşleri ---');
   const { b, p } = await ac({ rol: 'mudur', yol: '/mudur/rapor', durum: { acik: false } });
   const m = await p.locator('main').innerText();
   (/Paydaş görüşleri/.test(m) ? tamam : bozuk)('bölüm var');
-  (/Veli anketi[\s\S]*Henüz yeterli yanıt yok \(en az 5\)/.test(m) ? tamam : bozuk)('n<5 grupta "henüz yeterli yanıt yok"');
+  (/Veli anketi[\s\S]*Henüz yanıt yok/.test(m) ? tamam : bozuk)('yanıtsız grupta "Henüz yanıt yok"');
+  (/Öğretmen anketi · 1 yanıt[\s\S]*Ortalama 4 \/ 5 · katılıyorum ve tamamen katılıyorum: %100 \(1\/1\)/.test(m) ? tamam : bozuk)('0077: tek öğretmen yanıtı da gösteriliyor');
+  (!/en az 5 yanıt|yeterli yanıt yok|eşik aşıl/i.test(m) ? tamam : bozuk)('alt sınır yazısı yok');
   (/Ortalama 3,75 \/ 5 · katılıyorum ve tamamen katılıyorum: %67 \(8\/12\)/.test(m) ? tamam : bozuk)(`yeterli grupta dağılım metni payda ile (${(m.match(/Ortalama[^\n]*/) ?? [''])[0]})`);
   ((await p.getByRole('button', { name: /Anketi (aç|kapat)/ }).count()) === 0 ? tamam : bozuk)('müdürde aç/kapat düğmesi yok');
   await b.close();
