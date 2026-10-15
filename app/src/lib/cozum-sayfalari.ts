@@ -1,5 +1,5 @@
 /**
- * ÇÖZÜM SAYFALARI (0054) — öğretmenin seçtiği sayfa sınırı.
+ * ÇÖZÜM SAYFALARI (0054; 0078: her sayfa zorunlu) — ödevin sayfa sayısı.
  *
  * Ağa ve React'e dokunmayan her kural burada, testli: sayfa yolu, sınırın
  * okunması, seçime ekleme/çıkarma ve deponun "zaten var" cevabı. Ekran
@@ -9,15 +9,15 @@
  * `cozumSayfaYolu(o, s, 1)` 0009'dan beri kullanılan `cozum/o/s.jpg`.
  */
 
-/** Sunucudaki tablo kısıtıyla aynı (0054: 1–8). */
-export const EN_FAZLA_SAYFA = 8;
+/** Sunucudaki tablo kısıtıyla aynı (0054: 1–8; 0078: 1–40). */
+export const EN_FAZLA_SAYFA = 40;
 
 /**
  * n. sayfanın deposundaki yolu. Sunucu (`_cozum_yolu_gecerli`) tam bu
  * kalıbı bekliyor; uydurulan bir yol reddedilir.
  *
  *   1. sayfa:  cozum/<odev>/<ogrenci>.jpg      ← 0009'dan beri, EKSİZ
- *   n. sayfa:  cozum/<odev>/<ogrenci>-<n>.jpg  (n = 2…8)
+ *   n. sayfa:  cozum/<odev>/<ogrenci>-<n>.jpg  (n = 2…40)
  *
  * `-1` yazımı YOK: 1. sayfanın iki farklı yolu olsaydı sunucu ikisini de
  * tanımak zorunda kalırdı.
@@ -43,6 +43,28 @@ export function sayfaSiniriniOku(ham: unknown): number {
   return typeof ham === 'number' && Number.isInteger(ham) && ham >= 1 && ham <= EN_FAZLA_SAYFA
     ? ham
     : 1;
+}
+
+/**
+ * ÖDEVİN SAYFA KURALI (0078).
+ *
+ *   sayfa        ödevin sayfa sayısı (öğrencinin göndereceği çözüm sayfası)
+ *   tumSayfalar  true: TAM `sayfa` kadar sayfa zorunlu (0078 sonrası ödev)
+ *                false: eski kural, en az 1 en fazla `sayfa`
+ *
+ * İki biçim okunuyor: `odev_sayfa_kurali` ({sayfa, tum_sayfalar}) ve eski
+ * `odev_sayfa_siniri` (yalnız sayı). Hiçbiri okunamazsa {1, false} — her
+ * ödevde geçerli; bir ayarın okunamaması teslim ekranını bozmamalı.
+ */
+export type SayfaKurali = { sayfa: number; tumSayfalar: boolean };
+
+export function sayfaKuraliniOku(kural: unknown, eskiSinir?: unknown): SayfaKurali {
+  if (kural && typeof kural === 'object') {
+    const k = kural as { sayfa?: unknown; tum_sayfalar?: unknown };
+    const sayfa = sayfaSiniriniOku(k.sayfa);
+    if (sayfa === k.sayfa) return { sayfa, tumSayfalar: k.tum_sayfalar === true };
+  }
+  return { sayfa: sayfaSiniriniOku(eskiSinir), tumSayfalar: false };
 }
 
 /**
@@ -92,14 +114,50 @@ export function depoZatenVarMi(durum: number, govde: string): boolean {
   }
 }
 
-/** "2/3 sayfa seçildi" — sayaç. */
-export function sayfaSayacMetni(secili: number, sinir: number): string {
-  return `${secili}/${sinir} sayfa seçildi`;
+/**
+ * Sayaç. Her sayfası zorunlu ödevde eksik sayfayı da söylüyor:
+ *   "5 / 8 sayfa eklendi · 3 sayfa eksik"   "8 / 8 sayfa eklendi · tamam"
+ * Eski ödevde: "2 / 3 sayfa seçildi".
+ */
+export function sayfaSayacMetni(secili: number, sinir: number, zorunlu = false): string {
+  if (!zorunlu) return `${secili} / ${sinir} sayfa seçildi`;
+  const eksik = Math.max(0, sinir - secili);
+  return eksik === 0
+    ? `${secili} / ${sinir} sayfa eklendi · tamam`
+    : `${secili} / ${sinir} sayfa eklendi · ${eksik} sayfa eksik`;
+}
+
+/** Yükleme alanının açıklaması. */
+export function sayfaIpucuMetni(sinir: number, zorunlu: boolean): string {
+  const nasil =
+    'Kâğıda çözdüysen her sayfanın fotoğrafını çek; tablette çözdüysen görsel ya da PDF ' +
+    "yükleyebilirsin, PDF'in her sayfası ayrı bir sayfa sayılır.";
+  if (!zorunlu) {
+    return `Bu ödevde en fazla ${sinir} sayfa gönderebilirsin; sırayla ekle, öğretmenin bu sırayla görecek. ${nasil}`;
+  }
+  return sinir === 1
+    ? `Bu ödev 1 sayfa. ${nasil}`
+    : `Bu ödev ${sinir} sayfa. Her sayfanın çözümünü sırayla ekle: önce 1. sayfa, sonra 2. sayfa… ${nasil}`;
+}
+
+/**
+ * Neden her sayfa zorunlu — öğrenciye bir kez, kısa. Puan tehdidi değil,
+ * öğrenmenin dili: öğretmen çözüm YOLUNU görmek istiyor.
+ */
+export const HER_SAYFA_GEREKCESI =
+  'Öğretmenin çözüm yolunun tamamını görebilsin diye ödevin her sayfası zorunlu. ' +
+  'Boş bıraktığın bir soru olsa da o sayfayı ekle; denediğin her adım öğrenmenin parçası.';
+
+/** Eksik sayfayla göndermeye çalışınca. */
+export function eksikSayfaMetni(eksik: number): string {
+  return `${eksik} sayfa eksik. Ödevi gönderebilmek için her sayfanın çözümünü eklemelisin.`;
 }
 
 /** Sınırı aşan seçimde öğrenciye söylenen. */
-export function tasmaMetni(sinir: number, tasan: number): string {
-  return `Bu ödevde en fazla ${sinir} sayfa yükleyebilirsin. ${tasan} görsel eklenmedi.`;
+export function tasmaMetni(sinir: number, tasan: number, zorunlu = false): string {
+  return zorunlu
+    ? `Bu ödev ${sinir} sayfa; fazladan seçtiğin ${tasan} görsel eklenmedi.`
+    : `Bu ödevde en fazla ${sinir} sayfa yükleyebilirsin. ${tasan} görsel eklenmedi.`;
 }
 
 /**
@@ -128,4 +186,14 @@ export function oncedenYuklenenMetni(sayfalar: readonly number[]): string | null
   return sayfalar.length === 1
     ? `${liste} sayfa önceki denemende yüklenmişti; o hâliyle gönderildi.`
     : `${liste} sayfalar önceki denemende yüklenmişti; o hâlleriyle gönderildi.`;
+}
+
+/** Kutudaki değeri doğrular: 1–40 tam sayı, değilse hata metni. */
+export function sayfaSayisiHatasi(deger: string): string | null {
+  const n = Number(deger);
+  if (deger.trim() === '') return 'Ödevin sayfa sayısını yazın.';
+  if (!Number.isInteger(n) || n < 1 || n > EN_FAZLA_SAYFA) {
+    return `Sayfa sayısı 1 ile ${EN_FAZLA_SAYFA} arasında olmalı.`;
+  }
+  return null;
 }

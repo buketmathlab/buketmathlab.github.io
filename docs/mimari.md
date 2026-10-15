@@ -5017,6 +5017,10 @@ toplandı (`toLocaleLowerCase('tr')`).
 
 ## 0054 — ödev başına sayfa sınırı (varsayılan 1)
 
+> **0078'den beri:** yeni ödevlerde sınır değil, ödevin sayfa sayısı var ve
+> her sayfa zorunlu; üst sınır 40. Aşağıdaki "en fazla N" kuralı yalnız
+> 0078 öncesi ödevlerde (`tum_sayfalar = false`) sürüyor. Bkz. 0078.
+
 İstek *"öğrenciler 8 görsel yükleyebilsin"* olarak geldi. Öğretmen,
 depolama maliyeti konuşulunca daralttı: öğrenciler sayfalarını zaten
 birleştirip tek görsel gönderiyor; **varsayılan 1 kalsın, sınırı ben
@@ -5334,6 +5338,10 @@ kabul ediyordu (toplu ekleme testi 12); eksik olan formdaki alandı.
 - `lib/ogrenci-numarasi.ts` (+test), `ogrenci-numarasi-denetimi.mjs`.
 
 ## Öğrenci çözümü olarak PDF (istemci)
+
+> **0078'den beri:** tek görsele birleştirme kalktı (`tekGorselDuzeni`,
+> `pdfiTekGorsele` silindi). PDF'in her sayfası her zaman ayrı bir sayfa
+> sayılıyor. Aşağıdaki "sınır 1" maddesi tarihçedir.
 
 Öğretmenin isteği: "PDF de gönderebilsinler." Öğrenciler çözümü PDF
 olarak seçiyor, çözüm alanı yalnız görsel kabul ettiği için "Fotoğraf
@@ -6432,3 +6440,53 @@ olsun." 0076'nın 5 yanıt eşiğiyle öğretmen anketi hiç görünmezdi.
   - Mutasyon kanıtı: eşik 5'e geri alınınca test düşüyor.
   - `anket-denetimi` A5: tek öğretmen yanıtı görünüyor, alt sınır
     yazısı yok.
+
+## 0078 — Ödevin her sayfası zorunlu
+
+Öğretmenin isteği: "Verdiğim ödev kaç sayfalık ödevse otomatik olarak o
+kadar sayfa gönderim hakkına sahip olsun öğrenciler… görsel birleştirme,
+tek PDF gönderme detaylarını kaldır… yapılan ödevlerin her sayfasını
+göndermek zorundalar." Depolama farkı yok: PDF de cihazda aynı ayarla
+JPEG'e çevriliyor (1400 px, 0.72); belirleyici olan sayfa sayısı.
+
+Öğretmenin üç kararı:
+- Kural yalnız **yeni ödevlerde**. Eski ödevler, eski gönderimler ve
+  puanlar değişmiyor.
+- Sayfa sayısı soru PDF'inden **otomatik** geliyor (`pdfSayfaSayisi`);
+  öğretmen düzeltebiliyor (kapak, açıklama sayfası).
+- Soru PDF'i yoksa öğretmen sayıyı **yazıyor**; alan zorunlu, boşken
+  kayıt yok.
+
+Sunucu (`0078_tum_sayfalar_zorunlu.sql`):
+- `odevler.tum_sayfalar boolean default false`. Eski satırlar false →
+  eski kural (en az 1, en fazla N). `odev_olustur` yeni ödevi true yazıyor.
+- Üst sınır 8 → 40: iki kısıt, `_cozum_yolu_gecerli` yol düzeni `-2..-40`.
+- `odev_gonder` (0074 kopyası): `tum_sayfalar` ise `1 + ek < sayfa_limiti`
+  reddediliyor ("Bu ödev N sayfa; her sayfanın çözümünü eklemelisin (k
+  sayfa eksik)."). Fazla sayfa eski mesajla reddediliyor.
+- `odev_guncelle`: yeni düzendeki ödeve gönderim yapıldıysa sayfa sayısı
+  değiştirilemiyor — öğrenciler arasında farklı kural olmasın.
+- `odev_kardeslere_yay`: bayrak taşınıyor; gönderim yapılmış kardeşte
+  eski sayı ve bayrak korunuyor.
+- `odev_detay` bayrağı döndürüyor. Yeni uç `odev_sayfa_kurali` → `{sayfa,
+  tum_sayfalar}`, yalnız ödevin öğrencisine (`odev_sayfa_siniri` ile aynı
+  yetki; eski uç duruyor, istemci uç yoksa ona düşüyor).
+- Gövdeler mekanik kopya; `sayfa-zorunlu-denetimi.mjs` A1–A2 farkı ölçüyor.
+
+İstemci:
+- Öğretmen: `SayfaSayisi.tsx` (oluşturma ve düzenleme). Gönderim varsa
+  salt okunur ve nedeni yazıyor. Eski ödevde "önceki düzende verildi"
+  notu.
+- Öğrenci: tek yol `SayfaSahnesi`. Sayaç "5 / 8 sayfa eklendi · 3 sayfa
+  eksik"; ilk açılışta gerekçe ("Öğretmenin çözüm yolunun tamamını
+  görebilsin diye…"); her sayfada yerinde "Değiştir". Eksik sayfayla
+  gönder dokunulunca çağrı yapılmıyor, eksik sayısı yazıyor.
+- Birleştirme kodu ve metinleri silindi; tanıtım cümlesi "eksik sayfayla
+  teslim tamamlanmaz".
+
+Testler: `sayfa_zorunlu_testleri.sql` (7 grup; eksik/fazla/tam, eski
+ödev, 40 sınırı, güncelleme kilidi, kardeş koruması, yetki, deneme;
+mutasyon kanıtı: eksik sayfa denetimi ve kilit kaldırılınca düşüyor),
+`sayfa_siniri_testleri.sql` 1–40'a uyarlandı, `guvenlik_denetimi`
+beyaz listesinde `odev_sayfa_kurali`. Chromium: `sayfa-zorunlu`
+(Z1–Z4), `pdf-cozum` (P1–P8, gerçek 20 sayfalık PDF), `sayfa-siniri`.

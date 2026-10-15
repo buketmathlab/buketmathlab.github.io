@@ -275,7 +275,7 @@ const YAMALAR = [
     // KORUNAN GÜVENCE 3 — ölçülen ürün davranışı.
     ad: 'Fotoğraf zorunluluğu maddeden düşerse',
     dosya: SAYFA,
-    eski: 'fotoğraf yüklenmeden teslim tamamlanmaz.',
+    eski: 'eksik sayfayla teslim tamamlanmaz.',
     yeni: 'fotoğrafını da ekler.',
     bekleyen: 'çözüm fotoğrafının zorunlu olduğu',
   },

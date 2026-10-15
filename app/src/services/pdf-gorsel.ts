@@ -8,13 +8,7 @@
  * indirmiyor.
  */
 
-import {
-  ARA_CIZGI,
-  PDF_GENISLIK,
-  TEK_GORSEL_EN_FAZLA_SAYFA,
-  cokSayfaMetni,
-  tekGorselDuzeni,
-} from '@/lib/pdf-cozum';
+import { PDF_GENISLIK } from '@/lib/pdf-cozum';
 import { KaranlikFotografHatasi, karanlikMi } from '@/lib/karanlik-fotograf';
 import { EN_BUYUK_BOYUT } from './dosya';
 import { pdfIleCalis, type PdfBelgesi } from './pdf-metin';
@@ -89,43 +83,7 @@ function acmaHatasi(e: unknown): Error {
 }
 
 /**
- * Sayfa sınırı 1 olan ödev: PDF'in bütün sayfaları alt alta TEK görsel.
- */
-export async function pdfiTekGorsele(dosya: File): Promise<{ dosya: File; sayfaSayisi: number }> {
-  try {
-    return await pdfIleCalis(dosya, async (belge) => {
-      const n = belge.numPages;
-      if (n > TEK_GORSEL_EN_FAZLA_SAYFA) throw new Error(cokSayfaMetni(n));
-
-      const sayfalar: Sayfa[] = [];
-      for (let i = 1; i <= n; i++) sayfalar.push(await belge.getPage(i));
-      const duzen = tekGorselDuzeni(
-        sayfalar.map((s) => {
-          const v = s.getViewport({ scale: 1 });
-          return { en: v.width, boy: v.height };
-        }),
-      );
-
-      const { tuval, ctx } = tuvalAc(duzen.en, duzen.boy);
-      try {
-        // Sayfa ayraçları: öğretmen sayfa geçişlerini görsün.
-        ctx.fillStyle = '#c8c8c8';
-        for (const s of duzen.sayfalar.slice(1)) ctx.fillRect(0, s.y - ARA_CIZGI, duzen.en, ARA_CIZGI);
-        for (let i = 0; i < n; i++) await sayfayiCiz(sayfalar[i]!, ctx, duzen.en, duzen.sayfalar[i]!.y);
-        return { dosya: await jpeg(tuval, 'cozum.jpg'), sayfaSayisi: n };
-      } finally {
-        bosalt(tuval);
-      }
-    });
-  } catch (e) {
-    if (e instanceof KaranlikFotografHatasi) throw e;
-    if (e instanceof Error && /sayfa; tek görsele|çok büyük/.test(e.message)) throw e;
-    throw acmaHatasi(e);
-  }
-}
-
-/**
- * Birden fazla sayfaya izin verilen ödev: her PDF sayfası ayrı görsel.
+ * Her PDF sayfası ayrı görsel (0078: tek yol; birleştirme kalktı).
  * Yalnız ilk `enFazla` sayfa çiziliyor; `toplam` taşanı bildirmek için.
  */
 export async function pdfSayfalariniGorsele(

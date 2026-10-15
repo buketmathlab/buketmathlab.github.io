@@ -118,6 +118,11 @@ begin
                -- `sayfa_siniri_testleri.sql` BAŞKA SINIFIN ödevinin 42501,
                -- VELİ ve ÖĞRETMEN jetonunun 42501 ile reddedildiğini sınıyor.
                'odev_sayfa_siniri',
+               -- 0078: `odev_sayfa_kurali` aynı ucun {sayfa, tum_sayfalar}
+               -- döndüren hâli; gövde `odev_sayfa_siniri`'nin kopyası, aynı
+               -- P0002. Tersi `sayfa_zorunlu_testleri.sql` 6. grupta
+               -- ölçülüyor (başka sınıf, veli ve öğretmen jetonu 42501).
+               'odev_sayfa_kurali',
                -- 0034: `onam_ver` VELİNİN kendi ucu — onamı veli verir,
                -- başkası onun adına veremez. Öğrenci jetonunu 42501 ile
                -- reddediyor (bu listenin ölçtüğü şey), veli jetonunda ise

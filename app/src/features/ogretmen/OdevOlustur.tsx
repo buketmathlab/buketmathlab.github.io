@@ -10,7 +10,7 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import { ODEV_PDF_EN_BUYUK, dosyaYukle, odevDosyaYolu, dosyayiDenetle } from '@/services/dosya';
-import { pdfSatirlariniOku } from '@/services/pdf-metin';
+import { pdfSatirlariniOku, pdfSayfaSayisi } from '@/services/pdf-metin';
 import { anahtarlariBirlestir, type Cikarim, type SonSecenek } from '@/lib/cevap-anahtari';
 import { anahtarOku } from '@/services/anahtar-oku';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
@@ -19,7 +19,8 @@ import { KunyePaneli } from './KunyePaneli';
 import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
 import { SikSayisiSecimi } from './SikSayisiSecimi';
-import { SayfaSiniriSecimi } from './SayfaSiniriSecimi';
+import { SayfaSayisi } from './SayfaSayisi';
+import { EN_FAZLA_SAYFA, sayfaSayisiHatasi } from '@/lib/cozum-sayfalari';
 import { sunucuyaHazirla, type Konular } from '@/lib/konu-atama';
 import { odevPdfOzeti, type PdfOzeti } from '@/lib/odev-pdf-ozeti';
 import type { CokluOdevSonucu, Sinif } from '@/types/api';
@@ -63,9 +64,12 @@ export function OdevOlustur() {
   // kabul etmiyorum. Nadiren bu seçimi işaretlerim." Varsayılan, sık olanı
   // temsil etmeli; nadir olanı her ödevde elle kapatmak zorunda kalmasın.
   const [gecTeslim, setGecTeslim] = useState(false);
-  // VARSAYILAN 1 (0054). Öğretmen: öğrenciler sayfalarını birleştirip tek
-  // görsel gönderiyor; sınırı yalnız istediği ödevde yükseltiyor.
-  const [sayfaSiniri, setSayfaSiniri] = useState(1);
+  // ÖDEVİN SAYFA SAYISI (0078). Soru PDF'i seçilince oradan gelir,
+  // öğretmen düzeltebilir; PDF yoksa öğretmen yazar. Öğrenci TAM bu kadar
+  // sayfa gönderir. Son adımda, kaydetmeden hemen önce soruluyor.
+  const [sayfaSayisi, setSayfaSayisi] = useState('');
+  const [pdfSayfa, setPdfSayfa] = useState<number | null>(null);
+  const [sayfaHatasi, setSayfaHatasi] = useState<string | null>(null);
   const [formHatasi, setFormHatasi] = useState<string | null>(null);
 
   // 2. adım
@@ -118,6 +122,15 @@ export function OdevOlustur() {
    * bildirmek, olmayan bir sorunu varmış gibi gösterirdi.
    */
   async function odevPdfiniOku(dosya: File) {
+    // Sayfa sayısı ayrı okunuyor: taranmış PDF metin vermez ama sayfa
+    // sayısını verir.
+    void pdfSayfaSayisi(dosya).then((n) => {
+      setPdfSayfa(n);
+      if (n !== null) {
+        setSayfaSayisi(String(Math.min(n, EN_FAZLA_SAYFA)));
+        setSayfaHatasi(null);
+      }
+    });
     try {
       setPdfOzet(odevPdfOzeti(await pdfSatirlariniOku(dosya)));
     } catch {
@@ -166,6 +179,11 @@ export function OdevOlustur() {
   }
 
   async function taslagiKaydet() {
+    const sayfaSorunu = sayfaSayisiHatasi(sayfaSayisi);
+    if (sayfaSorunu) {
+      setSayfaHatasi(sayfaSorunu);
+      return;
+    }
     setKaydediyor(true);
     try {
       // PDF'LER BİR KEZ YÜKLENİYOR — kaç sınıf seçilmiş olursa olsun.
@@ -201,11 +219,9 @@ export function OdevOlustur() {
         // Açık uçlu ödevde konu analizi yapılamaz: anahtar yok, hangi sorunun
         // yanlış olduğu bilinmiyor. Konu alanı da o yüzden yalnız testte var.
         p_konular: tur === 'test' ? sunucuyaHazirla(konular, n) : null,
-        // YALNIZ 1'DEN FARKLIYSA GÖNDERİLİYOR (0054). PostgREST uçları
-        // parametre ADLARIYLA eşliyor: 0054 panelde henüz çalıştırılmadıysa
-        // bilinmeyen bir `p_sayfa_limiti` HER ödev oluşturmayı "could not
-        // find the function" ile düşürürdü. Göndermemek = sunucuda 1.
-        ...(sayfaSiniri !== 1 ? { p_sayfa_limiti: sayfaSiniri } : {}),
+        // 0078: HER ZAMAN gönderiliyor — ödevin sayfa sayısı. Sunucu yeni
+        // ödevi "her sayfa zorunlu" olarak kaydediyor.
+        p_sayfa_limiti: Number(sayfaSayisi),
       };
 
       try {
@@ -228,15 +244,6 @@ export function OdevOlustur() {
         const ucYok =
           e instanceof Error && /could not find the function|schema cache/i.test(e.message);
         if (!ucYok) throw e;
-        // Sınır gönderildiyse "uç yok" büyük olasılıkla 0054'ün eksikliği.
-        // Tek sınıflık yola düşmek aynı hatayı tekrar verirdi; ne olduğunu
-        // ve ne yapılacağını söylüyoruz.
-        if (sayfaSiniri !== 1) {
-          throw new Error(
-            'Birden fazla sayfa bu sistemde henüz açılmadı. ' +
-              'Sayfa sınırını 1 yaparak kaydedebilirsiniz.',
-          );
-        }
         if (sinifIdler.length > 1) {
           throw new Error(
             'Birden çok sınıfa ödev verme bu sistemde henüz açılmadı. ' +
@@ -418,8 +425,6 @@ export function OdevOlustur() {
               </>
             )}
 
-            <SayfaSiniriSecimi deger={sayfaSiniri} onDegis={setSayfaSiniri} />
-
             <GecTeslimSecimi deger={gecTeslim} onDegis={setGecTeslim} />
 
             {formHatasi && (
@@ -459,7 +464,10 @@ export function OdevOlustur() {
                   }
                   setOdevPdf(f);
                   if (f) void odevPdfiniOku(f);
-                  else setPdfOzet(null);
+                  else {
+                    setPdfOzet(null);
+                    setPdfSayfa(null);
+                  }
                 }}
               />
             )}
@@ -589,6 +597,18 @@ export function OdevOlustur() {
               verirsiniz.
             </p>
           )}
+
+          <div className="mt-6 border-t border-line pt-5">
+            <SayfaSayisi
+              deger={sayfaSayisi}
+              onDegis={(v) => {
+                setSayfaSayisi(v);
+                setSayfaHatasi(null);
+              }}
+              pdfSayfa={pdfSayfa}
+              hata={sayfaHatasi}
+            />
+          </div>
 
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
             <Button tur="sade" onClick={() => setAdim(tur === 'test' ? 2 : 1)} tamGenislik>
