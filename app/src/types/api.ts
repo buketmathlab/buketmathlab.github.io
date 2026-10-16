@@ -448,6 +448,14 @@ export type KendiKarnem = {
    * ekran `?? null` ile sessizce ortalamasız çalışır.
    */
   genel_ortalama: number | null;
+  /**
+   * 0080 — tüm ödevlerin ortalaması, yapılmayan 0 (yine yalnız çocuğun
+   * kendisi). Puanlanmamış gönderim puan verilene kadar ikisine de girmez.
+   * 0080 çalışmadıysa alanlar gelmez; ekran eski satırla kalır.
+   */
+  tum_ortalama?: number | null;
+  yapilmayan?: number;
+  puan_bekleyen?: number;
   konular: KonuAnalizi[];
   gelisim: GelisimSatiri[];
 };
@@ -889,6 +897,17 @@ export type SinifOgrenciOzeti = {
     yapilan: number;
     /** 0052 — aynı kümenin geri kalanı; ekranda çıkarma yapılmıyor. */
     yapilmayan: number;
+    /**
+     * 0080 — YAPTIĞI ödevlerin ortalaması (puanlı gönderimler). Ödev var
+     * ama puanlı gönderim yoksa `null`. 0080 çalışmadıysa alan hiç gelmez
+     * (`undefined`) ve ekran tek ortalamayla kalır.
+     *
+     * 0080'den sonra `ortalama` (tüm ödevler) puanlanmamış gönderimi 0
+     * saymıyor; puan verilene kadar ikisine de girmiyor.
+     */
+    yapilan_ortalama?: number | null;
+    /** 0080 — gönderdiği ama henüz puanı olmayan ödev sayısı. */
+    puan_bekleyen?: number;
     /**
      * Yanlış + boş sayısı en yüksek konu; yalnız 5+ soru çözülmüş
      * konular aday. Hiç yanlışı yoksa `null` — öğrenciyi etiketlememek

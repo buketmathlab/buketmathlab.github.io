@@ -80,6 +80,27 @@ export function ortalamaSatiri(ortalama: number | null): string {
   return `Ortalama: ${sayi}`;
 }
 
+/**
+ * İKİ ORTALAMA (0080) — kâğıtta da ikisi, etiketleriyle. Fiş eve gidiyor
+ * ve tek başına okunuyor; "tüm ödevler"in yapılmayanı 0 saydığı kâğıdın
+ * üstünde yazılı olmalı.
+ *
+ * `null` = o ortalama yok (puanlı gönderim yok); tire, sıfır değil.
+ */
+export function ikiOrtalamaSatiri(yapilan: number | null, tum: number | null): string {
+  const yaz = (n: number | null) =>
+    n === null || Number.isNaN(n)
+      ? '—'
+      : n.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return `Yaptığı ödevlerin ortalaması: ${yaz(yapilan)} · Tüm ödevlerin ortalaması (yapılmayan 0): ${yaz(tum)}`;
+}
+
+/** Tablo hücresi: tek hane, `null` tire. */
+export function ortalamaHucresi(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  return n.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
 export const KONU_BASLIGI = 'Üzerinde çalışılacak konular';
 
 /**
@@ -108,6 +129,12 @@ export function konuSatiri(konular: readonly string[]): string | null {
 export const KAPSAM_NOTU =
   'Sayılar ve ortalama, teslim süresi dolmuş ödevleri kapsar; süresi devam eden ' +
   'ödev hiçbir sayıya girmez.';
+
+/** 0080 — iki ortalamanın tanımı, kâğıtta. */
+export const IKI_ORTALAMA_NOTU =
+  'Sayılar ve ortalamalar, teslim süresi dolmuş ödevleri kapsar; süresi devam eden ' +
+  'ödev hiçbir sayıya girmez. Tüm ödevlerin ortalamasında yapılmayan ödev 0 sayılır. ' +
+  'Henüz puanlanmamış ödev iki ortalamaya da girmez.';
 
 /**
  * Fişin altındaki tek satır.

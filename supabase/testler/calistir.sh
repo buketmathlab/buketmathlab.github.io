@@ -234,6 +234,10 @@ echo "==> Sayfa sayısı düzenleme testleri (0079)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/sayfa_duzenleme_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> İki ortalama testleri (0080)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/iki_ortalama_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Yöneticinin ödevi + puan düzeltme testleri (0055)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/ortak_odev_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
