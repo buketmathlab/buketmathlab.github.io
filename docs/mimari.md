@@ -6733,6 +6733,14 @@ kısıtı değil, el yazısı kuralının kendisi gibi yazılı bir kural. Denet
 onun **yazdığını** ölçebiliyor, **uygulandığını** ölçemez; asıl denetim
 öğretmenin "yeniden aç" yolu (0056).
 
+### Sıra: çıktı → tablet → boş kâğıt
+
+Öğretmenin ikinci düzeltmesi boş kâğıt ile tableti yer değiştirdi. Gerekçe
+sırayı okunur kılıyor: **ilk iki yolun ortak yanı, çözümün SORULARIN
+ÜZERİNE yazılması** — kâğıtta ya da ekranda. Boş kâğıt bu bakımdan
+ikisinden de ayrı ve en sonda duruyor: yürüyen bir yol, ama tercih edilen
+değil.
+
 ### Sıra öğretmenin kararı — ve ekrandan ölçülüyor
 
 Üç yol `YOLLAR` dizisinde duruyor, ekran diziyi olduğu gibi çiziyor ve

@@ -13,16 +13,28 @@ import {
 const hepsi = [BASLIK, NEDEN, KABUL_EDILMEYEN, ONAY, ONAY_EKSIK, ...YOLLAR.map((y) => y.metin)].join(' ');
 
 describe('el yazısı kuralı metni', () => {
-  it('üç geçerli yol da yazılı: çıktı, boş kâğıt, tablet', () => {
+  /**
+   * SIRA: çıktı → tablet → boş kâğıt.
+   *
+   * İlk iki yolun ortak yanı, çözümün SORULARIN ÜZERİNE yazılması —
+   * kâğıtta ya da ekranda. Boş kâğıt ikisinden de ayrı ve en sonda
+   * (öğretmenin ikinci düzeltmesi: boş kâğıt ile tablet yer değiştirdi).
+   */
+  it('üç geçerli yol da yazılı: çıktı, tablet, boş kâğıt', () => {
     expect(YOLLAR.map((y) => y.baslik)).toEqual([
       'Çıktı alınmış soru kâğıdında',
-      'Boş kâğıt üzerinde',
       'iPad veya tablet üzerinde',
+      'Boş kâğıt üzerinde',
     ]);
     expect(YOLLAR[0]?.metin).toMatch(/soruların üzerine ve altındaki/);
-    expect(YOLLAR[1]?.metin).toMatch(/boş kâğıda çöz/);
-    expect(YOLLAR[2]?.metin).toMatch(/soruların üzerine kalemle/);
-    expect(YOLLAR[2]?.metin).toMatch(/Bu da el yazısı sayılır/);
+    expect(YOLLAR[1]?.metin).toMatch(/soruların üzerine kalemle/);
+    expect(YOLLAR[1]?.metin).toMatch(/Bu da el yazısı sayılır/);
+    expect(YOLLAR[2]?.metin).toMatch(/boş kâğıda çöz/);
+  });
+
+  /** Boş kâğıt SON sırada: yürüyen bir yol, ama tercih edilen değil. */
+  it('boş kâğıt yolu en sonda', () => {
+    expect(YOLLAR.at(-1)?.baslik).toBe('Boş kâğıt üzerinde');
   });
 
   /**

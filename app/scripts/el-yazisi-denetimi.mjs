@@ -8,7 +8,9 @@
  *      soru kâğıdında / Boş kâğıt üzerinde / iPad veya tablet üzerinde),
  *      kabul edilmeyenler. Öğretmenin isteği üzerine (16 Ekim) çıktı alınmış
  *      soru kâğıdı ÖNERİLEN yol ve BİRİNCİ SIRADA; sıra EKRANDAN okunuyor.
- *      Boş kâğıt yolu duruyor (yazıcısı olmayan öğrenci) ve soru numarası
+ *      Sıra: çıktı → tablet → boş kâğıt. İlk ikisinin ortak yanı çözümün
+ *      SORULARIN ÜZERİNE yazılması; boş kâğıt ikisinden de ayrı ve SON
+ *      sırada — duruyor (yazıcısı olmayan öğrenci) ve soru numarası
  *      kuralını taşıyor.
  *  E2. Onaysız "Ödevi gönder" → `odev_gonder` ÇAĞRILMIYOR, yükleme yok,
  *      `role="alert"` uyarısı görünüyor; düğme kapalı değil.
@@ -166,8 +168,14 @@ const { b, p } = await kur('/ogrenci/odev/a1');
   (/^Çıktı alınmış soru kâğıdında/.test(yollar[0] ?? '') ? tamam : bozuk)(
     `çıktı yolu BİRİNCİ sırada (${yollar[0] ?? 'yok'})`,
   );
-  (/^Boş kâğıt üzerinde/.test(yollar[1] ?? '') ? tamam : bozuk)(
-    `boş kâğıt ikinci sırada (${yollar[1] ?? 'yok'})`,
+  // SIRA: çıktı → tablet → boş kâğıt. İlk ikisinin ortak yanı çözümün
+  // SORULARIN ÜZERİNE yazılması; boş kâğıt ikisinden de ayrı ve en sonda
+  // (öğretmenin ikinci düzeltmesi).
+  (/^iPad veya tablet üzerinde/.test(yollar[1] ?? '') ? tamam : bozuk)(
+    `tablet ikinci sırada (${yollar[1] ?? 'yok'})`,
+  );
+  (/^Boş kâğıt üzerinde/.test(yollar[2] ?? '') ? tamam : bozuk)(
+    `boş kâğıt SON sırada (${yollar[2] ?? 'yok'})`,
   );
   // "Önerilen" YAZIYLA: renkli şerit tek başına ekran okuyucuya ve renk
   // körü birine hiçbir şey söylemez.

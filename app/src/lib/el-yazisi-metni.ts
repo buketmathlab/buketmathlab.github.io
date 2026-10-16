@@ -20,9 +20,14 @@
  * BOŞ KÂĞIT YOLU KALDIRILMADI — ve bu da öğretmenin kararı
  *
  * Türkiye'de her evde yazıcı yok. Boş kâğıdı kaldırmak, yazıcısı olmayan
- * öğrencinin ödev gönderememesi demekti. İkinci sırada duruyor ve
- * SORU NUMARASI kuralıyla birlikte geliyor: numara yazılırsa çıktısı
- * olmayan öğrencinin kâğıdı da okunabilir kalıyor.
+ * öğrencinin ödev gönderememesi demekti. SON SIRADA duruyor ve SORU
+ * NUMARASI kuralıyla birlikte geliyor: numara yazılırsa çıktısı olmayan
+ * öğrencinin kâğıdı da okunabilir kalıyor.
+ *
+ * SIRA ÖĞRETMENİN İKİNCİ DÜZELTMESİ: boş kâğıt ile tablet yer değiştirdi.
+ * İlk iki yolun ortak yanı, çözümün SORULARIN ÜZERİNE yazılması — kâğıtta
+ * ya da ekranda. Boş kâğıt bu bakımdan ikisinden de ayrı ve en sonda
+ * duruyor: yürüyen bir yol, ama tercih edilen değil.
  *
  * DÜRÜST SINIR: numara kuralı bir yazılım kısıtı DEĞİL, yazılı bir kural —
  * el yazısı kuralının kendisi gibi. Denetim yazdığını ölçebilir,
@@ -85,15 +90,15 @@ export const YOLLAR: ReadonlyArray<ElYazisiYolu> = [
     soruDosyasiGerekir: true,
   },
   {
-    baslik: 'Boş kâğıt üzerinde',
-    metin: `Yazıcın yoksa boş kâğıda çöz ve ${NUMARA_KURALI}; çözümünün net bir fotoğrafını yükle.`,
-  },
-  {
     baslik: 'iPad veya tablet üzerinde',
     metin:
       '“Soruları aç (PDF)” ile ödev dosyasını aç, soruların üzerine kalemle çöz; ' +
       'sayfaları kaydedip yükle. Bu da el yazısı sayılır.',
     soruDosyasiGerekir: true,
+  },
+  {
+    baslik: 'Boş kâğıt üzerinde',
+    metin: `Yazıcın yoksa boş kâğıda çöz ve ${NUMARA_KURALI}; çözümünün net bir fotoğrafını yükle.`,
   },
 ];
 
