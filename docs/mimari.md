@@ -6593,3 +6593,55 @@ uzatılıyor, ölçüm 1280×800'de yapılıyor. Ölçülenler:
 Kusur provaları:
 - yapışkan menü kalkınca 4 ölçüm kırmızı (eski "en dipte" hâli);
 - `mt-auto` kalkınca 2 ölçüm kırmızı (bir önceki "çok yukarıda" hâli).
+
+## 0080 — İki ortalama: yaptığı ödevler · tüm ödevler
+
+Öğretmen: "Yaptığı ödevden aldığı ortalaması ve yapılan yapılmayan tüm
+ödevlerden aldığı ortalaması ayrı ayrı yazılsın… amacım ödevini yaparsa
+ortalamasının ne kadar yükseleceğini görmesi."
+
+**Kararlar (öğretmenden):**
+- İki ortalamayı öğretmen, öğrenci ve veli birlikte görür.
+- Puanlanmamış gönderim, puan verilene kadar iki ortalamaya da girmez.
+  Yalnız hiç gönderilmemiş ödev 0 sayılır. 0051'den beri öğretmen listesi
+  puanlanmamış gönderimi 0 sayıyordu; bu düzeltildi.
+
+**Sunucu (`0080_iki_ortalama.sql`):**
+- Yeni dahili yardımcı `_ogrenci_ortalamalari(öğrenci, sınıf, sınıfa
+  geliş)`. İki ortalama ve sayılar tek yerde hesaplanır. Ödev kümesi:
+  sınıfın yayındaki, süresi dolmuş ve öğrenciye düşen ödevleri. Dışarıya
+  kapalı (`revoke all`).
+  - `yapilan_ortalama` = puanlı gönderimlerin ortalaması;
+  - `tum_ortalama` = puanlı gönderimler + gönderilmemişler (0);
+  - `odev_sayisi`, `yapilan`, `yapilmayan`, `puan_bekleyen`.
+- `sinif_ogrenci_ozeti` (0073'ten mekanik kopya): `ortalama` artık
+  yardımcının tüm ödevler ortalaması; yeni alanlar `yapilan_ortalama`,
+  `puan_bekleyen`.
+- `kendi_karnem` (0064'ten mekanik kopya): `genel_ortalama` yardımcıdan
+  (anlam aynı: yaptığı ve puanlanmış ödevler). Yeni alanlar `tum_ortalama`,
+  `yapilmayan`, `puan_bekleyen`. Ödev kümesi öğretmen listesiyle birleşti:
+  sınıfa gelmeden önce kapanmış ödev buraya da girmiyor. Sınıf ortalaması
+  ya da sıralama yine yok.
+
+**İstemci:**
+- Öğrenciler → sınıf: her satırda "Yaptığı ödevler" ve "Tüm ödevler"
+  etiketli iki sayı, altında sayılar ve "N ödev puan bekliyor". Puanlı
+  gönderimi olmayan öğrencide "Yaptığı ödevler" tire (sıfır değil).
+- Sınıf çıktısı: tabloda iki sütun, veli fişinde iki ortalama.
+- Öğrenci ve veli karnesi: `IkiOrtalamaKarti` ve
+  `lib/ortalama-farki-metni.ts`. Fark cümlesi aritmetik olarak her zaman
+  doğru olanı söyler: "Yapmadığın 2 ödev 0 sayıldığı için tüm ödevlerin
+  ortalaması 15,6 puan daha düşük. Bundan sonraki ödevlerini yaptıkça sıfır
+  sayılan ödevlerin ortalamadaki ağırlığı azalır." "Ortalaman X olur" ya
+  da "fark kapanır" denmiyor: yeni ödevin puanı bilinmiyor.
+- Eski sunucuda (alanlar gelmezse) ekranlar eski tek ortalamayla kalır.
+
+**Testler:**
+- `iki_ortalama_testleri.sql` (6 grup): 80 · 60 · gönderilmemiş ·
+  puanlanmamış → 70 / 46,67; karne aynı (1 hane); puan verilince
+  güncelleniyor; başka sınıf 42501; yardımcı kapalı; deneme hesabı yok.
+- Mutasyon kanıtları: puanlanmamışı 0 sayan formül 1b'de, eski iki gövde
+  1a ve 3a'da düşüyor.
+- `kendi_karnem_testleri.sql` 3c: izinli ikinci anahtar `tum_ortalama`.
+- Chromium: `iki-ortalama` A1–A2 (gövde farkı), D1–D5 (360 px, üç rol,
+  çıktı, eski sunucu).

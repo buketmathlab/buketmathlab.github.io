@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   GERI,
+  IKI_ORTALAMA_ACIKLAMASI,
   KAPSAM_ACIKLAMASI,
   KONU_ACIKLAMASI,
   KONU_BOS,
@@ -9,7 +10,11 @@ import {
   SINIF_YOK,
   eksikKonuYazisi,
   odevSayisiYazisi,
+  ikiOrtalamaHucresi,
   ortalamaYazisi,
+  puanBekleyenYazisi,
+  TUM_ORTALAMA_ETIKETI,
+  YAPILAN_ORTALAMA_ETIKETI,
   yapilanYazisi,
 } from './sinif-ozet-metni';
 import { yasakKaliplariBul } from './urun-dili';
@@ -178,5 +183,25 @@ describe('sinif-ozet-metni', () => {
     expect(KAPSAM_ACIKLAMASI).toMatch(/süresi dolmuş/);
     expect(KAPSAM_ACIKLAMASI).toMatch(/devam eden ödev/);
     expect(yasakKaliplariBul(KAPSAM_ACIKLAMASI)).toEqual([]);
+  });
+
+  /** 0080 — iki ortalama. */
+  it('iki ortalama: etiketler, tire, puan bekleyen', () => {
+    expect(YAPILAN_ORTALAMA_ETIKETI).toBe('Yaptığı ödevler');
+    expect(TUM_ORTALAMA_ETIKETI).toBe('Tüm ödevler');
+    expect(ikiOrtalamaHucresi(70)).toBe('70,0');
+    expect(ikiOrtalamaHucresi(46.67)).toBe('46,7');
+    // Ödev var ama puanlı gönderim yok: "Henüz ödev yok" DEĞİL.
+    expect(ikiOrtalamaHucresi(null)).toBe('—');
+    expect(ikiOrtalamaHucresi(undefined)).toBe('—');
+    expect(puanBekleyenYazisi(0)).toBeNull();
+    expect(puanBekleyenYazisi(undefined)).toBeNull();
+    expect(puanBekleyenYazisi(2)).toBe('2 ödev puan bekliyor');
+  });
+
+  it('iki ortalamanın tanımı: yapılmayan 0, puanlanmamış hesapta yok', () => {
+    expect(IKI_ORTALAMA_ACIKLAMASI).toContain('yapılmayan ödev 0 sayılır');
+    expect(IKI_ORTALAMA_ACIKLAMASI).toContain('puan verilene kadar iki ortalamaya da girmez');
+    expect(yasakKaliplariBul(`${IKI_ORTALAMA_ACIKLAMASI} ${puanBekleyenYazisi(1)}`)).toEqual([]);
   });
 });

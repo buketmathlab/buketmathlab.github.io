@@ -1,3 +1,5 @@
+import { IkiOrtalamaKarti } from '@/components/IkiOrtalamaKarti';
+import { ikiOrtalamaVar } from '@/lib/ortalama-farki-metni';
 import { Card } from '@/components/ui/Card';
 import { Gelisim } from '@/components/ui/Gelisim';
 import { KonuListesi } from '@/components/ui/KonuListesi';
@@ -106,7 +108,11 @@ export function OgrenciKarnem() {
                   `?? null` savunması bilerek: 0029 panelde henüz
                   çalıştırılmadıysa alan hiç gelmez ve satır sessizce
                   çizilmez — ekran bozulmaz. */}
-              {(veri.genel_ortalama ?? null) !== null && (
+              {/* İKİ ORTALAMA (0080): yaptığı ödevler · tüm ödevler
+                  (yapılmayan 0) ve aradaki farkın cümlesi. Eski sunucuda
+                  alanlar gelmiyor; aşağıdaki tek satır kalıyor. */}
+              {ikiOrtalamaVar(veri) && <IkiOrtalamaKarti veri={veri} ses="ogrenci" />}
+              {!ikiOrtalamaVar(veri) && (veri.genel_ortalama ?? null) !== null && (
                 <p className="mb-2 text-[15px] text-ink">
                   Genel ortalaman{' '}
                   <span className="sk-sayi font-bold">{veri.genel_ortalama}</span>

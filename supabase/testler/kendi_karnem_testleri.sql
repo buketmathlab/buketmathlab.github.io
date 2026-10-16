@@ -195,7 +195,10 @@ begin
   -- metinden çıkarılıyor, kalan her "ortalama" hâlâ yakalanıyor. Yani
   -- `sinif_ortalama`, `ortalama_tum`, `ortalama_yapan` gibi bir alan bir gün
   -- sızarsa test yine kırılır.
-  if replace(v::text, 'genel_ortalama', '') ilike '%ortalama%'
+  --
+  -- 0080: ikinci izinli anahtar `tum_ortalama` — yine çocuğun KENDİ
+  -- ortalaması (yapılmayan ödev 0). Kıyas değil; öğretmen istedi.
+  if replace(replace(v::text, 'genel_ortalama', ''), '"tum_ortalama"', '') ilike '%ortalama%'
      or v::text ilike '%siralama%' then
     raise exception '3c: karnede KIYAS ortalaması/sıralama geçiyor';
   end if;

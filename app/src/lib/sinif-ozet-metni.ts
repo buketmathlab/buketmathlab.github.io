@@ -26,6 +26,32 @@ export function ortalamaYazisi(ortalama: number | null): string {
   });
 }
 
+/**
+ * İKİ ORTALAMA (0080) — öğretmenin isteği: *"yaptığı ödevden aldığı
+ * ortalaması ve yapılan yapılmayan tüm ödevlerden aldığı ortalaması ayrı
+ * ayrı yazılsın."* İkisi de etiketli; etiketsiz iki sayı yan yana
+ * hangisinin hangisi olduğunu söylemez.
+ */
+export const YAPILAN_ORTALAMA_ETIKETI = 'Yaptığı ödevler';
+export const TUM_ORTALAMA_ETIKETI = 'Tüm ödevler';
+
+/**
+ * İki ortalamanın hücresi. `ortalamaYazisi`'ndan farkı: ödev VARKEN de
+ * `null` gelebilir — yaptığı ödevlerin hiçbiri henüz puanlanmadıysa (ya
+ * da hiç ödev yapmadıysa "yaptığı ödevler" ortalaması yoktur). O zaman
+ * "Henüz ödev yok" demek yanlış olurdu; tire hiçbir şey iddia etmiyor.
+ */
+export function ikiOrtalamaHucresi(ortalama: number | null | undefined): string {
+  if (ortalama === null || ortalama === undefined || Number.isNaN(ortalama)) return '—';
+  return ortalamaYazisi(ortalama);
+}
+
+/** 0080 — gönderdiği ama henüz puanlanmamış ödev; yoksa `null`. */
+export function puanBekleyenYazisi(n: number | undefined): string | null {
+  if (!n || n <= 0) return null;
+  return `${n} ödev puan bekliyor`;
+}
+
 /** Ortalamanın altındaki küçük satır: kaç ödev üzerinden. */
 export function odevSayisiYazisi(odevSayisi: number): string {
   return `${odevSayisi} ödev`;
@@ -107,6 +133,22 @@ export const KONU_ACIKLAMASI =
 export const KAPSAM_ACIKLAMASI =
   'Sayılar ve ortalama, teslim süresi dolmuş ödevleri kapsar; süresi ' +
   'devam eden ödev hiçbir sayıya girmez.';
+
+/**
+ * 0080 — İKİ ORTALAMANIN TANIMI. Eski sunucuda (tek ortalama) yukarıdaki
+ * cümle kalıyor; iki ortalama gelince bu.
+ *
+ * Aradaki farkın neyi gösterdiği açıkça yazılıyor: öğretmenin amacı
+ * öğrencinin "ödevini yaparsa ortalamasının ne kadar yükseleceğini"
+ * görmesi.
+ */
+export const IKI_ORTALAMA_ACIKLAMASI =
+  'Sayılar ve ortalamalar, teslim süresi dolmuş ödevleri kapsar; süresi ' +
+  'devam eden ödev hiçbir sayıya girmez. “Yaptığı ödevler”, gönderdiği ' +
+  've puanlanmış ödevlerin ortalamasıdır. “Tüm ödevler”de yapılmayan ödev ' +
+  '0 sayılır; iki sayı arasındaki fark, yapılmayan ödevlerin ortalamaya ' +
+  'etkisidir. Gönderilmiş ama henüz puanlanmamış ödev, puan verilene ' +
+  'kadar iki ortalamaya da girmez.';
 
 /**
  * KONU BAŞLIKLARININ HEPSİ — EKRANDA DA (öğretmenin düzeltmesi).

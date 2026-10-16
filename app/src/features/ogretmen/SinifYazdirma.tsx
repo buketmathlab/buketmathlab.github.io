@@ -20,6 +20,9 @@ import {
   fisAltNotu,
   konuSatiri,
   odevSayilariYazisi,
+  IKI_ORTALAMA_NOTU,
+  ikiOrtalamaSatiri,
+  ortalamaHucresi,
   ortalamaSatiri,
   tarihYazisi,
 } from '@/lib/sinif-yazdirma-metni';
@@ -88,6 +91,8 @@ export function SinifYazdirma() {
   }
 
   const sinifAdi = veri?.sinif.ad ?? '';
+  // 0080: iki ortalama sunucudan geliyorsa kâğıtta da ikisi; eski sunucuda tek sütun.
+  const iki = veri?.ogrenciler.some((o) => o.yapilan_ortalama !== undefined) ?? false;
 
   return (
     <>
@@ -129,7 +134,7 @@ export function SinifYazdirma() {
                   sığmaz; ekranda yatay kaydırılıyor, KÂĞITTA kaydırma
                   diye bir şey olmadığı için orada normale dönüyor. */}
               <Card className="mt-4 overflow-x-auto print:overflow-visible print:border-0 print:p-0 print:shadow-none">
-                <table className="sk-yazdirma-tablo w-full min-w-[640px] text-left text-[14px] print:min-w-0">
+                <table className="sk-yazdirma-tablo w-full min-w-[720px] text-left text-[14px] print:min-w-0">
                   <thead>
                     <tr className="border-b border-line">
                       <th className="py-2 pr-2 font-semibold">No</th>
@@ -137,7 +142,14 @@ export function SinifYazdirma() {
                       <th className="py-2 pr-2 font-semibold">Verilen</th>
                       <th className="py-2 pr-2 font-semibold">Yapılan</th>
                       <th className="py-2 pr-2 font-semibold">Yapılmayan</th>
-                      <th className="py-2 pr-2 font-semibold">Ortalama</th>
+                      {iki ? (
+                        <>
+                          <th className="py-2 pr-2 font-semibold">Yaptığı ödevler ort.</th>
+                          <th className="py-2 pr-2 font-semibold">Tüm ödevler ort.</th>
+                        </>
+                      ) : (
+                        <th className="py-2 pr-2 font-semibold">Ortalama</th>
+                      )}
                       <th className="py-2 font-semibold">Üzerinde çalışılacak konular</th>
                     </tr>
                   </thead>
@@ -149,9 +161,18 @@ export function SinifYazdirma() {
                         <td className="sk-sayi py-2 pr-2">{o.odev_sayisi}</td>
                         <td className="sk-sayi py-2 pr-2">{o.yapilan}</td>
                         <td className="sk-sayi py-2 pr-2">{o.yapilmayan}</td>
-                        <td className="sk-sayi py-2 pr-2">
-                          {ortalamaSatiri(o.ortalama).replace('Ortalama: ', '')}
-                        </td>
+                        {iki ? (
+                          <>
+                            <td className="sk-sayi py-2 pr-2">
+                              {ortalamaHucresi(o.yapilan_ortalama)}
+                            </td>
+                            <td className="sk-sayi py-2 pr-2">{ortalamaHucresi(o.ortalama)}</td>
+                          </>
+                        ) : (
+                          <td className="sk-sayi py-2 pr-2">
+                            {ortalamaSatiri(o.ortalama).replace('Ortalama: ', '')}
+                          </td>
+                        )}
                         <td className="py-2">
                           {o.eksik_konular.length > 0 ? o.eksik_konular.join(' · ') : '—'}
                         </td>
@@ -161,7 +182,9 @@ export function SinifYazdirma() {
                 </table>
               </Card>
 
-              <p className="mt-3 text-[12px] leading-snug text-muted">{KAPSAM_NOTU}</p>
+              <p className="mt-3 text-[12px] leading-snug text-muted">
+                {iki ? IKI_ORTALAMA_NOTU : KAPSAM_NOTU}
+              </p>
             </section>
 
             {/* ---------------- VELİ FİŞLERİ ---------------- */}
@@ -214,14 +237,18 @@ export function SinifYazdirma() {
                         {odevSayilariYazisi(o.odev_sayisi, o.yapilan, o.yapilmayan)}
                       </p>
                       <p className="sk-sayi text-[13px] text-ink">
-                        {ortalamaSatiri(o.ortalama)}
+                        {iki && o.odev_sayisi > 0
+                          ? ikiOrtalamaSatiri(o.yapilan_ortalama ?? null, o.ortalama)
+                          : ortalamaSatiri(o.ortalama)}
                       </p>
                       {konu && <p className="mt-1 text-[13px] text-ink">{konu}</p>}
 
                       <p className="mt-3 border-t border-line pt-1 text-[10px] leading-snug text-muted">
                         {fisAltNotu(sinifAdi, an)}
                       </p>
-                      <p className="text-[10px] leading-snug text-muted">{KAPSAM_NOTU}</p>
+                      <p className="text-[10px] leading-snug text-muted">
+                        {iki ? IKI_ORTALAMA_NOTU : KAPSAM_NOTU}
+                      </p>
                     </div>
                   );
                 })}

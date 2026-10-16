@@ -16,14 +16,19 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import {
   GERI,
+  IKI_ORTALAMA_ACIKLAMASI,
   KAPSAM_ACIKLAMASI,
   KONU_ACIKLAMASI,
   SINIF_KUTUSU_ACIKLAMASI,
   SINIF_KUTUSU_BASLIGI,
   SINIF_YOK,
+  TUM_ORTALAMA_ETIKETI,
+  YAPILAN_ORTALAMA_ETIKETI,
   eksikKonuYazisi,
+  ikiOrtalamaHucresi,
   odevSayisiYazisi,
   ortalamaYazisi,
+  puanBekleyenYazisi,
   yapilanYazisi,
 } from '@/lib/sinif-ozet-metni';
 import type { Kodlar, OgrenciListesi, Sinif, SinifOgrenciOzeti, YeniOgrenci } from '@/types/api';
@@ -601,6 +606,42 @@ function SinifOzeti({
                       </p>
                     </div>
 
+                    {/* İKİ ORTALAMA (0080) — öğretmenin isteği: yaptığı
+                        ödevlerin ortalaması ve tüm ödevlerin ortalaması
+                        (yapılmayan 0) ayrı ayrı, ikisi de etiketli. Eski
+                        sunucuda alan gelmiyor; aşağıdaki tek sayı kalıyor. */}
+                    {o.yapilan_ortalama !== undefined && o.odev_sayisi > 0 ? (
+                      <div className="text-right">
+                        <div className="flex justify-end gap-4">
+                          <p>
+                            <span className="block text-[11px] text-muted">
+                              {YAPILAN_ORTALAMA_ETIKETI}
+                            </span>
+                            <span className="sk-sayi block text-[18px] font-semibold text-ink">
+                              {ikiOrtalamaHucresi(o.yapilan_ortalama)}
+                            </span>
+                          </p>
+                          <p>
+                            <span className="block text-[11px] text-muted">
+                              {TUM_ORTALAMA_ETIKETI}
+                            </span>
+                            <span className="sk-sayi block text-[18px] font-semibold text-ink">
+                              {ikiOrtalamaHucresi(o.ortalama)}
+                            </span>
+                          </p>
+                        </div>
+                        <p className="sk-sayi text-[12px] text-muted">
+                          {odevSayisiYazisi(o.odev_sayisi)}
+                          {yapilanYazisi(o.yapilan, o.yapilmayan) &&
+                            ` · ${yapilanYazisi(o.yapilan, o.yapilmayan)}`}
+                        </p>
+                        {puanBekleyenYazisi(o.puan_bekleyen) && (
+                          <p className="sk-sayi text-[12px] text-muted">
+                            {puanBekleyenYazisi(o.puan_bekleyen)}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
                     <div className="flex items-center gap-3">
                       {/* ORTALAMA — adın KARŞISINDA (öğretmenin isteği).
                           Altında önce kaç ödev üzerinden hesaplandığı,
@@ -624,12 +665,17 @@ function SinifOzeti({
                         )}
                       </p>
                     </div>
+                    )}
                   </div>
                 </Card>
               ))}
             </div>
             <p className="mt-3 text-[13px] leading-snug text-muted">{KONU_ACIKLAMASI}</p>
-            <p className="mt-2 text-[13px] leading-snug text-muted">{KAPSAM_ACIKLAMASI}</p>
+            <p className="mt-2 text-[13px] leading-snug text-muted">
+              {ozet.veri.ogrenciler.some((o) => o.yapilan_ortalama !== undefined)
+                ? IKI_ORTALAMA_ACIKLAMASI
+                : KAPSAM_ACIKLAMASI}
+            </p>
           </>
         )}
       </AsyncBoundary>
