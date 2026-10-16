@@ -593,20 +593,20 @@ function OdevIcerigi({
                     (y.onerilen ? ' border-l-[3px] border-l-success' : '')
                   }
                 >
-                  <strong className="block">
-                    {y.baslik}
-                    {/* "Önerilen" YAZIYLA. Yalnız renkli bir şerit, renk
-                        körü birine ve ekran okuyucuya hiçbir şey söylemez.
+                  <strong className="block">{y.baslik}</strong>
+                  {/* "Önerilen" YAZIYLA ve BAŞLIĞIN ALTINDA (öğretmenin
+                      isteği). Yalnız renkli bir şerit, renk körü birine ve
+                      ekran okuyucuya hiçbir şey söylemez.
 
-                        `whitespace-nowrap`: "·" ile "Önerilen" arasında
-                        satır kırılırsa nokta satır sonunda sallantıda
-                        kalıyordu (geniş ekran görüntüsünde görüldü). */}
-                    {y.onerilen && (
-                      <span className="ml-1 whitespace-nowrap text-[12px] font-semibold text-success">
-                        · Önerilen
-                      </span>
-                    )}
-                  </strong>
+                      Başlığın yanında "· Önerilen" olarak duruyordu ve dar
+                      sütunda satır kırılınca nokta sallantıda kalıyordu;
+                      kendi satırına inince hem o sorun kalktı hem de üç
+                      kutu aynı hizada okunuyor. */}
+                  {y.onerilen && (
+                    <span className="block text-[12px] font-semibold text-success">
+                      Önerilen
+                    </span>
+                  )}
                   {y.metin}
                 </li>
               ))}

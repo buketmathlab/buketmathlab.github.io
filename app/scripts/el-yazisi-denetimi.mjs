@@ -179,9 +179,24 @@ const { b, p } = await kur('/ogrenci/odev/a1');
   );
   // "Önerilen" YAZIYLA: renkli şerit tek başına ekran okuyucuya ve renk
   // körü birine hiçbir şey söylemez.
-  (/Önerilen/.test(yollar[0] ?? '') ? tamam : bozuk)('önerilen yol yazıyla işaretli');
-  (yollar.filter((y) => /Önerilen/.test(y)).length === 1 ? tamam : bozuk)(
-    'yalnız bir yol önerilen',
+  //
+  // İKİ YOL ÖNERİLEN, BİRİ DEĞİL. Çıktı ve tablet aynı şeyi yapıyor:
+  // çözüm soruların üzerine yazılıyor. Boş kâğıt önerilmeyen tek yol —
+  // üçü birden işaretlenseydi işaret hiçbir şey ayırt etmezdi.
+  const onerilenler = await p.evaluate(() =>
+    [...document.querySelectorAll('[data-test="el-yazisi-yollari"] > li')]
+      .filter((l) => /Önerilen/.test(l.innerText))
+      .map((l) => l.innerText.split('\n')[0].trim()),
+  );
+  (onerilenler.length === 2 ? tamam : bozuk)(`iki yol önerilen (${onerilenler.length})`);
+  (/^Çıktı alınmış soru kâğıdında/.test(onerilenler[0] ?? '') ? tamam : bozuk)(
+    `çıktı yolu önerilen (${onerilenler[0] ?? 'yok'})`,
+  );
+  (/^iPad veya tablet üzerinde/.test(onerilenler[1] ?? '') ? tamam : bozuk)(
+    `tablet yolu önerilen (${onerilenler[1] ?? 'yok'})`,
+  );
+  (!onerilenler.some((y) => /Boş kâğıt/.test(y)) ? tamam : bozuk)(
+    'boş kâğıt önerilen DEĞİL — işaret bir şey ayırt ediyor',
   );
   // Kart, yükleme alanından ÖNCE okunsun.
   const sira = await p.evaluate(() => {

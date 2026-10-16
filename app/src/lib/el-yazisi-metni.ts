@@ -29,6 +29,12 @@
  * ya da ekranda. Boş kâğıt bu bakımdan ikisinden de ayrı ve en sonda
  * duruyor: yürüyen bir yol, ama tercih edilen değil.
  *
+ * ÖĞRETMENİN ÜÇÜNCÜ DÜZELTMESİ: tablet yolu da "Önerilen". İkisi birden
+ * önerilen, çünkü ikisi de AYNI ŞEYİ yapıyor — çözüm soruların üzerine
+ * yazılıyor. Yalnız çıktıyı önermek, iPad'iyle doğru olanı yapan
+ * öğrenciye ikinci sınıf bir yol seçmiş hissi verirdi. Önerilmeyen tek
+ * yol boş kâğıt.
+ *
  * DÜRÜST SINIR: numara kuralı bir yazılım kısıtı DEĞİL, yazılı bir kural —
  * el yazısı kuralının kendisi gibi. Denetim yazdığını ölçebilir,
  * uygulandığını ölçemez; asıl denetim öğretmenin "yeniden aç" yolu (0056).
@@ -94,6 +100,7 @@ export const YOLLAR: ReadonlyArray<ElYazisiYolu> = [
     metin:
       '“Soruları aç (PDF)” ile ödev dosyasını aç, soruların üzerine kalemle çöz; ' +
       'sayfaları kaydedip yükle. Bu da el yazısı sayılır.',
+    onerilen: true,
     soruDosyasiGerekir: true,
   },
   {

@@ -44,8 +44,24 @@ describe('el yazısı kuralı metni', () => {
    */
   it('önerilen yol çıktı kâğıdı ve birinci sırada', () => {
     expect(YOLLAR[0]?.onerilen).toBe(true);
-    expect(YOLLAR.filter((y) => y.onerilen)).toHaveLength(1);
     expect(YOLLAR[0]?.metin).toMatch(/Soruları yazdır/);
+  });
+
+  /**
+   * İKİ YOL ÖNERİLEN, BİRİ DEĞİL.
+   *
+   * Çıktı ve tablet aynı şeyi yapıyor: çözüm SORULARIN ÜZERİNE yazılıyor.
+   * Yalnız çıktıyı önermek, iPad'iyle doğru olanı yapan öğrenciye ikinci
+   * sınıf bir yol seçmiş hissi verirdi (öğretmenin üçüncü düzeltmesi).
+   * Önerilmeyen tek yol boş kâğıt — ve bu ayrımın kaybolmaması gerekiyor,
+   * yoksa işaret hiçbir şey ayırt etmez.
+   */
+  it('çıktı ve tablet önerilen, boş kâğıt değil', () => {
+    expect(YOLLAR.filter((y) => y.onerilen).map((y) => y.baslik)).toEqual([
+      'Çıktı alınmış soru kâğıdında',
+      'iPad veya tablet üzerinde',
+    ]);
+    expect(YOLLAR.find((y) => y.baslik === 'Boş kâğıt üzerinde')?.onerilen).toBeUndefined();
   });
 
   /**

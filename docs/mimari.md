@@ -6741,6 +6741,19 @@ sırayı okunur kılıyor: **ilk iki yolun ortak yanı, çözümün SORULARIN
 ikisinden de ayrı ve en sonda duruyor: yürüyen bir yol, ama tercih edilen
 değil.
 
+**Çıktı ve tablet İKİSİ BİRDEN "Önerilen"** (öğretmenin üçüncü
+düzeltmesi), çünkü ikisi de aynı şeyi yapıyor: çözüm soruların üzerine
+yazılıyor. Yalnız çıktıyı önermek, iPad'iyle doğru olanı yapan öğrenciye
+ikinci sınıf bir yol seçmiş hissi verirdi. **Önerilmeyen tek yol boş
+kâğıt** — ve denetim bu ayrımın kaybolmadığını ayrıca sayıyor: üçü birden
+işaretlenseydi işaret hiçbir şey ayırt etmezdi. İki kusur provası
+(işaretin üçe yayılması, tabletten kalkması) ikisini de kırıyor.
+
+İşaret **başlığın altında, kendi satırında** (öğretmenin isteği). Başlığın
+yanında "· Önerilen" olarak duruyordu ve dar sütunda satır kırılınca nokta
+sallantıda kalıyordu; kendi satırına inince hem o sorun kalktı hem üç kutu
+aynı hizada okunuyor.
+
 ### Sıra öğretmenin kararı — ve ekrandan ölçülüyor
 
 Üç yol `YOLLAR` dizisinde duruyor, ekran diziyi olduğu gibi çiziyor ve
