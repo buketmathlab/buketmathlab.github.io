@@ -4,8 +4,12 @@
  * Öğretmen: "Öğrenciye kural ve onay olsun fakat iPad/tabletten açıp soru
  * dosyasının üzerinden de çözmüş olabilir. Bu da bir el yazısı."
  *
- *  E1. Gönderilmemiş ödevde kural kartı: başlık, neden, iki yol (Kâğıt üzerinde /
- *      iPad veya tablet üzerinde — "soruların üzerine kalemle"), kabul edilmeyenler.
+ *  E1. Gönderilmemiş ödevde kural kartı: başlık, neden, ÜÇ yol (Çıktı alınmış
+ *      soru kâğıdında / Boş kâğıt üzerinde / iPad veya tablet üzerinde),
+ *      kabul edilmeyenler. Öğretmenin isteği üzerine (16 Ekim) çıktı alınmış
+ *      soru kâğıdı ÖNERİLEN yol ve BİRİNCİ SIRADA; sıra EKRANDAN okunuyor.
+ *      Boş kâğıt yolu duruyor (yazıcısı olmayan öğrenci) ve soru numarası
+ *      kuralını taşıyor.
  *  E2. Onaysız "Ödevi gönder" → `odev_gonder` ÇAĞRILMIYOR, yükleme yok,
  *      `role="alert"` uyarısı görünüyor; düğme kapalı değil.
  *  E3. Onay işaretlenince uyarı kalkıyor; gönderim gidiyor.
@@ -21,6 +25,14 @@
  *  E10. Yeni sürüm yayındayken öğrencinin eski sekmesi KENDİNİ yeniliyor
  *      (bir kez, döngü yok); teslim ve mesaj ekranında yenilemiyor, şerit
  *      görünüyor; teslim ekranından çıkınca yeniliyor.
+ *  E11. "Soruları yazdır" düğmesi: soru dosyası olan ödevde var, cihaz adımı
+ *      düğmenin ALTINDA ve dokunmadan görünür, basınca AYNI dosyaya gidiyor
+ *      ("Soruları aç" ile tek yol), soru dosyası OLMAYAN ödevde hiç yok.
+ *
+ *      ÖLÇÜLEN SINIR: SEKİZ dosyayı kendisi yazdırmıyor — PDF tarayıcıda
+ *      açılıyor, yazdırma komutu tarayıcının. Denetim de bunu ölçüyor:
+ *      düğmenin yazdırma komutu verdiğini DEĞİL, dosyayı açtığını ve adımın
+ *      yazılı olduğunu.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/el-yazisi-denetimi.mjs
@@ -35,9 +47,10 @@ const KOK = 'http://127.0.0.1:8788/yeni/';
 
 // Açık renkli kâğıt: E7'deki karanlık fotoğraf denetimine takılmasın.
 const PNG = await sharp({ create: { width: 600, height: 800, channels: 3, background: '#f2efe8' } }).png().toBuffer();
-const odev = (id, gonderim) => ({
+/** `odevYolu` parametreli: E11'de soru dosyası OLMAYAN ödev de gerekiyor. */
+const odev = (id, gonderim, odevYolu = 'odev/x/sorular.pdf') => ({
   id, baslik: 'Açık uçlu ödev', aciklama: null, tur: 'acik', son_tarih: '2099-10-02',
-  soru_sayisi: null, gec_teslim: true, sik_sayisi: 5, sinif_arsiv: false, odev_yolu: 'odev/x/sorular.pdf',
+  soru_sayisi: null, gec_teslim: true, sik_sayisi: 5, sinif_arsiv: false, odev_yolu: odevYolu,
   gonderim, konu_analizi: [], cevap_anahtari: null, anahtar_yolu: null,
 });
 const ODEVLER = {
@@ -46,6 +59,8 @@ const ODEVLER = {
     odev('a1', null),
     odev('a2', { id: 'g1', zaman: '2026-09-30T10:00:00Z', durum: 'incelemede', dogru: null, yanlis: null,
       bos: null, puan: null, ogretmen_puan: null, ogretmen_yorum: null, cevaplar: null, gecikmeli: false }),
+    // E11-3: öğretmen soru dosyası eklememiş ödev (`odev_yolu` isteğe bağlı).
+    odev('a3', null, null),
   ],
   dersler: [], okunmamis_mesaj: 0,
 };
@@ -114,7 +129,7 @@ async function bas(p) {
   await p.waitForTimeout(1000);
 }
 
-console.log('--- E1. Kural kartı: neden, iki yol, kabul edilmeyenler ---');
+console.log('--- E1. Kural kartı: neden, üç yol, sıra, kabul edilmeyenler ---');
 const { b, p } = await kur('/ogrenci/odev/a1');
 {
   if ((await kart(p).count()) !== 1) bozuk('kural kartı yok');
@@ -122,7 +137,10 @@ const { b, p } = await kur('/ogrenci/odev/a1');
     const k = await kart(p).innerText();
     const bek = [
       [/nasıl düşündüğünü/, 'neden'],
-      [/Kâğıt üzerinde/, 'kâğıt yolu'],
+      [/Çıktı alınmış soru kâğıdında/, 'çıktı yolu'],
+      [/soruların üzerine ve altındaki/, 'soruların üzerine ve altındaki boşluk'],
+      [/Boş kâğıt üzerinde/, 'boş kâğıt yolu (yazıcısı olmayan öğrenci)'],
+      [/soru numarasını yaz/, 'boş kâğıtta soru numarası kuralı'],
       [/iPad veya tablet üzerinde/, 'iPad/tablet yolu'],
       [/soruların üzerine kalemle çöz/, 'soruların üzerine kalemle'],
       [/Bu da el yazısı sayılır/, 'iPad/tablet de el yazısı'],
@@ -132,6 +150,31 @@ const { b, p } = await kur('/ogrenci/odev/a1');
     ];
     for (const [r, ad] of bek) (r.test(k) ? tamam : bozuk)(`kartta ${ad}`);
   }
+
+  /**
+   * SIRA EKRANDAN OKUNUYOR, veriden değil (öğretmenin kararı: çıktı
+   * alınmış soru kâğıdı önerilen yol ve birinci sırada). `YOLLAR`
+   * dizisine bakan bir ölçüm, ekran listeyi ters çevirse de yeşil
+   * kalırdı.
+   */
+  const yollar = await p.evaluate(() =>
+    [...document.querySelectorAll('[data-test="el-yazisi-yollari"] > li')].map((l) =>
+      l.innerText.split('\n')[0].trim(),
+    ),
+  );
+  (yollar.length === 3 ? tamam : bozuk)(`üç yol çizildi (${yollar.length})`);
+  (/^Çıktı alınmış soru kâğıdında/.test(yollar[0] ?? '') ? tamam : bozuk)(
+    `çıktı yolu BİRİNCİ sırada (${yollar[0] ?? 'yok'})`,
+  );
+  (/^Boş kâğıt üzerinde/.test(yollar[1] ?? '') ? tamam : bozuk)(
+    `boş kâğıt ikinci sırada (${yollar[1] ?? 'yok'})`,
+  );
+  // "Önerilen" YAZIYLA: renkli şerit tek başına ekran okuyucuya ve renk
+  // körü birine hiçbir şey söylemez.
+  (/Önerilen/.test(yollar[0] ?? '') ? tamam : bozuk)('önerilen yol yazıyla işaretli');
+  (yollar.filter((y) => /Önerilen/.test(y)).length === 1 ? tamam : bozuk)(
+    'yalnız bir yol önerilen',
+  );
   // Kart, yükleme alanından ÖNCE okunsun.
   const sira = await p.evaluate(() => {
     const k = document.getElementById('el-yazisi-baslik');
@@ -312,6 +355,134 @@ console.log('--- E10. Eski sekme kendini yeniliyor (öğrenci) ---');
     }
     await b.close();
   }
+}
+
+console.log('--- E11. Soruları yazdır: düğme, cihaz adımı, tek dosya yolu ---');
+{
+  const { b, p } = await kur('/ogrenci/odev/a1');
+
+  const yazdir = p.getByRole('button', { name: 'Soruları yazdır', exact: true });
+  const ac = p.getByRole('button', { name: 'Soruları aç (PDF)', exact: true });
+  ((await yazdir.count()) === 1 ? tamam : bozuk)(`"Soruları yazdır" düğmesi var (${await yazdir.count()})`);
+  ((await ac.count()) === 1 ? tamam : bozuk)('"Soruları aç (PDF)" düğmesi duruyor');
+
+  /**
+   * CİHAZ ADIMI DOKUNMADAN GÖRÜNÜYOR.
+   *
+   * `DosyaAcici` kartına koymak düşünüldü ve bırakıldı: o kart dosya
+   * açıldıktan SONRA beliriyor, o anda öğrenci zaten öteki sekmede.
+   * Ölçüm "ekranda bir yerde var" demiyor — GÖRÜNÜR olduğunu ve
+   * düğmenin ALTINDA durduğunu sayıyor.
+   */
+  const adim = p.locator('[data-test="yazdirma-adimi"]');
+  ((await adim.count()) === 1 ? tamam : bozuk)('cihaz adımı satırı var');
+  if (await adim.count()) {
+    (await adim.isVisible() ? tamam : bozuk)('adım dokunmadan görünür');
+    const t = await adim.innerText();
+    // Chromium Linux → "Ctrl + P". Cümle boş olmamalı ve "Çıktı almak
+    // için:" ile başlamalı; hangi cihaz olduğu `yazdirma-yonergesi.test.ts`'de.
+    (/Çıktı almak için:\s*\S/.test(t) ? tamam : bozuk)(`adım cümlesi dolu (${t})`);
+    const altta = await p.evaluate(() => {
+      const d = [...document.querySelectorAll('button')].find(
+        (x) => x.textContent.trim() === 'Soruları yazdır',
+      );
+      const a = document.querySelector('[data-test="yazdirma-adimi"]');
+      return !!d && !!a && !!(d.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+    (altta ? tamam : bozuk)('adım düğmenin altında');
+  }
+
+  /**
+   * YÜKLEME İPUCU DA EKRANDA ÖLÇÜLÜYOR.
+   *
+   * Bu iddia bir kusur yüzünden eklendi: numara kuralı önce
+   * `el-yazisi-metni.ts`'teki `YUKLEME_IPUCU` sabitine yazılmıştı ve o
+   * sabit ÖLÜ ÇIKTI — hiçbir ekran çizmiyordu, yalnız kendi testi
+   * okuyordu. Birim testi yeşildi, ekran eski cümleyi gösteriyordu.
+   * Ölçüm artık EKRANI okuyor.
+   */
+  const sayfa = await metin(p);
+  (/Çıktı alınmış soru kâğıdına/.test(sayfa) ? tamam : bozuk)(
+    'yükleme ipucu çıktı yolunu söylüyor',
+  );
+  ((sayfa.match(/soru numarasını yaz/g) ?? []).length >= 2 ? tamam : bozuk)(
+    `numara kuralı hem kuralda hem ipucunda (${(sayfa.match(/soru numarasını yaz/g) ?? []).length})`,
+  );
+
+  /**
+   * TEK DOSYA YOLU. "Soruları yazdır" ikinci bir açma mantığı yazmıyor:
+   * `dosya-ac.ts`'in notuna göre bu düğmede bir kez gerçek arıza yaşandı
+   * ve o yol tek bir yerde duruyor. İki düğme de AYNI dosyayı istiyor.
+   */
+  await p.evaluate(() => { window.__istenen = []; });
+  await p.evaluate(() => {
+    const asil = window.fetch;
+    window.fetch = async (u, o) => {
+      const url = String(typeof u === 'string' ? u : u.url);
+      if (/functions\/v1\/dosya-url/.test(url)) {
+        try { window.__istenen.push(JSON.parse(String(o?.body ?? '{}')).yol); } catch { /* yok */ }
+      }
+      return asil(u, o);
+    };
+  });
+  await yazdir.click();
+  await p.waitForTimeout(700);
+  const istenen = await p.evaluate(() => window.__istenen);
+  (istenen.length === 1 && istenen[0] === 'odev/x/sorular.pdf' ? tamam : bozuk)(
+    `yazdır düğmesi soru dosyasını istedi (${JSON.stringify(istenen)})`,
+  );
+  await b.close();
+}
+
+console.log('--- E11b. Soru dosyası olmayan ödevde yazdır düğmesi YOK ---');
+{
+  const { b, p } = await kur('/ogrenci/odev/a3');
+  // POZİTİF KONTROL: ekran gerçekten çizildi — yoksa "düğme yok" ölçümü,
+  // sayfa hiç yüklenmese de yeşil yanardı.
+  ((await kart(p).count()) === 1 ? tamam : bozuk)('pozitif kontrol: kural kartı çizildi');
+  const n = await p.getByRole('button', { name: /^Soruları/ }).count();
+  (n === 0 ? tamam : bozuk)(`soru dosyası yokken "Soruları…" düğmesi yok (${n})`);
+  const a = await p.locator('[data-test="yazdirma-adimi"]').count();
+  (a === 0 ? tamam : bozuk)(`adım satırı da yok (${a})`);
+
+  /**
+   * OLMAYAN DÜĞME TARİF EDİLMİYOR.
+   *
+   * Soru dosyası yoksa ekranda ne "Soruları yazdır" var ne "Soruları aç
+   * (PDF)"; o ödevde üç yolu birden göstermek, olmayan iki düğmeyi tarif
+   * etmek olurdu. Ekran görüntüsü alınınca görüldü ve düzeltildi.
+   */
+  const yollar = await p.evaluate(() =>
+    [...document.querySelectorAll('[data-test="el-yazisi-yollari"] > li')].map((l) =>
+      l.innerText.split('\n')[0].trim(),
+    ),
+  );
+  (yollar.length === 1 && /^Boş kâğıt üzerinde/.test(yollar[0] ?? '') ? tamam : bozuk)(
+    `yalnız boş kâğıt yolu çizildi (${yollar.join(' | ') || 'hiç'})`,
+  );
+  const k = await kart(p).innerText();
+  (!/Soruları yazdır|Soruları aç/.test(k) ? tamam : bozuk)(
+    'kart olmayan düğmeleri tarif etmiyor',
+  );
+  await b.close();
+}
+
+console.log('--- E11c. 360 px: iki düğme ve adım taşmıyor ---');
+{
+  const { b, p } = await kur('/ogrenci/odev/a1', { en: 360 });
+  const tasma = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  (tasma <= 0 ? tamam : bozuk)(`360 px yatay taşma yok (${tasma} px)`);
+  (await p.locator('[data-test="yazdirma-adimi"]').isVisible() ? tamam : bozuk)(
+    '360 px’de adım görünür',
+  );
+  // Üç yol 360 px'de alt alta iniyor; hiçbiri kesilmiyor.
+  const kesik = await p.evaluate(() =>
+    [...document.querySelectorAll('[data-test="el-yazisi-yollari"] > li')].filter(
+      (l) => l.scrollWidth > l.clientWidth,
+    ).length,
+  );
+  (kesik === 0 ? tamam : bozuk)(`360 px’de hiçbir yol kutusu kesilmiyor (${kesik})`);
+  await b.close();
 }
 
 console.log('');

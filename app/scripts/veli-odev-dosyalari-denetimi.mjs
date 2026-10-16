@@ -13,6 +13,10 @@
  *  V5. Ekranda "anahtar" yazısı yok; hiçbir istek anahtar yolu istemiyor;
  *      düğmenin adı "Çocuğunuzun çözümünü aç" — çıplak "Çözümü aç" yok.
  *  V6. 360 px'de yatay taşma yok.
+ *  V7. "Soruları yazdır" (16 Ekim): öğretmenin kararı — çıktıyı öğrenci ya da
+ *      VELİ alabilsin (evde yazıcı çoğu zaman velinin elinde). Düğme soru
+ *      dosyası olan kartta var, AYNI dosyayı istiyor ("Soruları aç" ile tek
+ *      yol) ve cihaz adımı dokunmadan görünür. Soru dosyası yoksa yok.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/veli-odev-dosyalari-denetimi.mjs
@@ -40,6 +44,10 @@ const TAM = [
   { ...satir('Sayı aralıkları', { odev_yolu: 'odev/ara/sorular.pdf', cozum_yollari: [] }),
     son_tarih: gun(2), gonderildi: false, gonderim_zamani: null, puan: null, durum: null,
     yanlis_sorular: [], bos_sorular: [] },
+  // V7: öğretmen soru dosyası eklememiş ödev. Çözümü VAR ki kart çizilsin
+  // (`VeliOdevDosyalari` ikisi de yoksa hiç çizmiyor) — ölçüm "düğme yok"u
+  // boş bir kartta değil, GERÇEKTEN çizilmiş bir kartta sayabilsin.
+  satir('Dosyasız ödev', { odev_yolu: null, cozum_yollari: ['cozum/dos/c.jpg'] }),
 ];
 const ESKI = TAM.map((r) => {
   const k = { ...r };
@@ -149,6 +157,45 @@ console.log('--- V4. 0071 öncesi: alan yok ---');
   const m = await p.evaluate(() => document.body.innerText);
   (m.includes('Üslü sayılar') ? tamam : bozuk)('ekran açıldı');
   ((await p.getByRole('button', { name: /Soruları aç|çözümünü aç/ }).count()) === 0 ? tamam : bozuk)('düğme yok');
+  await b.close();
+}
+
+console.log('--- V7. Soruları yazdır (veli de çıktı alabilsin) ---');
+{
+  const { b, s, p } = await kur(TAM);
+  const k = kart(p, 'Üslü sayılar');
+  const yaz = k.getByRole('button', { name: 'Soruları yazdır', exact: true });
+  ((await yaz.count()) === 1 ? tamam : bozuk)(`"Soruları yazdır" düğmesi var (${await yaz.count()})`);
+
+  // TEK DOSYA YOLU: "Soruları aç" ile aynı dosyayı istiyor. İkinci bir
+  // açma mantığı yazılmadı — `dosya-ac.ts`'in notundaki arıza o yolda.
+  const a = await basVeSekme(s, yaz);
+  const y = (await yollar(p)).at(-1);
+  (a === IMZALI && y === 'odev/us/sorular.pdf' ? tamam : bozuk)(
+    `"Soruları yazdır" → ${y}, sekme ${a ? 'açıldı' : 'YOK'}`,
+  );
+
+  // CİHAZ ADIMI DOKUNMADAN GÖRÜNÜR (öğrenci ekranıyla aynı gerekçe).
+  const adim = k.locator('[data-test="yazdirma-adimi"]');
+  ((await adim.count()) === 1 ? tamam : bozuk)('cihaz adımı satırı var');
+  if (await adim.count()) {
+    (await adim.first().isVisible() ? tamam : bozuk)('adım dokunmadan görünür');
+    const t = await adim.first().innerText();
+    (/Çıktı almak için:\s*\S/.test(t) ? tamam : bozuk)(`adım cümlesi dolu (${t})`);
+  }
+
+  // SORU DOSYASI YOKSA DÜĞME DE YOK. Pozitif kontrol: kart gerçekten çizildi.
+  const yok = kart(p, 'Dosyasız ödev');
+  ((await yok.count()) > 0 ? tamam : bozuk)('pozitif kontrol: dosyasız ödev kartı çizildi');
+  ((await yok.getByRole('button', { name: /^Soruları/ }).count()) === 0 ? tamam : bozuk)(
+    'soru dosyası yokken "Soruları…" düğmesi yok',
+  );
+
+  // CEVAP ANAHTARI HÂLÂ YOK (Kural 6) — yeni düğme bir kapı açmadı.
+  const istenenler = await yollar(p);
+  (!istenenler.some((x) => /anahtar/i.test(x)) ? tamam : bozuk)(
+    `yazdır düğmesinden sonra da anahtar istenmedi (${istenenler.join(', ')})`,
+  );
   await b.close();
 }
 

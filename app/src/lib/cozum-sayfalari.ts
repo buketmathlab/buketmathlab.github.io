@@ -9,6 +9,8 @@
  * `cozumSayfaYolu(o, s, 1)` 0009'dan beri kullanılan `cozum/o/s.jpg`.
  */
 
+import { NUMARA_KURALI } from '@/lib/el-yazisi-metni';
+
 /** Sunucudaki tablo kısıtıyla aynı (0054: 1–8; 0078: 1–40). */
 export const EN_FAZLA_SAYFA = 40;
 
@@ -127,10 +129,21 @@ export function sayfaSayacMetni(secili: number, sinir: number, zorunlu = false):
     : `${secili} / ${sinir} sayfa eklendi · ${eksik} sayfa eksik`;
 }
 
-/** Yükleme alanının açıklaması. */
+/**
+ * Yükleme alanının açıklaması.
+ *
+ * NUMARA KURALI BURADA, çünkü ÖĞRENCİNİN OKUDUĞU İPUCU BU. Kural önce
+ * `el-yazisi-metni.ts`'teki `YUKLEME_IPUCU` sabitine yazılmıştı ve o sabit
+ * ÖLÜ ÇIKTI: hiçbir ekran onu çizmiyordu, yalnız kendi testi okuyordu.
+ * Ekran görüntüsü aldığımızda görüldü — ipucu hâlâ eski cümleydi. Ölü
+ * sabit silindi; kural buraya, gerçekten çizilen metne taşındı.
+ *
+ * Ders: bir metni değiştirmek, onun ekrana ulaştığını kanıtlamaz.
+ */
 export function sayfaIpucuMetni(sinir: number, zorunlu: boolean): string {
   const nasil =
-    'Kâğıda çözdüysen her sayfanın fotoğrafını çek; tablette çözdüysen görsel ya da PDF ' +
+    `Çıktı alınmış soru kâğıdına ya da boş kâğıda çözdüysen (boş kâğıtta ${NUMARA_KURALI}) ` +
+    'her sayfanın fotoğrafını çek; tablette çözdüysen görsel ya da PDF ' +
     "yükleyebilirsin, PDF'in her sayfası ayrı bir sayfa sayılır.";
   if (!zorunlu) {
     return `Bu ödevde en fazla ${sinir} sayfa gönderebilirsin; sırayla ekle, öğretmenin bu sırayla görecek. ${nasil}`;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useDosyaAc } from '@/components/DosyaAcici';
 import { dosyaAdresi } from '@/services/dosya';
+import { buCihazinYazdirmaAdimi } from '@/lib/yazdirma-yonergesi';
 
 /**
  * Veli ödev kartı: "Soruları aç (PDF)" ve "Çocuğunuzun çözümünü aç" (0071).
@@ -28,6 +29,7 @@ export function VeliOdevDosyalari({
 }) {
   const dosya = useDosyaAc();
   const [sayfalarAcik, setSayfalarAcik] = useState(false);
+  const yazdirmaAdimi = buCihazinYazdirmaAdimi();
 
   if (!odevYolu && cozumYollari.length === 0) return null;
 
@@ -43,9 +45,20 @@ export function VeliOdevDosyalari({
     <div className="mt-3 border-t border-line pt-3">
       <div className="flex flex-wrap gap-2">
         {odevYolu && (
-          <Button tur="sade" olcu="sm" onClick={() => ac(odevYolu, 'Sorular açılamadı.')}>
-            Soruları aç (PDF)
-          </Button>
+          <>
+            <Button tur="sade" olcu="sm" onClick={() => ac(odevYolu, 'Sorular açılamadı.')}>
+              Soruları aç (PDF)
+            </Button>
+            {/* SORULARI YAZDIR — öğretmenin kararı: çıktıyı öğrenci ya da
+                VELİ alabilsin. Evde yazıcı çoğu zaman velinin elinde.
+
+                Aynı dosyayı aynı yoldan açıyor; adım cümlesi öğrenci
+                ekranıyla ORTAK (`lib/yazdirma-yonergesi.ts`) — ikinci bir
+                kopya bir gün ayrışırdı. */}
+            <Button tur="sade" olcu="sm" onClick={() => ac(odevYolu, 'Sorular açılamadı.')}>
+              Soruları yazdır
+            </Button>
+          </>
         )}
         {cozumYollari.length > 0 && (
           <Button
@@ -58,6 +71,13 @@ export function VeliOdevDosyalari({
           </Button>
         )}
       </div>
+      {/* Adım düğmenin altında, her zaman görünür: veli sekme
+          değiştirmeden önce okusun (öğrenci ekranıyla aynı gerekçe). */}
+      {odevYolu && (
+        <p className="mt-2 text-[13px] text-muted" data-test="yazdirma-adimi">
+          Çıktı almak için: {yazdirmaAdimi}
+        </p>
+      )}
       {sayfalarAcik && cozumYollari.length > 1 && (
         <div
           className="mt-2 flex flex-wrap items-center gap-2"

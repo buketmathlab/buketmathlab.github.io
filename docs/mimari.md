@@ -6645,3 +6645,147 @@ ortalamasının ne kadar yükseleceğini görmesi."
 - `kendi_karnem_testleri.sql` 3c: izinli ikinci anahtar `tum_ortalama`.
 - Chromium: `iki-ortalama` A1–A2 (gövde farkı), D1–D5 (360 px, üç rol,
   çıktı, eski sunucu).
+
+## Soru kâğıdına çözüm — çıktı alıp soruların üzerine yazmak (16 Ekim)
+
+Öğretmenin isteği: *"çözümünü kendi el yazınla teslim et kısmı var öğrenci
+ödevini gönderirken. Orada kâğıt üzerinde yazıyor. Kâğıt üzerinde de boş
+kâğıt üzerinde olmasın. Çıktı alarak mümkünse eğer. Çıktı alınan kâğıdın
+üzerinde, yani soruların üzerinde ve soruların altındaki boşlukta
+çözümlerini yaparlarsa daha iyi olur."*
+
+Gerekçe somut: boş kâğıtta soru ile çözüm ayrı düşüyor ve öğretmen hangi
+çözümün hangi soruya ait olduğunu ayrı bir zihinsel işle kuruyor.
+Soruların üzerine yazılmış bir kâğıtta o iş kendiliğinden bitmiş oluyor.
+
+### Öğretmenin dört kararı
+
+| Soru | Karar |
+| --- | --- |
+| Kim yazdıracak | **Öğrenci ya da veli** — öğretmen tarafına toplu çıktı bu turda yok |
+| Kâğıt düzeni | **"Hazırladığım sayfa nasılsa öyle çıktı alınsın. Herhangi bir değişiklik olmasın."** |
+| Yazıcısı olmayan | Boş kâğıt yolu **duruyor, ikinci sırada** + **her çözümün başına soru numarası** |
+| Düğme adı | **"Soruları yazdır" + cihaza göre adım** |
+
+### PDF'e DOKUNULMADI — ve bu bilinçli
+
+En beklenen tasarım, soru sayfasını A4'ün üst yarısına küçültüp altını
+çözüm için boş bırakmaktı; boşluk o zaman **garanti** olurdu. Öğretmenin
+kararı bunu kapattı: *"Hazırladığım sayfa nasılsa öyle."* Sayfa
+küçültülmüyor, üstüne künye konmuyor, araya boş çözüm kâğıdı eklenmiyor.
+
+Teknik taraf da bu kararı destekliyor: `odev-kunye.ts`'in başındaki nota
+göre öğretmenin gerçek PDF'lerinde **sorular görsel olarak gömülü**, metin
+katmanında yok — sayfayı yeniden akıtmak zaten mümkün değildi. Yapılabilecek
+tek şey rasterleştirip yeniden yerleştirmekti ve o da "değişiklik olmasın"a
+aykırı.
+
+### DÜRÜST SINIR: SEKİZ yazdırmıyor, tarayıcı yazdırıyor
+
+Soru PDF'i imzalı bir adreste (60 sn) duruyor ve öğrencinin tarayıcısında
+açılıyor; yazdırma komutu tarayıcının kendisinde. Gizli bir `<iframe>`e
+PDF yükleyip `print()` çağırmak **masaüstünde çalışır, telefonda
+çalışmaz** — ve bu ekranın öğrencileri telefonda.
+
+Üstelik bu düğmenin geçmişinde tam o kapıdan gelmiş **gerçek bir arıza**
+var: `services/dosya-ac.ts`'in başındaki nota göre öğrenciler "Soruları aç
+(PDF)"a basınca hiçbir şey olmadığını, üç cihazda denediklerini bildirdi;
+sekme imzalı adres geldikten sonra açıldığı için iPhone Safari ve uygulama
+içi tarayıcılar onu açılır pencere sayıp sessizce engelliyordu. Çözüm,
+sekmeyi **dokunuş anında** açıp adres gelince yönlendirmek oldu.
+
+Bu tur o kanıtlanmış yolun dışına çıkmıyor: **"Soruları yazdır" dosyayı
+açıyor**, yazdırmayı öğrenci yapıyor, ve cihazın adımı düğmenin hemen
+altında yazılı duruyor — `lib/yazdirma-yonergesi.ts`:
+
+| Cihaz | Cümle |
+| --- | --- |
+| iPhone / iPad | Açılan sayfada Paylaş ⬆ → Yazdır |
+| Android | Açılan sayfada ⋮ menüsü → Yazdır |
+| Mac | Açılan sayfada ⌘ + P |
+| Windows / Linux | Açılan sayfada Ctrl + P |
+| Tanınmayan | Açılan sayfada tarayıcının yazdırma seçeneğini kullan |
+
+**Tanınmayan cihaz boş dönmüyor** ve bu ölçülüyor: boş dönseydi bilinmeyen
+bir tarayıcıda öğrenci hiçbir şey okumazdı.
+
+**iPadOS 13'ten beri iPad kendini Mac gibi tanıtıyor** — aynı tarayıcı
+dizesi, iki farklı cevap; ayrım `maxTouchPoints`'te. Bu ölçüm olmasaydı
+iPad'li öğrenci "⌘ + P" okurdu, o tuşlar onda yok.
+
+### Adım neden kartta değil, düğmenin altında
+
+`DosyaAcici` kartına koymak düşünüldü ve bırakıldı: o kart dosya
+**açıldıktan sonra** beliriyor, o anda öğrenci zaten öteki sekmede — adımı
+okumak için geri dönmesi gerekirdi. Düğmenin altında, dokunmadan önce
+okunuyor. Denetim "ekranda bir yerde var" demiyor, **görünür** olduğunu ve
+düğmenin **altında** durduğunu sayıyor.
+
+### Boş kâğıt yolu kaldırılmadı
+
+Türkiye'de her evde yazıcı yok. Boş kâğıdı kaldırmak, yazıcısı olmayan
+öğrencinin ödev gönderememesi demekti — teslim oranı düşerdi. Yol ikinci
+sırada duruyor ve **soru numarası** kuralıyla geliyor: numara yazılırsa
+çıktısı olmayan öğrencinin kâğıdı da okunabilir kalıyor.
+
+**Numara kuralı ölçülemez bir kuraldır** ve bu dürüstçe yazılı: yazılım
+kısıtı değil, el yazısı kuralının kendisi gibi yazılı bir kural. Denetim
+onun **yazdığını** ölçebiliyor, **uygulandığını** ölçemez; asıl denetim
+öğretmenin "yeniden aç" yolu (0056).
+
+### Sıra öğretmenin kararı — ve ekrandan ölçülüyor
+
+Üç yol `YOLLAR` dizisinde duruyor, ekran diziyi olduğu gibi çiziyor ve
+denetim **sırayı ekrandan okuyor**, veriden değil. Diziye bakan bir ölçüm,
+ekran listeyi ters çevirse de yeşil kalırdı — kusur provası tam bunu
+yapıyor ve ölçüm kırmızı yanıyor.
+
+"Önerilen" işareti **yazıyla** da duruyor: yalnız renkli bir şerit, renk
+körü birine ve ekran okuyucuya hiçbir şey söylemez.
+
+### Sunucu değişmedi
+
+`odev_yolu` hem öğrenciye hem veliye zaten geliyordu. **Migration yok,
+panel adımı yok, yeni uç yok** — yayın yalnız siteden.
+
+### Kusur provaları — yedisi de ısırdı
+
+| Prova | Kırılan |
+| --- | --- |
+| Yollar ters çevriliyor | `çıktı yolu BİRİNCİ sırada` |
+| Boş kâğıttan numara kuralı siliniyor | `kartta boş kâğıtta soru numarası kuralı` |
+| "Önerilen" yazısı gizleniyor | `önerilen yol yazıyla işaretli` |
+| Cihaz adımı gizleniyor | `adım dokunmadan görünür` |
+| Dosyasız ödevde de düğme çiziliyor | `soru dosyası yokken "Soruları…" düğmesi yok` |
+| Veli düğmesi başka dosyayı istiyor | `"Soruları yazdır" → odev/baska/x.pdf` |
+| `yazdirmaAdimi` tanınmayanda boş döner | birim testi (iki iddia) |
+
+### Bu turda EKRAN GÖRÜNTÜSÜ iki kusur buldu
+
+Birim testler ve tarayıcı denetimi yeşilken ekran görüntüsüne bakmak iki
+ayrı kusur gösterdi. İkisi de aynı aileden: **bir metni değiştirmek, onun
+ekrana ulaştığını kanıtlamaz.**
+
+**1. Ölü sabit.** Soru numarası kuralı önce `el-yazisi-metni.ts`'teki
+`YUKLEME_IPUCU` sabitine yazılmıştı. O sabit **hiçbir ekran tarafından
+çizilmiyordu** — yalnız kendi testi okuyordu; öğrencinin gördüğü ipucu
+`cozum-sayfalari.ts`'teki `sayfaIpucuMetni`'nden geliyor. Birim testi
+yeşildi ve hiçbir şey ölçmüyordu. Ölü sabit silindi, kural gerçekten
+çizilen metne taşındı ve denetim artık **ekranı** okuyor ("numara kuralı
+hem kuralda hem ipucunda"). Kusur provası bunu kırıyor.
+
+**2. Olmayan düğmenin tarifi.** Öğretmen bazı ödevlere soru dosyası
+eklemiyor (`odev_yolu` null). O ödevde ekranda ne "Soruları yazdır" var ne
+"Soruları aç (PDF)" — ama kart üç yolu birden çiziyor ve ikisi o iki
+düğmeyi adıyla tarif ediyordu. `yollariSec(soruDosyasiVar)` eklendi: soru
+dosyası yoksa yalnız boş kâğıt yolu kalıyor. Ayıklama yapıyor, **yeniden
+sıralamıyor** — sıra öğretmenin kararı.
+
+### Bu turda bulunan, bu turla ilgisi olmayan arıza
+
+`coklu-sinif-denetimi.mjs` 3. grubu **dört iddiada kırmızı** yanıyor
+(`odev_olustur` yedek davranışı: 0030 çalıştırılmamışsa tek sınıfta eski
+uca düşme ve Türkçe açıklama). Bu turun değişiklikleriyle ilgisi yok ve
+ölçüldü: **değişiklikler saklanıp (`git stash`) yayındaki paketle
+koşulduğunda da aynı dört hata çıkıyor.** Öğretmen ekranının ödev oluşturma
+yolunda, ayrı bir turda ele alınacak.

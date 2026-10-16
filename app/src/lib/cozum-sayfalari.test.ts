@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NUMARA_KURALI } from './el-yazisi-metni';
 import {
   EN_FAZLA_SAYFA,
   cozumSayfaYolu,
@@ -154,6 +155,22 @@ describe('metinler', () => {
     expect(m).toContain("PDF'in her sayfası ayrı bir sayfa");
     for (const x of [m, sayfaIpucuMetni(1, true), sayfaIpucuMetni(3, false), HER_SAYFA_GEREKCESI]) {
       expect(x).not.toMatch(/birleştir|tek görsel|tek PDF/i);
+    }
+  });
+
+  /**
+   * NUMARA KURALI ÖĞRENCİNİN OKUDUĞU İPUCUNDA.
+   *
+   * Kural önce `el-yazisi-metni.ts`'teki `YUKLEME_IPUCU` sabitine
+   * yazılmıştı ve o sabit ÖLÜ ÇIKTI — hiçbir ekran onu çizmiyordu, yalnız
+   * kendi testi okuyordu. Ekran görüntüsü alınınca görüldü. Bu iddia,
+   * kuralın gerçekten çizilen metinde durduğunu sayıyor.
+   */
+  it('ipucu çıktı yolunu ve boş kâğıtta numara kuralını söylüyor', () => {
+    for (const m of [sayfaIpucuMetni(1, true), sayfaIpucuMetni(8, true), sayfaIpucuMetni(3, false)]) {
+      expect(m).toContain('Çıktı alınmış soru kâğıdına');
+      expect(m).toContain(NUMARA_KURALI);
+      expect(m).toContain('tablette çözdüysen');
     }
   });
 

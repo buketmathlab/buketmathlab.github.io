@@ -3,21 +3,68 @@ import {
   BASLIK,
   KABUL_EDILMEYEN,
   NEDEN,
+  NUMARA_KURALI,
   ONAY,
   ONAY_EKSIK,
   YOLLAR,
-  YUKLEME_IPUCU,
+  yollariSec,
 } from './el-yazisi-metni';
 
-const hepsi = [BASLIK, NEDEN, KABUL_EDILMEYEN, ONAY, ONAY_EKSIK, YUKLEME_IPUCU, ...YOLLAR.map((y) => y.metin)].join(' ');
+const hepsi = [BASLIK, NEDEN, KABUL_EDILMEYEN, ONAY, ONAY_EKSIK, ...YOLLAR.map((y) => y.metin)].join(' ');
 
 describe('el yazısı kuralı metni', () => {
-  it('iki geçerli yol da yazılı: kâğıt ve tablette soruların üzerine', () => {
-    expect(YOLLAR.map((y) => y.baslik)).toEqual(['Kâğıt üzerinde', 'iPad veya tablet üzerinde']);
-    expect(YOLLAR[0]?.metin).toMatch(/kâğıda kalemle/);
-    expect(YOLLAR[1]?.metin).toMatch(/soruların üzerine kalemle/);
-    expect(YOLLAR[1]?.metin).toMatch(/Bu da el yazısı sayılır/);
-    expect(YUKLEME_IPUCU).toMatch(/iPad\/tablette/);
+  it('üç geçerli yol da yazılı: çıktı, boş kâğıt, tablet', () => {
+    expect(YOLLAR.map((y) => y.baslik)).toEqual([
+      'Çıktı alınmış soru kâğıdında',
+      'Boş kâğıt üzerinde',
+      'iPad veya tablet üzerinde',
+    ]);
+    expect(YOLLAR[0]?.metin).toMatch(/soruların üzerine ve altındaki/);
+    expect(YOLLAR[1]?.metin).toMatch(/boş kâğıda çöz/);
+    expect(YOLLAR[2]?.metin).toMatch(/soruların üzerine kalemle/);
+    expect(YOLLAR[2]?.metin).toMatch(/Bu da el yazısı sayılır/);
+  });
+
+  /**
+   * SIRA ÖĞRETMENİN KARARI, kozmetik değil: çıktı alınmış soru kâğıdı
+   * ÖNERİLEN yol ve birinci sırada. Diziyi yeniden sıralamak kararı
+   * sessizce geri almak olurdu.
+   */
+  it('önerilen yol çıktı kâğıdı ve birinci sırada', () => {
+    expect(YOLLAR[0]?.onerilen).toBe(true);
+    expect(YOLLAR.filter((y) => y.onerilen)).toHaveLength(1);
+    expect(YOLLAR[0]?.metin).toMatch(/Soruları yazdır/);
+  });
+
+  /**
+   * BOŞ KÂĞIT YOLU DURUYOR — yazıcısı olmayan öğrenci ödev gönderemez
+   * hâle gelmesin (öğretmenin kararı). Ama numara kuralıyla birlikte.
+   */
+  it('boş kâğıt yolu duruyor ve soru numarası isteniyor', () => {
+    const bos = YOLLAR.find((y) => y.baslik === 'Boş kâğıt üzerinde');
+    expect(bos).toBeDefined();
+    expect(bos?.metin).toContain(NUMARA_KURALI);
+    expect(NUMARA_KURALI).toMatch(/soru numarasını yaz/);
+  });
+
+  /**
+   * SORU DOSYASI OLMAYAN ÖDEVDE OLMAYAN DÜĞME TARİF EDİLMİYOR.
+   *
+   * Öğretmen bazı ödevlere soru dosyası eklemiyor. O ödevde ekranda ne
+   * "Soruları yazdır" var ne "Soruları aç (PDF)"; üç yolu birden
+   * göstermek, olmayan iki düğmeyi tarif etmek olurdu. Ekran görüntüsü
+   * alınınca görüldü.
+   */
+  it('soru dosyası yoksa yalnız boş kâğıt yolu kalıyor', () => {
+    const hepsi = yollariSec(true);
+    expect(hepsi).toHaveLength(3);
+    expect(hepsi).toEqual(YOLLAR);
+
+    const dosyasiz = yollariSec(false);
+    expect(dosyasiz.map((y) => y.baslik)).toEqual(['Boş kâğıt üzerinde']);
+    // Olmayan düğmelerin adı hiç geçmiyor.
+    const m = dosyasiz.map((y) => y.metin).join(' ');
+    expect(m).not.toMatch(/Soruları yazdır|Soruları aç/);
   });
 
   it('kabul edilmeyenler açık: klavye, başkasından alınmış, yapay zekâ', () => {

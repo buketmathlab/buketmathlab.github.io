@@ -288,3 +288,13 @@ canlıda da doğrulandı: 401/42501), ama yeniden açılsalar hiçbir test
 yakalamayacaktı. Süpürme artık katalogdan sayıyor: yeni bir dahili
 fonksiyon ya da tablo eklemek onu kendiliğinden nöbete sokuyor. Kapsam
 15 → 31 fonksiyon, 17 → 18 tablo.
+
+## Soru kâğıdı çıktısı (16 Ekim) — yeni veri toplanmıyor
+
+"Soruları yazdır" düğmesi **yeni bir uç açmıyor ve yeni bir veri
+toplamıyor**: zaten var olan soru PDF'ini, "Soruları aç (PDF)" ile birebir
+aynı yoldan açıyor. Cihaz adımı cümlesi `navigator.userAgent` ve
+`maxTouchPoints`'ten **yalnız ekranda** türetiliyor — hiçbir yere
+gönderilmiyor, kaydedilmiyor.
+
+Bu satır "bakılmadı" sanılmasın diye yazıldı: kapsam ölçüldü ve boş çıktı.

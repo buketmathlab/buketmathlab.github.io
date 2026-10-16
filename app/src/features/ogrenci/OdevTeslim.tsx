@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import * as EL_YAZISI from '@/lib/el-yazisi-metni';
+import { buCihazinYazdirmaAdimi } from '@/lib/yazdirma-yonergesi';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { bosCevapUyarisi, type BosCevapUyarisi } from '@/lib/bos-cevap-uyarisi';
@@ -436,6 +437,9 @@ function OdevIcerigi({
   kiyas,
 }: IcerikProps) {
   const sure = sureDurumu(odev.son_tarih);
+  // Cihaza göre yazdırma adımı — kararın tamamı saf kütüphanede, burada
+  // yalnız okunuyor (`lib/yazdirma-yonergesi.ts`).
+  const yazdirmaAdimi = buCihazinYazdirmaAdimi();
   const gonderildi = odev.gonderim !== null;
   // İki AYRI kapanma sebebi. Aynı kutuya sıkıştırmıyoruz: "süren doldu" ile
   // "sınıfın kapandı" öğrenci için bambaşka iki şey, ilki onun elindeydi.
@@ -485,7 +489,33 @@ function OdevIcerigi({
 
         {odev.odev_yolu && (
           <div className="mt-4">
-            <Button onClick={() => onPdf(odev.odev_yolu as string)}>Soruları aç (PDF)</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => onPdf(odev.odev_yolu as string)}>Soruları aç (PDF)</Button>
+              {/* SORULARI YAZDIR — öğretmenin isteği: çözüm boş kâğıtta
+                  değil, çıktı alınmış soru kâğıdının üzerinde olsun.
+
+                  AYNI DOSYAYI AYNI YOLDAN açıyor (`onPdf`). İkinci bir
+                  açma mantığı yazılmadı: `dosya-ac.ts`'in başındaki nota
+                  göre bu düğmede bir kez gerçek bir arıza yaşandı
+                  (sekme dokunuş anında açılmazsa tarayıcı sessizce
+                  engelliyor) ve o yol tek bir yerde duruyor.
+
+                  SEKİZ YAZDIRMIYOR, TARAYICI YAZDIRIYOR. Gizli bir
+                  `<iframe>`e PDF yükleyip `print()` çağırmak masaüstünde
+                  çalışır, telefonda çalışmaz — ve bu ekranın öğrencileri
+                  telefonda. Adım cümlesi bu boşluğu kapatıyor. */}
+              <Button tur="sade" onClick={() => onPdf(odev.odev_yolu as string)}>
+                Soruları yazdır
+              </Button>
+            </div>
+            {/* ADIM DÜĞMENİN ALTINDA, HER ZAMAN GÖRÜNÜR.
+                `DosyaAcici` kartına koymak düşünüldü ve bırakıldı: o kart
+                dosya açıldıktan SONRA beliriyor, o anda öğrenci zaten
+                öteki sekmede — adımı okumak için geri dönmesi gerekirdi.
+                Burada dokunmadan önce okunuyor. */}
+            <p className="mt-2 text-[13px] text-muted" data-test="yazdirma-adimi">
+              Çıktı almak için: {yazdirmaAdimi}
+            </p>
           </div>
         )}
       </Card>
@@ -541,8 +571,11 @@ function OdevIcerigi({
             </div>
           )}
 
-          {/* EL YAZISI KURALI — yüklemeden ÖNCE okunsun (öğretmenin kuralı:
-              kâğıtta ya da tablette soruların üzerine; ikisi de el yazısı). */}
+          {/* EL YAZISI KURALI — yüklemeden ÖNCE okunsun. Üç yol da el
+              yazısı; ÖNERİLEN yol (çıktı alınmış soru kâğıdı) birinci
+              sırada ve görsel olarak ayrı. Sıra `YOLLAR` dizisinden
+              geliyor ve burada yeniden sıralanmıyor: sıra öğretmenin
+              kararı (bkz. `el-yazisi-metni.ts`). */}
           <section
             aria-labelledby="el-yazisi-baslik"
             className="mb-5 rounded-sk-sm border border-line bg-paper p-4"
@@ -551,10 +584,29 @@ function OdevIcerigi({
               {EL_YAZISI.BASLIK}
             </h2>
             <p className="mt-1 text-[14px] text-ink">{EL_YAZISI.NEDEN}</p>
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {EL_YAZISI.YOLLAR.map((y) => (
-                <li key={y.baslik} className="rounded-sk-sm bg-surface p-3 text-[14px] text-ink">
-                  <strong className="block">{y.baslik}</strong>
+            <ul className="mt-3 grid gap-2 sm:grid-cols-3" data-test="el-yazisi-yollari">
+              {EL_YAZISI.yollariSec(odev.odev_yolu !== null).map((y) => (
+                <li
+                  key={y.baslik}
+                  className={
+                    'rounded-sk-sm bg-surface p-3 text-[14px] text-ink' +
+                    (y.onerilen ? ' border-l-[3px] border-l-success' : '')
+                  }
+                >
+                  <strong className="block">
+                    {y.baslik}
+                    {/* "Önerilen" YAZIYLA. Yalnız renkli bir şerit, renk
+                        körü birine ve ekran okuyucuya hiçbir şey söylemez.
+
+                        `whitespace-nowrap`: "·" ile "Önerilen" arasında
+                        satır kırılırsa nokta satır sonunda sallantıda
+                        kalıyordu (geniş ekran görüntüsünde görüldü). */}
+                    {y.onerilen && (
+                      <span className="ml-1 whitespace-nowrap text-[12px] font-semibold text-success">
+                        · Önerilen
+                      </span>
+                    )}
+                  </strong>
                   {y.metin}
                 </li>
               ))}
