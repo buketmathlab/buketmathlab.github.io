@@ -298,3 +298,34 @@ aynı yoldan açıyor. Cihaz adımı cümlesi `navigator.userAgent` ve
 gönderilmiyor, kaydedilmiyor.
 
 Bu satır "bakılmadı" sanılmasın diye yazıldı: kapsam ölçüldü ve boş çıktı.
+
+## Anket kapsamı (0081) — anonimlik bir miktar ZAYIFLIYOR
+
+Bu tur, anketin anonimliğini bilerek ve ölçülü biçimde zayıflatıyor.
+Açıkça yazılması gerekiyor.
+
+**Değişen:** `anket_yanitlari` satırına artık `sinif_id` yazılıyor
+(öğrenci ve veli yanıtlarında; öğretmen yanıtında **yazılmıyor**). Bugün
+bir yanıt "tüm okul"a aitken, bu turdan sonra bir sınıfa ait.
+
+**Değişmeyen:** yanıtta kimlik yok, saat yok (yalnız haftanın başı),
+denetim izine yazılmıyor, `anket_katilimlari` ile `anket_yanitlari`
+arasında uygulama düzeyinde bağ kurulamıyor. Katılım özeti de sınıf
+taşımıyor. Testin 10. grubu bunların hepsini ölçüyor.
+
+**Yeni kişisel veri toplanmıyor ve kimseye yeni bir soru sorulmuyor.**
+Sınıf zaten kayıtlı bir bilgi; sunucu onu hesaptan okuyor. Anket formu
+aynen duruyor: ad yok, sınıf yok, kod yok.
+
+**Kalan risk, açıkça:** alt sınır yok (0077, öğretmenin kararı). Küçük bir
+sınıfta tek bir yanıt varsa, yazılan görüşün kime ait olduğu tahmin
+edilebilir. Öğretmene soruldu, bedeli bilerek seçti. Risk **ekranda da
+yazıyor**: dar kapsamda *"Ad ve kimlik saklı; ama grup küçükse yazılan bir
+görüşün kime ait olduğu tahmin edilebilir."*
+
+**Kimler görüyor:** öğrenci ve veli anketini sahip, müdür ve öğretmenler
+(öğretmenler yalnız kendi sınıfları + okul geneli). Öğretmen anketini
+yalnız sahip ve müdür. Öğrenci ve veli hiçbir sonucu göremiyor.
+
+**0081 öncesinden kalan yanıtlar** sınıfsız; geriye dönük atanamıyorlar ve
+atanmadılar. Yalnız genel sonuçta sayılıyorlar.

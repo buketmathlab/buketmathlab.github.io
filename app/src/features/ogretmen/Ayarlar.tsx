@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SurumDefteriDugmesi } from '@/features/ogretmen/SurumDefteri';
 import { AnketSonuclari } from '@/features/anket/AnketSonuclari';
+import { DerseGirdigimSiniflar } from '@/features/ogretmen/DerseGirdigimSiniflar';
 import { useBenKimim } from '@/hooks/useBenKimim';
 import {
   KART_ACIKLAMASI as CIKARMA_KART_ACIKLAMASI,
@@ -151,6 +152,27 @@ export function Ayarlar() {
           <AnketSonuclari yonetim />
         </Card>
       )}
+
+      {/* 0081 — ÖĞRETMENE DE ANKET SONUCU. Öğretmenin kararı: "diğer
+          öğretmenler de kendi girdikleri sınıfların anketlerini görsünler…
+          aynı benim gördüğüm gibi." Aç/kapat düğmesi YOK (`yonetim`
+          verilmiyor); asıl sınır yine sunucuda (`anket_ac_kapat` →
+          `_yonetici`). Öğretmen anketi grubu da sunucuda süzülüyor. */}
+      {ben !== null && !ben.sahip && (
+        <Card className="mt-4">
+          <h2 className="mb-1 text-[18px] text-ink">Paydaş anketi</h2>
+          <p className="mb-3 text-[14px] text-muted">
+            Öğrenci ve veli görüşleri. Kendi sınıflarınızı ve tüm okulu ayrı ayrı
+            görebilirsiniz; yanıtlar kimlikle birlikte saklanmaz.
+          </p>
+          <AnketSonuclari />
+        </Card>
+      )}
+
+      {/* 0081 — "Kendi sınıflarım" kapsamı bu seçimden hesaplanıyor.
+          SAHİBE DE ÖĞRETMENE DE görünüyor: sahip 9A/9B/10C/11C'yi
+          işaretliyor, öğretmen zaten yalnız kendi sınıflarını görüyor. */}
+      <DerseGirdigimSiniflar />
 
       {/* 0041: SÜRÜM DEFTERİ — YALNIZ SAHİP. Kurulum bilgisi, ders bilgisi
           değil; kadronun görmesine gerek yok. Asıl sınır yine sunucuda

@@ -38,7 +38,7 @@ const SONUC = [{
   ],
 }];
 
-async function ac({ rol, yol, durum, en = 390 }) {
+async function ac({ rol, yol, durum, en = 390, ek = {}, sonucFn = null }) {
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: en, height: 1000 } });
   const cagrilar = [];
@@ -49,7 +49,11 @@ async function ac({ rol, yol, durum, en = 390 }) {
     try { govde = JSON.parse(r.request().postData() ?? 'null'); } catch { /* yok */ }
     cagrilar.push({ uc, govde });
     const yanit = {
-      anket_durumu: durum, anket_yanitla: { kaydedildi: true }, anket_sonuclari: SONUC,
+      anket_durumu: durum, anket_yanitla: { kaydedildi: true },
+      // 0081: sahte sunucu KAPSAMA DUYARLI. Sabit bir yanıt döndürseydi
+      // "sekme sunucuya gidiyor" ölçümü, ekran hiçbir şey göndermese de
+      // yeşil kalırdı.
+      anket_sonuclari: sonucFn ? sonucFn(govde) : SONUC,
       anket_ac_kapat: SONUC,
       ben_kimim: { id: 't1', ad: 'Buket Topuzoğlu', sahip: true, vekalet: false, vekil: null },
       ogrenci_odevleri: { ogrenci: OGR, odevler: [], dersler: [], okunmamis_mesaj: 0, okunmamis_duyuru: 0 },
@@ -60,6 +64,7 @@ async function ac({ rol, yol, durum, en = 390 }) {
       okul_geneli: { yil_baslangici: '2026-09-01', okul: { sinif_sayisi: 0, ogrenci_sayisi: 0, odev_sayisi: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null }, seviyeler: [], siniflar: [], aylar: [] },
       mudur_paneli: { ad: 'Ayşe Kaya', yil_baslangici: '2026-09-01', okul: { sinif_sayisi: 0, ogrenci_sayisi: 0, odev_sayisi: 0, soru_toplami: 0, soru_sayisiz: 0, gonderim_orani: null, ortalama: null }, seviyeler: [], siniflar: [], aylar: [], ogretmenler: [] },
       proje_raporu: null, bildirim_sayilari: {}, siniflar_listesi: [], duyurular_ogretmen: [], ogretmen_duyurulari: [],
+      ...ek,
     }[uc] ?? {};
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(yanit) });
   });
@@ -149,6 +154,180 @@ console.log('--- A7. 360 px ---');
   const { b, p } = await ac({ rol: 'veli', yol: '/veli/anket', durum: DURUM('veli'), en: 360 });
   const t = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   (t <= 0 ? tamam : bozuk)(`veli anket sayfası 360 px taşma yok (${t} px)`);
+  await b.close();
+}
+
+// =============================================================================
+// 0081 — KAPSAM. Öğretmenin isteği: kendi sınıfları ayrı, tüm okul ayrı;
+// diğer öğretmenler de aynısını görsün.
+// =============================================================================
+
+/** Kapsama göre yanıt üreten sahte sunucu. Ekranın süzmediğini ölçmek için. */
+const SINIFLAR = [{ id: 's1', ad: '9A' }, { id: 's2', ad: '9B' }];
+const grup = (rol, n, gorus) => ({
+  rol, katilim: n, yanit: n, yeterli: n > 0,
+  maddeler: n === 0 ? [] : Array.from({ length: rol === 'ogrenci' ? 7 : 5 },
+    (_, i) => ({ madde: `m${i + 1}`, dagilim: [0, 0, 0, 0, n], ortalama: 5 })),
+  gorusler: n > 0 && gorus ? [gorus] : [],
+});
+/** `ogretmenGrubu`: sunucunun kararını taklit ediyor (sahip/müdürde var). */
+const kapsamliSonuc = (ogretmenGrubu) => (govde) => {
+  const k = govde?.p_kapsam ?? 'okul';
+  const sid = govde?.p_sinif_id ?? null;
+  const gruplar = [
+    grup('ogrenci', k === 'okul' ? 12 : k === 'kendi' ? 7 : 3,
+         k === 'sinif' ? 'Sınıf görüşü' : 'Genel görüş'),
+    grup('veli', k === 'okul' ? 5 : 2, 'Veli görüşü'),
+    ...(ogretmenGrubu && k === 'okul' ? [grup('ogretmen', 1, 'Öğretmen görüşü')] : []),
+  ];
+  return [{
+    anket: '2026-2027-1', baslik: '2026-2027 1. dönem SEKİZ görüş anketi',
+    acik: true, esik: 1, kapsam: k,
+    sinif: k === 'sinif' ? { id: sid, ad: SINIFLAR.find((x) => x.id === sid)?.ad ?? '?' } : null,
+    sinifsiz_yanit: k === 'okul' ? 4 : 0,
+    secilebilir_siniflar: SINIFLAR,
+    gruplar,
+  }];
+};
+const sonucCagrilari = (c) => c.filter((x) => x.uc === 'anket_sonuclari');
+
+console.log('--- A8. Sahip: üç kapsam, sekme SUNUCUYA gidiyor ---');
+{
+  const { b, p, cagrilar } = await ac({
+    rol: 'ogretmen', yol: '/ogretmen/ayarlar', durum: DURUM('ogretmen'),
+    sonucFn: kapsamliSonuc(true),
+  });
+  const sekmeler = p.locator('[data-test="anket-kapsamlari"] button');
+  const adlar = await sekmeler.allInnerTexts();
+  (adlar.join('|') === 'Tüm okul|Kendi sınıflarım|9A|9B' ? tamam : bozuk)(
+    `dört sekme sırayla (${adlar.join(', ')})`);
+
+  // İLK ÇAĞRI GENEL KAPSAM.
+  const ilk = sonucCagrilari(cagrilar)[0]?.govde;
+  (ilk?.p_kapsam === 'okul' ? tamam : bozuk)(`açılışta p_kapsam=okul (${ilk?.p_kapsam})`);
+
+  // EKRAN SÜZMÜYOR: sekmeye dokunmak YENİ BİR İSTEK doğuruyor.
+  const once = sonucCagrilari(cagrilar).length;
+  await p.getByRole('button', { name: '9A', exact: true }).click();
+  await p.waitForTimeout(700);
+  const son = sonucCagrilari(cagrilar).at(-1)?.govde;
+  (sonucCagrilari(cagrilar).length > once ? tamam : bozuk)('sekme yeni istek doğurdu (ekran süzmüyor)');
+  (son?.p_kapsam === 'sinif' && son?.p_sinif_id === 's1' ? tamam : bozuk)(
+    `sınıf sekmesi p_kapsam ve p_sinif_id gönderdi (${JSON.stringify(son)})`);
+
+  const once2 = sonucCagrilari(cagrilar).length;
+  await p.getByRole('button', { name: 'Kendi sınıflarım' }).click();
+  await p.waitForTimeout(700);
+  const son2 = sonucCagrilari(cagrilar).at(-1)?.govde;
+  (sonucCagrilari(cagrilar).length > once2 && son2?.p_kapsam === 'kendi' ? tamam : bozuk)(
+    `kendi sınıflarım p_kapsam=kendi gönderdi (${son2?.p_kapsam})`);
+  // SINIF KİMLİĞİ TAŞINMIYOR: kalıntı bir kimlik yanlış kapsamı açardı.
+  (son2?.p_sinif_id === undefined ? tamam : bozuk)(
+    `kendi kapsamında sınıf kimliği gönderilmiyor (${son2?.p_sinif_id})`);
+  await b.close();
+}
+
+console.log('--- A9. Öğretmende öğretmen grubu YOK, sebebi yazılı ---');
+{
+  const { b, p } = await ac({
+    rol: 'ogretmen', yol: '/ogretmen/ayarlar', durum: DURUM('ogretmen'),
+    ek: { ben_kimim: { id: 't2', ad: 'Kadro Öğretmeni', sahip: false, vekalet: false, vekil: null } },
+    sonucFn: kapsamliSonuc(false),
+  });
+  // ÖLÇÜM GRUP BAŞLIKLARINA DARALTILDI. İlk yazımda sayfanın tamamı
+  // okunuyordu ve kendi açıklama notum ("Öğretmen anketinin sonuçları…")
+  // iddiayı kırıyordu: ölçüm, ölçtüğünü sandığı şeyi ölçmüyordu.
+  const basliklar = (await p.locator('h3').allInnerTexts())
+    .map((x) => x.toLocaleLowerCase('tr'));
+  const varMi = (ad) => basliklar.some((x) => x.startsWith(ad.toLocaleLowerCase('tr')));
+  (!varMi('Öğretmen anketi') ? tamam : bozuk)(
+    `öğretmen anketi grubu ekranda yok (${basliklar.join(' | ')})`);
+  // POZİTİF KONTROL: ekran gerçekten çizildi.
+  (varMi('Öğrenci anketi') && varMi('Veli anketi') ? tamam : bozuk)(
+    'pozitif kontrol: öğrenci ve veli grupları çizildi');
+  ((await p.locator('[data-test="anket-ogretmen-notu"]').isVisible()) ? tamam : bozuk)(
+    'eksik grubun sebebi yazılı');
+  // Aç/kapat düğmesi sahip olmayanda YOK.
+  ((await p.getByRole('button', { name: /Anketi (aç|kapat)/ }).count()) === 0 ? tamam : bozuk)(
+    'öğretmende aç/kapat düğmesi yok');
+  await b.close();
+}
+
+console.log('--- A10. Gizlilik notu dar kapsamda var, genelde yok ---');
+{
+  const { b, p } = await ac({
+    rol: 'ogretmen', yol: '/ogretmen/ayarlar', durum: DURUM('ogretmen'),
+    sonucFn: kapsamliSonuc(true),
+  });
+  const not = p.locator('[data-test="anket-gizlilik-notu"]');
+  ((await not.count()) === 0 ? tamam : bozuk)('genel kapsamda gizlilik notu YOK');
+  await p.getByRole('button', { name: '9A', exact: true }).click();
+  await p.waitForTimeout(700);
+  ((await not.isVisible()) ? tamam : bozuk)('sınıf kapsamında gizlilik notu görünür');
+  const t = await not.innerText();
+  (/9A/.test(t) && /tahmin edilebilir/.test(t) ? tamam : bozuk)(
+    `not sınıfı ve riski söylüyor (${t.slice(0, 60)}…)`);
+  await b.close();
+}
+
+console.log('--- A11. Sınıfsız yanıt sayısı genel kapsamda yazılı ---');
+{
+  const { b, p } = await ac({
+    rol: 'ogretmen', yol: '/ogretmen/ayarlar', durum: DURUM('ogretmen'),
+    sonucFn: kapsamliSonuc(true),
+  });
+  const n = p.locator('[data-test="anket-sinifsiz-notu"]');
+  ((await n.isVisible()) ? tamam : bozuk)('genel kapsamda sınıfsız notu görünür');
+  (/4/.test(await n.innerText()) ? tamam : bozuk)('sayı yazılı');
+  await p.getByRole('button', { name: 'Kendi sınıflarım' }).click();
+  await p.waitForTimeout(700);
+  ((await n.count()) === 0 ? tamam : bozuk)('dar kapsamda sınıfsız notu YOK');
+  await b.close();
+}
+
+console.log('--- A12. Derse girdiğim sınıflar: işaret sunucuya gidiyor ---');
+{
+  const { b, p, cagrilar } = await ac({
+    rol: 'ogretmen', yol: '/ogretmen/ayarlar', durum: DURUM('ogretmen'),
+    sonucFn: kapsamliSonuc(true),
+    ek: {
+      siniflar_listesi: [
+        { id: 's1', ad: '9A', seviye: 9, sube: 'A', ozel: false, arsiv: false, ogrenci_sayisi: 28, dersine_giriyor: true },
+        { id: 's9', ad: '12F', seviye: 12, sube: 'F', ozel: false, arsiv: false, ogrenci_sayisi: 24, dersine_giriyor: true },
+      ],
+      sinif_dersine_giriyor: { durum: 'tamam' },
+    },
+  });
+  const kart = p.locator('[data-test="derse-girdigim-siniflar"]');
+  ((await kart.count()) === 1 ? tamam : bozuk)('sınıf seçimi kartı çizildi');
+  const kutular = kart.locator('input[type=checkbox]');
+  ((await kutular.count()) === 2 ? tamam : bozuk)(`iki sınıf listelendi (${await kutular.count()})`);
+
+  await kutular.nth(1).uncheck();
+  await p.waitForTimeout(600);
+  const c = cagrilar.filter((x) => x.uc === 'sinif_dersine_giriyor').at(-1)?.govde;
+  (c?.p_sinif_id === 's9' && c?.p_deger === false ? tamam : bozuk)(
+    `işaret kaldırma sunucuya gitti (${JSON.stringify(c)})`);
+
+  // GÜVENCE CÜMLESİ EKRANDA: bu olmadan öğretmen sınıfı kaybedeceğini
+  // sanıp hiç işaretlemezdi.
+  const m = await p.locator('main').innerText();
+  (/yalnız anket sonuçlarını kapsar/.test(m) ? tamam : bozuk)('güvence cümlesi yazılı');
+  await b.close();
+}
+
+console.log('--- A13. 360 px: kapsam sekmeleri taşmıyor ---');
+{
+  const { b, p } = await ac({
+    rol: 'ogretmen', yol: '/ogretmen/ayarlar', durum: DURUM('ogretmen'),
+    en: 360, sonucFn: kapsamliSonuc(true),
+  });
+  const t = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  (t <= 0 ? tamam : bozuk)(`360 px yatay taşma yok (${t} px)`);
+  const kesik = await p.evaluate(() =>
+    [...document.querySelectorAll('[data-test="anket-kapsamlari"] button')]
+      .filter((x) => x.scrollWidth > x.clientWidth).length);
+  (kesik === 0 ? tamam : bozuk)(`hiçbir sekme kesilmiyor (${kesik})`);
   await b.close();
 }
 

@@ -6810,3 +6810,129 @@ uca düşme ve Türkçe açıklama). Bu turun değişiklikleriyle ilgisi yok ve
 ölçüldü: **değişiklikler saklanıp (`git stash`) yayındaki paketle
 koşulduğunda da aynı dört hata çıkıyor.** Öğretmen ekranının ödev oluşturma
 yolunda, ayrı bir turda ele alınacak.
+
+## Anket sonuçlarında kapsam (0081)
+
+Öğretmenin isteği: *"Ben platform sahibi olarak tüm sınıfları
+görebiliyorum, fakat bu tüm sınıfların öğretmeni değilim. Benim girdiğim
+sınıflar 9A, 9B, 10C, 11C. … benim dersine girdiğim öğrencilerin ve bu
+öğrencilerin velilerinden oluşan anketi ben göreyim. Bir de tüm okulun …
+anketlerini genel olarak göreyim. Ve diğer öğretmenler de kendi girdikleri
+sınıfların anketlerini görsünler … Aynı benim gördüğüm gibi."*
+
+Bugüne kadar `anket_sonuclari` tek bir sayı kümesi döndürüyordu (bütün
+okul) ve yalnız sahip ile müdür görüyordu.
+
+### Öğretmenin dört kararı
+
+| Soru | Karar |
+| --- | --- |
+| Kırılım | Sınıf sınıf da görünsün + kendi sınıfları toplu + tüm okul |
+| Öğretmen anketi | **Yalnız sahip ve müdür** — diğer öğretmenler göremez |
+| "Benim sınıflarım" | Ayarlar'da kendisi işaretleyecek |
+| Alt sınır | Yok, bugünkü gibi (0077 sürüyor) |
+
+### Kimseye sınıf sorulmuyor — ama yanıt satırına yazılıyor
+
+Anket formu **aynen** kaldı: ad yok, sınıf yok, kod yok. Sunucu
+yanıtlayanı zaten biliyor (tekrarı engelleyen özeti üretmek için) ve
+sınıfı hesabından okuyor. Testin 3. grubu bunu iki yönlü ölçüyor: imza
+değişmedi **ve** gönderilen bir `sinif_id` anahtarı dikkate alınmıyor —
+yanıt yine kişinin kendi sınıfına yazılıyor.
+
+**Bedeli dürüstçe:** kişi yazmasa da yanıt satırına sınıf kaydediliyor.
+Bugün bir yanıt "tüm okul"a aitken yarın "9A"ya ait. Alt sınır da olmadığı
+için tek bir yanıt bile gösteriliyor — küçük bir sınıfta yazılan bir
+görüşün kime ait olduğu tahmin edilebilir. Öğretmene soruldu, bedeli
+bilerek seçti; **ekranda da yazıyor** (`gizlilikNotu`, dar kapsamda).
+Kararı veren kişinin bedeli her gün görmemesi doğru olmazdı.
+
+### Geriye dönük doldurma yapılamadı
+
+0041'in çıpalı deseni burada **uygulanamıyor**: bugüne kadar toplanan
+yanıtların sınıfı hiçbir yerde yazmıyor ve bir çıpa olsaydı zaten
+anonimlik kırılmış olurdu. O yanıtlar `sinif_id is null` kalıyor, yalnız
+"tüm okul" sonucunda görünüyor; **sayıları ekranda yazılı**. Sessizce yok
+saymak, dar kapsam toplamları ile genel toplamın tutmamasına ve
+öğretmenin sayılara güvenmemesine yol açardı.
+
+**Öğretmen yanıtları bu sayıya girmiyor** — onlar bilerek sınıfsız.
+Bu kusuru testin 8. grubu buldu: ilk yazımda sayı 1 yerine 2 çıkıyordu,
+çünkü öğretmenin kendi yanıtı da "atfedilemeyen" sayılıyordu ve ekranda
+olmayan bir eksiklik gösterilecekti.
+
+### `dersine_giriyor` sınıf görme yetkisini DEĞİŞTİRMİYOR
+
+Sorun şuydu: 0033:92 bütün mevcut sınıfları yöneticiye bağlamış, o yüzden
+sahip hepsini görüyor — ve "dersine girdiğim sınıf" diye bir ayrım yoktu.
+
+Üç yol vardı; öğretmene soruldu ve **"Ayarlar'da ben işaretleyeyim"** dedi.
+Reddedilen seçenek önemli: *"sınıf atamamı gerçeğe çekelim"* en temizi
+gibi görünüyordu ama öğrenciler, ödevler, mesajlar — **bütün ekranlarda**
+diğer sınıfları kapatırdı.
+
+Bu yüzden `ogretmen_siniflari`'na ayrı bir bayrak kondu ve
+`_ogretmenin_sinifi` ona **bakmıyor**. Öz-denetim bunu ayrıca sayıyor:
+fonksiyonun gövdesinde `dersine_giriyor` geçerse migration patlıyor.
+Varsayılan `true`, yani normal öğretmende hiçbir şey değişmedi.
+
+Ekrandaki güvence cümlesi de bunun için: *"Bu seçim yalnız anket
+sonuçlarını kapsar; bütün sınıflarınızı görmeye devam edersiniz."*
+Olmasaydı öğretmen, işareti kaldırınca sınıfı kaybedeceğini sanıp hiç
+işaretlemezdi — özellik ölü doğardı.
+
+### Öğretmen anketi dar kapsamda HİÇ yok
+
+Öğretmen yanıtı sınıf taşımıyor (taşımamalı: okulda 4 öğretmen var, yanıtı
+bir sınıfa bağlamak kimliği doğrudan ele verirdi), dolayısıyla sınıfa
+bölünemez. Genel kapsamda ise yalnız sahip ve müdüre dönüyor — öğretmenin
+kararı. **Öğretmen ekranı sebebini yazıyor**: eksik bir grubu açıklamasız
+bırakmak "bir hata mı var?" dedirtirdi.
+
+Süzme **sunucuda**: `anket_sonuclari` o grubu yanıta hiç koymuyor. Arayüz
+hiçbir şey ayıklamıyor (Part XXI) ve kusur provası bunu deniyor — ekrana
+elle bir öğretmen grubu eklendiğinde denetim kırmızı yanıyor.
+
+### 0007 tuzağı açıkça kapatıldı
+
+`anket_sonuclari`'nın imzası değişti, yani bu **yeni** bir fonksiyon. Eski
+tek argümanlı sürüm yerinde bırakılsaydı PostgREST `{p_token}` çağrısını
+ona çözerdi ve ekran eski (kapsamsız) sonucu görürdü. `drop function`
+açıkça yazıldı ve öz-denetim düşürüldüğünü sayıyor.
+
+Kusur provası bunu çok net gösterdi: eski uç elle geri konup düşürmeyen
+sürüm kurulduğunda hata `11a` bile değil, doğrudan
+**`function public.anket_sonuclari(text) is not unique`** — iki imza bir
+arada olunca çağrı belirsizleşiyor ve uç hiç çalışmıyor.
+
+### Kusur provaları — on ikisi de ısırdı
+
+| SQL provası | Kırılan |
+| --- | --- |
+| Veli yanıtına sınıf yazılmıyor | `1b` |
+| Öğretmen yanıtına da sınıf yazılıyor | `2a` |
+| `dersine_giriyor` süzgeci kalkıyor | `4a` |
+| Sınıf kapsamı sahiplik denetlemiyor | `5b` |
+| Dar kapsamda öğretmen grubu dönüyor | `6a` |
+| Öğretmene de öğretmen grubu dönüyor | `7a` |
+| Sınıfsız yanıtlar dar kapsama giriyor | `8c` |
+| Eski kapsamsız uç düşürülmüyor | `is not unique` |
+
+| Arayüz provası | Kırılan |
+| --- | --- |
+| Ekran kapsamı kendi süzüyor | `sekme yeni istek doğurdu` |
+| Öğretmene öğretmen grubu çiziliyor | `öğretmen anketi grubu ekranda yok` |
+| Gizlilik notu ters kapsamda | `genel kapsamda gizlilik notu YOK` |
+| Sınıfsız sayısı hep sıfır okunuyor | `sınıfsız notu görünür` |
+
+İki arayüz provası ilk yazımda **derlenmedi** (`null` atamak içe aktarmayı
+kullanılmaz yapıyordu) ve geçersiz sayıldı; derlenebilir, daha gerçekçi
+kusurlarla değiştirildi — kapsamı ters vermek ve yanlış alanı okumak.
+
+### Denetimde bir ölçüm yanlış şeyi ölçüyordu
+
+A9 ilk yazımda sayfanın tamamında "öğretmen anketi" ifadesini arıyordu ve
+**kendi açıklama notum** ("Öğretmen anketinin sonuçları okul yönetimine
+açıktır…") iddiayı kırıyordu. Ölçüm grup **başlıklarına** daraltıldı.
+Aynı ailenin üçüncü örneği: bir ölçüm, ölçtüğünü iddia ettiği yeri
+okumalı.

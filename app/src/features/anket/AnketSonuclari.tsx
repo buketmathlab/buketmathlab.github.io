@@ -5,6 +5,15 @@ import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { ACIK_UCLU_SORU, ANKET_MADDELERI, LIKERT, ROL_ADI } from '@/lib/anket-sorulari';
+import {
+  BOS_DAR,
+  KAPSAM_KENDI,
+  KAPSAM_OKUL,
+  OGRETMEN_GRUBU_NOTU,
+  gizlilikNotu,
+  sinifsizNotu,
+  type Kapsam,
+} from '@/lib/anket-kapsam-metni';
 import { rpc } from '@/services/supabase';
 import type { AnketSonucu } from '@/types/api';
 
@@ -18,12 +27,29 @@ function ortalama5(v: number | string | null): string | null {
 }
 
 /**
- * PAYDAŞ GÖRÜŞLERİ (0076) — Proje raporunun bölümü; sahip ve müdür.
+ * PAYDAŞ GÖRÜŞLERİ (0076) — sahip, müdür ve 0081'den beri ÖĞRETMEN.
  *
  * Her madde için 1–5 dağılımı METİN olarak yazılı (n ve yüzde); çubuk onun
  * görsel karşılığı. 0077: ALT SINIR YOK (öğretmenin kararı: okulda 4
  * öğretmen var, eşik 5 olsaydı öğretmen anketi hiç görünmezdi); tek yanıt
  * da gösteriliyor, yanıtsız grupta "Henüz yanıt yok".
+ *
+ * -----------------------------------------------------------------------------
+ * 0081 — ÜÇ KAPSAM
+ *
+ * Öğretmenin isteği: kendi derse girdiği sınıfların anketini ayrı, tüm
+ * okulunkini ayrı görmek; diğer öğretmenler de aynısını görsün.
+ *
+ * EKRAN HİÇBİR ŞEY SÜZMÜYOR. Sekme değişince sunucuya `p_kapsam` (ve
+ * sınıfta `p_sinif_id`) gidiyor ve süzgeç ORADA çalışıyor. Buraya bir
+ * süzgeç yazmak, başka bir sınıfın yanıtlarını tele indirip yalnız
+ * çizmemek olurdu (Part XXI: göstermediğini gönderme) — ve bir sınıfın
+ * kapısı arayüzde tutulamaz.
+ *
+ * ÖĞRETMEN GRUBU ÖĞRETMENE GELMİYOR ve bu da sunucuda: `anket_sonuclari`
+ * o grubu yalnız sahip ve müdüre koyuyor. Ekran yalnız SEBEBİNİ yazıyor
+ * (`OGRETMEN_GRUBU_NOTU`) — eksik bir grubu açıklamasız bırakmak
+ * "bir hata mı var?" dedirtirdi.
  *
  * `yonetim`: yalnız sahipte "Anketi aç / kapat" düğmesi (sunucuda
  * `_yonetici`).
@@ -31,7 +57,13 @@ function ortalama5(v: number | string | null): string | null {
 export function AnketSonuclari({ yonetim = false }: { yonetim?: boolean }) {
   const { oturum } = useOturum();
   const { bildir } = useToast();
-  const sonuc = useVeri<AnketSonucu[]>('anket_sonuclari', { p_token: oturum?.token });
+  const [kapsam, setKapsam] = useState<Kapsam>('okul');
+  const [sinifId, setSinifId] = useState<string | null>(null);
+  const sonuc = useVeri<AnketSonucu[]>('anket_sonuclari', {
+    p_token: oturum?.token,
+    p_kapsam: kapsam,
+    ...(kapsam === 'sinif' && sinifId ? { p_sinif_id: sinifId } : {}),
+  });
   const [calisiyor, setCalisiyor] = useState(false);
   const liste = Array.isArray(sonuc.veri) ? sonuc.veri : null;
   const ucYok = sonuc.hata !== null && /could not find the function|schema cache/i.test(sonuc.hata);
@@ -53,7 +85,7 @@ export function AnketSonuclari({ yonetim = false }: { yonetim?: boolean }) {
     return (
       <Card>
         <p className="text-[14px] text-ink">
-          Paydaş anketi, SQL 0076 Supabase panelinde çalıştırıldıktan sonra kullanılabilir.
+          Paydaş anketi, SQL 0081 Supabase panelinde çalıştırıldıktan sonra kullanılabilir.
         </p>
       </Card>
     );
@@ -61,6 +93,28 @@ export function AnketSonuclari({ yonetim = false }: { yonetim?: boolean }) {
   if (!liste) return null;
   const a = liste[0];
   if (!a) return null;
+
+  const siniflar = a.secilebilir_siniflar ?? [];
+  const gizlilik = gizlilikNotu(kapsam, a.sinif?.ad ?? null);
+  const sinifsiz = kapsam === 'okul' ? sinifsizNotu(a.sinifsiz_yanit ?? 0) : null;
+  const ogretmenGrubuVar = a.gruplar.some((g) => g.rol === 'ogretmen');
+
+  /** Sekme: seçiliyse dolu, değilse sade. Dokunma hedefi 44 px. */
+  function Sekme({ secili, onSec, children }: { secili: boolean; onSec: () => void; children: string }) {
+    return (
+      <button
+        type="button"
+        onClick={onSec}
+        aria-pressed={secili}
+        className={
+          'inline-flex min-h-[44px] items-center rounded-sk-sm px-3 text-[14px] font-semibold ' +
+          (secili ? 'bg-ink text-paper' : 'border border-line bg-surface text-ink')
+        }
+      >
+        {children}
+      </button>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -83,6 +137,62 @@ export function AnketSonuclari({ yonetim = false }: { yonetim?: boolean }) {
           </Button>
         )}
       </div>
+
+      {/* KAPSAM SEKMELERİ. Sekmeye dokunmak sunucuya yeni bir `p_kapsam`
+          gönderiyor; ekran elindeki veriyi süzmüyor. */}
+      <div className="flex flex-wrap gap-2" data-test="anket-kapsamlari">
+        <Sekme secili={kapsam === 'okul'} onSec={() => { setKapsam('okul'); setSinifId(null); }}>
+          {KAPSAM_OKUL}
+        </Sekme>
+        {siniflar.length > 0 && (
+          <Sekme secili={kapsam === 'kendi'} onSec={() => { setKapsam('kendi'); setSinifId(null); }}>
+            {KAPSAM_KENDI}
+          </Sekme>
+        )}
+        {siniflar.map((s) => (
+          <Sekme
+            key={s.id}
+            secili={kapsam === 'sinif' && sinifId === s.id}
+            onSec={() => { setKapsam('sinif'); setSinifId(s.id); }}
+          >
+            {s.ad}
+          </Sekme>
+        ))}
+      </div>
+
+      {/* DAR KAPSAMIN BEDELİ EKRANDA. Öğretmen bu kararı bilerek verdi;
+          yazmamak, kararı veren kişinin bedeli her gün görmemesi olurdu. */}
+      {gizlilik && (
+        <p
+          className="rounded-sk-sm bg-info-bg p-3 text-[13px] text-ink"
+          data-test="anket-gizlilik-notu"
+        >
+          {gizlilik}
+        </p>
+      )}
+
+      {/* SINIFSIZ YANITLAR SESSİZCE YOK SAYILMIYOR: yazılmasa, dar kapsam
+          toplamları ile genel toplam tutmaz ve sayılara güven giderdi. */}
+      {sinifsiz && (
+        <p className="text-[13px] text-muted" data-test="anket-sinifsiz-notu">
+          {sinifsiz}
+        </p>
+      )}
+
+      {/* EKSİK GRUBUN SEBEBİ YAZILI. Öğretmen görünümünde öğretmen anketi
+          yok (sunucunun kararı); sebebini yazmamak "hata mı var?"
+          dedirtirdi. */}
+      {!ogretmenGrubuVar && kapsam === 'okul' && (
+        <p className="text-[13px] text-muted" data-test="anket-ogretmen-notu">
+          {OGRETMEN_GRUBU_NOTU}
+        </p>
+      )}
+
+      {a.gruplar.length === 0 && (
+        <Card>
+          <p className="text-[14px] text-muted">{BOS_DAR}</p>
+        </Card>
+      )}
 
       {a.gruplar.map((g) => (
         <Card key={g.rol}>

@@ -6,7 +6,8 @@
 --  3. ANONİMLİK: yanıt satırında kimlik ve saat yok; özet kimliği taşımıyor.
 --  4. Kim: onamsız veli reddediliyor; müdür yanıtlayamıyor; deneme hesabı
 --     yanıtlıyor ama KAYIT YOK.
---  5. Sonuçlar: sahip ve müdür görür, öğretmen/öğrenci görmez. 0077: ALT
+--  5. Sonuçlar: sahip, müdür VE ÖĞRETMEN görür (0081); öğrenci/veli görmez.
+--     Öğretmen grubu yalnız sahip ve müdüre (0081). 0077: ALT
 --     SINIR YOK — tek yanıtta da dağılım ve görüş görünüyor; dağılım doğru;
 --     yanıtı olmayan grup "yeterli değil" ve boş.
 -- =============================================================================
@@ -123,9 +124,20 @@ begin
 
   -- ===========================================================================
   raise notice '--- 5. Sonuçlar (0077: alt sınır yok) ---';
-  begin perform public.anket_sonuclari(jo);
-    raise exception '5a: ÖĞRETMEN SONUÇLARI GÖRDÜ';
-  exception when insufficient_privilege then null; end;
+  -- 0081 — KURAL DEĞİŞTİ. 0076'da öğretmen sonuçları HİÇ göremiyordu ve bu
+  -- iddia onu koruyordu. Öğretmenin yeni kararı: "diğer öğretmenler de
+  -- kendi girdikleri sınıfların anketlerini görsünler… aynı benim gördüğüm
+  -- gibi." Artık öğretmen 'okul' ve 'kendi' kapsamlarını görüyor —
+  -- AMA ÖĞRETMEN GRUBU ONA GELMİYOR (ayrıntısı `anket_kapsami_testleri`
+  -- 7. grupta). Öğrenci ve veli hiçbir kapsamı göremiyor.
+  if jsonb_array_length(public.anket_sonuclari(jo, 'okul')) = 0 then
+    raise exception '5a: öğretmen tüm okul sonucunu göremedi (0081)';
+  end if;
+  if exists (select 1 from jsonb_array_elements(public.anket_sonuclari(jo, 'okul')) a,
+                            jsonb_array_elements(a->'gruplar') g
+              where g->>'rol' = 'ogretmen') then
+    raise exception '5a: ÖĞRETMENE ÖĞRETMEN ANKETİ GÖRÜNDÜ';
+  end if;
   begin perform public.anket_sonuclari(tok[2]);
     raise exception '5b: ÖĞRENCİ SONUÇLARI GÖRDÜ';
   exception when insufficient_privilege then null; end;
@@ -158,7 +170,7 @@ begin
      or (ogr->>'katilim')::int <> 5 or ogr->'gorusler' <> '["Çok iyi"]'::jsonb then
     raise exception '5d: beş yanıtta sonuçlar yanlış: %', ogr;
   end if;
-  raise notice '    yalnız sahip ve müdür; tek yanıt da görünüyor; dağılım doğru: OK';
+  raise notice '    sahip, müdür ve öğretmen (öğretmen grubu hariç); tek yanıt da görünüyor: OK';
 
   -- Temizlik
   delete from public.anketler where kod = 'test-anket';

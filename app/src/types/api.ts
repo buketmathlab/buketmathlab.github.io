@@ -45,6 +45,14 @@ export type Sinif = {
   ozel: boolean;
   arsiv: boolean;
   ogrenci_sayisi: number;
+  /**
+   * 0081 — öğretmen bu sınıfın dersine giriyor mu.
+   *
+   * SINIF GÖRME YETKİSİ DEĞİL: bu bayrak yalnız anket sonuçlarındaki
+   * "Kendi sınıflarım" kapsamını belirliyor. Bütün sınıflar eskisi gibi
+   * görünüyor. 0081 çalıştırılmamış bir panelde alan hiç gelmez.
+   */
+  dersine_giriyor?: boolean;
 };
 
 export type OgrenciSatiri = {
@@ -1176,6 +1184,18 @@ export type AnketSonucu = {
   baslik: string;
   acik: boolean;
   esik: number;
+  /** 0081 — hangi kapsamın sonucu: tüm okul, kendi sınıflarım, tek sınıf. */
+  kapsam: 'okul' | 'kendi' | 'sinif';
+  /** Yalnız `kapsam === 'sinif'` iken dolu. */
+  sinif: { id: string; ad: string } | null;
+  /**
+   * 0081 ÖNCESİNDEN kalan, sınıfı bilinemeyen öğrenci/veli yanıtı sayısı.
+   * Yalnız genel kapsamda dolu; dar kapsamlarda 0 (orada zaten dışarıda).
+   * Öğretmen yanıtları BİLEREK sınıfsız ve buraya sayılmıyor.
+   */
+  sinifsiz_yanit: number;
+  /** Kapsam sekmeleri bundan çiziliyor: derse girilen, arşivde olmayan sınıflar. */
+  secilebilir_siniflar: Array<{ id: string; ad: string }>;
   gruplar: Array<{
     rol: 'ogrenci' | 'veli' | 'ogretmen';
     katilim: number;
