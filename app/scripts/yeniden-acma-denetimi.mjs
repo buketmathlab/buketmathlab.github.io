@@ -391,6 +391,13 @@ console.log('--- C5. Öğrenci: sınıf tarihi GEÇMİŞ, kişisel tarih açık 
   const { b, p } = await kur({ oturum: OGRENCI_OTURUMU, ben: null, odevler }, '/ogrenci/odev/a1');
   if ((await p.locator('input[type=file]').count()) === 0) bozuk('kişisel süre açıkken yükleme alanı yok');
   else tamam('C5b: yükleme alanı açık');
+  // EKRAN GÖRÜNTÜSÜ BULDU: süre geçmişken çıkan kutu "öğretmenin geç
+  // teslime izin veriyor" diyordu — oysa `gec_teslim` KAPALI; izin
+  // sınıfa değil, yalnız bu öğrenciye verildi.
+  const t2 = await metin(p);
+  if (/geç teslime izin veriyor/.test(t2)) bozuk('C5d: ek süreyi sınıfın geç teslim ayarı gibi anlatıyor');
+  else if (!/ek süre verdi/.test(t2)) bozuk('C5d: süre geçmişken neden gönderebildiği yazmıyor');
+  else tamam('C5d: "öğretmenin sana ... ek süre verdi"');
   await b.close();
 
   // KİŞİSEL SÜRE DE DOLMUŞSA kapı yine kapalı — ek süre sınırsız değil.

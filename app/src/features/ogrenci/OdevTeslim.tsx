@@ -20,7 +20,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
-import { ekSureAcik, ogrenciEkSure } from '@/lib/iptal-metni';
+import { ekSureAcik, gunMetni, ogrenciEkSure } from '@/lib/iptal-metni';
 import { KARANLIK_METNI, KaranlikFotografHatasi } from '@/lib/karanlik-fotograf';
 import { pdfMi } from '@/lib/pdf-cozum';
 import { sureDurumu } from '@/lib/son-tarih';
@@ -556,9 +556,15 @@ function OdevIcerigi({
         </Card>
       ) : (
         <Card>
+          {/* SÜRE GEÇMİŞKEN NEDEN AÇIK — iki ayrı sebep, iki ayrı cümle.
+              0081: ek süre YALNIZ bu öğrenciye verildi; "öğretmenin geç
+              teslime izin veriyor" demek sınıfın ayarını anlatırdı ve
+              burada doğru değil (`gec_teslim` kapalı). */}
           {sure.gecti && (
             <p className="mb-4 rounded-sk-sm bg-warning-bg p-3 text-[13px] text-warning">
-              Süresi geçti ama öğretmenin geç teslime izin veriyor. Yine de gönderebilirsin.
+              {ekSure && !odev.gec_teslim
+                ? `Sınıfın süresi geçti ama öğretmenin sana ${gunMetni(odev.ek_sure) ?? ''} tarihine kadar ek süre verdi. Gönderebilirsin.`
+                : 'Süresi geçti ama öğretmenin geç teslime izin veriyor. Yine de gönderebilirsin.'}
             </p>
           )}
 

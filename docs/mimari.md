@@ -6939,6 +6939,16 @@ işaretini arıyor; prova bunu doğruluyor (`0081: önce 0078 çalıştırılmal
   sayıyor.
 - `yeniden_acma_testleri.sql` (0056) yeni imzayla koşuyor; yetki iddiası
   yeni yardımcının adını taşıyor.
+### Bu turda da EKRAN GÖRÜNTÜSÜ bir kusur buldu
+
+Denetim yeşilken alınan görüntü şunu gösterdi: süre geçmişken çıkan turuncu
+kutu *"Süresi geçti ama öğretmenin geç teslime izin veriyor"* diyordu —
+oysa `gec_teslim` **kapalı**. İzin sınıfa değil, yalnız o öğrenciye
+verilmişti; cümle sınıfın ayarını anlatıyor ve yanlış söylüyordu. Metin
+ikiye ayrıldı: ek süre varken *"Sınıfın süresi geçti ama öğretmenin sana
+24 Ekim 2026 tarihine kadar ek süre verdi"*. Denetimin C5d iddiası artık
+eski cümlenin geri gelmesini engelliyor.
+
 - `yeniden-acma-denetimi.mjs` — C1–C6: tarih alanı ve `min=bugün`, elle
   yazılan geçmiş tarih ağa gitmiyor, sebep uyarısı dokunmadan görünüyor,
   önizleme doğru, `p_son_tarih` yükte, "ek süre verildi" çiziliyor (ve
