@@ -6955,3 +6955,102 @@ eski cümlenin geri gelmesini engelliyor.
   tarih yokken çizilmiyor), öğrenci kişisel tarihi iki ekranda da görüyor
   ve gönderebiliyor, ek süre dolunca kapı yine kapanıyor, 360 px'de taşma
   yok. **7 arayüz kusur provasının hepsi ısırıyor.**
+
+## 0082 — Yeniden açılan ödevde fotoğrafı yeniden yükleyebilme (18 Ekim)
+
+0081 yayına girdikten hemen sonra öğretmenin sorduğu şey: *"Daha önceki
+fotoğraf yerine tekrar yükleyebilsin."* Haklıydı — olayın özü buydu ve
+0081 onu çözmüyordu: öğrenci yeniden gönderdiğinde öğretmene **yine o boş
+sayfalar** gidiyordu.
+
+### Neden olmuyordu — ölçüldü
+
+Çözüm sayfasının deposundaki yol sabit ve hesaplanabilir (0009):
+`cozum/<odev>/<ogrenci>.jpg`, ek sayfalar `-<n>`. Üzerine yazmak **bilerek
+kapalı**: `dosya-url` Edge Function imzalı adresi `upsert` vermeden
+üretiyor. Depo 409 dönüyor ve `services/dosya.ts`'teki `cozumSayfasiYukle`
+bunu **hata saymıyor** — mevcut dosyayı kullanıyor (`oncedenVardi: true`).
+
+Bu davranışın kendi gerekçesi var ve doğru: yarıda kalan bir gönderimin
+yeniden denenmesi çalışsın diye. Ama yeniden **açılmış** bir gönderimde
+sonucu tersine çeviriyordu: öğrenci yeni fotoğrafı seçiyor, ekran sessizce
+eskisini gönderiyordu.
+
+### Neden "üzerine yazdıralım" değil — iki ayrı gerekçe
+
+1. Yasak, gönderdikten **sonra** fotoğrafın değiştirilmesini engellemek
+   için var. Kaldırmak puanlanmış bir gönderimin fotoğrafını
+   değiştirilebilir yapardı.
+2. 0056 iptalde eski gönderimin **tamamını** (`foto_yolu`,
+   `ek_sayfa_yollari` dâhil) denetim izine yazıyor. Üzerine yazmak o kaydı
+   **sessizce yalancı** yapardı: "gönderilen buydu" dediği dosyanın içeriği
+   değişmiş olurdu. Bir kaydın en tehlikeli hâli yok olması değil, yanlış
+   olmasıdır.
+
+### Denemeye göre yol
+
+```
+1. deneme:  cozum/<odev>/<ogrenci>.jpg       …/<ogrenci>-<n>.jpg
+k. deneme:  cozum/<odev>/<ogrenci>-d<k>.jpg  …/<ogrenci>-d<k>-<n>.jpg
+```
+
+`d` öneki iki kalıbı ayırıyor: `-2` birinci denemenin 2. sayfası, `-d2`
+ikinci denemenin 1. sayfası. **Eski yollar hiç değişmiyor** — yayındaki
+her gönderim, veli ekranı ve denetim izi dokunulmadan çalışıyor; testin
+1. grubu bunu her çalıştırmada doğruluyor.
+
+**Deneme numarasını sunucu türetiyor**, istemci seçmiyor: denetim izinde o
+(ödev, öğrenci) için kaç `gonderim_yeniden_acildi` satırı varsa deneme
+`1 + o sayı` (`_cozum_deneme`). Yeni sütun gerekmiyor ve 0081 **öncesi**
+açılmış gönderimler de kendiliğinden kapsama giriyor — onların
+`odev_ek_sure` satırı yok ama denetim izi satırı var.
+
+Yoldaki numara o anki denemeden **büyük olamıyor**; küçük olabiliyor ve bu
+bilinçli (aşağıya bakın).
+
+### Öğretmenin kararı: öğrenci seçsin
+
+Varsayılan yeni fotoğraf yüklemek; ikinci yol "önceki sayfalarımı kullan".
+Gerekçe, 0056'nın kendi olayı: cevapları yanlışlıkla boş giden öğrencinin
+**fotoğrafı iyiydi**, onu yeniden çekmek zorunda kalmamalı. Bu yüzden eski
+denemenin yolları hâlâ geçerli ve `odev_gonder` onları kabul ediyor.
+
+Yine de **bütün sayfalar tek bir denemeden** gelmek zorunda: 1. denemenin
+sayfa 1'i ile 2. denemenin sayfa 2'si karışsaydı öğretmen karma bir çözüm
+görürdü. Kural tek satırda duruyor — ek sayfa yolları 1. sayfadan türetilen
+`v_on` önekini paylaşmak zorunda.
+
+### İKİ AYRI YERDE KALIP VAR — ikincisi gözden kaçabilirdi
+
+`_cozum_yolu_gecerli`'yi genişletmek **yetmiyor**: `odev_gonder` 1. sayfayı
+ayrıca kendi regex'iyle eksiz yola zorluyordu (0054'ten beri, `foto_yolu`
+her zaman 1. sayfa olsun diye). O satır olduğu gibi kalsaydı yeni yol
+**sessizce reddedilirdi**. Kusur provası tam bunu kuruyor ("0081'in sıkı
+satırı korunuyor") ve 3. grup ısırıyor.
+
+### Edge Function değişmedi
+
+`dosya-url` yolu kendisi denetlemiyor, `dosya_erisim_izni`'ye soruyor; o da
+`_cozum_yolu_gecerli`'ye. Öğretmenin fonksiyonu yeniden yüklemesi
+gerekmiyor. Öğrencinin önceki sayfalarını **görebilmesi** de aynı kapıdan
+geliyor — yeni bir okuma izni açılmadı.
+
+### Kusur provası bir ölçümü ölü buldu
+
+6. grup ("başka öğrencinin yolu reddediliyor") sahiplik satırı silindiğinde
+**yeşil kalıyordu**: `-d2` yolunu komşu öğrenci için zaten *deneme*
+denetimi reddediyordu (onun denemesi 1). İki denetim üst üste bindiği için
+sahiplik hiç sınanmıyordu. Grup, eksiz (1. deneme) yolla ayrıca ölçüyor;
+artık prova ısırıyor.
+
+### Ölçüm
+
+- `yeniden_yukleme_testleri.sql` — 9 grup; **8 SQL kusur provasının hepsi
+  ısırıyor**: 0081'in sıkı satırı korunuyor · kalıpta `-d<k>` yok ·
+  gelecekteki deneme serbest · tek-deneme kuralı yok · sahiplik denetimi
+  kalkıyor · sayfa sınırı kalkıyor · `onceki_sayfalar` dolmuyor ·
+  `deneme_no` hep 1.
+- `yeniden-acma-denetimi.mjs` — D1–D5: seçim yalnız iptalden sonra
+  çiziliyor, varsayılan yeni yükleme, yükleme `-d2` yoluna gidiyor,
+  "öncekini kullan" hiç yükleme yapmadan eski yolları gönderiyor, 360
+  px'de taşma yok. **3 arayüz kusur provasının hepsi ısırıyor.**

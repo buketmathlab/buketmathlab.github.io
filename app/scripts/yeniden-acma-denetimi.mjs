@@ -19,6 +19,13 @@
  *    C5. Öğrenci kişisel tarihi görüyor ve SINIF TARİHİ GEÇMİŞKEN gönderebiliyor.
  *    C6. 360 px'de taşma yok.
  *
+ * D. 0082 — YENİDEN AÇILAN ÖDEVDE FOTOĞRAFI YENİDEN YÜKLEME
+ *    D1. Önceki sayfa yoksa seçim HİÇ çizilmiyor (bugünkü ekran).
+ *    D2. Varsa iki yol da görünüyor; varsayılan YENİ YÜKLEME.
+ *    D3. Yeni yükleme `-d2` yoluna gidiyor (`dosya-url` yükü okunuyor).
+ *    D4. "Önceki sayfalarımı kullan" → HİÇ yükleme yok, eski yollar gidiyor.
+ *    D5. 360 px'de taşma yok.
+ *
  * B. ÖĞRENCİ — boş cevap uyarısı
  *    B0. "Ödevi gönder" sayfa sonunda alt çubuğun ALTINDA KALMIYOR (ölçülen
  *        kusur: alt boşluk 0 px'ti, düğmeye basan alt çubuğa dokunuyordu).
@@ -455,6 +462,157 @@ console.log('--- C6. 360 px: taşma yok ---');
   else if (olcu.yatay) bozuk('360 px: sayfa yatay kayıyor');
   else tamam('C6: 360 px — kırpılma ve yatay kayma yok');
   await p.locator('[data-test="ek-sure"]').first().screenshot({ path: '/tmp/claude-0/0081-ek-sure-360.png' }).catch(() => {});
+  await b.close();
+}
+
+// ---------------------------------------------------------------------------
+// D. 0082 — FOTOĞRAFI YENİDEN YÜKLEME
+// ---------------------------------------------------------------------------
+const ESKI1 = `cozum/a1/o1.jpg`;
+const ESKI2 = `cozum/a1/o1-2.jpg`;
+
+/** Gönderimi yeniden açılmış öğrencinin ödevi: 2. deneme, iki eski sayfa. */
+const ACILMIS = {
+  ...TEMEL_ODEVLER,
+  odevler: [{
+    ...TEMEL_ODEVLER.odevler[0],
+    deneme_no: 2,
+    onceki_sayfalar: [ESKI1, ESKI2],
+  }],
+};
+
+console.log('--- D1. Önceki sayfa yokken seçim çizilmiyor ---');
+{
+  const { b, p } = await kur({ oturum: OGRENCI_OTURUMU, ben: null }, '/ogrenci/odev/a1');
+  if ((await p.locator('[data-test="yukleme-yolu"]').count()) !== 0) {
+    bozuk('D1: iptal edilmemiş ödevde seçim çizildi');
+  } else if ((await p.locator('input[type=file]').count()) === 0) {
+    bozuk('D1: yükleme alanı kayboldu');
+  } else tamam('D1: seçim yok, yükleme alanı bugünkü gibi');
+  await b.close();
+}
+
+console.log('--- D2/D3. İki yol görünüyor; yeni yükleme -d2 yoluna gidiyor ---');
+{
+  const { b, p } = await kur({ oturum: OGRENCI_OTURUMU, ben: null, odevler: ACILMIS }, '/ogrenci/odev/a1');
+  const secim = p.locator('[data-test="yukleme-yolu"]');
+  if ((await secim.count()) !== 1) bozuk('D2: seçim çizilmedi');
+  else {
+    const t = await secim.innerText();
+    if (!/Yeni fotoğraf yükle/.test(t) || !/Önceki sayfalarımı kullan/.test(t)) {
+      bozuk(`D2: iki yol görünmüyor: ${t.slice(0, 160)}`);
+    } else if (!/2 sayfa/.test(t)) bozuk('D2: önceki sayfa sayısı yazmıyor');
+    else tamam('D2: iki yol görünüyor, "2 sayfa" yazıyor');
+    // VARSAYILAN YENİ YÜKLEME: iptalin sebebi çoğu zaman sayfaların kendisi.
+    const secili = await secim.locator('input[type=radio]').nth(0).isChecked();
+    if (!secili) bozuk('D2b: varsayılan "yeni fotoğraf" değil');
+    else if ((await p.locator('input[type=file]').count()) === 0) {
+      bozuk('D2b: varsayılan yeniyken yükleme alanı yok');
+    } else tamam('D2b: varsayılan yeni yükleme, alan açık');
+  }
+
+  // D3 — yüklenen sayfa YENİ DENEMENİN yoluna gidiyor. Eski yola gitseydi
+  // depo "zaten var" der ve ESKİ fotoğraf gönderilirdi: düzeltilen kusur.
+  await p.locator('input[type=file]').setInputFiles({ name: 'cozum.jpg', mimeType: 'image/jpeg', buffer: FOTO });
+  await p.waitForTimeout(600);
+  await gonderBas(p);
+  await p.waitForTimeout(400);
+  if ((await p.locator('dialog[open]').count()) > 0) {
+    await p.locator('dialog[open]').getByRole('button', { name: 'Yine de gönder' }).click();
+    await p.waitForTimeout(800);
+  }
+  const imza = await cagrilar(p, 'dosya-url');
+  if (imza.length === 0) bozuk('D3: hiç yükleme adresi istenmedi');
+  else if (imza[0].govde?.yol !== 'cozum/a1/o1-d2.jpg') {
+    bozuk(`D3: ESKİ YOLA YÜKLENİYOR — yeni fotoğraf atılır: ${imza[0].govde?.yol}`);
+  } else tamam('D3: yükleme cozum/a1/o1-d2.jpg yoluna gitti');
+  const g = await cagrilar(p, 'odev_gonder');
+  if (g.length !== 1 || g[0].govde.p_foto_yolu !== 'cozum/a1/o1-d2.jpg') {
+    bozuk(`D3b: gönderimde yol yanlış: ${JSON.stringify(g.map((x) => x.govde?.p_foto_yolu))}`);
+  } else tamam('D3b: odev_gonder yeni yolu taşıyor');
+  await b.close();
+}
+
+console.log('--- D4. "Önceki sayfalarımı kullan": yükleme yok, eski yollar gidiyor ---');
+{
+  const { b, p } = await kur({ oturum: OGRENCI_OTURUMU, ben: null, odevler: ACILMIS }, '/ogrenci/odev/a1');
+  const secim = p.locator('[data-test="yukleme-yolu"]');
+  await secim.locator('input[type=radio]').nth(1).check();
+  await p.waitForTimeout(250);
+  // Yükleme alanı kapanıyor: öğrenci fotoğraf seçmeyecek.
+  if ((await p.locator('input[type=file]').count()) !== 0) {
+    bozuk('D4: önceki seçiliyken yükleme alanı hâlâ açık');
+  } else tamam('D4: önceki seçilince yükleme alanı kapandı');
+  // Öğrenci NEYİ göndereceğini görebilmeli: sayfa düğmeleri çizilmiş ve
+  // gerçekten dokunulabilir olmalı (alt çubuk örtmemeli).
+  const sayfaDugmeleri = await p.evaluate(() => {
+    const d = [...document.querySelectorAll('[data-test="yukleme-yolu"] button')];
+    return d.map((x) => {
+      x.scrollIntoView({ block: 'center' });
+      const r = x.getBoundingClientRect();
+      const ust = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { metin: (x.textContent ?? '').trim(), ortulu: !x.contains(ust) };
+    });
+  });
+  if (sayfaDugmeleri.length !== 2) bozuk(`D4a: önceki sayfa düğmeleri ${sayfaDugmeleri.length} tane`);
+  else if (sayfaDugmeleri.some((x) => x.ortulu)) bozuk('D4a: sayfa düğmesi örtülü');
+  else if (sayfaDugmeleri[0].metin !== '1. sayfa') bozuk(`D4a: etiket yanlış: ${sayfaDugmeleri[0].metin}`);
+  else tamam('D4a: "1. sayfa" ve "2. sayfa" çizili ve dokunulabilir');
+  await gonderBas(p);
+  await p.waitForTimeout(400);
+  if ((await p.locator('dialog[open]').count()) > 0) {
+    await p.locator('dialog[open]').getByRole('button', { name: 'Yine de gönder' }).click();
+    await p.waitForTimeout(800);
+  }
+  if ((await cagrilar(p, 'dosya-url')).length > 0 || (await cagrilar(p, 'depo-yukle')).length > 0) {
+    bozuk('D4b: önceki sayfalar seçiliyken yine de yükleme yapıldı');
+  } else tamam('D4b: hiç yükleme yok');
+  const g = await cagrilar(p, 'odev_gonder');
+  if (g.length !== 1
+      || g[0].govde.p_foto_yolu !== ESKI1
+      || g[0].govde.p_ek_sayfa_yollari?.[0] !== ESKI2) {
+    bozuk(`D4c: eski yollar gönderilmedi: ${JSON.stringify(g.map((x) => x.govde?.p_foto_yolu))}`);
+  } else tamam('D4c: odev_gonder önceki iki sayfayı taşıyor');
+  await b.close();
+}
+
+console.log('--- D5. 360 px: taşma yok ---');
+{
+  const b = await chromium.launch();
+  const s = await b.newContext({ viewport: { width: 360, height: 900 } });
+  await s.addInitScript(({ oturum, O }) => {
+    localStorage.setItem('sekiz_oturum', JSON.stringify(oturum));
+    const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    const asil = window.fetch;
+    window.fetch = async (u, o) => {
+      const url = String(typeof u === 'string' ? u : u.url);
+      const m = url.match(/\/rpc\/([a-z_]+)/);
+      if (!m) return asil(u, o);
+      switch (m[1]) {
+        case 'ogrenci_odevleri': return json(O);
+        case 'odev_sayfa_siniri': return json(1);
+        case 'ewalu_mesajlari': return json([]);
+        default: return json({});
+      }
+    };
+  }, { oturum: OGRENCI_OTURUMU, O: ACILMIS });
+  const p = await s.newPage();
+  await p.goto(KOK + '#/ogrenci/odev/a1', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  const olcu = await p.evaluate(() => {
+    const e = document.querySelector('[data-test="yukleme-yolu"]');
+    if (!e) return { yok: true };
+    return {
+      yok: false,
+      tasan: e.scrollWidth > e.clientWidth + 1,
+      yatay: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  if (olcu.yok) bozuk('D5: 360 px: seçim çizilmedi');
+  else if (olcu.tasan) bozuk('D5: 360 px: seçim kutudan taşıyor');
+  else if (olcu.yatay) bozuk('D5: 360 px: sayfa yatay kayıyor');
+  else tamam('D5: 360 px — taşma ve yatay kayma yok');
+  await p.locator('[data-test="yukleme-yolu"]').screenshot({ path: '/tmp/claude-0/0082-secim-360.png' }).catch(() => {});
   await b.close();
 }
 

@@ -37,6 +37,28 @@ describe('cozumSayfaYolu', () => {
     }
   });
 
+  /**
+   * 0082: DENEME EKİ. Varsayılan 1 ve o zaman yol 0009'dan beri
+   * kullanılanla BİREBİR aynı — yayındaki gönderimler, veli ekranı ve
+   * denetim izi bu yollara bakıyor.
+   */
+  it('deneme verilmezse yol hiç değişmiyor', () => {
+    expect(cozumSayfaYolu(O, S, 1)).toBe(cozumSayfaYolu(O, S, 1, 1));
+    expect(cozumSayfaYolu(O, S, 3)).toBe(cozumSayfaYolu(O, S, 3, 1));
+  });
+
+  it('2. ve sonraki denemeler -d<k> eki taşır', () => {
+    expect(cozumSayfaYolu(O, S, 1, 2)).toBe(`cozum/${O}/${S}-d2.jpg`);
+    expect(cozumSayfaYolu(O, S, 3, 2)).toBe(`cozum/${O}/${S}-d2-3.jpg`);
+    expect(cozumSayfaYolu(O, S, 1, 50)).toBe(`cozum/${O}/${S}-d50.jpg`);
+  });
+
+  it('sunucunun tanımadığı deneme numarası üretmez', () => {
+    for (const k of [0, 51, -1, 2.5, Number.NaN]) {
+      expect(() => cozumSayfaYolu(O, S, 1, k)).toThrow(RangeError);
+    }
+  });
+
   it('sunucudaki kalıpla eşleşir (_cozum_yolu_gecerli, 0078)', () => {
     // Migration'daki düzenli ifadenin birebir JS karşılığı.
     const kalip =

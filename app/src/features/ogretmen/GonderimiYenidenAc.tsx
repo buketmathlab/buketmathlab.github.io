@@ -173,10 +173,15 @@ export function GonderimiYenidenAc({
           <li>
             Eski gönderimin tamamı (cevaplar, puan, zaman) <strong>kayıt altında saklanır</strong>.
           </li>
+          {/* 0082: eski cümle "daha önce yüklediği fotoğraf kullanılmaya
+              devam eder" diyordu ve artık YANLIŞ — öğrenci sayfalarının
+              fotoğrafını yeniden yükleyebiliyor. Boş sayfa gönderen
+              öğrencide olayın özü tam buydu. */}
           <li>
             Öğrenci ödevi <strong>aşağıda seçtiğiniz tarihe kadar</strong> yeniden gönderebilir —
-            sınıfın süresi dolmuş olsa bile. Daha önce yüklediği fotoğraf kullanılmaya devam eder;
-            cevaplarını yeniden işaretler.
+            sınıfın süresi dolmuş olsa bile. <strong>Sayfalarının fotoğrafını yeniden
+            yükleyebilir</strong>; isterse önceki sayfalarını kullanır. Cevaplarını yeniden
+            işaretler.
           </li>
           <li>
             Gönderim yine <strong>gecikmeli</strong> görünür; yanında ek süre verdiğiniz yazar.

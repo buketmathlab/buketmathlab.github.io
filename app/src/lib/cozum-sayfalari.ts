@@ -14,23 +14,43 @@ import { NUMARA_KURALI } from '@/lib/el-yazisi-metni';
 /** Sunucudaki tablo kısıtıyla aynı (0054: 1–8; 0078: 1–40). */
 export const EN_FAZLA_SAYFA = 40;
 
+/** Deneme numarasının üst sınırı — sunucudaki kalıpla aynı (0082). */
+export const EN_FAZLA_DENEME = 50;
+
 /**
  * n. sayfanın deposundaki yolu. Sunucu (`_cozum_yolu_gecerli`) tam bu
  * kalıbı bekliyor; uydurulan bir yol reddedilir.
  *
- *   1. sayfa:  cozum/<odev>/<ogrenci>.jpg      ← 0009'dan beri, EKSİZ
- *   n. sayfa:  cozum/<odev>/<ogrenci>-<n>.jpg  (n = 2…40)
+ *   1. deneme, 1. sayfa:  cozum/<odev>/<ogrenci>.jpg      ← 0009'dan beri, EKSİZ
+ *   1. deneme, n. sayfa:  cozum/<odev>/<ogrenci>-<n>.jpg  (n = 2…40)
+ *   k. deneme, 1. sayfa:  cozum/<odev>/<ogrenci>-d<k>.jpg (k = 2…50, 0082)
+ *   k. deneme, n. sayfa:  cozum/<odev>/<ogrenci>-d<k>-<n>.jpg
  *
- * `-1` yazımı YOK: 1. sayfanın iki farklı yolu olsaydı sunucu ikisini de
- * tanımak zorunda kalırdı.
+ * `-1` ve `-d1` yazımları YOK: 1. sayfanın ya da 1. denemenin iki farklı
+ * yolu olsaydı sunucu ikisini de tanımak zorunda kalırdı.
+ *
+ * DENEME (0082): gönderim her yeniden açıldığında bir artıyor ve sunucudan
+ * geliyor (`ogrenci_odevleri.deneme_no`). Varsayılan 1, yani bu
+ * fonksiyonun 0082 öncesindeki her çağrısı BİREBİR aynı yolu üretiyor.
+ * Ayrı yol gerekli, çünkü deponun üzerine yazması kapalı ve eski
+ * gönderimin fotoğrafı denetim izinde kayıtlı — üzerine yazmak o kaydı
+ * yalancı yapardı.
  */
-export function cozumSayfaYolu(odevId: string, ogrenciId: string, sayfa: number): string {
+export function cozumSayfaYolu(
+  odevId: string,
+  ogrenciId: string,
+  sayfa: number,
+  deneme = 1,
+): string {
   if (!Number.isInteger(sayfa) || sayfa < 1 || sayfa > EN_FAZLA_SAYFA) {
     throw new RangeError(`Sayfa numarası 1–${EN_FAZLA_SAYFA} olmalı: ${sayfa}`);
   }
-  return sayfa === 1
-    ? `cozum/${odevId}/${ogrenciId}.jpg`
-    : `cozum/${odevId}/${ogrenciId}-${sayfa}.jpg`;
+  if (!Number.isInteger(deneme) || deneme < 1 || deneme > EN_FAZLA_DENEME) {
+    throw new RangeError(`Deneme numarası 1–${EN_FAZLA_DENEME} olmalı: ${deneme}`);
+  }
+  const d = deneme === 1 ? '' : `-d${deneme}`;
+  const s = sayfa === 1 ? '' : `-${sayfa}`;
+  return `cozum/${odevId}/${ogrenciId}${d}${s}.jpg`;
 }
 
 /**

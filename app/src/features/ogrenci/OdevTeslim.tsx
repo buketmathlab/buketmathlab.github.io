@@ -21,6 +21,9 @@ import { rpc } from '@/services/supabase';
 import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
 import { ekSureAcik, gunMetni, ogrenciEkSure } from '@/lib/iptal-metni';
+import * as YUKLEME from '@/lib/yeniden-yukleme-metni';
+import type { YuklemeYolu } from '@/lib/yeniden-yukleme-metni';
+import { gonderildiMetni } from '@/lib/yeniden-yukleme-metni';
 import { KARANLIK_METNI, KaranlikFotografHatasi } from '@/lib/karanlik-fotograf';
 import { pdfMi } from '@/lib/pdf-cozum';
 import { sureDurumu } from '@/lib/son-tarih';
@@ -72,6 +75,9 @@ export function OdevTeslim() {
   // yükleniyor; tek görsele birleştirme kalktı (öğretmenin isteği).
   const [sayfalar, setSayfalar] = useState<Sayfa[]>([]);
   const [isliyor, setIsliyor] = useState(false);
+  // 0082: YENİ FOTOĞRAF mı, ÖNCEKİ SAYFALAR mı. Varsayılan yeni yükleme —
+  // gönderim iptal edildiyse sebebi çoğu zaman sayfaların kendisi.
+  const [yuklemeYolu, setYuklemeYolu] = useState<YuklemeYolu>('yeni');
   // Boş cevap uyarısı açıkken dolu; "Yine de gönder" onu onaylıyor.
   const [bosUyari, setBosUyari] = useState<BosCevapUyarisi | null>(null);
   // El yazısı onayı (öğretmenin kuralı). Saklanmıyor; gönderimin ön şartı.
@@ -141,6 +147,9 @@ export function OdevTeslim() {
   for (const s of ozelListe ?? []) ozelCumleler[s.bant] = s.cumle;
 
   const odev: OgrenciOdev | undefined = veri?.odevler.find((o) => o.id === id);
+  // 0082: son iptalin sayfaları. Boşsa seçim hiç çizilmiyor — bugünkü
+  // ekran. 0082 çalışmamış sunucuda da boş gelir.
+  const oncekiSayfalar = odev?.onceki_sayfalar ?? [];
 
   // Sekme dokunuş anında açılıyor; engellenirse ekranda bağlantı çıkıyor
   // (`useDosyaAc`). Eskiden adres gelince açılıyordu ve bazı telefonlar
@@ -234,14 +243,17 @@ export function OdevTeslim() {
 
   async function gonder(bosOnaylandi = false) {
     if (!odev || !oturum?.ogrenci) return;
+    // 0082: ÖNCEKİ SAYFALARI KULLAN. Hiç yükleme yapılmıyor — o dosyalar
+    // zaten depoda ve sunucu eski denemenin yollarını kabul ediyor.
+    const oncekiyle = yuklemeYolu === 'onceki' && oncekiSayfalar.length > 0;
     const dosyalar = sayfalar.map((s) => s.dosya);
-    if (dosyalar.length === 0) {
+    if (!oncekiyle && dosyalar.length === 0) {
       return setFotoHatasi('Çözüm fotoğrafı olmadan ödev gönderilemez.');
     }
     // HER SAYFA ZORUNLU (0078). Sunucu da reddediyor; burada söylemek
     // öğrenciyi boşuna yüklemeden kurtarıyor. Düğme kapatılmıyor: öğrenci
     // bastığında neyin eksik olduğunu görsün (el yazısı onayındaki kural).
-    if (zorunlu && dosyalar.length < sinir) {
+    if (!oncekiyle && zorunlu && dosyalar.length < sinir) {
       return setFotoHatasi(eksikSayfaMetni(sinir - dosyalar.length));
     }
     // EL YAZISI ONAYI — sunucuya gitmeden. Düğme kapatılmıyor: öğrenci
@@ -259,14 +271,18 @@ export function OdevTeslim() {
     setBosUyari(null);
 
     setGonderiyor(true);
-    const yollar: string[] = [];
+    const yollar: string[] = oncekiyle ? [...oncekiSayfalar] : [];
     const onceden: number[] = [];
     try {
+      if (oncekiyle) {
+        bildir('Önceki sayfaların gönderiliyor…');
+      }
       // SIRALI, paralel değil: yarıda kalırsa kaçıncı sayfada kaldığı belli
       // olsun ve telefonun zayıf bağlantısı sekiz eşzamanlı yüklemeyle
       // boğulmasın. Hepsi yüklenmeden `odev_gonder` ÇAĞRILMIYOR — yarım
       // gönderim oluşamaz.
-      for (let i = 0; i < dosyalar.length; i++) {
+      const yuklenecek = oncekiyle ? [] : dosyalar;
+      for (let i = 0; i < yuklenecek.length; i++) {
         const no = i + 1;
         bildir(
           dosyalar.length === 1
@@ -279,7 +295,10 @@ export function OdevTeslim() {
         // artık tekrar deneyebiliyor.
         const s = await cozumSayfasiYukle(
           dosyalar[i]!,
-          cozumSayfaYolu(odev.id, oturum.ogrenci.id, no),
+          // 0082: DENEME NUMARASI YOLA GİRİYOR. Olmasaydı yol önceki
+          // denemeyle aynı olur, depo "zaten var" der ve ESKİ FOTOĞRAF
+          // gönderilirdi — tam da düzeltilen kusur.
+          cozumSayfaYolu(odev.id, oturum.ogrenci.id, no, odev.deneme_no ?? 1),
         ).catch((e: unknown) => {
           if (dosyalar.length > 1) throw new Error(yarimKalanMetni(i, dosyalar.length));
           throw e;
@@ -304,7 +323,14 @@ export function OdevTeslim() {
       yenile();
       setSayfalar([]);
       const not = oncedenYuklenenMetni(onceden);
-      bildir(not ? `Ödevin gönderildi. ${not}` : 'Ödevin gönderildi', 'basari');
+      bildir(
+        oncekiyle
+          ? gonderildiMetni('onceki', yollar.length)
+          : not
+            ? `Ödevin gönderildi. ${not}`
+            : 'Ödevin gönderildi',
+        'basari',
+      );
     } catch (e) {
       bildir(e instanceof Error ? e.message : 'Gönderilemedi.', 'hata');
     } finally {
@@ -359,6 +385,13 @@ export function OdevTeslim() {
           sinirHazir={sinirHazir}
           sayfalar={sayfalar}
           isliyor={isliyor}
+          oncekiSayfalar={oncekiSayfalar}
+          yuklemeYolu={yuklemeYolu}
+          onYuklemeYolu={(y) => {
+            setFotoHatasi(null);
+            setYuklemeYolu(y);
+          }}
+          onOncekiAc={(yol) => void dosya.ac(() => dosyaAdresi(yol))}
           onSayfaEkle={(d) => void sayfaEkle(d)}
           onSayfaCikar={(i) => {
             setFotoHatasi(null);
@@ -397,6 +430,11 @@ type IcerikProps = {
   sinirHazir: boolean;
   sayfalar: readonly Sayfa[];
   isliyor: boolean;
+  /** Son iptalin sayfa yolları (0082); boşsa seçim çizilmiyor. */
+  oncekiSayfalar: readonly string[];
+  yuklemeYolu: YuklemeYolu;
+  onYuklemeYolu: (y: YuklemeYolu) => void;
+  onOncekiAc: (yol: string) => void;
   onSayfaEkle: (d: File[]) => void;
   onSayfaCikar: (sira: number) => void;
   onSayfaDegistir: (sira: number, d: File) => void;
@@ -425,6 +463,10 @@ function OdevIcerigi({
   sinirHazir,
   sayfalar,
   isliyor,
+  oncekiSayfalar,
+  yuklemeYolu,
+  onYuklemeYolu,
+  onOncekiAc,
   onSayfaEkle,
   onSayfaCikar,
   onSayfaDegistir,
@@ -637,19 +679,73 @@ function OdevIcerigi({
 
           {/* ÇÖZÜM SAYFALARI — tek yol (0078). Eski 1 sayfalık ödevde de aynı
               alan, sınır 1. */}
+          {/* İKİ YOL (0082) — yalnız gönderimi yeniden açılmış öğrencide.
+              Depoya üzerine yazmak kapalı olduğu için yeni fotoğraf AYRI
+              bir yola gidiyor; önceki sayfalar da yerinde duruyor ve
+              istenirse olduğu gibi gönderilebiliyor (öğretmenin kararı). */}
+          {oncekiSayfalar.length > 0 && (
+            <section className="mb-4" data-test="yukleme-yolu">
+              <h2 className="mb-2 font-display text-[16px] font-semibold text-ink">
+                {YUKLEME.SECIM_BASLIGI}
+              </h2>
+              <div className="flex flex-col gap-2">
+                {(
+                  [
+                    ['yeni', YUKLEME.YENI_ETIKET, YUKLEME.YENI_ACIKLAMA],
+                    [
+                      'onceki',
+                      YUKLEME.ONCEKI_ETIKET,
+                      YUKLEME.oncekiAciklama(oncekiSayfalar.length),
+                    ],
+                  ] as const
+                ).map(([deger, etiket, aciklama]) => (
+                  <label
+                    key={deger}
+                    className="flex min-h-[44px] items-start gap-2 rounded-sk-sm border border-line p-3 text-[15px] text-ink"
+                  >
+                    <input
+                      type="radio"
+                      name="yukleme-yolu"
+                      className="mt-1 size-5 shrink-0 accent-ink"
+                      checked={yuklemeYolu === deger}
+                      onChange={() => onYuklemeYolu(deger)}
+                    />
+                    <span className="min-w-0">
+                      <span className="font-semibold">{etiket}</span>
+                      <span className="block text-[13px] text-muted">{aciklama}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {/* Öğrenci neyi göndereceğini GÖREBİLMELİ; yollar zaten ona
+                  ait, okuma izni sunucuda (`_cozum_yolu_gecerli`). */}
+              {yuklemeYolu === 'onceki' && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {oncekiSayfalar.map((yol, i) => (
+                    <Button key={yol} tur="sade" olcu="sm" onClick={() => onOncekiAc(yol)}>
+                      {YUKLEME.oncekiSayfaEtiketi(i + 1)}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
           {!sinirHazir ? (
             <p className="mb-4 text-[13px] text-muted">Hazırlanıyor…</p>
           ) : (
-            <SayfaSahnesi
-              sayfalar={sayfalar}
-              sinir={sinir}
-              zorunlu={zorunlu}
-              isliyor={isliyor}
-              hata={fotoHatasi}
-              onEkle={onSayfaEkle}
-              onCikar={onSayfaCikar}
-              onDegistir={onSayfaDegistir}
-            />
+            yuklemeYolu === 'yeni' && (
+              <SayfaSahnesi
+                sayfalar={sayfalar}
+                sinir={sinir}
+                zorunlu={zorunlu}
+                isliyor={isliyor}
+                hata={fotoHatasi}
+                onEkle={onSayfaEkle}
+                onCikar={onSayfaCikar}
+                onDegistir={onSayfaDegistir}
+              />
+            )
           )}
 
           <p className="mb-4 rounded-sk-sm bg-line-soft p-3 text-[13px] text-muted">

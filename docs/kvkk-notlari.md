@@ -321,3 +321,19 @@ taşımak olurdu.
 olarak gönderilir" yazıyor ve mesajın önizlemesi duruyor. Uyarı olmasaydı
 öğretmen oraya kendine not yazar ve notu öğrenci okurdu — yani bir
 gizlilik kusuru, arayüzdeki bir eksiklikten doğardı.
+
+## Yeniden yükleme (0082) — yeni kişisel veri yok
+
+Yeni bir alan, tablo ya da uç açılmıyor. Değişen tek şey çözüm
+sayfasının **deposundaki yolu**: her yeniden açma `-d<k>` ekli ayrı bir yol
+kullanıyor.
+
+Eski denemelerin dosyaları **depoda kalıyor** ve silinmiyor. Bu bilinçli:
+iptal edilen gönderimin yolu denetim izinde yazılı; dosyayı silmek ya da
+üzerine yazmak o kaydı doğrulanamaz hâle getirirdi.
+
+Erişim genişlemedi. O dosyaları yalnız **kendi öğrencisi** (yol onun
+kimliğini taşıyor, `_cozum_yolu_gecerli` denetliyor) ve gönderimi
+okuyabilen öğretmen açabiliyor. Veli için hiçbir şey değişmedi: veli zaten
+`gonderimler` satırındaki yolu görüyor, denetim izindeki eski denemeleri
+değil.

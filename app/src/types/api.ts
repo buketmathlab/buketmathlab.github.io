@@ -276,6 +276,20 @@ export type OgrenciOdev = {
    * "gönderemem" sanmasın. 0081 çalışmamış sunucuda hiç gelmez.
    */
   ek_sure?: string | null;
+  /**
+   * Kaçıncı deneme (0082). Her yeniden açmada bir artıyor; yükleme yolu
+   * buna göre kuruluyor (`cozumSayfaYolu`). Gelmezse 1 — 0082 çalışmamış
+   * sunucuda bugünkü yol.
+   */
+  deneme_no?: number;
+  /**
+   * Son iptal edilen gönderimin sayfa yolları (0082), yoksa `null`.
+   *
+   * Öğrenci isterse bunları olduğu gibi yeniden gönderebiliyor:
+   * cevapları yanlışlıkla boş giden öğrencinin fotoğrafı iyiydi, onu
+   * yeniden çekmesi gereksiz iş olurdu (öğretmenin kararı).
+   */
+  onceki_sayfalar?: string[] | null;
   soru_sayisi: number | null;
   gec_teslim: boolean;
   /** 4 (A–D) ya da 5 (A–E). Öğrenci ızgarası kaç düğme çizeceğini buradan bilir. */
