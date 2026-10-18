@@ -11,6 +11,14 @@
  *    A3. Sebeple: `gonderimi_yeniden_ac` doğru gönderim ve sebeple çağrılıyor,
  *        liste yenileniyor.
  *
+ * C. 0081 — İPTALDE YENİ SON TARİH VE ÖĞRENCİYE HABER
+ *    C1. Diyalogda tarih alanı var, varsayılan dolu, GEÇMİŞ TARİH SEÇİLEMEZ.
+ *    C2. "Sebep öğrenciye mesaj olarak gönderilir" uyarısı DOKUNMADAN görünür.
+ *    C3. Onaylayınca `p_son_tarih` ağa GİDİYOR ve seçilen tarih.
+ *    C4. Gönderim listesinde "ek süre verildi · <tarih>" çiziliyor.
+ *    C5. Öğrenci kişisel tarihi görüyor ve SINIF TARİHİ GEÇMİŞKEN gönderebiliyor.
+ *    C6. 360 px'de taşma yok.
+ *
  * B. ÖĞRENCİ — boş cevap uyarısı
  *    B0. "Ödevi gönder" sayfa sonunda alt çubuğun ALTINDA KALMIYOR (ölçülen
  *        kusur: alt boşluk 0 px'ti, düğmeye basan alt çubuğa dokunuyordu).
@@ -38,7 +46,7 @@ const SAHIP = { id: 's', ad: 'Buket Topuzoğlu', sahip: true, vekalet: false, ve
 const OGRETMEN = { id: 'x', ad: 'Xeda Ortak', sahip: false, vekalet: false, vekil: null };
 const VEKALET = { id: 'x', ad: 'Xeda Ortak', sahip: false, vekalet: true, vekil: { id: 's', ad: 'Buket Topuzoğlu' } };
 
-const GONDERIMLER = {
+const TEMEL_GONDERIMLER = {
   odev: { id: 'a1', baslik: 'Üslü ve köklü', tur: 'test', sinif: '9C', son_tarih: '2026-10-02',
           soru_sayisi: N, gec_teslim: false, yayinda: true },
   ozet: { mevcut: 1, gonderen: 1, gecikmeli: 0, puan_bekleyen: 0 },
@@ -51,7 +59,7 @@ const GONDERIMLER = {
   }],
 };
 
-const OGRENCI_ODEVLERI = {
+const TEMEL_ODEVLER = {
   ogrenci: { id: 'o1', ad: 'Duru Dilara Aygün', sinif: '9C', tur: 'okul' },
   odevler: [{
     id: 'a1', baslik: 'Üslü ve köklü', aciklama: null, tur: 'test', son_tarih: '2099-10-02',
@@ -62,7 +70,14 @@ const OGRENCI_ODEVLERI = {
   okunmamis_mesaj: 0,
 };
 
-async function kur({ oturum, ben }, yol) {
+/**
+ * `gonderimler` / `odevler`: 0081 grupları aynı ekranı BAŞKA veriyle
+ * görmek zorunda (ek süre verilmiş satır, sınıf tarihi geçmiş ödev).
+ * Kalıbı kopyalamak yerine taklit RPC'ye ne döneceğini söylüyoruz.
+ */
+async function kur({ oturum, ben, gonderimler, odevler }, yol) {
+  const GONDERIMLER = gonderimler ?? TEMEL_GONDERIMLER;
+  const OGRENCI_ODEVLERI = odevler ?? TEMEL_ODEVLER;
   const b = await chromium.launch();
   const s = await b.newContext({ viewport: { width: 390, height: 900 } });
   await s.addInitScript(({ oturum, ben, GONDERIMLER, OGRENCI_ODEVLERI }) => {
@@ -128,8 +143,14 @@ console.log('--- A2/A3. Diyalog gösteriyor, uyarıyor, sebep istiyor; sonra aç
   if (!/Duru Dilara Aygün bu ödevi baştan gönderebilecek/.test(d) || !/0 doğru, 0 yanlış, 51 boş/.test(d)) {
     bozuk(`diyalog gönderimi göstermiyor: ${d.slice(0, 200)}`);
   } else tamam('diyalog: öğrenci, "0 doğru, 0 yanlış, 51 boş"');
-  if (!/kayıt altında saklanır/.test(d) || !/süre dolmuş olsa bile/.test(d)) bozuk('uyarı metni eksik');
-  else tamam('uyarı: kayıt altında saklanır, süre dolmuş olsa bile gönderebilir');
+  // 0081: "süresiz açılıyor" yerine "aşağıda seçtiğiniz tarihe kadar".
+  // Eski metin ("süre dolmuş olsa bile") artık sınıfın süresini anlatıyor.
+  if (!/kayıt altında saklanır/.test(d)
+      || !/aşağıda seçtiğiniz tarihe kadar/.test(d)
+      || !/sınıfın süresi dolmuş olsa bile/.test(d)
+      || !/gecikmeli/.test(d)) {
+    bozuk(`uyarı metni eksik: ${d.slice(0, 300)}`);
+  } else tamam('uyarı: kayıt saklanır, seçilen tarihe kadar gönderir, gecikmeli kalır');
   await p.locator('dialog[open]').getByRole('button', { name: 'Yeniden aç' }).click();
   await p.waitForTimeout(300);
   if ((await cagrilar(p, 'gonderimi_yeniden_ac')).length > 0) bozuk('SEBEPSİZ açma ağa gitti');
@@ -235,6 +256,198 @@ console.log('--- B4. Hepsi işaretliyse hiçbir şey sorulmaz ---');
   else if ((await p.locator('dialog[open]').count()) !== 0) bozuk('dolu gönderimde uyarı çıktı');
   else if ((await cagrilar(p, 'odev_gonder')).length !== 1) bozuk('dolu gönderim gitmedi');
   else tamam('51/51: sormadan gönderildi');
+  await b.close();
+}
+
+// ---------------------------------------------------------------------------
+// C. 0081 — İPTALDE YENİ SON TARİH VE ÖĞRENCİYE HABER
+// ---------------------------------------------------------------------------
+/** Bugün ve n gün sonrası, `YYYY-AA-GG`. Ekrandaki alanın beklediği biçim. */
+const gun = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+/** "25 Ekim 2026" — `iptal-metni.ts`'teki biçimlendiricinin aynısı. */
+const GUN_TR = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+const gunTr = (iso) => GUN_TR.format(new Date(`${iso}T00:00:00`));
+
+console.log('--- C1/C2/C3. Tarih alanı, sebep uyarısı, p_son_tarih ağa gidiyor ---');
+{
+  const { b, p } = await kur({ oturum: OGRETMEN_OTURUMU, ben: SAHIP }, '/ogretmen/odevler/a1/gonderimler');
+  await p.getByRole('button', { name: 'Gönderimi yeniden aç' }).click();
+  await p.waitForTimeout(200);
+  const d = p.locator('dialog[open]');
+
+  // C2 — DOKUNMADAN görünüyor. Uyarı yalnız yazdıktan sonra çıksaydı,
+  // öğretmen sebebi zaten kendine not diye yazmış olurdu.
+  const uyari = d.locator('[data-test="sebep-uyarisi"]');
+  if ((await uyari.count()) !== 1) bozuk('sebep uyarısı yok');
+  else if (!/öğrenciye mesaj olarak gönderilir/.test(await uyari.innerText())) {
+    bozuk(`uyarı metni yanlış: ${await uyari.innerText()}`);
+  } else tamam('C2: "sebep öğrenciye mesaj olarak gönderilir" dokunmadan görünüyor');
+
+  // C1 — tarih alanı dolu geliyor ve geçmişe kapalı.
+  const tarih = d.locator('input[type="date"]');
+  if ((await tarih.count()) !== 1) bozuk('tarih alanı yok');
+  else {
+    const deger = await tarih.inputValue();
+    const min = await tarih.getAttribute('min');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(deger) || deger < gun(0)) bozuk(`varsayılan tarih yanlış: ${deger}`);
+    else if (min !== gun(0)) bozuk(`min bugün değil: ${min}`);
+    else tamam(`C1: tarih alanı dolu (${deger}), min=bugün`);
+  }
+
+  // C1b — GEÇMİŞ TARİH ELLE YAZILIRSA ağa gitmiyor. `min` yalnız takvimi
+  // kısıtlar; klavyeyle yazılan tarihi durdurmaz.
+  await tarih.fill(gun(-3));
+  await d.locator('textarea').fill('Boş sayfa gönderilmiş');
+  await d.getByRole('button', { name: 'Yeniden aç' }).click();
+  await p.waitForTimeout(300);
+  if ((await cagrilar(p, 'gonderimi_yeniden_ac')).length > 0) bozuk('GEÇMİŞ TARİH AĞA GİTTİ');
+  else if (!/bugünden önce olamaz/.test(await d.innerText())) bozuk('geçmiş tarih hatası görünmüyor');
+  else tamam('C1b: geçmiş tarih ağa gitmedi, "bugünden önce olamaz"');
+
+  // C3 — seçilen tarih yükte.
+  const secilen = gun(5);
+  await tarih.fill(secilen);
+  await p.waitForTimeout(150);
+
+  // Önizleme: öğretmen ne gideceğini görüyor.
+  const on = d.locator('[data-test="iptal-onizleme"]');
+  if ((await on.count()) !== 1) bozuk('iptal önizlemesi yok');
+  else {
+    const t = await on.innerText();
+    const noktali = secilen.split('-').reverse().join('.');
+    if (!t.includes('Üslü ve köklü') || !t.includes('Boş sayfa gönderilmiş') || !t.includes(noktali)) {
+      bozuk(`önizleme eksik: ${t.slice(0, 160)}`);
+    } else tamam('C3a: önizleme ödev adını, sebebi ve tarihi taşıyor');
+  }
+
+  await d.getByRole('button', { name: 'Yeniden aç' }).click();
+  await p.waitForTimeout(500);
+  const c = await cagrilar(p, 'gonderimi_yeniden_ac');
+  if (c.length !== 1) bozuk(`çağrı sayısı ${c.length}`);
+  else if (c[0].govde.p_son_tarih !== secilen) {
+    bozuk(`p_son_tarih yanlış/yok: ${JSON.stringify(c[0].govde)}`);
+  } else tamam(`C3: p_son_tarih=${secilen} ağa gitti`);
+  await b.close();
+}
+
+console.log('--- C4. Gönderim listesinde "ek süre verildi · <tarih>" ---');
+{
+  const EK = gun(7);
+  // İptalden SONRAKİ gerçek durum: satır silindi, öğrenci "Göndermeyenler"e
+  // düştü ve ek süresi var. Öğretmen verdiği tarihi burada görmeli.
+  const gonderimler = {
+    ...TEMEL_GONDERIMLER,
+    ozet: { mevcut: 1, gonderen: 0, gecikmeli: 0, puan_bekleyen: 0 },
+    satirlar: [{
+      ...TEMEL_GONDERIMLER.satirlar[0],
+      gonderim_id: null, gonderdi: false, zaman: null, durum: null,
+      dogru: null, yanlis: null, bos: null, puan: null, foto_var: false,
+      ek_sure: EK,
+    }],
+  };
+  const { b, p } = await kur({ oturum: OGRETMEN_OTURUMU, ben: SAHIP, gonderimler }, '/ogretmen/odevler/a1/gonderimler');
+  const etiketler = p.locator('[data-test="ek-sure"]');
+  if ((await etiketler.count()) < 1) bozuk('"ek süre verildi" etiketi çizilmedi');
+  else {
+    const t = await etiketler.first().innerText();
+    if (t !== `ek süre verildi · ${gunTr(EK)}`) bozuk(`etiket metni yanlış: "${t}"`);
+    else tamam(`C4: "${t}"`);
+  }
+  // Tarih yoksa hiçbir şey çizilmemeli — boş bir etiket gürültüdür.
+  await b.close();
+  const yok = await kur({ oturum: OGRETMEN_OTURUMU, ben: SAHIP }, '/ogretmen/odevler/a1/gonderimler');
+  if ((await yok.p.locator('[data-test="ek-sure"]').count()) !== 0) bozuk('ek süre yokken etiket çizildi');
+  else tamam('C4b: ek süre yokken etiket yok');
+  await yok.b.close();
+}
+
+console.log('--- C5. Öğrenci: sınıf tarihi GEÇMİŞ, kişisel tarih açık ---');
+{
+  const EK = gun(6);
+  // Tam da öğretmenin olayı: sınıfın tarihi geçti, geç teslim KAPALI,
+  // ama bu öğrenciye ek süre verildi. Ekran "Teslim kapandı" derse
+  // öğrenci sunucu kabul ederken gönderemediğini sanır.
+  const odevler = {
+    ...TEMEL_ODEVLER,
+    odevler: [{ ...TEMEL_ODEVLER.odevler[0], son_tarih: gun(-5), gec_teslim: false, ek_sure: EK }],
+  };
+  for (const [ad, yol] of [['liste', '/ogrenci/odevler'], ['teslim ekranı', '/ogrenci/odev/a1']]) {
+    const { b, p } = await kur({ oturum: OGRENCI_OTURUMU, ben: null, odevler }, yol);
+    const k = p.locator('[data-test="ogrenci-ek-sure"]');
+    if ((await k.count()) < 1) bozuk(`${ad}: kişisel tarih yazmıyor`);
+    else if ((await k.first().innerText()) !== `Sana verilen süre: ${gunTr(EK)}`) {
+      bozuk(`${ad}: metin yanlış — "${await k.first().innerText()}"`);
+    } else tamam(`${ad}: "Sana verilen süre: ${gunTr(EK)}"`);
+    const t = await metin(p);
+    if (/Teslim kapandı|Geç teslim kabul edilmiyor/.test(t)) bozuk(`${ad}: kişisel süre açıkken "teslim kapandı" yazıyor`);
+    else tamam(`${ad}: "teslim kapandı" yazmıyor`);
+    await b.close();
+  }
+  // Teslim ekranında gönderme yolu GERÇEKTEN açık mı.
+  const { b, p } = await kur({ oturum: OGRENCI_OTURUMU, ben: null, odevler }, '/ogrenci/odev/a1');
+  if ((await p.locator('input[type=file]').count()) === 0) bozuk('kişisel süre açıkken yükleme alanı yok');
+  else tamam('C5b: yükleme alanı açık');
+  await b.close();
+
+  // KİŞİSEL SÜRE DE DOLMUŞSA kapı yine kapalı — ek süre sınırsız değil.
+  const dolmus = {
+    ...TEMEL_ODEVLER,
+    odevler: [{ ...TEMEL_ODEVLER.odevler[0], son_tarih: gun(-9), gec_teslim: false, ek_sure: gun(-2) }],
+  };
+  const g = await kur({ oturum: OGRENCI_OTURUMU, ben: null, odevler: dolmus }, '/ogrenci/odev/a1');
+  if (!/Teslim kapandı|süresi doldu/i.test(await metin(g.p))) bozuk('C5c: ek süre dolmuşken ekran hâlâ açık');
+  else tamam('C5c: ek süre dolunca kapı yine kapalı');
+  await g.b.close();
+}
+
+console.log('--- C6. 360 px: taşma yok ---');
+{
+  const EK = gun(7);
+  const gonderimler = {
+    ...TEMEL_GONDERIMLER,
+    satirlar: [{ ...TEMEL_GONDERIMLER.satirlar[0], gecikmeli: true, ek_sure: EK }],
+  };
+  const b = await chromium.launch();
+  const s = await b.newContext({ viewport: { width: 360, height: 900 } });
+  await s.addInitScript(({ oturum, ben, GONDERIMLER, OGRENCI_ODEVLERI }) => {
+    localStorage.setItem('sekiz_oturum', JSON.stringify(oturum));
+    const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    const asil = window.fetch;
+    window.fetch = async (u, o) => {
+      const url = String(typeof u === 'string' ? u : u.url);
+      const m = url.match(/\/rpc\/([a-z_]+)/);
+      if (!m) return asil(u, o);
+      switch (m[1]) {
+        case 'ben_kimim': return json(ben);
+        case 'odev_gonderimleri': return json(GONDERIMLER);
+        case 'ogrenci_odevleri': return json(OGRENCI_ODEVLERI);
+        default: return json({});
+      }
+    };
+  }, { oturum: OGRETMEN_OTURUMU, ben: SAHIP, GONDERIMLER: gonderimler, OGRENCI_ODEVLERI: TEMEL_ODEVLER });
+  const p = await s.newPage();
+  await p.goto(KOK + '#/ogretmen/odevler/a1/gonderimler', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(400);
+  // Etiket "Gecikmeli" ile YAN YANA duruyor: dar ekranda ikisi birden
+  // satıra sığmazsa kutudan taşar ya da kırpılır.
+  const olcu = await p.evaluate(() => {
+    const e = document.querySelector('[data-test="ek-sure"]');
+    if (!e) return { yok: true };
+    return {
+      yok: false,
+      kirpik: e.scrollWidth > e.clientWidth + 1,
+      yatay: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  if (olcu.yok) bozuk('360 px: etiket çizilmedi');
+  else if (olcu.kirpik) bozuk('360 px: etiket kırpıldı');
+  else if (olcu.yatay) bozuk('360 px: sayfa yatay kayıyor');
+  else tamam('C6: 360 px — kırpılma ve yatay kayma yok');
+  await p.locator('[data-test="ek-sure"]').first().screenshot({ path: '/tmp/claude-0/0081-ek-sure-360.png' }).catch(() => {});
   await b.close();
 }
 

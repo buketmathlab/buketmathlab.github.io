@@ -267,6 +267,15 @@ export type OgrenciOdev = {
   aciklama: string | null;
   tur: 'test' | 'acik';
   son_tarih: string;
+  /**
+   * Yalnız bu öğrenciye verilmiş kişisel son tarih (0081). Sahip gönderimi
+   * yeniden açarken tarih verdiyse dolu; yoksa `null`.
+   *
+   * `son_tarih` DEĞİŞMİYOR — sınıfın tarihi ortak bir gerçek. Bu alan onun
+   * yerine geçmiyor, yanında duruyor: öğrenci geçmiş bir tarihe bakıp
+   * "gönderemem" sanmasın. 0081 çalışmamış sunucuda hiç gelmez.
+   */
+  ek_sure?: string | null;
   soru_sayisi: number | null;
   gec_teslim: boolean;
   /** 4 (A–D) ya da 5 (A–E). Öğrenci ızgarası kaç düğme çizeceğini buradan bilir. */
@@ -312,6 +321,14 @@ export type GonderimSatiri = {
   gonderdi: boolean;
   zaman: string | null;
   gecikmeli: boolean;
+  /**
+   * Bu öğrenciye verilen kişisel son tarih (0081), yoksa `null`.
+   *
+   * `gecikmeli` BİLEREK DEĞİŞMİYOR: öğrenci sınıfın tarihini gerçekten
+   * kaçırdı ve kayıt dürüst kalıyor. Ek süre onun yerine geçmiyor,
+   * yanında "ek süre verildi · <tarih>" olarak görünüyor.
+   */
+  ek_sure?: string | null;
   durum: 'incelemede' | 'onaylandi' | 'puanlandi' | null;
   dogru: number | null;
   yanlis: number | null;

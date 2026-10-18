@@ -67,13 +67,13 @@ begin
 
   ------------------------------------------------------------------
   raise notice '--- 1. YALNIZ SAHİP açabilir ---';
-  begin perform public.gonderimi_yeniden_ac(jx, g, 'Deneme sebebi');
+  begin perform public.gonderimi_yeniden_ac(jx, g, 'Deneme sebebi', (current_date + 7));
         raise exception 'HATA: SINIF ÖĞRETMENİ GÖNDERİMİ AÇTI!';
   exception when insufficient_privilege then null; end;
-  begin perform public.gonderimi_yeniden_ac(jo, g, 'Deneme sebebi');
+  begin perform public.gonderimi_yeniden_ac(jo, g, 'Deneme sebebi', (current_date + 7));
         raise exception 'HATA: ÖĞRENCİ KENDİ GÖNDERİMİNİ AÇTI!';
   exception when insufficient_privilege then null; end;
-  begin perform public.gonderimi_yeniden_ac(jveli, g, 'Deneme sebebi');
+  begin perform public.gonderimi_yeniden_ac(jveli, g, 'Deneme sebebi', (current_date + 7));
         raise exception 'HATA: VELİ GÖNDERİMİ AÇTI!';
   exception when insufficient_privilege then null; end;
   if not exists (select 1 from public.gonderimler where id = g) then
@@ -84,18 +84,18 @@ begin
   ------------------------------------------------------------------
   raise notice '--- 2. Sebep zorunlu; olmayan gönderim ---';
   foreach kod_sql in array array['', '  ', 'ab', repeat('x', 501)] loop
-    begin perform public.gonderimi_yeniden_ac(js, g, kod_sql);
+    begin perform public.gonderimi_yeniden_ac(js, g, kod_sql, (current_date + 7));
           raise exception 'HATA: geçersiz sebep kabul edildi: "%"', left(kod_sql, 10);
     exception when invalid_parameter_value then null; end;
   end loop;
-  begin perform public.gonderimi_yeniden_ac(js, gen_random_uuid(), 'Olmayan gönderim');
+  begin perform public.gonderimi_yeniden_ac(js, gen_random_uuid(), 'Olmayan gönderim', (current_date + 7));
         raise exception 'HATA: olmayan gönderim açıldı!';
   exception when no_data_found then null; end;
   raise notice '    boş/kısa/uzun sebep 22023, olmayan gönderim P0002: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 3. SAHİP açıyor: eski gönderim denetim izinde, satır silindi ---';
-  v := public.gonderimi_yeniden_ac(js, g, 'Cevaplar sisteme boş kaydedildi');
+  v := public.gonderimi_yeniden_ac(js, g, 'Cevaplar sisteme boş kaydedildi', (current_date + 7));
   if v->>'ogrenci' <> 'Duru Deneme ' || ek then
     raise exception 'HATA: dönüşte öğrenci adı yok: %', v;
   end if;
@@ -144,7 +144,7 @@ begin
 
   -- VEKÂLETTE de sahip açabiliyor; iz "sahip → X".
   jv := (public.ogretmen_olarak_gir(js, x_id))->>'token';
-  perform public.gonderimi_yeniden_ac(jv, g, 'Vekâletle yeniden açma');
+  perform public.gonderimi_yeniden_ac(jv, g, 'Vekâletle yeniden açma', (current_date + 7));
   if not exists (select 1 from public.denetim_izi
                   where islem = 'gonderim_yeniden_acildi' and kayit_id = g and aktor like '%→%') then
     raise exception 'HATA: vekâlet denetim izinde görünmüyor!';
@@ -162,10 +162,14 @@ begin
 
   ------------------------------------------------------------------
   raise notice '--- 6. Yetkiler ---';
-  if has_function_privilege('anon', 'public._gonderim_yeniden_acildi(uuid,uuid)', 'execute') then
-    raise exception 'HATA: _gonderim_yeniden_acildi anon''a açık!';
+  -- 0081: yardımcının adı değişti. `_gonderim_yeniden_acildi` her yeniden
+  -- açmada doğru dönüyordu ve verilen kişisel tarihi anlamsız kılıyordu;
+  -- yerine YALNIZ tarihsiz (0056 yolundan) kayıtlara bakan
+  -- `_tarihsiz_yeniden_acildi` geldi ve eskisi düşürüldü.
+  if has_function_privilege('anon', 'public._tarihsiz_yeniden_acildi(uuid,uuid)', 'execute') then
+    raise exception 'HATA: _tarihsiz_yeniden_acildi anon''a açık!';
   end if;
-  if not has_function_privilege('anon', 'public.gonderimi_yeniden_ac(text,uuid,text)', 'execute') then
+  if not has_function_privilege('anon', 'public.gonderimi_yeniden_ac(text,uuid,text,date)', 'execute') then
     raise exception 'HATA: gonderimi_yeniden_ac istemciye kapalı!';
   end if;
   raise notice '    dahili yardımcı kapalı, uç açık (yetki içeride): OK';

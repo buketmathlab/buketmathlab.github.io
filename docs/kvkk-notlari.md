@@ -298,3 +298,26 @@ aynı yoldan açıyor. Cihaz adımı cümlesi `navigator.userAgent` ve
 gönderilmiyor, kaydedilmiyor.
 
 Bu satır "bakılmadı" sanılmasın diye yazıldı: kapsam ölçüldü ve boş çıktı.
+
+## Gönderim iptali (0081) — yeni kişisel veri yok, bir mesaj var
+
+`odev_ek_sure` yalnız **(ödev, öğrenci, tarih, veren, verildi)** tutuyor:
+hepsi zaten üründe olan kimlikler ve bir tarih. Tablo RLS ile tamamen
+kapalı (`using (false)`, `revoke all`); yalnız `SECURITY DEFINER` uçlar
+okuyor ve test bunu her çalıştırmada doğruluyor.
+
+**Yeni olan tek şey bir mesaj.** İptal sebebi, gönderimin silinmesiyle
+aynı işlemde `mesajlar` tablosuna `kanal = 'ogrenci'` ile yazılıyor:
+öğrencinin kendi yazışmasına düşüyor, **veli görmüyor** (0025'in ayrımı).
+Sebep zaten 0056'dan beri denetim izine yazılıyordu; 0081 onu bir de
+öğrenciye gösteriyor.
+
+Bu bilinçli bir gizlilik kararı: iptalin muhatabı öğrenci ve 0056'da
+gönderim onun ekranından **sessizce** kayboluyordu. Sebebi veliye de
+göndermek, öğrencinin öğretmeniyle arasındaki bir konuyu üçüncü kişiye
+taşımak olurdu.
+
+Öğretmen bunu önceden biliyor: diyalogda "yazdığınız sebep öğrenciye mesaj
+olarak gönderilir" yazıyor ve mesajın önizlemesi duruyor. Uyarı olmasaydı
+öğretmen oraya kendine not yazar ve notu öğrenci okurdu — yani bir
+gizlilik kusuru, arayüzdeki bir eksiklikten doğardı.

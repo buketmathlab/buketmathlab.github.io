@@ -14,6 +14,7 @@ import { CozumDugmesi } from './CozumDugmesi';
 import { YoneticiPuanDuzeltme } from './YoneticiPuanDuzeltme';
 import { GonderimiYenidenAc } from './GonderimiYenidenAc';
 import { useBenKimim } from '@/hooks/useBenKimim';
+import { ekSureEtiketi } from '@/lib/iptal-metni';
 import { duzeltmeIsareti } from '@/lib/puan-duzeltme';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OdevGonderimleri as Veri, GonderimSatiri } from '@/types/api';
@@ -136,8 +137,16 @@ export function OdevGonderimleri() {
                 <Card>
                   <ul className="divide-y divide-line">
                     {gondermeyen.map((s) => (
-                      <li key={s.ogrenci_id} className="py-2 text-[15px] text-ink first:pt-0 last:pb-0">
-                        {s.ogrenci}
+                      <li
+                        key={s.ogrenci_id}
+                        className="flex flex-wrap items-center justify-between gap-2 py-2 text-[15px] text-ink first:pt-0 last:pb-0"
+                      >
+                        <span className="min-w-0">{s.ogrenci}</span>
+                        {/* GÖNDERİMİ İPTAL EDİLEN ÖĞRENCİ BURADA (0081):
+                            iptalde satır siliniyor, öğrenci bu listeye
+                            düşüyor. Ek süre yazılmazsa öğretmen kendi
+                            verdiği tarihi hiçbir yerde göremezdi. */}
+                        <EkSure tarih={s.ek_sure} />
                       </li>
                     ))}
                   </ul>
@@ -185,6 +194,7 @@ export function OdevGonderimleri() {
                         </div>
                         <div className="flex flex-wrap justify-end gap-1">
                           {s.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
+                          <EkSure tarih={s.ek_sure} />
                           <Tag tur="basari">
                             <span className="sk-sayi">
                               {`${s.ogretmen_puan ?? s.puan ?? '—'} puan`}
@@ -218,6 +228,7 @@ export function OdevGonderimleri() {
                           <GonderimiYenidenAc
                             gonderimId={s.gonderim_id}
                             ogrenci={s.ogrenci}
+                            odev={veri.odev.baslik}
                             puan={s.ogretmen_puan ?? s.puan}
                             dogru={s.dogru}
                             yanlis={s.yanlis}
@@ -255,6 +266,26 @@ function Bolum({
       {!aciklama && <div className="mb-3" />}
       {children}
     </section>
+  );
+}
+
+/**
+ * "ek süre verildi · 25 Ekim 2026" (0081).
+ *
+ * `Gecikmeli` DAMGASININ YERİNE GEÇMİYOR, YANINDA DURUYOR: öğrenci sınıfın
+ * son tarihini gerçekten kaçırdı ve kayıt dürüst kalıyor — ama sebebi de
+ * görünüyor. Tarih yoksa hiçbir şey çizilmiyor; 0081 çalışmamış sunucuda
+ * alan hiç gelmiyor.
+ */
+function EkSure({ tarih }: { tarih: string | null | undefined }) {
+  const etiket = ekSureEtiketi(tarih);
+  if (etiket === null) return null;
+  return (
+    <Tag tur="bilgi">
+      <span data-test="ek-sure" className="whitespace-nowrap">
+        {etiket}
+      </span>
+    </Tag>
   );
 }
 
@@ -308,7 +339,10 @@ function Puanlama({
             <p className="text-[13px] text-muted">{TARIH.format(new Date(satir.zaman))}</p>
           )}
         </div>
-        {satir.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
+        <div className="flex flex-wrap justify-end gap-1">
+          {satir.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
+          <EkSure tarih={satir.ek_sure} />
+        </div>
       </div>
 
       {satir.gonderim_id && satir.foto_var && (

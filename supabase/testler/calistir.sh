@@ -242,6 +242,10 @@ echo "==> Yöneticinin ödevi + puan düzeltme testleri (0055)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/ortak_odev_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Gönderim iptali testleri (0081)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/gonderim_iptali_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Gönderimi yeniden açma testleri (0056)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/yeniden_acma_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

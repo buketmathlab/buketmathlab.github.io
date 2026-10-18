@@ -5,6 +5,7 @@ import { Tag } from '@/components/ui/Tag';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { ekSureAcik, ogrenciEkSure } from '@/lib/iptal-metni';
 import { ogrenciOzeti } from '@/lib/ogrenci-ozet-metni';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OgrenciOdevleri, OgrenciOdev } from '@/types/api';
@@ -50,6 +51,10 @@ export function Odevlerim() {
     if (o.gonderim) return 2;
     // Sınıf arşivdeyse hiçbir ödev gönderilemez; hepsi aşağı iner.
     if (o.sinif_arsiv) return 1;
+    // 0081: KİŞİSEL SÜRE AÇIKSA ÖDEV HÂLÂ "YAPILACAK". Gönderimi iptal
+    // edilen öğrencinin yeniden göndermesi gereken ödev, sınıfın tarihi
+    // geçtiği için listenin dibine inseydi öğrenci onu görmezdi.
+    if (ekSureAcik(o.ek_sure)) return 0;
     return sureDurumu(o.son_tarih).gecti && !o.gec_teslim ? 1 : 0;
   }
 
@@ -160,6 +165,15 @@ export function Odevlerim() {
                         {' · '}
                         {TARIH.format(new Date(o.son_tarih))}
                       </p>
+                      {/* KİŞİSEL SÜRE (0081): sınıfın tarihi geçmiş olsa
+                          bile bu öğrenciye verilmiş bir tarih varsa ekran
+                          onu söylemeli — yoksa öğrenci geçmiş bir tarihe
+                          bakıp "benim için de bitti" sanır. */}
+                      {!gonderildi && ogrenciEkSure(o.ek_sure) && (
+                        <p data-test="ogrenci-ek-sure" className="text-[13px] text-ink">
+                          {ogrenciEkSure(o.ek_sure)}
+                        </p>
+                      )}
                     </div>
                     {gonderildi ? (
                       <div className="flex flex-wrap justify-end gap-1">
@@ -180,7 +194,9 @@ export function Odevlerim() {
                         {o.sinif_arsiv ? (
                           <Tag tur="notr">Sınıf kapandı</Tag>
                         ) : (
-                          s.gecti && !o.gec_teslim && <Tag tur="notr">Teslim kapandı</Tag>
+                          s.gecti &&
+                          !o.gec_teslim &&
+                          !ekSureAcik(o.ek_sure) && <Tag tur="notr">Teslim kapandı</Tag>
                         )}
                       </div>
                     )}

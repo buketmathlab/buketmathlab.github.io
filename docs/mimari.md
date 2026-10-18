@@ -6810,3 +6810,138 @@ uca düşme ve Türkçe açıklama). Bu turun değişiklikleriyle ilgisi yok ve
 ölçüldü: **değişiklikler saklanıp (`git stash`) yayındaki paketle
 koşulduğunda da aynı dört hata çıkıyor.** Öğretmen ekranının ödev oluşturma
 yolunda, ayrı bir turda ele alınacak.
+
+## 0081 — Gönderimi iptal ederken yeni son tarih ve öğrenciye haber (18 Ekim)
+
+Gerçek olay, öğretmenin anlatımıyla: *"Bir öğrenci çözüm yaptığı sayfaları
+kaybettiği için gönderemediğini söylüyor. 'Çözümleri yaptığım sayfaları
+kaybettiğimden yükleyemedim. Özür dilerim, bir daha olmayacak' demiş ve boş
+sayfa göndermiş diğer sayfaları. Bu ödevi ben kabul etmek istemiyorum.
+Böyle durumlarda ödev gönderimini iptal etmek istiyorum."*
+
+**Aradığının büyük kısmı 0056'dan beri yayındaydı:** "Gönderimi yeniden aç"
+sebep istiyor, gönderimin tamamını denetim izine yazıp satırı siliyor,
+öğrenci süre dolmuş olsa bile yeniden gönderebiliyor. Eksik olan iki şey
+vardı; üçüncüsü bilinçli olarak eksik bırakıldı.
+
+### Öğretmenin üç kararı
+
+| Karar | 0056 | 0081 |
+| --- | --- | --- |
+| Yeni son tarih | yok — süre **sınırsız** açılıyordu | tarih veriliyor, sonra kapı yine kapanıyor |
+| Öğrenciye haber | hiç gitmiyor; gönderim **sessizce** kayboluyor | yazılan sebep öğrenciye **mesaj** olarak gidiyor |
+| "Gecikmeli" damgası | kalıyor | **kalıyor** + yanında "ek süre verildi · \<tarih\>" |
+
+### NEDEN `gecikmeli` DEĞİŞMEDİ — ölçüldü
+
+`_gecikmeli(gonderim_zamani, son_tarih)` üründe **43 ayrı yerde** anlık
+hesaplanıyor: pano sayıları, ödev listeleri, öğrenci ve veli ekranları.
+Kişisel tarihin gecikme hesabına girmesi 43 çağrı noktasının hepsinin bu
+tabloyu bilmesi demekti; biri atlanırsa bir ekranda gecikmeli, öbüründe
+değil görünürdü.
+
+Öğretmene soruldu, kararı: **gecikmeli kalsın, yanında ek süre verildiği
+yazılsın.** Kayıt böylece dürüst kalıyor — öğrenci sınıfın son tarihini
+gerçekten kaçırdı — ve sebebi de görünüyor.
+
+### Neden ayrı tablo (`odev_ek_sure`)
+
+0056 istisnayı **denetim izinden türetiyordu**: `_gonderim_yeniden_acildi`
+bir boolean dönüyordu ("süreye hiç bakılmasın") ve bu yeterliydi. Bir
+**kapıyı yöneten tarih** ise her gönderim denemesinde okunuyor ve
+öğrencinin ekranında yazıyor; jsonb içinden ayıklanan bir tarih hem
+kırılgan hem sorgulanamaz olurdu. Tablo RLS ile tamamen kapalı
+(`using (false)`), yalnız `SECURITY DEFINER` uçlar okuyor.
+
+### İki kapı bilerek yan yana
+
+`odev_gonder` içindeki istisna artık iki şeye bakıyor:
+
+```sql
+and not exists (select 1 from public.odev_ek_sure e
+                 where e.odev_id = p_odev and e.ogrenci_id = o.ogrenci_id
+                   and (now() at time zone 'Europe/Istanbul')::date <= e.son_tarih)
+and not public._tarihsiz_yeniden_acildi(p_odev, o.ogrenci_id)
+```
+
+İkincisi **yalnız 0081'den önce** açılmış ve henüz göndermemiş öğrenciler
+için duruyor: onların tarihi hiçbir yerde yazmıyor ve uydurmak veri
+uydurmak olurdu. Migration kaç kişinin bu durumda olduğunu `raise notice`
+ile bildiriyor; sayı zamanla sıfıra iner.
+
+**İlk yazımda buradan bir kusur çıktı ve test yakaladı.** Eski yardımcı
+(`_gonderim_yeniden_acildi`) *her* yeniden açmada doğru dönüyordu — yani
+0081'in verdiği kişisel tarihi anlamsız kılıyor, süre yine sınırsız
+kalıyordu. Yardımcı `_tarihsiz_yeniden_acildi` olarak yeniden yazıldı:
+yalnız `yeni` alanında `son_tarih` **bulunmayan** denetim izi satırlarına
+bakıyor. Eskisi `drop function` ile düşürüldü ve kapının ona bir daha
+başvurmadığı öz-denetimde sayılıyor.
+
+### 0007 tuzağı yine kapatıldı
+
+İmza değişti (`p_son_tarih date` eklendi), bu yüzden **eski üç argümanlı
+sürüm açıkça düşürülüyor**:
+
+```sql
+drop function if exists public.gonderimi_yeniden_ac(text, uuid, text);
+```
+
+Bırakılsaydı PostgREST ekranın çağrısını ona çözer, ekran tarihi
+gönderdiğini sanırken hiçbir şey kaydedilmezdi. Kusur provası bunu
+doğruluyor: eski uç elle geri konduğunda test `is not unique` ile düşüyor.
+
+### Sebep öğrenciye gidiyor — ve öğretmen bunu önceden biliyor
+
+Mesaj `kanal = 'ogrenci'` ile, gönderimin silinmesiyle **aynı işlemde**
+yazılıyor: mesaj yazılamazsa iptal de olmuyor. Öğrencinin kendi
+yazışmasına düşüyor, **veli görmüyor** (0025'in ayrımı).
+
+Diyalogda *"Yazdığınız sebep öğrenciye mesaj olarak gönderilir"* yazıyor ve
+altında **mesajın önizlemesi** duruyor. Bu uyarı olmasaydı öğretmen oraya
+kendine not yazar ve notu öğrenci okurdu. Cümleyi sunucu kuruyor;
+`lib/iptal-metni.ts`'teki kopya yalnız önizleme ve `iptal-metni.test.ts`
+**migration dosyasının gerçek metnini okuyarak** ikisinin ayrışmasını
+engelliyor.
+
+### Ekrana düşen alanlar
+
+`ogrenci_odevleri` ve `odev_gonderimleri` **imzaları değişmeden** yanıtlarına
+`ek_sure` ekliyor.
+
+- **Öğretmen** — gönderim listesinde "ek süre verildi · 25 Ekim 2026".
+  En çok gerektiği yer **"Göndermeyenler"**: iptalde satır silindiği için
+  öğrenci oraya düşüyor ve öğretmen verdiği tarihi başka hiçbir yerde
+  göremezdi.
+- **Öğrenci** — "Sana verilen süre: 25 Ekim 2026". Ekranın kapısı da bu
+  tarihi okuyor: sınıfın tarihi geçmiş olsa bile **"Teslim kapandı" yazmıyor
+  ve yükleme açık kalıyor**; `lib/iptal-metni.ts`'teki `ekSureAcik`,
+  sunucudaki `bugün <= son_tarih` kapısının ekrandaki karşılığı. Ödev
+  listede de "yapılacaklar" arasında kalıyor — sınıf tarihi geçti diye
+  dibe inseydi öğrenci onu görmezdi.
+
+0081 çalışmamış bir sunucuda alan hiç gelmiyor ve ekranlar bugünkü gibi
+davranıyor. Diyalogdaki "uç bulunamadı" mesajı artık **0081**'i işaret
+ediyor: imza değiştiği için 0056 kurulu olsa bile çağrı bulunmaz.
+
+### Ön koşul kapısı genişletildi
+
+`odev_gonder` gövdesi 0078'den mekanik kopya. plpgsql gövdesi kurulurken
+sütunlar denetlenmediği için, 0078 çalışmamış bir veritabanında 0081 sessizce
+kurulur ve **gönderim çalışma anında patlardı**. Migration artık 0078'in
+işaretini arıyor; prova bunu doğruluyor (`0081: önce 0078 çalıştırılmalı`).
+
+### Ölçüm
+
+- `gonderim_iptali_testleri.sql` — 11 grup; **8 SQL kusur provasının hepsi
+  ısırıyor**: tarih kaydedilmiyor · kapı tarihe bakmıyor · geçmiş tarih
+  kabul ediliyor · mesaj veli kanalına gidiyor · mesaj hiç gitmiyor · eski
+  uç düşürülmüyor · eski dal siliniyor · eski dal tarihli kayıtları da
+  sayıyor.
+- `yeniden_acma_testleri.sql` (0056) yeni imzayla koşuyor; yetki iddiası
+  yeni yardımcının adını taşıyor.
+- `yeniden-acma-denetimi.mjs` — C1–C6: tarih alanı ve `min=bugün`, elle
+  yazılan geçmiş tarih ağa gitmiyor, sebep uyarısı dokunmadan görünüyor,
+  önizleme doğru, `p_son_tarih` yükte, "ek süre verildi" çiziliyor (ve
+  tarih yokken çizilmiyor), öğrenci kişisel tarihi iki ekranda da görüyor
+  ve gönderebiliyor, ek süre dolunca kapı yine kapanıyor, 360 px'de taşma
+  yok. **7 arayüz kusur provasının hepsi ısırıyor.**

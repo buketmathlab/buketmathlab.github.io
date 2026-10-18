@@ -88,4 +88,5 @@ export const MIGRATION_LISTESI: readonly MigrationKaydi[] = [
   { no: '0078', dosya: '0078_tum_sayfalar_zorunlu.sql' },
   { no: '0079', dosya: '0079_sayfa_sayisi_duzenleme.sql' },
   { no: '0080', dosya: '0080_iki_ortalama.sql' },
+  { no: '0081', dosya: '0081_gonderim_iptali.sql' },
 ];

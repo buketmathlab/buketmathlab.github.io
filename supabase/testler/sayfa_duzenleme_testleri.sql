@@ -206,7 +206,7 @@ begin
   ------------------------------------------------------------------
   raise notice '--- 5. Yeniden açılan gönderim yeni sayıyla ---';
   select id into v_gon from public.gonderimler where odev_id = v_eski and ogrenci_id = v_ali;
-  perform public.gonderimi_yeniden_ac(t_ogr, v_gon, 'Eksik sayfa: ödev 3 sayfa.');
+  perform public.gonderimi_yeniden_ac(t_ogr, v_gon, 'Eksik sayfa: ödev 3 sayfa.', (current_date + 7));
   begin
     perform public.odev_gonder(t_ali, v_eski, 'cozum/' || v_eski || '/' || v_ali || '.jpg', null, null);
     raise exception 'HATA: yeniden açılan gönderim eski sayıyla KABUL EDİLDİ!';

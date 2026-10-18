@@ -20,6 +20,7 @@ import { useVeri } from '@/hooks/useVeri';
 import { rpc } from '@/services/supabase';
 import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
+import { ekSureAcik, ogrenciEkSure } from '@/lib/iptal-metni';
 import { KARANLIK_METNI, KaranlikFotografHatasi } from '@/lib/karanlik-fotograf';
 import { pdfMi } from '@/lib/pdf-cozum';
 import { sureDurumu } from '@/lib/son-tarih';
@@ -444,7 +445,12 @@ function OdevIcerigi({
   // İki AYRI kapanma sebebi. Aynı kutuya sıkıştırmıyoruz: "süren doldu" ile
   // "sınıfın kapandı" öğrenci için bambaşka iki şey, ilki onun elindeydi.
   const sinifKapali = odev.sinif_arsiv;
-  const kapali = sinifKapali || (sure.gecti && !odev.gec_teslim);
+  // 0081: YALNIZ BU ÖĞRENCİYE VERİLMİŞ SÜRE. Gönderimi iptal edilirken
+  // verilen tarih, sunucudaki kapıyı (`odev_gonder`) açık tutuyor; ekran
+  // bunu bilmezse "Teslim kapandı" yazıp gönderme yolunu kapatır,
+  // sunucu kabul ederken öğrenci gönderemediğini sanırdı.
+  const ekSure = ekSureAcik(odev.ek_sure);
+  const kapali = sinifKapali || (sure.gecti && !odev.gec_teslim && !ekSure);
   const testMi = odev.tur === 'test';
   const soruSayisi = odev.soru_sayisi ?? 0;
   // Şık sayısı ödevde saklı (migration 0010). Tahmin etmiyoruz: A–D'lik bir
@@ -470,6 +476,13 @@ function OdevIcerigi({
           {' · Son tarih '}
           {TARIH.format(new Date(odev.son_tarih))}
         </p>
+        {/* KİŞİSEL SÜRE (0081): sınıfın tarihi geçmiş olsa bile bu
+            öğrenciye verilmiş tarih burada yazıyor. */}
+        {!gonderildi && ogrenciEkSure(odev.ek_sure) && (
+          <p data-test="ogrenci-ek-sure" className="mt-1 text-[14px] text-ink">
+            {ogrenciEkSure(odev.ek_sure)}
+          </p>
+        )}
         {odev.aciklama && <p className="mt-3 text-[15px] text-ink">{odev.aciklama}</p>}
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -482,7 +495,9 @@ function OdevIcerigi({
             <Tag tur={sure.gecti ? 'notr' : sure.acil ? 'uyari' : 'notr'}>{sure.metin}</Tag>
           )}
           {!gonderildi && sinifKapali && <Tag tur="notr">Sınıf kapandı</Tag>}
-          {!gonderildi && !sinifKapali && !odev.gec_teslim && (
+          {/* Kişisel süresi açıkken "geç teslim kabul edilmiyor" yazmak
+              öğrenciye yanlış söylerdi: ona tam da o istisna verildi. */}
+          {!gonderildi && !sinifKapali && !odev.gec_teslim && !ekSure && (
             <Tag tur="uyari">Geç teslim kabul edilmiyor</Tag>
           )}
         </div>
