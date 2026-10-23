@@ -7137,8 +7137,18 @@ takılıyor, RPC **hiç gitmiyordu** — yani ölçüm, ölçmek istediği yola 
 ulaşamıyordu. Yedek davranışın kendisi çalışıyormuş.
 
 Yardımcıya `sayfaSayisiDoldur` eklendi; grup yeşile döndü ve artık gerçek
-bir şey ölçüyor. Ders: **kırmızı bir ölçümün sebebini okumadan "ilgisiz"
-diye etiketlemek, o ölçümü sessizce ölü bırakıyor.**
+bir şey ölçüyor.
+
+**Ve aynı kök sebep ikinci bir denetimde de çıktı.** Süpürmede kalan son
+kırmızı `kunye-denetimi`'ydi — o da turlardır "ödev oluşturma ailesi,
+ilgisiz" diye taşınıyordu. Üç iddiasının tamamı *"ödev oluşturma ucu
+çağrıldı"* demekti ve çağrılmıyordu: aynı sayfa sayısı alanı. Aynı
+yardımcı oraya da kondu; 33 iddia geçiyor, kalan sıfır.
+
+Ders: **kırmızı bir ölçümün sebebini okumadan "ilgisiz" diye
+etiketlemek, o ölçümü sessizce ölü bırakıyor** — ve aynı etiket iki ayrı
+dosyada aynı kusuru aylarca gizleyebiliyor. Süpürme artık **sıfır
+kırmızı**.
 
 ### Ölçüm
 

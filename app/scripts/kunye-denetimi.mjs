@@ -82,6 +82,27 @@ const tarayici = await chromium.launch();
  * `tur` parametresi 8b için gerekiyor: açık uçlu ödevde cevap anahtarı
  * kavramı yok, `ilerle()` 2. adımı ATLAYIP doğrudan 3'e geçiyor.
  */
+/**
+ * ÖDEVİN SAYFA SAYISI (0078) — varsa doldurur.
+ *
+ * 0083 turunda eklendi ve ÖLÜ BİR ÖLÇÜMÜ diriltti. Bu dosyanın üç iddiası
+ * uzun süredir kırmızı yanıyor ve "ödev oluşturma ailesiyle ilgili,
+ * bu turla ilgisiz" diye not düşülüyordu. Gerçek sebep başkaymış:
+ * 0078'den beri ekran sayfa sayısı istiyor, denetim onu doldurmuyordu;
+ * "Taslağı kaydet" doğrulamada takılıyor ve RPC HİÇ GİTMİYORDU. Yani
+ * ölçüm, ölçmek istediği yola hiç ulaşamıyordu.
+ *
+ * (Aynı kusur `coklu-sinif-denetimi.mjs`'te de vardı ve aynı turda
+ * düzeltildi.)
+ */
+async function sayfaSayisiDoldur(s) {
+  const alan = s.getByLabel(/Ödevin sayfa sayısı/);
+  if (await alan.isVisible().catch(() => false)) {
+    await alan.fill('1');
+    await s.waitForTimeout(150);
+  }
+}
+
 async function ucuncuAdim(soruSayisi = 5, tur = 'test') {
   const s = await tarayici.newPage({ viewport: { width: 360, height: 780 } });
   const istekler = [];
@@ -213,6 +234,7 @@ console.log('\n4 — SUNUCUYA GİDEN İSTEKTE KONULAR GERÇEKTEN VAR');
   // `/taslak/i` DEĞİL: düğme "Taslağı kaydet" yazıyor ve Türkçe ünsüz
   // yumuşaması yüzünden kök "taslağ" oluyor. Kısa yoldan eşleşen bir
   // parça seçiliyor.
+  await sayfaSayisiDoldur(s);
   await s.getByRole('button', { name: /kaydet/i }).first().click();
   await s.waitForTimeout(900);
 
@@ -372,6 +394,7 @@ console.log('\n8 — KÜNYE KULLANILMAZSA ESKİ AKIŞ AYNEN ÇALIŞIYOR');
   olc('künyeye dokunulmadı (kutu hâlâ kapalı)',
       (await s.getByLabel('Künye metni').count()) === 0);
 
+  await sayfaSayisiDoldur(s);
   await s.getByRole('button', { name: /kaydet/i }).first().click();
   await s.waitForTimeout(900);
 
@@ -420,6 +443,7 @@ console.log('\n8c — İKİ YOL ÇAKIŞMIYOR: ELLE GİRİLEN KAYBOLMUYOR');
   await s.getByRole('button', { name: 'Uygula' }).click();
   await s.waitForTimeout(500);
 
+  await sayfaSayisiDoldur(s);
   await s.getByRole('button', { name: /kaydet/i }).first().click();
   await s.waitForTimeout(900);
 
