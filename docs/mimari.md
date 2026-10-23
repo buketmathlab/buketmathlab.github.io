@@ -7054,3 +7054,103 @@ artık prova ısırıyor.
   çiziliyor, varsayılan yeni yükleme, yükleme `-d2` yoluna gidiyor,
   "öncekini kullan" hiç yükleme yapmadan eski yolları gönderiyor, 360
   px'de taşma yok. **3 arayüz kusur provasının hepsi ısırıyor.**
+
+## 0083 — Var olan ödevi sonradan başka sınıflara da verme (20 Ekim)
+
+Öğretmenin isteği: *"Bir sınıfa gönderdiğim ödevin aynısını diğer sınıfa da
+gönderebileyim. Mesela 10C'ye ödev gönderdim. Bu ödevin aynısını daha sonra
+istediğim diğer sınıflara da gönderebileyim."*
+
+### Bu ailede zaten ne vardı
+
+- **0030** `odevler_coklu_olustur` — aynı ödev **oluşturma anında** birden
+  çok sınıfa verilebiliyordu. Her sınıf kendi `odevler` satırını alıyor;
+  aralarındaki tek bağ `grup_id`.
+- **0031** `odev_kardeslere_yay` — bir kardeşteki içerik düzeltmesi
+  ötekilere yayılıyor.
+
+Eksik olan tam bu istekti: **sonradan sınıf eklemek**. Bugüne kadar
+10C'nin ödevini 10D'ye vermek, formu baştan doldurup iki PDF'i yeniden
+yüklemek demekti.
+
+### Kopya, ortak ödev değil — 0030'un kararı sürüyor
+
+`odevler.sinif_id` `not null` ve neredeyse her uç ona göre süzüyor. "Tek
+ödev · çok sınıf" şeması o uçların tamamını elden geçirmek olurdu. Her
+sınıf kendi ödevini alıyor; kopyalar `grup_id` ile **kardeş** oluyor,
+böylece 0031'in yayma düğmesi onlara da ulaşıyor.
+
+Gövde de kopyalanmıyor: `odev_siniflara_kopyala` ön denetimden sonra
+döngüde mevcut `odev_olustur`'u **çağırıyor**. İkinci bir insert yazsaydık
+iki yol bir gün ayrışırdı. Öz-denetim bunu ayrıca sayıyor — fonksiyonun
+gövdesinde `insert into public.odevler` bulunursa migration kurulmuyor.
+
+### PDF'ler yeniden yüklenmiyor — ölçüldü
+
+Kopya kaynakla **aynı depo yolunu** gösteriyor. Öğrencinin soru PDF'ine
+erişimi `dosya_erisim_izni` içinde
+
+```sql
+d.odev_url = p_yol and d.yayinda and d.sinif_id = ogr.sinif_id
+```
+
+kuralından geliyor; kopya yeni sınıfın satırı olduğu için o sınıfın
+öğrencisi dosyayı yayından sonra açabiliyor, başka sınıfın öğrencisi
+açamıyor. **Yeni izin açılmadı.** Testin 4. grubu üç durumu da ölçüyor:
+taslakken kapalı · yayında kendi sınıfına açık · yabancıya kapalı.
+
+### `tum_sayfalar` tuzağı
+
+0078'den beri `odev_olustur` **yeni** ödevi her zaman `tum_sayfalar = true`
+yapıyor. Kopya bu alanı kaynaktan almazsa, 0078 öncesi bir ödevin kopyası
+kaynaktan **daha katı** olurdu — öğrenci her sayfayı göndermek zorunda
+kalırdı. Oluşturmadan sonra kaynaktan yazılıyor; kusur provası bunu
+kırdığında 3. grup ısırıyor.
+
+### `verilebilir_siniflar` sunucuda hesaplanıyor
+
+Diyalogun hangi sınıfları göstereceğini `odev_detay` söylüyor: öğretmenin
+arşivde olmayan sınıflarından, kaynağın sınıfı ve gruptakiler çıkarılmış
+hâli. Ekranda ikinci bir süzgeç yazmak, aynı listeyi iki yerde iki türlü
+hesaplamak olurdu; süzgeç kayarsa sunucu reddederken öğretmen sebebini
+anlamazdı. Liste boşsa **kart hiç çizilmiyor** — ve 0083 çalışmamış
+sunucuda alan gelmediği için aynı yol işliyor.
+
+### 9. GRUBUN NEYİ ÖLÇMEDİĞİ YAZILI
+
+Atomiklik iddiası için kusur provası denendi ve **ısırmadı**. Sebebi
+öğretici: atomikliği bu dosyadaki kod değil, **işlemin geri alması**
+sağlıyor (0030'un notu). Ön denetim döngüsü de yaratma döngüsünün yarıda
+kalmasını engelliyor, yani tek bir kusurla kırılamıyor. Sahte bir prova
+tutmak yerine iddianın neyi yakalayıp neyi yakalamadığı testin içine
+yazıldı — yeşili yanlış okunmasın diye.
+
+### ÖLÜ BİR ÖLÇÜM DİRİLDİ — ve sanılan sebep yanlıştı
+
+`coklu-sinif-denetimi.mjs`'in 3. grubu ("0030 çalıştırılmamışsa ekran
+bozulmuyor") uzun süredir **dört iddiada kırmızı** yanıyordu ve her turda
+"bu turla ilgisiz, `odev_olustur` ailesi" diye not düşülüyordu.
+
+Gerçek sebep başkaymış: **0078'den beri ekran "Ödevin sayfa sayısı"
+istiyor** ve denetim o alanı doldurmuyordu. "Taslağı kaydet" doğrulamada
+takılıyor, RPC **hiç gitmiyordu** — yani ölçüm, ölçmek istediği yola hiç
+ulaşamıyordu. Yedek davranışın kendisi çalışıyormuş.
+
+Yardımcıya `sayfaSayisiDoldur` eklendi; grup yeşile döndü ve artık gerçek
+bir şey ölçüyor. Ders: **kırmızı bir ölçümün sebebini okumadan "ilgisiz"
+diye etiketlemek, o ölçümü sessizce ölü bırakıyor.**
+
+### Ölçüm
+
+- `siniflara_verme_testleri.sql` — 10 grup; **8 SQL kusur provasının hepsi
+  ısırıyor**: `grup_id` yazılmıyor · `tum_sayfalar` kaynaktan alınmıyor ·
+  PDF yolları kopyalanmıyor · gruptaki sınıf denetimi kalkıyor · arşiv
+  denetimi kalkıyor · geçmiş tarih kabul ediliyor · yetki denetimi
+  kalkıyor · `verilebilir_siniflar` süzmüyor.
+- `coklu-sinif-denetimi.mjs` — 4. grup: kart yalnız verilecek sınıf varken
+  çiziliyor, kaynağın sınıfı listede değil, tarih dolu ve `min` bugün,
+  taslak olduğu yazılı, sınıf seçilmeden ağa gitmiyor, yük doğru,
+  **hiçbir dosya yeniden yüklenmiyor**, 360 px'de taşma yok.
+  **4 arayüz kusur provasının hepsi ısırıyor.**
+- Denetim bir kusuru kendi yakaladı: `Card` ek öznitelik almıyor, dışarıya
+  yazılan `data-test` DOM'a hiç ulaşmıyordu.

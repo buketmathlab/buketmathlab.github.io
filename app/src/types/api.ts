@@ -204,6 +204,19 @@ export type KardesDetay = {
   arsiv: boolean;
 };
 
+/**
+ * Ödevin verilebileceği bir sınıf (0083).
+ *
+ * Listeyi SUNUCU süzüyor (`odev_detay.verilebilir_siniflar`): kaynağın
+ * kendi sınıfı, zaten verilmiş kardeş sınıflar ve arşivdekiler gelmiyor.
+ * Ekranda ikinci bir süzgeç yok — iki yerde iki türlü hesaplanan liste
+ * bir gün ayrışır ve öğretmen sunucunun neden reddettiğini anlamaz.
+ */
+export type VerilebilirSinif = {
+  id: string;
+  ad: string;
+};
+
 /** `odev_kardeslere_yay` (0031) yanıtı — kardeş başına bir satır. */
 export type YaymaRaporu = {
   sinif: string;

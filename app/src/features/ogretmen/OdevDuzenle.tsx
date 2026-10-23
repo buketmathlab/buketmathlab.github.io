@@ -40,7 +40,8 @@ import { KardeslereYayma } from "./KardeslereYayma";
 import { SoruIptali, type SubeRaporu } from "./SoruIptali";
 import { sunucudanOku, sunucuyaHazirla, type Konular } from "@/lib/konu-atama";
 import { odevPdfOzeti, type PdfOzeti } from "@/lib/odev-pdf-ozeti";
-import type { KardesDetay, Sinif } from "@/types/api";
+import { SiniflaraVer } from "./SiniflaraVer";
+import type { KardesDetay, Sinif, VerilebilirSinif } from "@/types/api";
 
 type OdevDetay = {
   id: string;
@@ -70,6 +71,12 @@ type OdevDetay = {
    * yayma kartı hiç çizilmez.
    */
   kardes_detay?: KardesDetay[] | null;
+  /**
+   * Bu ödevin HENÜZ VERİLMEDİĞİ, öğretmenin arşivde olmayan sınıfları
+   * (0083). Sunucu süzüyor: kaynağın kendi sınıfı ve kardeşler yok.
+   * 0083 çalıştırılmadıysa gelmez ve kart hiç çizilmez.
+   */
+  verilebilir_siniflar?: VerilebilirSinif[] | null;
   /** Ödevin sayfa sayısı (0054). 0054 çalıştırılmadıysa gelmez → 1. */
   sayfa_limiti?: number;
   /** Her sayfa zorunlu mu (0078). Gelmezse ya da false ise eski kural. */
@@ -431,6 +438,19 @@ export function OdevDuzenle() {
                 - GELMİYORSA (0031 henüz çalıştırılmamış): 0030'un
                   bugünkü uyarısı aynen duruyor. Ekran bozulmuyor, yalnız
                   düğme hiç çıkmıyor — `ucYok` deseni. */}
+            {/* 0083 — BU ÖDEVİ BAŞKA SINIFLARA DA VER.
+                Verilecek sınıf yoksa (hepsine verilmiş ya da 0083 henüz
+                çalıştırılmamış) kart HİÇ çizilmiyor: boş bir seçim kutusu
+                açan düğme, öğretmeni yanlış yere götürürdü. */}
+            {detay.verilebilir_siniflar && detay.verilebilir_siniflar.length > 0 && (
+              <SiniflaraVer
+                odevId={detay.id}
+                kaynakSinif={detay.sinif}
+                siniflar={detay.verilebilir_siniflar}
+                onVerildi={yenile}
+              />
+            )}
+
             {detay.kardes_detay && detay.kardes_detay.length > 0 ? (
               <KardeslereYayma
                 odevId={detay.id}

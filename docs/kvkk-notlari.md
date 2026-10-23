@@ -337,3 +337,18 @@ kimliğini taşıyor, `_cozum_yolu_gecerli` denetliyor) ve gönderimi
 okuyabilen öğretmen açabiliyor. Veli için hiçbir şey değişmedi: veli zaten
 `gonderimler` satırındaki yolu görüyor, denetim izindeki eski denemeleri
 değil.
+
+## Ödevi başka sınıflara verme (0083) — yeni kişisel veri yok
+
+Kopyalanan şey ödevin kendisi: başlık, sorular, cevap anahtarı, konular ve
+iki PDF'in **yolu**. Öğrenciye ait hiçbir şey kopyalanmıyor — gönderimler,
+puanlar ve karneler her sınıfta ayrı kalıyor.
+
+Dosyalar da çoğaltılmıyor: kopya kaynakla aynı depo yolunu gösteriyor.
+Erişim yine sınıf üyeliğinden geliyor (`dosya_erisim_izni`): yeni sınıfın
+öğrencisi ödev **yayınlandıktan sonra** soru PDF'ini açabiliyor, başka
+sınıfın öğrencisi açamıyor, taslak hâldeyken kimse açamıyor. Testin 4.
+grubu üçünü de ölçüyor.
+
+Kimin hangi ödevi hangi sınıfa verdiği `denetim_izi`'ne yazılıyor
+(`odev_siniflara_verildi`): kaynak ödev, hedef sınıf ve verilen tarih.

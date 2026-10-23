@@ -136,6 +136,23 @@ const cagrilar = (p) => p.evaluate(() => window.__cagrilar);
 const yuklemeler = (p) => p.evaluate(() => window.__yuklemeler);
 
 /** 1. adımı doldurur ve verilen sınıfları işaretler. */
+/**
+ * ÖDEVİN SAYFA SAYISI (0078) — varsa doldurur.
+ *
+ * Bu yardımcı 0083 turunda eklendi ve bir ÖLÜ ÖLÇÜMÜ dirilttiyor: 3. grup
+ * dört iddiada kırmızı yanıyordu ve sebebi sanıldığı gibi "yedek davranış
+ * bozuldu" DEĞİLDİ. 0078'den beri ekran sayfa sayısı istiyor; denetim onu
+ * doldurmadığı için "Taslağı kaydet" doğrulamada takılıyor, RPC HİÇ
+ * gitmiyordu. Yani ölçüm, ölçmek istediği yola hiç ulaşamıyordu.
+ */
+async function sayfaSayisiDoldur(p) {
+  const alan = p.getByLabel(/Ödevin sayfa sayısı/);
+  if (await alan.isVisible().catch(() => false)) {
+    await alan.fill('1');
+    await p.waitForTimeout(150);
+  }
+}
+
 async function birinciAdim(p, adlar, tur = 'acik') {
   await p.getByLabel(/Başlık/).fill('Üslü Sayılar');
   for (const ad of adlar) {
@@ -252,6 +269,7 @@ console.log('3 — 0030 ÇALIŞTIRILMAMIŞSA EKRAN BOZULMUYOR');
   // 3a — TEK sınıf: sessizce eski uca düşüyor, ödev oluşuyor.
   const { b, p } = await kur(false);
   await birinciAdim(p, ['9A']);
+  await sayfaSayisiDoldur(p);
   await p.getByRole('button', { name: 'Taslağı kaydet' }).click();
   await p.waitForTimeout(900);
 
@@ -272,6 +290,7 @@ console.log('3 — 0030 ÇALIŞTIRILMAMIŞSA EKRAN BOZULMUYOR');
   // 3b — ÇOK sınıf: Türkçe ve anlaşılır bir cümle; sessizce yarısı oluşmuyor.
   const { b, p } = await kur(false);
   await birinciAdim(p, ['9A', '9B']);
+  await sayfaSayisiDoldur(p);
   await p.getByRole('button', { name: /sınıf için taslak kaydet/ }).click();
   await p.waitForTimeout(900);
 
@@ -284,6 +303,167 @@ console.log('3 — 0030 ÇALIŞTIRILMAMIŞSA EKRAN BOZULMUYOR');
     c.filter((x) => x.ad === 'odev_olustur').length === 0,
     'çok sınıflı istekte YARIM ödev oluşturulmuyor',
   );
+  await b.close();
+}
+
+// ===========================================================================
+console.log('4 — 0083: VAR OLAN ÖDEVİ SONRADAN BAŞKA SINIFLARA VERME');
+// ===========================================================================
+/** `odev_detay` yanıtı — düzenleme ekranının okuduğu şey. */
+function detay(verilebilir) {
+  return {
+    id: 'o1',
+    baslik: 'Üslü Sayılar',
+    aciklama: null,
+    tur: 'acik',
+    sinif_id: 's9a',
+    sinif: '9A',
+    son_tarih: '2026-11-20',
+    soru_sayisi: null,
+    gec_teslim: true,
+    konular: {},
+    sik_sayisi: 5,
+    sayfa_limiti: 2,
+    tum_sayfalar: false,
+    cevap_anahtari: {},
+    anahtar_yolu: null,
+    odev_yolu: 'odev/abc/sorular.pdf',
+    yayinda: true,
+    kardesler: null,
+    kardes_detay: null,
+    verilebilir_siniflar: verilebilir,
+    gonderim_sayisi: 0,
+    gec_gonderim_sayisi: 0,
+  };
+}
+
+async function duzenlemeEkrani(verilebilir) {
+  const b = await chromium.launch();
+  const s = await b.newContext({ viewport: { width: 390, height: 900 } });
+  await s.addInitScript(
+    ([oturum, siniflar, detayStr]) => {
+      localStorage.setItem('sekiz_oturum', oturum);
+      window.__cagrilar = [];
+      window.__yuklemeler = [];
+      const asil = window.fetch;
+      const json = (o) =>
+        new Response(JSON.stringify(o), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      window.fetch = async (u, o) => {
+        const url = String(typeof u === 'string' ? u : u.url);
+        if (url.includes('/functions/v1/dosya-url')) {
+          const g = JSON.parse(String(o?.body ?? '{}'));
+          window.__yuklemeler.push(g.yol ?? '?');
+          return json({ imzaliUrl: 'https://sahte.test/yukle', jeton: 'j', yol: g.yol });
+        }
+        const m = url.match(/\/rpc\/([a-z_]+)/);
+        if (!m) return asil(u, o);
+        let govde = null;
+        try {
+          govde = JSON.parse(String(o?.body ?? 'null'));
+        } catch {
+          /* yok */
+        }
+        window.__cagrilar.push({ ad: m[1], govde });
+        if (m[1] === 'odev_detay') return json(JSON.parse(detayStr));
+        if (m[1] === 'siniflar_listesi') return json(siniflar);
+        if (m[1] === 'konu_onerileri') return json([]);
+        return json({});
+      };
+    },
+    [
+      JSON.stringify({ token: 'sahte', rol: 'ogretmen', ad: 'Buket Topuzoğlu' }),
+      SINIFLAR,
+      JSON.stringify(detay(verilebilir)),
+    ],
+  );
+  const p = await s.newPage();
+  await p.goto(KOK + '#/ogretmen/odevler/o1', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  return { b, p };
+}
+
+const BUGUN = new Date();
+const gun = (n) => {
+  const d = new Date(BUGUN);
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+{
+  // 4a — VERİLECEK SINIF YOKSA KART HİÇ ÇİZİLMİYOR. Boş bir seçim kutusu
+  // açan düğme öğretmeni yanlış yere götürürdü. 0083 çalıştırılmamış
+  // sunucuda da alan gelmiyor ve aynı yol işliyor.
+  const { b, p } = await duzenlemeEkrani([]);
+  de((await p.locator('[data-test="siniflara-ver"]').count()) === 0,
+     'verilecek sınıf yokken kart çizilmiyor');
+  await b.close();
+}
+{
+  const { b, p } = await duzenlemeEkrani([
+    { id: 's9b', ad: '9B' },
+    { id: 's9c', ad: '9C' },
+  ]);
+  const kart = p.locator('[data-test="siniflara-ver"]');
+  de((await kart.count()) === 1, 'kart çiziliyor');
+  await kart.getByRole('button', { name: 'Sınıf seç' }).click();
+  await p.waitForTimeout(250);
+  const d = p.locator('dialog[open]');
+  const t = await d.innerText();
+
+  // 4b — İki sınıf seçilebilir, tarih kutusu dolu ve geçmişe kapalı.
+  de(/9B/.test(t) && /9C/.test(t), 'verilebilir sınıflar listede');
+  de(!/9A/.test(t), 'kaynağın kendi sınıfı listede değil');
+  const tarih = d.locator('input[type="date"]');
+  const deger = await tarih.inputValue();
+  de(/^\d{4}-\d{2}-\d{2}$/.test(deger) && deger >= gun(0), `tarih kutusu dolu (${deger})`);
+  de((await tarih.getAttribute('min')) === gun(0), 'min bugün');
+
+  // 4c — TASLAK OLDUĞU YAZILI. Söylenmezse öğretmen yayınlamayı beklemez
+  // ve ödev kimseye ulaşmaz.
+  de(/taslak/i.test(t) && /yayınlar/i.test(t), '"taslak olarak oluşur" yazıyor');
+  de(/yeniden yüklenmez/i.test(t), 'PDF\'lerin yeniden yüklenmediği yazılı');
+
+  // 4d — SINIF SEÇİLMEDEN ağa gitmiyor.
+  await d.getByRole('button', { name: 'Seçilen sınıflara ver' }).click();
+  await p.waitForTimeout(300);
+  de((await cagrilar(p)).filter((x) => x.ad === 'odev_siniflara_kopyala').length === 0,
+     'sınıf seçilmeden ağa gitmiyor');
+
+  // 4e — Seçip onaylayınca doğru yük gidiyor.
+  await d.getByText('9C', { exact: true }).click();
+  await p.waitForTimeout(150);
+  await tarih.fill(gun(10));
+  await d.getByRole('button', { name: 'Seçilen sınıflara ver' }).click();
+  await p.waitForTimeout(600);
+  const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_siniflara_kopyala');
+  de(c.length === 1, `odev_siniflara_kopyala bir kez çağrıldı (${c.length})`);
+  de(JSON.stringify(c[0]?.govde?.p_sinif_idler) === '["s9c"]',
+     `seçilen sınıf yükte: ${JSON.stringify(c[0]?.govde?.p_sinif_idler)}`);
+  de(c[0]?.govde?.p_son_tarih === gun(10), `tarih yükte: ${c[0]?.govde?.p_son_tarih}`);
+  de(c[0]?.govde?.p_id === 'o1', 'kaynak ödev kimliği yükte');
+
+  // 4f — ASIL KAZANÇ: HİÇBİR DOSYA YENİDEN YÜKLENMİYOR. Kopya kaynakla
+  // aynı depo yolunu gösteriyor; yükleme olsaydı turun anlamı kalmazdı.
+  de((await yuklemeler(p)).length === 0, 'hiçbir dosya yeniden yüklenmedi');
+  await b.close();
+}
+{
+  // 4g — 360 px: kart ve diyalog taşmıyor.
+  const { b, p } = await duzenlemeEkrani([{ id: 's9b', ad: '9B' }]);
+  await p.setViewportSize({ width: 360, height: 780 });
+  await p.locator('[data-test="siniflara-ver"]').getByRole('button', { name: 'Sınıf seç' }).click();
+  await p.waitForTimeout(300);
+  const olcu = await p.evaluate(() => ({
+    yatay: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    tasan: [...document.querySelectorAll('dialog[open] *')].some(
+      (e) => e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflowX === 'visible',
+    ),
+  }));
+  de(!olcu.yatay, '360 px: sayfa yatay kaymıyor');
+  de(!olcu.tasan, '360 px: diyalogda taşan kutu yok');
   await b.close();
 }
 
