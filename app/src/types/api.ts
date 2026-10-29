@@ -148,6 +148,38 @@ export type KodYenileme = { rol: 'ogrenci' | 'veli'; kod: string };
  * başına ve dokunuşla.
  */
 
+/**
+ * ÖDEVİN TARİHLERİ (0085) — dört ucun hepsinde AYNI nesne.
+ *
+ * Öğretmenin isteği: "veriliş tarihi ve son teslim tarihi yazsın; teslim
+ * tarihinde uzatma yaptıysam o ekstra belirtilsin."
+ *
+ * Hesabı sunucu tek yerde yapıyor (`_odev_tarihleri`): veriliş,
+ * `odev_yayinlandi` denetim izi satırının zamanı; uzatma ise
+ * `odev_guncellendi` satırlarının eski/yeni `son_tarih` karşılaştırması.
+ * Öğretmen, öğrenci ve veli ekranları bu yüzden ayrışamıyor.
+ *
+ * `verilis` TASLAKTA null: ödev henüz kimseye verilmedi. `created_at`
+ * yerine geçmiyor — ödev pazartesi açılıp perşembe yayınlanmış olabilir.
+ *
+ * `yon` iki yönlü: tarih öne alındıysa da söyleniyor. İlk hâline geri
+ * dönen tarihte null (değişiklik sayılmaya devam eder).
+ *
+ * 0085 çalıştırılmadıysa alan hiç GELMEZ; ekranlar o hâlde bugünkü gibi
+ * yalnız son tarihi yazıyor.
+ */
+export type OdevTarihleri = {
+  /** Ödevin yayına alındığı an (ISO). Taslakta `null`. */
+  verilis: string | null;
+  /** Ödevin BUGÜNKÜ son teslim tarihi. */
+  son_tarih: string;
+  /** Yayından sonra tarih değiştiyse İLK tarih; değişmediyse `null`. */
+  ilk_son_tarih: string | null;
+  /** Yayından sonra tarihin kaç kez değiştiği. */
+  degisiklik: number;
+  yon: 'uzatildi' | 'one_alindi' | null;
+};
+
 export type OdevSatiri = {
   id: string;
   baslik: string;
@@ -157,6 +189,8 @@ export type OdevSatiri = {
   sinif: string;
   sinif_ozel: boolean;
   son_tarih: string;
+  /** 0085 — veriliş tarihi ve uzatma. 0085 çalıştırılmadıysa gelmez. */
+  tarihler?: OdevTarihleri | null;
   soru_sayisi: number | null;
   /** Son tarih geçtikten sonra teslim alınıyor mu (migration 0010). */
   gec_teslim: boolean;
@@ -280,6 +314,11 @@ export type OgrenciOdev = {
   aciklama: string | null;
   tur: 'test' | 'acik';
   son_tarih: string;
+  /**
+   * 0085 — ödevin veriliş tarihi ve uzatma. SINIFIN tarihleri; aşağıdaki
+   * `ek_sure` ise yalnız bu öğrencinin. İkisi birbirinin yerine geçmiyor.
+   */
+  tarihler?: OdevTarihleri | null;
   /**
    * Yalnız bu öğrenciye verilmiş kişisel son tarih (0081). Sahip gönderimi
    * yeniden açarken tarih verdiyse dolu; yoksa `null`.
@@ -728,6 +767,12 @@ export type VeliOdevi = {
   baslik: string;
   son_tarih: string;
   olusturma: string;
+  /**
+   * 0085 — veriliş tarihi ve uzatma. Öğretmenin ve öğrencinin gördüğünün
+   * aynısı; veli de ödevin ne zaman verildiğini görüyor (öğretmenin
+   * kararı). `olusturma` ödevin TASLAK açıldığı an — veriliş tarihi değil.
+   */
+  tarihler?: OdevTarihleri | null;
   gonderildi: boolean;
   gonderim_zamani: string | null;
   puan: number | null;

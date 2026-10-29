@@ -7230,3 +7230,91 @@ izinin aktörü.
   `innerText()` ile **çöküyor** ve kırmızı üretmeden düşüyordu. Önce
   `count()` sayılıyor artık — 0081'de aynı desende yapılmış bir hatanın
   tekrarı.
+
+## 0085 — Ödevin veriliş tarihi, son teslim tarihi ve uzatma (29 Ekim)
+
+Öğretmenin isteği: *"Ödevleri verdiğim tarih de ödevin üzerinde yazsın
+geriye dönüp baktığımda. Yani veriliş tarihi ve son teslim tarihi yazsın.
+Eğer teslim tarihinde uzatma yaptıysam o ekstra belirtilsin."*
+Kararları: tarihleri **öğrenci ve veli de görsün**, hem **ödev
+sayfasında** hem **listede** yazsın.
+
+### Şema değişmedi — iki tarih de 0004'ten beri duruyordu
+
+Her ödev **taslak** doğuyor (`odev_olustur` `yayinda` alanına her zaman
+`false` yazıyor) ve o alanı `true` yapan tek yer `odev_yayinla`.
+**Yayından kaldırma diye bir işlem yok.** `odev_yayinla` ise 0004'ten beri
+`odev_yayinlandi` denetim izi satırını yazıyor — yani ödevin öğrenciye
+verildiği an kayıtlı, hem de geçmiş ödevlerin hepsinde.
+
+**0047'nin yorumu bu konuda yanlıştı** ve düzeltildi. Orada şöyle
+yazıyor: *"VERİLİŞ TARİHİ DİYE AYRI BİR ALAN YOK. Ölçüldü: … yayına alma
+ZAMANI hiçbir yerde tutulmuyor."* Alan yok, doğru; ama **zaman
+tutuluyor** — o tur denetim izine bakmamış. 0047'nin kendi hesabı (ödev
+kıyası gruplarını `created_at` ile eşlemesi) **bu turda değiştirilmedi**:
+ortalama gruplarını oynatmak öğretmenin sormadığı bir davranış
+değişikliği olurdu.
+
+Uzatma da izde: `odev_guncelle`, `odev_guncellendi` satırına eski ve yeni
+satırın tamamını yazıyor (`to_jsonb(d)` / `to_jsonb(o)`).
+
+### Üç tuzak — hesap bu yüzden tek yerde (`_odev_tarihleri`)
+
+1. **`odev_guncellendi` satırı tarih değişmese de yazılıyor.** Gerçek
+   veride `2026-11-03 -> 2026-11-03` satırı var: öğretmen başlığı
+   düzeltmiş. Süzmeden sayılsa **her düzenleme "uzatma" görünürdü.**
+2. **Tarih öne de alınabilir.** Yalnız uzatmayı yazıp öne alınmış tarihte
+   susmak, öğrencinin elindeki sürenin sessizce kısaldığı tek durum
+   olurdu. İki yön de dönüyor: `uzatildi` / `one_alindi`.
+3. **Taslaktayken yapılan tarih değişikliği uzatma değil.** Ödev henüz
+   kimsede görünmüyordu; onu uzatma diye yazmak öğretmene hiç yapmadığı
+   bir işi hatırlatırdı. Sayılan değişiklikler yalnız `zaman >= verilis`
+   olanlar.
+
+**Bilinen sınır:** tarih değiştirilip ilk hâline geri getirilirse
+`degisiklik` 2 olur ama `yon` null kalır — ekranda yazan şey ödevin
+**bugünkü** hâli. Ara tarih denetim izinde duruyor.
+
+### Dört uç, tek hesap
+
+`odev_detay`, `odevler_listesi`, `ogrenci_odevleri` ve `veli_paneli`
+dördü de `'tarihler', public._odev_tarihleri(d.id, d.son_tarih)` satırını
+taşıyor. Öğretmenin gördüğü tarihle öğrencinin ve velinin gördüğü tarih
+**ayrışamıyor** — testin 9. grubu dördünün aynı nesneyi döndürdüğünü
+ölçüyor.
+
+Dört uç **en son tanımlarından** kopyalandı. Kopyalama elle değil
+**programla** yapıldı ve kopyaların kaynakla birebir olduğu — yalnız
+eklenen üç satırın fark olduğu — bir **vitest sözleşmesiyle** sabitlendi:
+`odev-tarihleri.test.ts` migration dosyalarının gerçek metnini okuyup
+karşılaştırıyor. Elle kopyalamada önceki turların alanları sessizce
+düşebilirdi (0007 ailesinin klasik tuzağı).
+
+### Ölçüm
+
+- `odev_tarihleri_testleri.sql` — 12 grup. Taslakta veriliş null; veriliş
+  `odev_yayinlandi` satırının zamanı (`created_at` değil); ikinci
+  yayınlama tarihi kaydırmıyor; tarih değişmeyen düzenleme uzatma
+  sayılmıyor; uzatma ve öne alma; iki değişiklikte **ilk** tarih; taslak
+  dönemi dışarıda; geri dönen tarihte yön yok; dört uç aynı; kişisel
+  `ek_sure` karışmıyor; hesap anon'a kapalı.
+  **8 SQL kusur provasının hepsi ısırdı.**
+- Testlerin zaman çizgisi **elle kuruluyor**: `now()` bir işlem boyunca
+  donuk olduğu için tek işlemde yayınla+güncelle yapılınca iki iz
+  satırının zamanı birebir aynı çıkıyor. `odev_yayinlandi` satırı geriye
+  alınarak "yayından önce / sonra" ayrımı gerçek hayattaki gibi
+  ölçülüyor.
+- Denemediğim bir prova ve sebebi dosyada yazılı: `>=` yerine `>`
+  **ısıramaz**, çünkü iki ayrı RPC çağrısının `now()`'ı aynı olamaz.
+  Isırmayacak bir provayı yapmış gibi yazmak ölçümü yalanlamak olurdu.
+- `odev-tarihleri-denetimi.mjs` — T1–T6: öğretmen listesi, ödev sayfası,
+  taslak hâli, öğrenci, veli ve **0085 çalışmamış sunucu** (alan hiç
+  gelmiyor → yalnız son teslim yazıyor, ekran bozulmuyor).
+  **5 arayüz kusur provasının hepsi ısırdı.**
+- Koşum takımına baştan `oku()` yardımcısı kondu: eksik düğümde
+  `innerText()` çağırmak script'i düşürüyor ve prova tek bir ✗ bile
+  yazmadan bitiyor — 0081 C2 ve 0084 E4'te tam bu olmuştu.
+- `odev-durum-denetimi.mjs`'in seçicisi `'Son tarih'` metnine
+  bağlıydı; satır "Verildi: … · Son teslim: …" olduğu için seçici
+  güncellendi. O kartların `tarihler` alanı yok — yani o denetim artık
+  aynı zamanda **0085 çalışmamış sunucunun** ölçümü.

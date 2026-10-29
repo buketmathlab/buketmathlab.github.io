@@ -61,7 +61,11 @@ await s.goto(KOK + '/ogretmen/odevler', { waitUntil: 'networkidle' });
 await s.waitForTimeout(500);
 
 const kart = (baslik) =>
-  s.locator('div').filter({ has: s.getByRole('button', { name: baslik, exact: true }) }).filter({ hasText: 'Son tarih' }).last();
+  // 0085: satır artık "Verildi: … · Son teslim: …" yazıyor; seçici
+  // "Son tarih" yerine "Son teslim" arıyor. Bu kartların `tarihler`
+  // alanı YOK — yani burası aynı zamanda 0085 çalışmamış sunucunun
+  // ölçümü: liste bugünkü hâlinden geriye gitmiyor.
+  s.locator('div').filter({ has: s.getByRole('button', { name: baslik, exact: true }) }).filter({ hasText: 'Son teslim' }).last();
 
 console.log('--- Ö1. Durum etiketleri ---');
 olc('taslak: "Taslak"', (await kart('Taslak ödev').innerText()).includes('Taslak'));

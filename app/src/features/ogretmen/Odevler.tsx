@@ -11,15 +11,15 @@ import { useDosyaAc } from '@/components/DosyaAcici';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
+import { tarihSatiri, uzatmaEtiketi } from '@/lib/odev-tarihleri';
 import { rpc } from '@/services/supabase';
 import { dosyaAdresi } from '@/services/dosya';
 import type { OdevSatiri, Sinif } from '@/types/api';
 
-const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
-
-function tarihYaz(iso: string): string {
-  return TARIH.format(new Date(iso));
-}
+// 0085: tarih biçimi artık `odev-tarihleri` modülünde ve yılı da yazıyor.
+// Buradaki yerel `tarihYaz` yılsız yazıyordu ("5 Kasım"); öğretmenin
+// isteği "geriye dönüp baktığımda" olduğu için yıl şart — ve biçimin tek
+// yerde olması dört ekranın ayrışmasını imkânsız kılıyor.
 
 /** Son tarih geçti mi? Gün bazında karşılaştırılır, saat önemsiz. */
 function gecti(sonTarih: string): boolean {
@@ -244,8 +244,15 @@ export function Odevler() {
                 )}
               </div>
 
-              <p className="mb-3 text-[13px] text-muted">
-                Son tarih: {tarihYaz(o.son_tarih)}
+              {/* 0085: VERİLİŞ TARİHİ DE YAZILIYOR — öğretmenin isteği
+                  "geriye dönüp baktığımda". `tarihler` gelmediğinde (0085
+                  henüz çalışmadıysa) satır bugünkü hâlinde kalıyor:
+                  `tarihSatiri` yedeğe düşüp yalnız son teslimi yazıyor. */}
+              <p data-test="odev-tarihleri" className="mb-3 text-[13px] text-muted">
+                {tarihSatiri(o.tarihler, o.son_tarih)}
+                {uzatmaEtiketi(o.tarihler) && (
+                  <span className="text-ink"> · {uzatmaEtiketi(o.tarihler)}</span>
+                )}
                 {gecti(o.son_tarih) && <span className="text-danger"> · süresi doldu</span>}
                 {/* Geç teslim yalnız KAPALIYKEN yazılıyor: açık olan
                     varsayılan durum, her karta not düşmek gürültü olurdu. */}

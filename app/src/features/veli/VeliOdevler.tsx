@@ -6,6 +6,7 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { sureDurumu } from '@/lib/son-tarih';
+import { uzatmaMetni, verilisMetni } from '@/lib/odev-tarihleri';
 import type { VeliPaneli } from '@/types/api';
 import { VeliOdevDosyalari } from './VeliOdevDosyalari';
 
@@ -74,6 +75,21 @@ export function VeliOdevler() {
                           <> · {ZAMAN.format(new Date(o.gonderim_zamani))} tarihinde gönderdi</>
                         )}
                       </p>
+                      {/* 0085 — VERİLİŞ TARİHİ VE UZATMA.
+                          Öğretmenin kararı: veli de görsün. Ödevin ne
+                          zaman verildiğini bilmeyen veli, çocuğunun
+                          süresinin ne kadar olduğunu da bilmiyor.
+                          0085 çalıştırılmadıysa satır hiç çıkmıyor. */}
+                      {verilisMetni(o.tarihler) && (
+                        <p data-test="veli-verilis" className="mt-1 text-[13px] text-muted">
+                          {verilisMetni(o.tarihler)}
+                        </p>
+                      )}
+                      {uzatmaMetni(o.tarihler) && (
+                        <p data-test="veli-uzatma" className="mt-1 text-[13px] text-ink">
+                          {uzatmaMetni(o.tarihler)}
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-wrap justify-end gap-1">
                       {o.gonderildi ? (

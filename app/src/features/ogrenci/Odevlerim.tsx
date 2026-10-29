@@ -7,6 +7,7 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { ekSureAcik, ogrenciEkSure } from '@/lib/iptal-metni';
 import { ogrenciOzeti } from '@/lib/ogrenci-ozet-metni';
+import { uzatmaMetni, verilisMetni } from '@/lib/odev-tarihleri';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OgrenciOdevleri, OgrenciOdev } from '@/types/api';
 
@@ -165,10 +166,28 @@ export function Odevlerim() {
                         {' · '}
                         {TARIH.format(new Date(o.son_tarih))}
                       </p>
+                      {/* 0085 — VERİLİŞ TARİHİ VE UZATMA.
+                          Öğretmenin kararı: tarihleri öğrenci de görsün.
+                          Ödevin ne zaman verildiğini bilmek, "ne zaman
+                          gelmiş bu" sorusunun cevabı; uzatma ise
+                          öğrencinin elindeki sürenin kendisi.
+                          0085 çalıştırılmadıysa satır hiç çıkmıyor. */}
+                      {verilisMetni(o.tarihler) && (
+                        <p data-test="ogrenci-verilis" className="text-[13px] text-muted">
+                          {verilisMetni(o.tarihler)}
+                        </p>
+                      )}
+                      {uzatmaMetni(o.tarihler) && (
+                        <p data-test="ogrenci-uzatma" className="text-[13px] text-ink">
+                          {uzatmaMetni(o.tarihler)}
+                        </p>
+                      )}
                       {/* KİŞİSEL SÜRE (0081): sınıfın tarihi geçmiş olsa
                           bile bu öğrenciye verilmiş bir tarih varsa ekran
                           onu söylemeli — yoksa öğrenci geçmiş bir tarihe
-                          bakıp "benim için de bitti" sanır. */}
+                          bakıp "benim için de bitti" sanır.
+                          0085'in tarihleri SINIFIN, bu satır ise yalnız
+                          bu öğrencinin: ikisi ayrı satırda duruyor. */}
                       {!gonderildi && ogrenciEkSure(o.ek_sure) && (
                         <p data-test="ogrenci-ek-sure" className="text-[13px] text-ink">
                           {ogrenciEkSure(o.ek_sure)}

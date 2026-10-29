@@ -35,13 +35,19 @@ import {
   sayfaSayisiHatasi,
   sayfaSiniriniOku,
 } from "@/lib/cozum-sayfalari";
+import { tarihSatiri, uzatmaMetni, verilisMetni } from "@/lib/odev-tarihleri";
 import { OdevFormAlanlari, type OdevFormDegerleri } from "./OdevFormAlanlari";
 import { KardeslereYayma } from "./KardeslereYayma";
 import { SoruIptali, type SubeRaporu } from "./SoruIptali";
 import { sunucudanOku, sunucuyaHazirla, type Konular } from "@/lib/konu-atama";
 import { odevPdfOzeti, type PdfOzeti } from "@/lib/odev-pdf-ozeti";
 import { SiniflaraVer } from "./SiniflaraVer";
-import type { KardesDetay, Sinif, VerilebilirSinif } from "@/types/api";
+import type {
+  KardesDetay,
+  OdevTarihleri,
+  Sinif,
+  VerilebilirSinif,
+} from "@/types/api";
 
 type OdevDetay = {
   id: string;
@@ -77,6 +83,11 @@ type OdevDetay = {
    * 0083 çalıştırılmadıysa gelmez ve kart hiç çizilmez.
    */
   verilebilir_siniflar?: VerilebilirSinif[] | null;
+  /**
+   * Ödevin veriliş tarihi ve uzatma kaydı (0085). 0085
+   * çalıştırılmadıysa gelmez ve tarih kartı hiç çizilmez.
+   */
+  tarihler?: OdevTarihleri | null;
   /** Ödevin sayfa sayısı (0054). 0054 çalıştırılmadıysa gelmez → 1. */
   sayfa_limiti?: number;
   /** Her sayfa zorunlu mu (0078). Gelmezse ya da false ise eski kural. */
@@ -399,6 +410,40 @@ export function OdevDuzenle() {
       >
         {detay && (
           <>
+            {/* 0085 — ÖDEVİN TARİHLERİ.
+                Öğretmenin isteği: "Ödevleri verdiğim tarih de ödevin
+                üzerinde yazsın geriye dönüp baktığımda."
+
+                Kart yalnız bir CÜMLE bile olsa buraya, formun ÜSTÜNE
+                konuyor: aşağıdaki tarih alanı DEĞİŞTİRİLEBİLİR bir kutu,
+                burada yazan ise ödevin GEÇMİŞİ. İkisini aynı yere koymak
+                "hangisi gerçek" sorusunu doğururdu.
+
+                0085 çalıştırılmadıysa `tarihler` gelmez ve kart hiç
+                çizilmez (`ucYok` deseni). */}
+            {detay.tarihler && (
+              <Card className="mb-4">
+                <div data-test="odev-tarih-karti">
+                  <p className="text-[14px] text-ink">
+                    {tarihSatiri(detay.tarihler, detay.son_tarih)}
+                  </p>
+                  {verilisMetni(detay.tarihler) === null && (
+                    <p className="mt-1 text-[13px] text-muted">
+                      Bu ödev henüz yayınlanmadı; veriliş tarihi yayınlandığında
+                      yazılacak.
+                    </p>
+                  )}
+                  {/* UZATMA DA ÖNE ALMA DA YAZILIYOR. Yalnız uzatmayı
+                      yazmak, tarihin kısaldığı durumu gizlemek olurdu. */}
+                  {uzatmaMetni(detay.tarihler) && (
+                    <p data-test="odev-uzatma" className="mt-1 text-[13px] text-ink">
+                      {uzatmaMetni(detay.tarihler)}
+                    </p>
+                  )}
+                </div>
+              </Card>
+            )}
+
             {degisenler && degisenler.length > 0 && (
               <Card vurgu="uyari" className="mb-4">
                 <p className="mb-2 font-semibold text-ink">

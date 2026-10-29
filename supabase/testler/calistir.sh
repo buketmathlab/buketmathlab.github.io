@@ -246,6 +246,10 @@ echo "==> Gönderim iptali testleri (0081)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/gonderim_iptali_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Ödev tarihleri testleri (0085)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/odev_tarihleri_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Ek süre verme testleri (0084)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/ek_sure_verme_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
