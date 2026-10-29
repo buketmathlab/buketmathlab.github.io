@@ -352,3 +352,18 @@ grubu üçünü de ölçüyor.
 
 Kimin hangi ödevi hangi sınıfa verdiği `denetim_izi`'ne yazılıyor
 (`odev_siniflara_verildi`): kaynak ödev, hedef sınıf ve verilen tarih.
+
+## Ek süre verme (0084) — yeni kişisel veri yok
+
+Yeni tablo ya da alan açılmıyor; 0081'in `odev_ek_sure` tablosuna ikinci
+bir yoldan satır yazılıyor. Tablo RLS ile tamamen kapalı.
+
+Yazılan sebep öğrencinin **kendi yazışmasına** düşüyor (`kanal='ogrenci'`);
+**veli görmüyor** — 0081'deki ayrımın aynısı. Gerekçe de aynı: ek süre
+öğrencinin öğretmeniyle arasındaki bir konu, üçüncü kişiye taşınmıyor.
+
+Öğretmen bunu önceden biliyor: diyalogda "yazdığınız sebep öğrenciye mesaj
+olarak gönderilir" yazıyor ve mesajın önizlemesi duruyor.
+
+Kimin hangi öğrenciye hangi tarihe kadar ek süre verdiği `denetim_izi`'ne
+yazılıyor (`ogrenciye_ek_sure_verildi`), sebebiyle birlikte.

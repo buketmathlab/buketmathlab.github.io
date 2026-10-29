@@ -616,6 +616,150 @@ console.log('--- D5. 360 px: taşma yok ---');
   await b.close();
 }
 
+// ---------------------------------------------------------------------------
+// E. 0084 — GÖNDERMEYENE EK SÜRE (çoklu seçim)
+// ---------------------------------------------------------------------------
+/** İki göndermeyen + bir gönderen: kutu yalnız göndermeyenlerde olmalı. */
+const EK_SURE_LISTESI = {
+  ...TEMEL_GONDERIMLER,
+  ozet: { mevcut: 3, gonderen: 1, gecikmeli: 0, puan_bekleyen: 0 },
+  satirlar: [
+    { ...TEMEL_GONDERIMLER.satirlar[0], ogrenci_id: 'o1', ogrenci: 'Duru Dilara Aygün' },
+    {
+      ...TEMEL_GONDERIMLER.satirlar[0],
+      ogrenci_id: 'o2', ogrenci: 'Elif Naz Yıldırım',
+      gonderim_id: null, gonderdi: false, zaman: null, durum: null,
+      dogru: null, yanlis: null, bos: null, puan: null, foto_var: false,
+    },
+    {
+      ...TEMEL_GONDERIMLER.satirlar[0],
+      ogrenci_id: 'o3', ogrenci: 'Mert Can Demir',
+      gonderim_id: null, gonderdi: false, zaman: null, durum: null,
+      dogru: null, yanlis: null, bos: null, puan: null, foto_var: false,
+    },
+  ],
+};
+
+console.log('--- E1/E2. Kutu yalnız göndermeyenlerde; seçim yokken düğme kapalı ---');
+{
+  const { b, p } = await kur(
+    { oturum: OGRETMEN_OTURUMU, ben: SAHIP, gonderimler: EK_SURE_LISTESI },
+    '/ogretmen/odevler/a1/gonderimler',
+  );
+  const kutular = p.locator('[data-test="ek-sure-kutusu"]');
+  // Listede üç öğrenci var ama yalnız ikisi göndermemiş. Kutu gönderene
+  // de çizilseydi öğretmen ona süre verir, sunucu reddederdi.
+  if ((await kutular.count()) !== 2) bozuk(`E1: kutu sayısı ${await kutular.count()} (2 olmalı)`);
+  else tamam('E1: onay kutusu yalnız göndermeyen iki öğrencide');
+
+  const dugme = p.getByRole('button', { name: /Seçilenlere ek süre ver/ });
+  if (!(await dugme.isDisabled())) bozuk('E2: seçim yokken düğme açık');
+  else tamam('E2: seçim yokken düğme kapalı');
+
+  // E3 — seçince düğme açılıyor, sayaç çıkıyor, diyalog adları yazıyor.
+  await kutular.nth(0).check();
+  await kutular.nth(1).check();
+  await p.waitForTimeout(200);
+  if (await dugme.isDisabled()) bozuk('E3: seçim varken düğme hâlâ kapalı');
+  else if (!/2 öğrenci seçildi/.test(await p.locator('[data-test="ek-sure-sayaci"]').innerText())) {
+    bozuk('E3: sayaç yanlış');
+  } else tamam('E3: iki seçim, "2 öğrenci seçildi"');
+
+  await dugme.click();
+  await p.waitForTimeout(250);
+  const d = p.locator('dialog[open]');
+  const kimler = await d.locator('[data-test="ek-sure-kimler"]').innerText();
+  // ADLAR TEK TEK: "2 öğrenciye" deseydi yanlış seçim fark edilmezdi.
+  if (!/Elif Naz Yıldırım/.test(kimler) || !/Mert Can Demir/.test(kimler)) {
+    bozuk(`E3b: diyalogda adlar yok: ${kimler}`);
+  } else tamam('E3b: diyalog seçilen adları yazıyor');
+
+  const tarih = d.locator('input[type="date"]');
+  const deger = await tarih.inputValue();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deger) || deger < gun(0)) bozuk(`E3c: tarih yanlış: ${deger}`);
+  else if ((await tarih.getAttribute('min')) !== gun(0)) bozuk('E3c: min bugün değil');
+  else tamam(`E3c: tarih dolu (${deger}), min=bugün`);
+
+  // E4 — sebepsiz onay ağa GİTMİYOR; uyarı dokunmadan görünüyor.
+  // ÖNCE VARLIĞI SAYILIYOR: eleman yoksa `innerText()` çöküyor ve betik
+  // kırmızı ÜRETMEDEN düşüyor — kusur provası bunu gösterdi.
+  const uyari = d.locator('[data-test="ek-sure-sebep-uyarisi"]');
+  if ((await uyari.count()) !== 1) bozuk('E4: sebep uyarısı çizilmedi');
+  else if (!/öğrenciye mesaj olarak gönderilir/.test(await uyari.innerText())) {
+    bozuk('E4: sebep uyarısı görünmüyor');
+  } else tamam('E4: "sebep öğrenciye mesaj olarak gönderilir" dokunmadan görünüyor');
+
+  await d.getByRole('button', { name: 'Ek süre ver' }).click();
+  await p.waitForTimeout(300);
+  if ((await cagrilar(p, 'ogrencilere_ek_sure')).length > 0) bozuk('E4b: SEBEPSİZ ÇAĞRI AĞA GİTTİ');
+  else tamam('E4b: sebepsiz onay ağa gitmedi');
+
+  // E5 — doğru yük.
+  await d.locator('textarea').fill('Rahatsızdınız, sonradan gönderebilirsiniz.');
+  await tarih.fill(gun(6));
+  await p.waitForTimeout(200);
+  const on = d.locator('[data-test="ek-sure-onizleme"]');
+  if ((await on.count()) !== 1) bozuk('E5a: önizleme yok');
+  else {
+    const t = await on.innerText();
+    const nokta = gun(6).split('-').reverse().join('.');
+    if (!t.includes('Üslü ve köklü') || !t.includes(nokta)) {
+      bozuk(`E5a: önizleme eksik: ${t.slice(0, 140)}`);
+    } else tamam('E5a: önizleme ödev adını ve tarihi taşıyor');
+  }
+  await d.getByRole('button', { name: 'Ek süre ver' }).click();
+  await p.waitForTimeout(600);
+  const c = await cagrilar(p, 'ogrencilere_ek_sure');
+  if (c.length !== 1) bozuk(`E5: çağrı sayısı ${c.length}`);
+  else if (JSON.stringify(c[0].govde?.p_ogrenci_idler) !== '["o2","o3"]') {
+    bozuk(`E5: seçilen öğrenciler yanlış: ${JSON.stringify(c[0].govde?.p_ogrenci_idler)}`);
+  } else if (c[0].govde?.p_son_tarih !== gun(6)) {
+    bozuk(`E5: tarih yanlış/yok: ${c[0].govde?.p_son_tarih}`);
+  } else if (!c[0].govde?.p_neden) bozuk('E5: sebep yükte yok');
+  else tamam(`E5: ogrencilere_ek_sure(["o2","o3"], ${gun(6)}, sebep) çağrıldı`);
+  await b.close();
+}
+
+console.log('--- E6. 360 px: taşma yok ---');
+{
+  const b = await chromium.launch();
+  const s = await b.newContext({ viewport: { width: 360, height: 900 } });
+  await s.addInitScript(({ oturum, ben, G }) => {
+    localStorage.setItem('sekiz_oturum', JSON.stringify(oturum));
+    const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    const asil = window.fetch;
+    window.fetch = async (u, o) => {
+      const url = String(typeof u === 'string' ? u : u.url);
+      const m = url.match(/\/rpc\/([a-z_]+)/);
+      if (!m) return asil(u, o);
+      if (m[1] === 'ben_kimim') return json(ben);
+      if (m[1] === 'odev_gonderimleri') return json(G);
+      return json({});
+    };
+  }, { oturum: OGRETMEN_OTURUMU, ben: SAHIP, G: EK_SURE_LISTESI });
+  const p = await s.newPage();
+  await p.goto(KOK + '#/ogretmen/odevler/a1/gonderimler', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  const olcu = await p.evaluate(() => {
+    const k = document.querySelector('[data-test="ek-sure-kutusu"]');
+    if (!k) return { yok: true };
+    const r = k.getBoundingClientRect();
+    return {
+      yok: false,
+      // Dokunma hedefi 44 px'in altına düşmemeli: etiketin tamamı tıklanır.
+      kucuk: (k.closest('label')?.getBoundingClientRect().height ?? 0) < 44,
+      yatay: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      disarida: r.left < 0 || r.right > document.documentElement.clientWidth,
+    };
+  });
+  if (olcu.yok) bozuk('E6: 360 px: kutu çizilmedi');
+  else if (olcu.kucuk) bozuk('E6: 360 px: dokunma hedefi 44 px altında');
+  else if (olcu.yatay) bozuk('E6: 360 px: sayfa yatay kayıyor');
+  else if (olcu.disarida) bozuk('E6: 360 px: kutu ekran dışında');
+  else tamam('E6: 360 px — kutu 44 px, taşma ve yatay kayma yok');
+  await b.close();
+}
+
 console.log('');
 if (hata) { console.log(`YENİDEN AÇMA DENETİMİ BAŞARISIZ — ${hata} sapma`); process.exit(1); }
 console.log('YENİDEN AÇMA DENETİMİ GEÇTİ');

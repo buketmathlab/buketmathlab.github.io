@@ -14,6 +14,8 @@ import { CozumDugmesi } from './CozumDugmesi';
 import { YoneticiPuanDuzeltme } from './YoneticiPuanDuzeltme';
 import { GonderimiYenidenAc } from './GonderimiYenidenAc';
 import { useBenKimim } from '@/hooks/useBenKimim';
+import { EkSureVer } from './EkSureVer';
+import * as EK_SURE from '@/lib/ek-sure-metni';
 import { ekSureEtiketi } from '@/lib/iptal-metni';
 import { duzeltmeIsareti } from '@/lib/puan-duzeltme';
 import { sureDurumu } from '@/lib/son-tarih';
@@ -60,6 +62,12 @@ export function OdevGonderimleri() {
   const bekleyen = satirlar.filter((s) => s.gonderdi && s.durum === 'incelemede');
   const gondermeyen = satirlar.filter((s) => !s.gonderdi);
   const gonderen = satirlar.filter((s) => s.gonderdi && s.durum !== 'incelemede');
+
+  // 0084: göndermeyenlerden seçilenler. Liste yenilenince seçim
+  // temizleniyor — ek süre verilen öğrenci hâlâ işaretli kalsaydı
+  // öğretmen ikinci kez verdiğini sanmadan verirdi.
+  const [ekSureSecimi, setEkSureSecimi] = useState<string[]>([]);
+  const [ekSureAcik, setEkSureAcik] = useState(false);
 
   return (
     <>
@@ -141,7 +149,25 @@ export function OdevGonderimleri() {
                         key={s.ogrenci_id}
                         className="flex flex-wrap items-center justify-between gap-2 py-2 text-[15px] text-ink first:pt-0 last:pb-0"
                       >
-                        <span className="min-w-0">{s.ogrenci}</span>
+                        {/* 0084: ÇOKLU SEÇİM (öğretmenin kararı). Kutu
+                            yalnız BURADA — gönderen öğrenciye ek süre
+                            vermek işe yaramaz, sunucu da reddediyor. */}
+                        <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2">
+                          <input
+                            type="checkbox"
+                            className="size-5 shrink-0 accent-ink"
+                            data-test="ek-sure-kutusu"
+                            checked={ekSureSecimi.includes(s.ogrenci_id)}
+                            onChange={() =>
+                              setEkSureSecimi((y) =>
+                                y.includes(s.ogrenci_id)
+                                  ? y.filter((x) => x !== s.ogrenci_id)
+                                  : [...y, s.ogrenci_id],
+                              )
+                            }
+                          />
+                          <span className="min-w-0">{s.ogrenci}</span>
+                        </label>
                         {/* GÖNDERİMİ İPTAL EDİLEN ÖĞRENCİ BURADA (0081):
                             iptalde satır siliniyor, öğrenci bu listeye
                             düşüyor. Ek süre yazılmazsa öğretmen kendi
@@ -150,6 +176,21 @@ export function OdevGonderimleri() {
                       </li>
                     ))}
                   </ul>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                    <Button
+                      tur="sade"
+                      olcu="sm"
+                      disabled={ekSureSecimi.length === 0}
+                      onClick={() => setEkSureAcik(true)}
+                    >
+                      {EK_SURE.BASLIK}
+                    </Button>
+                    {EK_SURE.secimSayaci(ekSureSecimi.length) && (
+                      <span className="text-[13px] text-muted" data-test="ek-sure-sayaci">
+                        {EK_SURE.secimSayaci(ekSureSecimi.length)}
+                      </span>
+                    )}
+                  </div>
                 </Card>
               </Bolum>
             )}
@@ -243,6 +284,20 @@ export function OdevGonderimleri() {
                 </div>
               </Bolum>
             )}
+            {/* 0084 — EK SÜRE DİYALOĞU. Ödevin adı önizlemeye giriyor. */}
+            <EkSureVer
+              acik={ekSureAcik}
+              onKapat={() => setEkSureAcik(false)}
+              odevId={id}
+              odev={veri.odev.baslik}
+              secilenler={gondermeyen
+                .filter((s) => ekSureSecimi.includes(s.ogrenci_id))
+                .map((s) => ({ id: s.ogrenci_id, ad: s.ogrenci }))}
+              onVerildi={() => {
+                setEkSureSecimi([]);
+                yenile();
+              }}
+            />
           </>
         )}
       </AsyncBoundary>

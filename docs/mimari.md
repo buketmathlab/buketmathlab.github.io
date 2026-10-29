@@ -7164,3 +7164,69 @@ kırmızı**.
   **4 arayüz kusur provasının hepsi ısırıyor.**
 - Denetim bir kusuru kendi yakaladı: `Card` ek öznitelik almıyor, dışarıya
   yazılan `data-test` DOM'a hiç ulaşmıyordu.
+
+## 0084 — Göndermeyen öğrenciye sonradan ek süre verme (29 Ekim)
+
+Öğretmenin isteği: *"Ödevin son teslim tarihi içerisinde ödevini
+göndermeyen öğrenciye daha sonradan sadece o öğrenci bazında gönderme
+hakkı verebilen bir seçeneğim olsun."*
+
+### Altyapı 0081'de kurulmuştu; eksik olan ikinci kapıydı
+
+0081 şunları getirmişti ve hepsi yayında: `odev_ek_sure` tablosu,
+`odev_gonder`'in o tarihi okuyan kapısı, öğrencinin "Sana verilen süre"
+satırı, öğretmenin listesindeki "ek süre verildi · \<tarih\>" etiketi — ve
+o etiket tam da **"Göndermeyenler"** bölümünde çiziliyordu.
+
+Ama `odev_ek_sure` satırını oluşturmanın **tek yolu**
+`gonderimi_yeniden_ac`'tı ve o **var olan bir gönderim** istiyor
+(`gonderimler` satırı yoksa P0002). Hiç göndermemiş öğrencinin ortada
+gönderimi olmadığı için ona ek süre verecek bir yol yoktu.
+
+Yani bu tur yeni bir yetenek eklemiyor; var olan yeteneğe **ikinci bir
+kapı** açıyor. `odev_gonder`'e hiç dokunulmadı — imzasına el sürmek 0007
+tuzağını davet ederdi.
+
+### Yetki 0081'den bilerek farklı
+
+0081'in yeniden açması bir gönderimi **siliyor**; o yüzden yalnız
+platformun sahibine açık. Burada hiçbir şey silinmiyor, yalnız süre
+ekleniyor — sıradan bir öğretmenlik işi. Kural 0083'ünkiyle aynı: ödevi
+**veren** öğretmen. Vekâlet 0081'deki gibi: `v_gercek` mesajın ve denetim
+izinin aktörü.
+
+### Öğretmenin iki kararı
+
+- **Öğrenci haberdar olsun:** yazılan sebep öğrenciye mesaj olarak
+  gidiyor (`kanal='ogrenci'`, veli görmüyor). Hakkının verildiğini
+  bilmeyen öğrenci onu kullanmaz. Diyalog bunu önceden söylüyor ve
+  mesajın önizlemesini gösteriyor; cümle sunucudakiyle **migration'ın
+  gerçek metnini okuyan bir sözleşme testiyle** sabitlendi (0081'in
+  deseni).
+- **Çoklu seçim:** "Göndermeyenler" listesinde birkaç öğrenci
+  işaretlenip hepsine aynı tarih veriliyor.
+
+### İki küçük ama kritik kural
+
+1. **Zaten göndermiş öğrenci reddediliyor.** Gönderen ikinci kez
+   gönderemiyor (0056); ona süre vermek işe yaramayan bir hak vermek
+   olurdu. Hata mesajı doğru yolu söylüyor: "Gönderimi yeniden aç".
+2. **İkinci kez verilirse tarih güncelleniyor** (`do update`).
+   `do nothing` olsaydı ekranda yeni tarih yazar, kapı eski tarihte
+   kapanırdı — testin 6. grubu bunu ölçüyor.
+
+### Ölçüm
+
+- `ek_sure_verme_testleri.sql` — 12 grup. **Asıl ölçüm 2. grupta:** ek
+  süre verilen öğrenci süre dolmuş ve geç teslim kapalı ödeve
+  **gerçekten gönderiyor**, verilmeyen sınıf arkadaşı gönderemiyor.
+  Satırın yazılması tek başına hiçbir şey kanıtlamaz.
+  **9 SQL kusur provasının hepsi ısırıyor.**
+- `yeniden-acma-denetimi.mjs` — E1–E6: kutu yalnız göndermeyenlerde,
+  seçim yokken düğme kapalı, diyalog adları yazıyor, tarih dolu ve `min`
+  bugün, sebepsiz onay ağa gitmiyor, yük doğru, 360 px'de dokunma hedefi
+  44 px. **5 arayüz kusur provasının hepsi ısırıyor.**
+- Bir prova yine ölçümün kendi kusurunu buldu: E4 eksik elemanda
+  `innerText()` ile **çöküyor** ve kırmızı üretmeden düşüyordu. Önce
+  `count()` sayılıyor artık — 0081'de aynı desende yapılmış bir hatanın
+  tekrarı.
