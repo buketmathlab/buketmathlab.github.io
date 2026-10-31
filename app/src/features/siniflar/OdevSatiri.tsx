@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
 import { iptalMi } from '@/lib/soru-iptali';
 import type { SinifNotCizelgesi } from '@/types/api';
+import { turAdiKucuk } from '@/lib/odev-turu';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' });
 const gun = (iso: string) => new Date(`${iso.slice(0, 10)}T12:00:00`);
@@ -46,7 +47,7 @@ export function OdevSatiri({
         <div className="min-w-0 flex-1">
           <p className="break-words text-[15px] font-semibold text-ink">{o.baslik}</p>
           <p className="text-[13px] text-muted">
-            {o.ogretmen ?? '—'} · {o.tur === 'test' ? 'test' : 'açık uçlu'} · son tarih{' '}
+            {o.ogretmen ?? '—'} · {turAdiKucuk(o.tur)} · son tarih{' '}
             {TARIH.format(gun(o.son_tarih))}
           </p>
         </div>

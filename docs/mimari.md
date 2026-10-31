@@ -7318,3 +7318,79 @@ düşebilirdi (0007 ailesinin klasik tuzağı).
   bağlıydı; satır "Verildi: … · Son teslim: …" olduğu için seçici
   güncellendi. O kartların `tarihler` alanı yok — yani o denetim artık
   aynı zamanda **0085 çalışmamış sunucunun** ölçümü.
+
+## 0086 — Çalışma kağıdı: puansız üçüncü ödev türü (31 Ekim)
+
+Öğretmenin isteği: *"Çalışma kağıdı şeklinde de ödev verilebilsin. Puan
+hesaplaması yapılmadan ödevi gönderip göndermediği şeklinde tamamlansın.
+Puan hesaplaması yapmasına gerek yok. Ödevi gönderdim mi, göndermedim mi?
+Ama bu ayrı bir kategoride olsun."*
+
+Kararları: **öğrenci yine çözümünü yüklesin** (kanıt öğretmende kalsın),
+**karnede ve sınıf listesinde ayrı satır olarak sayılsın**, **veli de
+görsün**.
+
+### Bu tur etiket meselesi değil, sayım meselesiydi
+
+En son tanımların taranması gösterdi ki yedi uç süresi dolmuş her
+yayındaki ödevi **tür süzgeci olmadan** sayıyor. Çalışma kağıdı öylece
+eklenseydi:
+
+- `_ogrenci_ortalamalari` — kağıdı **göndermeyen** öğrencinin
+  ortalamasına **0 girerdi** (`avg(case when gonderdi then puan else 0 end)`),
+  gönderen de sonsuza dek "puan bekliyor" görünürdü;
+- `sinif_not_cizelgesi` ve `sinif_ogrencileri` —
+  `sum(coalesce(puan,0))/count(*)` paydayı büyütüp ortalamayı aşağı çekerdi;
+- `kendi_karnem`, `sinif_ogrenci_ozeti` — "kaç ödev üzerinden
+  konuşuyoruz" sayısı şişerdi;
+- `odevler_listesi` — kartta anlamsız bir "ortalama 0";
+- `_odev_kiyasi` — kıyas kartı sıfırlarla çizilirdi;
+- `puan_duzelt` — **tür denetlemiyordu**; arka kapıdan puan girilebilirdi.
+
+Yani "puan hesaplanmasın" kuralını ekrana yazmak yetmiyor; sayımların
+hepsinden çıkarmak gerekiyor.
+
+### Kural veritabanında, yalnız fonksiyonda değil
+
+`odev_test_tutarli` kısıtı yeniden yazılırken **güçlendirildi**: çalışma
+kağıdında `soru_sayisi` ve `cevap_anahtari` **null olmak zorunda**. Hangi
+yoldan yazılırsa yazılsın anahtar giremiyor. Kusur provası J bunu
+doğruladı: `odev_olustur`un temizlemesi kaldırıldığında ısıran şey
+fonksiyon değil, tablo oldu.
+
+Gönderim `durum = 'tamamlandi'` ile yazılıyor. `'puanlandi'` yalan
+olurdu; `'incelemede'` öğretmene hiç bitmeyen bir değerlendirme kuyruğu
+gösterir ve `acik_puanla`ya puanlanabilir görünürdü.
+
+### Ölçümün çalışırken bulduğu üç kusur
+
+Hepsi 5. grubun **önce/sonra fotoğrafı** sayesinde göründü — kod okuyarak
+değil, çalıştırarak:
+
+1. `odev_test_tutarli` çalışma kağıdını reddediyordu ("test değilse açık
+   uçludur" diye yazılmıştı, 0001).
+2. `kendi_karnem`in **gelişim grafiğine** `deger: null` bir nokta
+   giriyordu — çocuğa olmayan bir düşüş gösterecekti.
+3. `sinif_not_cizelgesi`nin **puan ızgarasında** baştan sona boş bir
+   çalışma kağıdı sütunu açılıyordu.
+
+Dördüncüsü arayüzde çıktı: öğretmenin sınıf sayfası `sinif_ogrencileri`
+değil **`sinif_not_cizelgesi`** ucundan besleniyor. İlk yazdığım süzgeç
+doğru uca konmamıştı; ekran taraması gösterdi.
+
+### Ölçüm
+
+- `calisma_kagidi_testleri.sql` — 12 grup. **Asıl ölçüm 5. grupta:**
+  çalışma kağıdı eklenip gönderildikten sonra BEŞ ucun çalışma kağıdı
+  dışı bütün sayıları, kağıt hiç yokken alınan fotoğrafla birebir aynı.
+  **10 SQL kusur provasının hepsi ısırdı.**
+- Prova D öğreticiydi: `acik_puanla`nın tür kapısı kaldırıldığında puan
+  yine YAZILMIYOR (durum kapısı tutuyor) ama öğretmene yanlış sebep
+  söyleniyor. Ölçüm başta yalnız hata koduna bakıyordu ve sessiz kaldı;
+  mesaj da ölçülmeye başlandı.
+- `calisma-kagidi-denetimi.mjs` — C1–C7, altı ekran ve 0086 çalışmamış
+  sunucu. **7 arayüz kusur provasının hepsi ısırdı.**
+- Prova 5 ilk hâlinde ısırmadı ve sebebi yine ölçümün kendisiydi:
+  "çalışma kağıdı yok" durumu alanları hiç göndermeyerek taklit
+  ediliyordu, oysa 0086 yayındayken sunucu onları **sıfır olarak** hep
+  gönderiyor. Fikstür gerçek şekle çevrildi.

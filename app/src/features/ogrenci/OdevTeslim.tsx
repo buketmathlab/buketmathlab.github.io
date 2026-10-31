@@ -40,6 +40,7 @@ import {
 } from '@/lib/cozum-sayfalari';
 import { SayfaSahnesi, type Sayfa } from './SayfaSahnesi';
 import type { OdevKiyasi, OgrenciOdev, OgrenciOdevleri } from '@/types/api';
+import { calismaMi, turAdi } from '@/lib/odev-turu';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -513,7 +514,7 @@ function OdevIcerigi({
       <Card className="mb-4">
         <h1 className="font-display text-[22px] font-semibold text-ink">{odev.baslik}</h1>
         <p className="mt-1 text-[14px] text-muted">
-          {testMi ? 'Test' : 'Açık uçlu'}
+          {turAdi(odev.tur)}
           {odev.soru_sayisi !== null && ` · ${odev.soru_sayisi} soru`}
           {' · Son tarih '}
           {TARIH.format(new Date(odev.son_tarih))}
@@ -523,6 +524,14 @@ function OdevIcerigi({
         {!gonderildi && ogrenciEkSure(odev.ek_sure) && (
           <p data-test="ogrenci-ek-sure" className="mt-1 text-[14px] text-ink">
             {ogrenciEkSure(odev.ek_sure)}
+          </p>
+        )}
+        {/* 0086: ÇALIŞMA KAĞIDINDA PUAN YOK, ÖĞRENCİ BUNU ÖNCEDEN BİLSİN.
+            Gönderdikten sonra puan bekleyip bulamamak, ekranın ona
+            söylemediği bir şeyi sonradan öğrenmesi olurdu. */}
+        {calismaMi(odev.tur) && (
+          <p data-test="ogrenci-calisma-notu" className="mt-1 text-[14px] text-ink">
+            Bu bir çalışma kağıdı: puanlanmıyor. Çözümünü gönderdiğinde tamamlanmış sayılır.
           </p>
         )}
         {odev.aciklama && <p className="mt-3 text-[15px] text-ink">{odev.aciklama}</p>}

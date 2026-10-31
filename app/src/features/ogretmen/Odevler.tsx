@@ -15,6 +15,7 @@ import { tarihSatiri, uzatmaEtiketi } from '@/lib/odev-tarihleri';
 import { rpc } from '@/services/supabase';
 import { dosyaAdresi } from '@/services/dosya';
 import type { OdevSatiri, Sinif } from '@/types/api';
+import { calismaMi, turAdi } from '@/lib/odev-turu';
 
 // 0085: tarih biçimi artık `odev-tarihleri` modülünde ve yılı da yazıyor.
 // Buradaki yerel `tarihYaz` yılsız yazıyordu ("5 Kasım"); öğretmenin
@@ -45,7 +46,12 @@ export function Odevler() {
   // "Süresi dolan" ayrı filtre (öğretmenin isteği: teslim süresi dolan ödev
   // "Yayında" yazmasın). Sunucu yalnız taslak/yayında ayrımını biliyor; süre
   // ayrımı aşağıda, kartın etiketiyle aynı `gecti` kuralıyla.
-  const [filtre, setFiltre] = useState<'hepsi' | 'taslak' | 'yayinda' | 'suresi_dolan'>('hepsi');
+  // 0086: "Çalışma kağıtları" da bir filtre — öğretmenin cümlesi "ayrı
+  // bir kategoride olsun". Tür süzgeci de süre süzgeci gibi İSTEMCİDE:
+  // sunucu yalnız taslak/yayında ayrımını parametre olarak biliyor.
+  const [filtre, setFiltre] = useState<
+    'hepsi' | 'taslak' | 'yayinda' | 'suresi_dolan' | 'calisma'
+  >('hepsi');
   const [sinifId, setSinifId] = useState('');
   const [silinecek, setSilinecek] = useState<OdevSatiri | null>(null);
   const [islemde, setIslemde] = useState(false);
@@ -55,7 +61,7 @@ export function Odevler() {
     {
       p_token: oturum?.token,
       p_sinif_id: sinifId || null,
-      p_yayinda: filtre === 'hepsi' ? null : filtre !== 'taslak',
+      p_yayinda: filtre === 'hepsi' || filtre === 'calisma' ? null : filtre !== 'taslak',
     },
     (v) => v.length === 0,
   );
@@ -65,7 +71,9 @@ export function Odevler() {
       ? o.yayinda && !gecti(o.son_tarih)
       : filtre === 'suresi_dolan'
         ? o.yayinda && gecti(o.son_tarih)
-        : true,
+        : filtre === 'calisma'
+          ? calismaMi(o.tur)
+          : true,
   );
 
   const siniflar = useVeri<Sinif[]>('siniflar_listesi', {
@@ -153,6 +161,7 @@ export function Odevler() {
             ['taslak', 'Taslaklar'],
             ['yayinda', 'Yayında'],
             ['suresi_dolan', 'Süresi dolan'],
+            ['calisma', 'Çalışma kağıtları'],
           ] as const
         ).map(([deger, etiket]) => (
           <button
@@ -223,7 +232,7 @@ export function Odevler() {
                       </span>
                     )}
                     {' · '}
-                    {o.tur === 'test' ? 'Test' : 'Açık uçlu'}
+                    {turAdi(o.tur)}
                     {o.soru_sayisi !== null && (
                       <>
                         {' · '}

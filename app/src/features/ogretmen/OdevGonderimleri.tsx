@@ -20,6 +20,7 @@ import { ekSureEtiketi } from '@/lib/iptal-metni';
 import { duzeltmeIsareti } from '@/lib/puan-duzeltme';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OdevGonderimleri as Veri, GonderimSatiri } from '@/types/api';
+import { gonderimDurumu, puanlanirMi, turAdi } from '@/lib/odev-turu';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', {
   day: 'numeric',
@@ -91,7 +92,7 @@ export function OdevGonderimleri() {
                 {veri.odev.baslik}
               </h1>
               <p className="mt-1 text-[14px] text-muted">
-                {veri.odev.sinif} · {veri.odev.tur === 'test' ? 'Test' : 'Açık uçlu'} ·{' '}
+                {veri.odev.sinif} · {turAdi(veri.odev.tur)} ·{' '}
                 {sureDurumu(veri.odev.son_tarih).metin}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -236,11 +237,19 @@ export function OdevGonderimleri() {
                         <div className="flex flex-wrap justify-end gap-1">
                           {s.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
                           <EkSure tarih={s.ek_sure} />
-                          <Tag tur="basari">
-                            <span className="sk-sayi">
-                              {`${s.ogretmen_puan ?? s.puan ?? '—'} puan`}
-                            </span>
-                          </Tag>
+                          {/* 0086: ÇALIŞMA KAĞIDINDA PUAN ETİKETİ YOK.
+                              Süzgeçsiz hâlde "— puan" yazıyordu; olmayan
+                              bir puanın yerine tire koymak, öğretmene
+                              "puan bekliyor" dedirtirdi. */}
+                          {puanlanirMi(veri.odev.tur) ? (
+                            <Tag tur="basari">
+                              <span className="sk-sayi">
+                                {`${s.ogretmen_puan ?? s.puan ?? '—'} puan`}
+                              </span>
+                            </Tag>
+                          ) : (
+                            <Tag tur="basari">{gonderimDurumu(true)}</Tag>
+                          )}
                           {s.duzeltildi && <Tag tur="bilgi">Yönetici düzeltti</Tag>}
                         </div>
                       </div>
@@ -258,11 +267,17 @@ export function OdevGonderimleri() {
                       )}
                       {yoneticiMi && s.gonderim_id && (
                         <div className="mt-2 flex flex-wrap items-start gap-2">
-                          <YoneticiPuanDuzeltme
-                            gonderimId={s.gonderim_id}
-                            mevcutPuan={s.ogretmen_puan ?? s.puan}
-                            onKaydedildi={yenile}
-                          />
+                          {/* 0086: çalışma kağıdında puan düzeltme yok.
+                              Sunucu zaten reddediyor (`puan_duzelt`);
+                              düğmeyi çizmek öğretmeni çalışmayan bir
+                              yola sokardı. */}
+                          {puanlanirMi(veri.odev.tur) && (
+                            <YoneticiPuanDuzeltme
+                              gonderimId={s.gonderim_id}
+                              mevcutPuan={s.ogretmen_puan ?? s.puan}
+                              onKaydedildi={yenile}
+                            />
+                          )}
                           {/* YENİDEN AÇMA (0056) — puan düzeltme gibi yalnız
                               sahipte. Cevaplar boş kaydedilmiş bir öğrenci
                               mağdur olmasın: ödevi baştan gönderebilsin. */}

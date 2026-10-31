@@ -38,6 +38,7 @@ import {
   numarayiDenetle,
   tekrarUyarisi,
 } from '@/lib/ogrenci-numarasi';
+import { calismaSatiri } from '@/lib/odev-turu';
 
 export function Ogrenciler() {
   const { ben } = useBenKimim();
@@ -638,6 +639,13 @@ function SinifOzeti({
                         {puanBekleyenYazisi(o.puan_bekleyen) && (
                           <p className="sk-sayi text-[12px] text-muted">
                             {puanBekleyenYazisi(o.puan_bekleyen)}
+                          </p>
+                        )}
+                        {/* 0086 — ÇALIŞMA KAĞIDI AYRI. Yukarıdaki
+                            ortalama ve ödev sayısı onu hiç saymıyor. */}
+                        {calismaSatiri(o.calisma_yapilan, o.calisma_sayisi) && (
+                          <p data-test="ogrenciler-calisma" className="sk-sayi text-[12px] text-muted">
+                            {calismaSatiri(o.calisma_yapilan, o.calisma_sayisi)}
                           </p>
                         )}
                       </div>

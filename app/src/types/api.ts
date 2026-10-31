@@ -1,6 +1,11 @@
 /** Veritabanı RPC'lerinin dönüş tipleri. supabase/migrations ile eşleşir. */
 
 import type { KonuVerisi } from '@/lib/konu-nedeni';
+// 0086: üç ödev türü tek yerde (`odev-turu.ts`). Birlik beş ayrı tipte
+// tekrarlanıyordu; üçüncü tür eklenince biri unutulsa tip denetimi
+// sessiz kalırdı.
+import type { OdevTuru } from '@/lib/odev-turu';
+export type { OdevTuru };
 
 /** 0060: 'mudur' — okul müdürü, salt izleme. */
 export type Rol = 'ogretmen' | 'ogrenci' | 'veli' | 'mudur';
@@ -184,7 +189,7 @@ export type OdevSatiri = {
   id: string;
   baslik: string;
   aciklama: string | null;
-  tur: 'test' | 'acik';
+  tur: OdevTuru;
   sinif_id: string;
   sinif: string;
   sinif_ozel: boolean;
@@ -312,7 +317,7 @@ export type OgrenciOdev = {
   id: string;
   baslik: string;
   aciklama: string | null;
-  tur: 'test' | 'acik';
+  tur: OdevTuru;
   son_tarih: string;
   /**
    * 0085 — ödevin veriliş tarihi ve uzatma. SINIFIN tarihleri; aşağıdaki
@@ -423,7 +428,7 @@ export type OdevGonderimleri = {
   odev: {
     id: string;
     baslik: string;
-    tur: 'test' | 'acik';
+    tur: OdevTuru;
     sinif: string;
     son_tarih: string;
     soru_sayisi: number | null;
@@ -457,6 +462,13 @@ export type SinifOgrencisi = {
   ortalama_yapan: number | null;
   /** Yapmadıkları 0 sayılarak tüm ödevlerin ortalaması. */
   ortalama_tum: number | null;
+  /**
+   * 0086 — ÇALIŞMA KAĞIDI: yukarıdaki dört sayının hiçbirine girmiyor.
+   * Puanlanmadığı için ortalamada yeri yok; emeğin görünmez kalmaması
+   * için kendi çifti. 0086 çalıştırılmadıysa gelmez ve satır çizilmez.
+   */
+  calisma_sayisi?: number | null;
+  calisma_yapilan?: number | null;
 };
 
 export type SinifDetayi = {
@@ -475,7 +487,7 @@ export type SinifDetayi = {
 export type GelisimSatiri = {
   odev: string;
   tarih: string;
-  tur: 'test' | 'acik';
+  tur: OdevTuru;
   /**
    * Sınıfta gönderenlerin ortalaması, öğrencide kendi puanı.
    *
@@ -521,6 +533,12 @@ export type KonuKarnesi = {
 export type KendiKarnem = {
   kapsam: { ad: string; sinif: string | null };
   odev_sayisi: number;
+  /**
+   * 0086 — çalışma kağıtları. Ortalamaya ve `odev_sayisi`'na girmiyor;
+   * ayrı satırda "kaçını gönderdin" olarak yazılıyor.
+   */
+  calisma_sayisi?: number | null;
+  calisma_yapilan?: number | null;
   /**
    * Çocuğun KENDİ genel ortalaması (0029). Sınıf ortalaması değil — o
    * bu uçtan hiç gelmiyor ve gelmeyecek.
@@ -765,6 +783,12 @@ export type OgrenciMesajlari = {
  */
 export type VeliOdevi = {
   baslik: string;
+  /**
+   * 0086 — ödevin türü. Veli çalışma kağıdını puansız görüyor; tür
+   * yazılmasaydı "daha değerlendirilmedi" sanırdı. 0086 çalışmamış
+   * sunucuda gelmez.
+   */
+  tur?: OdevTuru;
   son_tarih: string;
   olusturma: string;
   /**
@@ -1008,6 +1032,12 @@ export type SinifOgrenciOzeti = {
      * değil) — öğrenciyi etiketlememek için (bkz. 0051).
      */
     eksik_konular: string[];
+    /**
+     * 0086 — ÇALIŞMA KAĞIDI: `odev_sayisi`, `yapilan`, `yapilmayan` ve
+     * ortalamaların hiçbirine girmiyor; kendi satırında yazılıyor.
+     */
+    calisma_sayisi?: number | null;
+    calisma_yapilan?: number | null;
   }>;
 };
 
@@ -1121,7 +1151,7 @@ export type SinifNotCizelgesi = {
   odevler: Array<{
     id: string;
     baslik: string;
-    tur: 'test' | 'acik';
+    tur: OdevTuru;
     ogretmen: string | null;
     soru_sayisi: number | null;
     /** 0063 — soru PDF'i, anahtar PDF'i ve anahtar harfleri (müdür de görür). */
@@ -1151,6 +1181,12 @@ export type SinifNotCizelgesi = {
     ortalama_tum: number | string | null;
     yapilan: number;
     yapilmayan: number;
+    /**
+     * 0086 — ÇALIŞMA KAĞIDI: yukarıdaki hiçbir sayıya girmiyor. Ayrı
+     * satırda gösteriliyor. 0086 çalıştırılmadıysa gelmez.
+     */
+    calisma_sayisi?: number | null;
+    calisma_yapilan?: number | null;
     puanlar: Array<{
       odev_id: string;
       puan: number | string | null;

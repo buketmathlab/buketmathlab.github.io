@@ -11,6 +11,7 @@ import { karneSozu } from '@/lib/karne-sozu';
 import { bekleyenMetni, bekleyenSayisi } from '@/lib/bekleyen-degerlendirme';
 import { OdevlereGit } from '@/components/BekleyenDegerlendirme';
 import type { KendiKarnem, OgrenciOdevleri } from '@/types/api';
+import { calismaSatiri } from '@/lib/odev-turu';
 
 /**
  * Öğrencinin kendi konu karnesi (0026).
@@ -123,6 +124,15 @@ export function OgrenciKarnem() {
                 <span className="sk-sayi">{veri.odev_sayisi}</span> değerlendirilmiş ödev
                 üzerinden.
               </p>
+
+              {/* 0086 — ÇALIŞMA KAĞITLARI AYRI. Puanlanmadıkları için
+                  yukarıdaki ortalamaya girmiyorlar; emeğin görünmez
+                  kalmaması için kendi satırları var. */}
+              {calismaSatiri(veri.calisma_yapilan, veri.calisma_sayisi) && (
+                <p data-test="karne-calisma" className="mb-3 text-[13px] text-ink">
+                  {calismaSatiri(veri.calisma_yapilan, veri.calisma_sayisi)}
+                </p>
+              )}
 
               {veri.konular.length > 0 && (
                 <Card className="mb-6">

@@ -7,6 +7,7 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { sureDurumu } from '@/lib/son-tarih';
 import { uzatmaMetni, verilisMetni } from '@/lib/odev-tarihleri';
+import { calismaMi, turAdi } from '@/lib/odev-turu';
 import type { VeliPaneli } from '@/types/api';
 import { VeliOdevDosyalari } from './VeliOdevDosyalari';
 
@@ -67,6 +68,15 @@ export function VeliOdevler() {
                         <p className="mt-1 font-display font-semibold leading-tight text-ink">
                           <span className="sk-sayi text-[28px]">{o.puan}</span>{' '}
                           <span className="text-[16px]">puan</span>
+                        </p>
+                      )}
+                      {/* 0086: TÜR YAZILI. Çalışma kağıdı puansız olduğu
+                          için, tür yazmadan veli "öğretmen henüz
+                          bakmamış" sanırdı. */}
+                      {o.tur && (
+                        <p data-test="veli-tur" className="mt-1 text-[13px] text-muted">
+                          {turAdi(o.tur)}
+                          {calismaMi(o.tur) && ' · puanlanmaz'}
                         </p>
                       )}
                       <p className="mt-1 text-[13px] text-muted">

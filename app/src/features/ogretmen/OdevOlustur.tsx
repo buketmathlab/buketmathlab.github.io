@@ -15,6 +15,8 @@ import { anahtarlariBirlestir, type Cikarim, type SonSecenek } from '@/lib/cevap
 import { anahtarOku } from '@/services/anahtar-oku';
 import { AnahtarIzgarasi } from './AnahtarIzgarasi';
 import { KonuAtama } from './KonuAtama';
+import { CALISMA_ACIKLAMASI, TUR_IPUCU, calismaMi } from '@/lib/odev-turu';
+import type { OdevTuru } from '@/types/api';
 import { KunyePaneli } from './KunyePaneli';
 import { PdfOnerileri } from './PdfOnerileri';
 import { GecTeslimSecimi } from './GecTeslimSecimi';
@@ -56,7 +58,7 @@ export function OdevOlustur() {
   // ÇOKLU SINIF (0030). Aynı ödevi 9A, 9B ve 9C'ye vermek için akıştan üç kez
   // geçmek gerekiyordu; PDF'ler de üç kez yükleniyordu. Artık seçim bir küme.
   const [sinifIdler, setSinifIdler] = useState<string[]>([]);
-  const [tur, setTur] = useState<'test' | 'acik'>('test');
+  const [tur, setTur] = useState<OdevTuru>('test');
   const [sonTarih, setSonTarih] = useState('');
   const [soruSayisi, setSoruSayisi] = useState('20');
   const [sonSecenek, setSonSecenek] = useState<SonSecenek>('E');
@@ -393,18 +395,27 @@ export function OdevOlustur() {
               )}
             </Field>
 
-            <Field etiket="Tür" ipucu="Testte puanı sistem hesaplar; açık uçluda siz verirsiniz.">
+            <Field etiket="Tür" ipucu={TUR_IPUCU}>
               {(k) => (
                 <Select
                   {...k}
                   value={tur}
-                  onChange={(e) => setTur(e.target.value as 'test' | 'acik')}
+                  onChange={(e) => setTur(e.target.value as OdevTuru)}
                 >
                   <option value="test">Test (çoktan seçmeli)</option>
                   <option value="acik">Açık uçlu</option>
+                  <option value="calisma">Çalışma kağıdı (puanlanmaz)</option>
                 </Select>
               )}
             </Field>
+
+            {/* 0086: kural seçilir seçilmez yazılı — öğretmen puan
+                bekleyip bulamasın. */}
+            {calismaMi(tur) && (
+              <p data-test="calisma-aciklamasi" className="mb-4 text-[13px] text-ink">
+                {CALISMA_ACIKLAMASI}
+              </p>
+            )}
 
             {tur === 'test' && (
               <>

@@ -10,6 +10,7 @@ import { ogrenciOzeti } from '@/lib/ogrenci-ozet-metni';
 import { uzatmaMetni, verilisMetni } from '@/lib/odev-tarihleri';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OgrenciOdevleri, OgrenciOdev } from '@/types/api';
+import { turAdi } from '@/lib/odev-turu';
 
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
 const DERS_ZAMANI = new Intl.DateTimeFormat('tr-TR', {
@@ -161,7 +162,7 @@ export function Odevlerim() {
                         {o.baslik}
                       </p>
                       <p className="text-[13px] text-muted">
-                        {o.tur === 'test' ? 'Test' : 'Açık uçlu'}
+                        {turAdi(o.tur)}
                         {o.soru_sayisi !== null && ` · ${o.soru_sayisi} soru`}
                         {' · '}
                         {TARIH.format(new Date(o.son_tarih))}

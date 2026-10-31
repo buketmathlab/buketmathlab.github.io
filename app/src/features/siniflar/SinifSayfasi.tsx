@@ -17,6 +17,7 @@ import { dosyaAdresi } from '@/services/dosya';
 import type { GelisimSatiri, SinifNotCizelgesi } from '@/types/api';
 import type { SinifBaglantilari } from './SinifKartlari';
 import { OdevSatiri } from './OdevSatiri';
+import { calismaSatiri } from '@/lib/odev-turu';
 
 const SAYI = new Intl.NumberFormat('tr-TR');
 const TARIH = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' });
@@ -302,6 +303,15 @@ function OgrenciKarti({
             <span className="sk-sayi font-semibold text-ink">{o.yapti}</span> yaptı ·{' '}
             <span className="sk-sayi font-semibold text-ink">{o.yapmadi}</span> yapmadı
           </p>
+          {/* 0086 — ÇALIŞMA KAĞIDI AYRI SATIR (öğretmenin kararı).
+              Yukarıdaki sayılar ve ortalamalar çalışma kağıdını hiç
+              saymıyor; bu satır onu puana karıştırmadan gösteriyor.
+              Hiç çalışma kağıdı yoksa satır çıkmıyor. */}
+          {calismaSatiri(o.calisma_yapilan, o.calisma_sayisi) && (
+            <p data-test="calisma-satiri" className="mt-1 text-[13px] text-muted">
+              {calismaSatiri(o.calisma_yapilan, o.calisma_sayisi)}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-4 text-right">

@@ -1,7 +1,8 @@
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { SikSayisiSecimi } from './SikSayisiSecimi';
 import type { SonSecenek } from '@/lib/cevap-anahtari';
-import type { Sinif } from '@/types/api';
+import { CALISMA_ACIKLAMASI, TUR_IPUCU, calismaMi, turAdi } from '@/lib/odev-turu';
+import type { OdevTuru, Sinif } from '@/types/api';
 
 export type OdevFormDegerleri = {
   baslik: string;
@@ -20,8 +21,8 @@ type Props = {
   testMi: boolean;
   /** Düzenlemede tür kilitli — değiştirilirse mevcut gönderimlerin anlamı bozulur. */
   turDegistirilebilir: boolean;
-  tur: 'test' | 'acik';
-  onTurDegis?: (t: 'test' | 'acik') => void;
+  tur: OdevTuru;
+  onTurDegis?: (t: OdevTuru) => void;
 };
 
 /**
@@ -98,18 +99,28 @@ export function OdevFormAlanlari({
       </div>
 
       {turDegistirilebilir ? (
-        <Field etiket="Tür" ipucu="Testte puanı sistem hesaplar; açık uçluda siz verirsiniz.">
+        <Field etiket="Tür" ipucu={TUR_IPUCU}>
           {(k) => (
-            <Select {...k} value={tur} onChange={(e) => onTurDegis?.(e.target.value as 'test' | 'acik')}>
+            <Select {...k} value={tur} onChange={(e) => onTurDegis?.(e.target.value as OdevTuru)}>
               <option value="test">Test (çoktan seçmeli)</option>
               <option value="acik">Açık uçlu</option>
+              <option value="calisma">Çalışma kağıdı (puanlanmaz)</option>
             </Select>
           )}
         </Field>
       ) : (
         <p className="mb-4 text-[13px] text-muted">
-          Tür: <strong className="text-ink">{tur === 'test' ? 'Test' : 'Açık uçlu'}</strong> —
-          oluşturulduktan sonra değiştirilemez, mevcut gönderimlerin anlamı bozulurdu.
+          Tür: <strong className="text-ink">{turAdi(tur)}</strong> — oluşturulduktan sonra
+          değiştirilemez, mevcut gönderimlerin anlamı bozulurdu.
+        </p>
+      )}
+
+      {/* 0086: ÇALIŞMA KAĞIDININ KURALI SEÇİLİR SEÇİLMEZ YAZILI.
+          Öğretmen "puanlanmaz"ı ödevi kaydettikten sonra değil, türü
+          seçtiği anda görmeli; yoksa puan bekleyip bulamaz. */}
+      {calismaMi(tur) && (
+        <p data-test="calisma-aciklamasi" className="mb-4 text-[13px] text-ink">
+          {CALISMA_ACIKLAMASI}
         </p>
       )}
 
