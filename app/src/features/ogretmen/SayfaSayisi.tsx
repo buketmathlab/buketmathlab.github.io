@@ -16,7 +16,8 @@ type Props = {
 };
 
 /**
- * Ödevin sayfa sayısı (0078) — öğrencinin TAM bu kadar sayfa göndereceği.
+ * Ödevin sayfa sayısı (0078; 0087: ÜST SINIR) — öğrencinin en fazla bu
+ * kadar sayfa gönderebileceği.
  *
  * Öğretmenin isteği: "Verdiğim ödev kaç sayfalık ödevse otomatik olarak o
  * kadar sayfa gönderim hakkına sahip olsun öğrenciler." Kararları:
@@ -37,8 +38,8 @@ export function SayfaSayisi({
 }: Props) {
   const ipucu =
     pdfSayfa !== null
-      ? `Soru PDF’i ${pdfSayfa} sayfa; sayı oradan geldi. Kapak ya da açıklama sayfası gibi çözüm gerektirmeyen bir sayfa varsa düzeltin. Öğrenciler her sayfanın çözümünü göndermek zorundadır.`
-      : "Ödevin kaç sayfa olduğunu yazın. Öğrenciler her sayfanın çözümünü ayrı ayrı göndermek zorundadır.";
+      ? `Soru PDF’i ${pdfSayfa} sayfa; sayı oradan geldi. Kapak ya da açıklama sayfası gibi çözüm gerektirmeyen bir sayfa varsa düzeltin. Öğrenciler EN FAZLA bu kadar sayfa gönderebilir; daha azı da olur.`
+      : "Ödevin kaç sayfa olduğunu yazın. Öğrenciler EN FAZLA bu kadar sayfa gönderebilir; çözümünü daha az sayfaya sığdıran öğrenci de gönderebilir.";
   return (
     <>
       <Field

@@ -91,6 +91,12 @@ type OdevDetay = {
   /** Ödevin sayfa sayısı (0054). 0054 çalıştırılmadıysa gelmez → 1. */
   sayfa_limiti?: number;
   /** Her sayfa zorunlu mu (0078). Gelmezse ya da false ise eski kural. */
+  /**
+   * 0078'in "her sayfa zorunlu" bayrağı. 0087'den beri HER ÖDEVDE false
+   * ve hiçbir ekran okumuyor; sunucu eski istemciler için göndermeye
+   * devam ediyor. Tipte duruyor ki bir gün okunacak olursa anlamı
+   * yazılı olsun.
+   */
   tum_sayfalar?: boolean;
 };
 
@@ -322,12 +328,12 @@ export function OdevDuzenle() {
       }
 
       // Sayfa sayısı DEĞİŞTİYSE gönderiliyor (yoksa sunucuda "dokunma").
-      // 0079: ESKİ ödevde her kayıtta gönderiliyor — sayı gelince sunucu
-      // ödevi her sayfa zorunlu kurala geçiriyor (öğretmenin kararı).
-      const eskiOdev = detay.tum_sayfalar !== true;
-      const sinirDegisti =
-        eskiOdev ||
-        Number(sayfaSayisi) !== sayfaSiniriniOku(detay.sayfa_limiti);
+      //
+      // 0087: "eski ödev" ayrımı kalktı. 0079'da her kayıtta sayı
+      // gönderiliyordu, çünkü sayı gelince sunucu ödevi "her sayfa
+      // zorunlu" kuralına geçiriyordu. O kural yok; gereksiz yere sayı
+      // göndermek, denetim izine boş bir değişiklik yazmak olurdu.
+      const sinirDegisti = Number(sayfaSayisi) !== sayfaSiniriniOku(detay.sayfa_limiti);
       const sonuc = await rpc<{ yeniden_puanlanan: PuanDegisimi[] }>(
         "odev_guncelle",
         {
@@ -591,17 +597,6 @@ export function OdevDuzenle() {
                 }}
               />
 
-              {!detay.tum_sayfalar && (
-                <p className="mb-3 rounded-sk-sm bg-line-soft p-3 text-[13px] text-ink">
-                  Bu ödev önceki düzende verildi: öğrenciler en fazla{" "}
-                  <span className="sk-sayi">
-                    {sayfaSiniriniOku(detay.sayfa_limiti)}
-                  </span>{" "}
-                  sayfa gönderebiliyor. Kaydettiğinizde bu ödevde de öğrenciler,
-                  aşağıdaki sayı kadar sayfanın her birini göndermek zorunda
-                  olur.
-                </p>
-              )}
               <SayfaSayisi
                 deger={sayfaSayisi}
                 onDegis={(v) => {

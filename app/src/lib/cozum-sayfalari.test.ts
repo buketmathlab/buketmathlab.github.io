@@ -3,9 +3,8 @@ import { NUMARA_KURALI } from './el-yazisi-metni';
 import {
   EN_FAZLA_SAYFA,
   cozumSayfaYolu,
-  HER_SAYFA_GEREKCESI,
   depoZatenVarMi,
-  eksikSayfaMetni,
+  eksikSayfaUyarisi,
   oncedenYuklenenMetni,
   sahnedenCikar,
   sahneyeEkle,
@@ -86,19 +85,24 @@ describe('sayfaSiniriniOku', () => {
   });
 });
 
-describe('sayfaKuraliniOku (0078)', () => {
-  it('yeni uç: sayfa ve zorunluluk', () => {
-    expect(sayfaKuraliniOku({ sayfa: 8, tum_sayfalar: true })).toEqual({ sayfa: 8, tumSayfalar: true });
-    expect(sayfaKuraliniOku({ sayfa: 3, tum_sayfalar: false })).toEqual({ sayfa: 3, tumSayfalar: false });
+describe('sayfaKuraliniOku (0078; 0087: yalnız üst sınır)', () => {
+  /**
+   * 0087: `tumSayfalar` ALANI KALKTI. Sunucu `tum_sayfalar`'ı eski
+   * istemciler için göndermeye devam ediyor; bu okuyucu onu artık hiç
+   * okumuyor — okusaydı ölü bir dal taşırdık.
+   */
+  it('yalnız sayfa sayısını okuyor, gelen bayrağı yoksayıyor', () => {
+    expect(sayfaKuraliniOku({ sayfa: 8, tum_sayfalar: true })).toEqual({ sayfa: 8 });
+    expect(sayfaKuraliniOku({ sayfa: 3, tum_sayfalar: false })).toEqual({ sayfa: 3 });
   });
 
-  it('yeni uç yoksa eski sınıra düşer, zorunlu sayılmaz', () => {
-    expect(sayfaKuraliniOku(null, 4)).toEqual({ sayfa: 4, tumSayfalar: false });
-    expect(sayfaKuraliniOku({ sayfa: 99, tum_sayfalar: true }, 2)).toEqual({ sayfa: 2, tumSayfalar: false });
+  it('yeni uç yoksa eski sınıra düşer', () => {
+    expect(sayfaKuraliniOku(null, 4)).toEqual({ sayfa: 4 });
+    expect(sayfaKuraliniOku({ sayfa: 99, tum_sayfalar: true }, 2)).toEqual({ sayfa: 2 });
   });
 
-  it('hiçbiri okunamazsa 1, zorunlu değil', () => {
-    expect(sayfaKuraliniOku(undefined, undefined)).toEqual({ sayfa: 1, tumSayfalar: false });
+  it('hiçbiri okunamazsa 1', () => {
+    expect(sayfaKuraliniOku(undefined, undefined)).toEqual({ sayfa: 1 });
   });
 });
 
@@ -164,19 +168,24 @@ describe('depoZatenVarMi', () => {
 });
 
 describe('metinler', () => {
-  it('sayaç', () => {
+  it('sayaç — 0087: "eksik" demiyor', () => {
     expect(sayfaSayacMetni(2, 3)).toBe('2 / 3 sayfa seçildi');
-    expect(sayfaSayacMetni(5, 8, true)).toBe('5 / 8 sayfa eklendi · 3 sayfa eksik');
-    expect(sayfaSayacMetni(8, 8, true)).toBe('8 / 8 sayfa eklendi · tamam');
+    expect(sayfaSayacMetni(5, 8)).toBe('5 / 8 sayfa seçildi');
+    expect(sayfaSayacMetni(8, 8)).toBe('8 / 8 sayfa seçildi');
+    for (const m of [sayfaSayacMetni(5, 8), sayfaSayacMetni(1, 2)]) {
+      expect(m).not.toMatch(/eksik/);
+    }
   });
 
-  it('zorunlu ödevin açıklaması: sayfa sayısı ve sıra; birleştirme yok', () => {
-    const m = sayfaIpucuMetni(8, true);
-    expect(m).toContain('Bu ödev 8 sayfa');
+  it('açıklama ÜST sınırı söylüyor; birleştirme yok', () => {
+    const m = sayfaIpucuMetni(8);
+    expect(m).toContain('en fazla 8 sayfa');
     expect(m).toContain('sırayla');
     expect(m).toContain("PDF'in her sayfası ayrı bir sayfa");
-    for (const x of [m, sayfaIpucuMetni(1, true), sayfaIpucuMetni(3, false), HER_SAYFA_GEREKCESI]) {
+    // 0087: "Bu ödev 8 sayfa" gibi alt sınır ima eden cümle KALMADI.
+    for (const x of [m, sayfaIpucuMetni(1), sayfaIpucuMetni(3)]) {
       expect(x).not.toMatch(/birleştir|tek görsel|tek PDF/i);
+      expect(x).not.toMatch(/zorunda|her sayfanın çözümünü/);
     }
   });
 
@@ -189,23 +198,39 @@ describe('metinler', () => {
    * kuralın gerçekten çizilen metinde durduğunu sayıyor.
    */
   it('ipucu çıktı yolunu ve boş kâğıtta numara kuralını söylüyor', () => {
-    for (const m of [sayfaIpucuMetni(1, true), sayfaIpucuMetni(8, true), sayfaIpucuMetni(3, false)]) {
+    for (const m of [sayfaIpucuMetni(1), sayfaIpucuMetni(8), sayfaIpucuMetni(3)]) {
       expect(m).toContain('Çıktı alınmış soru kâğıdına');
       expect(m).toContain(NUMARA_KURALI);
       expect(m).toContain('tablette çözdüysen');
     }
   });
 
-  it('gerekçe öğrenme diliyle', () => {
-    expect(HER_SAYFA_GEREKCESI).toContain('çözüm yolunun tamamını');
-    expect(eksikSayfaMetni(3)).toBe('3 sayfa eksik. Ödevi gönderebilmek için her sayfanın çözümünü eklemelisin.');
+  /**
+   * 0087 — EKSİK SAYFA: ENGEL DEĞİL, SORU.
+   *
+   * Sınır kadar ya da fazla sayfa varsa hiçbir şey sorulmuyor; tek
+   * sayfalık ödevde de sorulmuyor (soracak bir şey yok).
+   */
+  it('eksik sayfa uyarısı yalnız gerektiğinde çıkıyor', () => {
+    expect(eksikSayfaUyarisi(3, 3)).toBeNull();
+    expect(eksikSayfaUyarisi(4, 3)).toBeNull();
+    expect(eksikSayfaUyarisi(1, 1)).toBeNull();
+    expect(eksikSayfaUyarisi(0, 5)).toBeNull();
+    const u = eksikSayfaUyarisi(2, 5);
+    expect(u?.baslik).toBe('5 sayfalık ödeve 2 sayfa ekledin');
+    expect(u?.metin).toMatch(/böyle gönderebilirsin/);
+    expect(u?.metin).toMatch(/unuttuğun bir sayfa/);
+    // SUÇLAMA YOK: "eksik", "zorunda" gibi bir dil kullanılmıyor.
+    expect(u?.metin).not.toMatch(/zorunda|eksiksin|yapmalısın/);
   });
 
   it('taşma sayısını söyler', () => {
     expect(tasmaMetni(3, 2)).toBe(
       'Bu ödevde en fazla 3 sayfa yükleyebilirsin. 2 görsel eklenmedi.',
     );
-    expect(tasmaMetni(8, 1, true)).toBe('Bu ödev 8 sayfa; fazladan seçtiğin 1 görsel eklenmedi.');
+    expect(tasmaMetni(8, 1)).toBe(
+      'Bu ödevde en fazla 8 sayfa yükleyebilirsin. 1 görsel eklenmedi.',
+    );
   });
 
   it('yarıda kalan yükleme: gönderilmediğini ve seçimin durduğunu söyler', () => {

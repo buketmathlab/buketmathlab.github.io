@@ -1,5 +1,5 @@
 /**
- * ÇÖZÜM SAYFALARI (0054; 0078: her sayfa zorunlu) — ödevin sayfa sayısı.
+ * ÇÖZÜM SAYFALARI (0054; 0078 alt sınır, 0087 o sınırı kaldırdı).
  *
  * Ağa ve React'e dokunmayan her kural burada, testli: sayfa yolu, sınırın
  * okunması, seçime ekleme/çıkarma ve deponun "zaten var" cevabı. Ekran
@@ -68,25 +68,28 @@ export function sayfaSiniriniOku(ham: unknown): number {
 }
 
 /**
- * ÖDEVİN SAYFA KURALI (0078).
+ * ÖDEVİN SAYFA SAYISI — ARTIK YALNIZ ÜST SINIR.
  *
- *   sayfa        ödevin sayfa sayısı (öğrencinin göndereceği çözüm sayfası)
- *   tumSayfalar  true: TAM `sayfa` kadar sayfa zorunlu (0078 sonrası ödev)
- *                false: eski kural, en az 1 en fazla `sayfa`
+ *   sayfa  en fazla kaç çözüm sayfası gönderilebilir
  *
- * İki biçim okunuyor: `odev_sayfa_kurali` ({sayfa, tum_sayfalar}) ve eski
- * `odev_sayfa_siniri` (yalnız sayı). Hiçbiri okunamazsa {1, false} — her
- * ödevde geçerli; bir ayarın okunamaması teslim ekranını bozmamalı.
+ * 0078'in `tumSayfalar` alanı 0087'de KALKTI: öğretmenin kararıyla alt
+ * sınır yok. Sunucu `tum_sayfalar` alanını hâlâ gönderiyor (eski
+ * istemciler için) ama her ödevde `false`; burada okunmuyor bile —
+ * okunsaydı ölü bir dal taşımış olurduk.
+ *
+ * İki biçim okunuyor: `odev_sayfa_kurali` ({sayfa, …}) ve eski
+ * `odev_sayfa_siniri` (yalnız sayı). Hiçbiri okunamazsa {1} — bir ayarın
+ * okunamaması teslim ekranını bozmamalı.
  */
-export type SayfaKurali = { sayfa: number; tumSayfalar: boolean };
+export type SayfaKurali = { sayfa: number };
 
 export function sayfaKuraliniOku(kural: unknown, eskiSinir?: unknown): SayfaKurali {
   if (kural && typeof kural === 'object') {
-    const k = kural as { sayfa?: unknown; tum_sayfalar?: unknown };
+    const k = kural as { sayfa?: unknown };
     const sayfa = sayfaSiniriniOku(k.sayfa);
-    if (sayfa === k.sayfa) return { sayfa, tumSayfalar: k.tum_sayfalar === true };
+    if (sayfa === k.sayfa) return { sayfa };
   }
-  return { sayfa: sayfaSiniriniOku(eskiSinir), tumSayfalar: false };
+  return { sayfa: sayfaSiniriniOku(eskiSinir) };
 }
 
 /**
@@ -137,16 +140,13 @@ export function depoZatenVarMi(durum: number, govde: string): boolean {
 }
 
 /**
- * Sayaç. Her sayfası zorunlu ödevde eksik sayfayı da söylüyor:
- *   "5 / 8 sayfa eklendi · 3 sayfa eksik"   "8 / 8 sayfa eklendi · tamam"
- * Eski ödevde: "2 / 3 sayfa seçildi".
+ * Sayaç: "2 / 3 sayfa seçildi".
+ *
+ * 0087: "… · 3 sayfa eksik" eki KALKTI. Alt sınır yokken "eksik" demek,
+ * öğrenciye var olmayan bir kural hatırlatmak olurdu.
  */
-export function sayfaSayacMetni(secili: number, sinir: number, zorunlu = false): string {
-  if (!zorunlu) return `${secili} / ${sinir} sayfa seçildi`;
-  const eksik = Math.max(0, sinir - secili);
-  return eksik === 0
-    ? `${secili} / ${sinir} sayfa eklendi · tamam`
-    : `${secili} / ${sinir} sayfa eklendi · ${eksik} sayfa eksik`;
+export function sayfaSayacMetni(secili: number, sinir: number): string {
+  return `${secili} / ${sinir} sayfa seçildi`;
 }
 
 /**
@@ -160,37 +160,49 @@ export function sayfaSayacMetni(secili: number, sinir: number, zorunlu = false):
  *
  * Ders: bir metni değiştirmek, onun ekrana ulaştığını kanıtlamaz.
  */
-export function sayfaIpucuMetni(sinir: number, zorunlu: boolean): string {
+export function sayfaIpucuMetni(sinir: number): string {
   const nasil =
     `Çıktı alınmış soru kâğıdına ya da boş kâğıda çözdüysen (boş kâğıtta ${NUMARA_KURALI}) ` +
     'her sayfanın fotoğrafını çek; tablette çözdüysen görsel ya da PDF ' +
     "yükleyebilirsin, PDF'in her sayfası ayrı bir sayfa sayılır.";
-  if (!zorunlu) {
-    return `Bu ödevde en fazla ${sinir} sayfa gönderebilirsin; sırayla ekle, öğretmenin bu sırayla görecek. ${nasil}`;
-  }
-  return sinir === 1
-    ? `Bu ödev 1 sayfa. ${nasil}`
-    : `Bu ödev ${sinir} sayfa. Her sayfanın çözümünü sırayla ekle: önce 1. sayfa, sonra 2. sayfa… ${nasil}`;
+  return `Bu ödevde en fazla ${sinir} sayfa gönderebilirsin; sırayla ekle, öğretmenin bu sırayla görecek. ${nasil}`;
 }
 
 /**
- * Neden her sayfa zorunlu — öğrenciye bir kez, kısa. Puan tehdidi değil,
- * öğrenmenin dili: öğretmen çözüm YOLUNU görmek istiyor.
+ * EKSİK SAYFA UYARISI (0087) — ENGEL DEĞİL, SORU.
+ *
+ * 0078 sınırın altında göndermeyi yasaklıyordu. Öğretmenin kararı:
+ * "çözüm sayfası en fazla soru kağıdının sayfası kadar olsun, fakat alt
+ * sınır olmasın" — kağıda çözen öğrenci 5 soruyu 3 sayfaya
+ * sığdırabiliyor. Yasak kalktı; yerine, kazara eksik göndermeyi önleyen
+ * bir soru kondu (öğretmenin kararı). Desen 0056'daki boş optik
+ * uyarısının aynısı: gönderim engellenmiyor, yalnız bir kez soruluyor.
+ *
+ * Sınır kadar ya da daha fazla sayfa varsa `null` — hiçbir şey sorulmuyor.
  */
-export const HER_SAYFA_GEREKCESI =
-  'Öğretmenin çözüm yolunun tamamını görebilsin diye ödevin her sayfası zorunlu. ' +
-  'Boş bıraktığın bir soru olsa da o sayfayı ekle; denediğin her adım öğrenmenin parçası.';
+export type EksikSayfaUyarisi = {
+  secili: number;
+  sinir: number;
+  baslik: string;
+  metin: string;
+};
 
-/** Eksik sayfayla göndermeye çalışınca. */
-export function eksikSayfaMetni(eksik: number): string {
-  return `${eksik} sayfa eksik. Ödevi gönderebilmek için her sayfanın çözümünü eklemelisin.`;
+export function eksikSayfaUyarisi(secili: number, sinir: number): EksikSayfaUyarisi | null {
+  if (!Number.isInteger(secili) || !Number.isInteger(sinir)) return null;
+  if (sinir < 2 || secili < 1 || secili >= sinir) return null;
+  return {
+    secili,
+    sinir,
+    baslik: `${sinir} sayfalık ödeve ${secili} sayfa ekledin`,
+    metin:
+      'Çözümünü daha az sayfaya sığdırdıysan sorun yok, böyle gönderebilirsin. ' +
+      'Eklemeyi unuttuğun bir sayfa varsa şimdi ekleyebilirsin — gönderdikten sonra değiştiremezsin.',
+  };
 }
 
-/** Sınırı aşan seçimde öğrenciye söylenen. */
-export function tasmaMetni(sinir: number, tasan: number, zorunlu = false): string {
-  return zorunlu
-    ? `Bu ödev ${sinir} sayfa; fazladan seçtiğin ${tasan} görsel eklenmedi.`
-    : `Bu ödevde en fazla ${sinir} sayfa yükleyebilirsin. ${tasan} görsel eklenmedi.`;
+/** Sınırı aşan seçimde öğrenciye söylenen. Üst sınır 0087'de de duruyor. */
+export function tasmaMetni(sinir: number, tasan: number): string {
+  return `Bu ödevde en fazla ${sinir} sayfa yükleyebilirsin. ${tasan} görsel eklenmedi.`;
 }
 
 /**

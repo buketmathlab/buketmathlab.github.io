@@ -7394,3 +7394,66 @@ doğru uca konmamıştı; ekran taraması gösterdi.
   "çalışma kağıdı yok" durumu alanları hiç göndermeyerek taklit
   ediliyordu, oysa 0086 yayındayken sunucu onları **sıfır olarak** hep
   gönderiyor. Fikstür gerçek şekle çevrildi.
+
+## 0087 — Çözüm sayfasında alt sınır kalkıyor (1 Kasım)
+
+Öğretmenin isteği: *"5 sayfalık ödev verdiğimde öğrencilerin çözümü de 5
+sayfa olarak göndermesi zorunluydu. Bazı öğrenciler kağıda çözüm yaptığı
+için 3–4 sayfaya sığdırabiliyorlar. Dolayısıyla çözüm sayfası EN FAZLA
+gönderdiğim soru kağıdının sayfası kadar olsun. Fakat ALT SINIR
+OLMASIN."*
+
+0078 iki kural getirmişti: **üst sınır** (en fazla `sayfa_limiti`) ve
+**alt sınır** (tam o kadar). Üst sınır kaldı, alt sınır kalktı. 0078'in
+gerekçesi yanlış değildi ("öğretmen çözüm yolunun tamamını görsün");
+eksik olan, kağıda çözen öğrencinin 5 soruyu 3 sayfaya
+sığdırabildiğiydi. Kural o öğrenciyi **olmayan bir sayfayı uydurmaya**
+zorluyordu.
+
+Kararı (soruldu): engel yerine **yumuşak bir onay** — "2 sayfalık ödeve
+1 sayfa ekledin. Yine de gönderilsin mi?" 0056'daki boş optik
+uyarısının aynı deseni: bir kez sorulur, "Yine de gönder" denince gider.
+
+### Bayrak ne oldu
+
+`odevler.tum_sayfalar` **düşürülmedi** (denetim izindeki eski satırlar
+onu taşıyor), ama bütün satırlar `false`a çekildi ve bayrağı yazan iki
+uç düzeltildi. Asıl tuzak `odev_guncelle`'deydi: 0079'daki
+`tum_sayfalar = (d.tum_sayfalar or p_sayfa_limiti is not null)` satırı,
+sayfa sayısı **her düzenlendiğinde** kuralı geri getirirdi.
+
+`odev_kardeslere_yay` ve `odev_siniflara_kopyala` bayrağı yalnız
+kopyaladığı için **bilerek kopyalanmadı** — gereksiz kopya, gereksiz
+risk. Ölçümün 6. grubu o kararın doğruluğunu ayrıca sınıyor.
+
+### Açıkça yazılan tuzak
+
+0081 ve 0086'nın öz-denetimleri `odev_gonder` gövdesinde alt sınır
+satırının **varlığını** arıyor (0078'i geri alan bir çağrıya karşı
+konmuştu). 0087 o satırı kaldırdı; dolayısıyla **0081 tek başına yeniden
+çalıştırılırsa hata verir, 0086 tek başına çalıştırılırsa 0087'yi
+sessizce geri alır.** Zincir sırayla uygulandığında sorun yok. Bu, ileri
+sarma dışında bir şey yapılacaksa okunması gereken not.
+
+### Ölçüm
+
+- `sayfa_alt_siniri_testleri.sql` — 9 grup. **6 kusur provasının hepsi
+  ısırdı.** 7. grup özellikle değerli: bayrak elle `true` yapılsa bile
+  eksik sayfalı gönderim geçiyor — yani kural veriden değil **koddan**
+  kalktı.
+- İki prova önce ısırmadı ve **ikisinin de sebebi koşum takımıydı**:
+  biri temiz bir veritabanında koştuğu için temizlenecek satır
+  bulamadı, öbürü yamanın SQL'i bozmasıydı. İkisi de düzeltilip
+  tekrarlandı.
+- Prova B öğretici: üst sınır **iki yerde** duruyor (`odev_gonder`'in
+  kapısı ve `_cozum_yolu_gecerli`'nin yol kalıbı). Birini silmek
+  gönderimi yine engelliyor, yalnız öğrenciye yanlış sebep söyleniyor.
+- 0078 ve 0079'un **kendi test dosyaları yeniden yazıldı, silinmedi**:
+  alt sınır iddiaları bugünkü kurala çevrildi, üst sınır ve yol kalıbı
+  ölçümleri aynen duruyor.
+- `sayfa-zorunlu-denetimi.mjs`'in B bölümü yeniden yazıldı (A bölümü
+  0078 DOSYASINI ölçüyor, o değişmedi). **5 arayüz kusur provasının
+  hepsi ısırdı.**
+- Arayüzde ölü kalacak iki metin (`HER_SAYFA_GEREKCESI`,
+  `eksikSayfaMetni`) ve `SayfaKurali.tumSayfalar` alanı **silindi** —
+  `YUKLEME_IPUCU` dersi: ölü metin bırakılmıyor.

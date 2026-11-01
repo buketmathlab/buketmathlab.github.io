@@ -1,16 +1,21 @@
 -- =============================================================================
--- SEKİZ — 0079 SAYFA SAYISI DÜZENLEME TESTLERİ
+-- SEKİZ — 0079 SAYFA SAYISI DÜZENLEME TESTLERİ (0087'DEN SONRA)
+--
+-- 0087 ALT SINIRI KALDIRDI: sayfa sayısı artık yalnız ÜST sınır. Bu
+-- dosyanın "eksik sayfa reddediliyor" iddiaları o yüzden yeniden
+-- yazıldı; silinmedi, çünkü asıl ölçüm (sayı değişince ne oluyor)
+-- aynen geçerli.
 --
 --  1. Gönderimi olan ödevin sayfa sayısı DEĞİŞİYOR; önceden yapılmış
 --     gönderim (yollar, puan) olduğu gibi kalıyor.
---  2. Yeni sayı henüz göndermeyene uygulanıyor: eski sayıyla gönderim
---     reddediliyor, yeni sayıyla kabul ediliyor. Sayı KÜÇÜLDÜĞÜNDE de.
---  3. Eski ödev (tum_sayfalar false) sayfa sayısıyla güncellenince her
---     sayfa zorunlu kurala geçiyor; sayı GÖNDERİLMEDEN güncellenince eski
---     kural sürüyor.
---  4. Kardeş yayma: gönderimi olan kardeşe de sayı ve bayrak taşınıyor;
---     kardeşteki gönderim değişmiyor.
---  5. Yeniden açılan gönderim yeni sayıyla gönderiliyor.
+--  2. Yeni sayı henüz göndermeyene ÜST SINIR olarak uygulanıyor: sayının
+--     altında gönderim kabul, üstünde red. Sayı KÜÇÜLDÜĞÜNDE de.
+--  3. Düzenleme `tum_sayfalar` bayrağını AÇMIYOR (0087); sayının altında
+--     gönderim düzenlemeden sonra da kabul.
+--  4. Kardeş yayma: gönderimi olan kardeşe de sayı taşınıyor, bayrak
+--     kapalı kalıyor; kardeşteki gönderim değişmiyor.
+--  5. Yeniden açılan gönderim yeni sayıyla, sayının altında da
+--     gönderilebiliyor.
 --
 -- Sınıf adları iki harfli (12-DA/DB): test dosyaları aynı veritabanını
 -- paylaşıyor.
@@ -109,18 +114,16 @@ begin
   raise notice '    2 → 3 kabul; önceki gönderim (yollar, puan %) aynı: OK', sonra.puan;
 
   ------------------------------------------------------------------
-  raise notice '--- 2. Yeni sayı göndermeyene uygulanıyor (büyüyünce ve küçülünce) ---';
-  begin
-    perform public.odev_gonder(t_ayse, v_test, 'cozum/' || v_test || '/' || v_ayse || '.jpg',
-                               '{"1":"A","2":"B"}'::jsonb,
-                               array['cozum/' || v_test || '/' || v_ayse || '-2.jpg']);
-    raise exception 'HATA: eski sayıyla (2/3) gönderim KABUL EDİLDİ!';
-  exception when invalid_parameter_value then
-    get stacked diagnostics mesaj = message_text;
-    if mesaj not like 'Bu ödev 3 sayfa;%(1 sayfa eksik).' then
-      raise exception 'HATA: eksik sayfa mesajı beklenmedik: %', mesaj;
-    end if;
-  end;
+  raise notice '--- 2. Yeni sayı ÜST SINIR olarak uygulanıyor (büyüyünce ve küçülünce) ---';
+  -- 0087: 2/3 artık GEÇİYOR. Sayı yalnız tavan.
+  perform public.odev_gonder(t_ayse, v_test, 'cozum/' || v_test || '/' || v_ayse || '.jpg',
+                             '{"1":"A","2":"B"}'::jsonb,
+                             array['cozum/' || v_test || '/' || v_ayse || '-2.jpg']);
+  if (select cardinality(ek_sayfa_yollari) from public.gonderimler
+       where odev_id = v_test and ogrenci_id = v_ayse) <> 1 then
+    raise exception 'HATA: 2/3 sayfalık gönderim kaydedilmedi!';
+  end if;
+  delete from public.gonderimler where odev_id = v_test and ogrenci_id = v_ayse;
   -- Sayı küçülüyor: 3 → 1. Artık 2 sayfa fazla.
   perform public.odev_guncelle(p_token => t_ogr, p_id => v_test, p_baslik => 'Test iki sayfa',
                                p_aciklama => null, p_sinif_id => v_sinif,
@@ -141,37 +144,39 @@ begin
        where odev_id = v_test and ogrenci_id = v_ali) <> 1 then
     raise exception 'HATA: sayı küçülünce önceki gönderimin sayfası kayboldu!';
   end if;
-  raise notice '    2/3 reddedildi; 1''e inince 2 sayfa reddedildi, 1/1 kabul; Ali''nin sayfaları duruyor: OK';
+  raise notice '    2/3 kabul; 1''e inince 2 sayfa reddedildi, 1/1 kabul; Ali''nin sayfaları duruyor: OK';
 
   ------------------------------------------------------------------
-  raise notice '--- 3. Eski ödev düzenlenince yeni kurala geçiyor ---';
-  -- Sayı gönderilmeden güncelleme: eski kural sürüyor.
+  raise notice '--- 3. Düzenleme bayrağı AÇMIYOR (0087) ---';
+  -- Sayı gönderilmeden güncelleme: bayrak kapalı.
   perform public.odev_guncelle(p_token => t_ogr, p_id => v_eski2, p_baslik => 'Eski düzen 2 (başlık)',
                                p_aciklama => null, p_sinif_id => v_sinif,
                                p_son_tarih => current_date + 5);
   if (select tum_sayfalar from public.odevler where id = v_eski2) then
-    raise exception 'HATA: sayı gönderilmeden eski ödev yeni kurala geçti!';
+    raise exception 'HATA: sayısız güncelleme bayrağı açtı!';
   end if;
-  -- Eski ödevde Ali 1/3 sayfa gönderiyor (eski kural: kabul).
   perform public.odev_gonder(t_ali, v_eski, 'cozum/' || v_eski || '/' || v_ali || '.jpg', null, null);
-  -- Öğretmen sayıyı (aynı 3) yazıp kaydediyor → her sayfa zorunlu.
+  -- Öğretmen sayıyı (aynı 3) yazıp kaydediyor. 0079'da bu, bayrağı açıp
+  -- "her sayfa zorunlu" kuralına geçiriyordu; 0087'den sonra AÇMIYOR.
   perform public.odev_guncelle(p_token => t_ogr, p_id => v_eski, p_baslik => 'Eski düzen',
                                p_aciklama => null, p_sinif_id => v_sinif,
                                p_son_tarih => current_date + 5, p_sayfa_limiti => 3::smallint);
-  if not (select tum_sayfalar from public.odevler where id = v_eski) then
-    raise exception 'HATA: eski ödev sayfa sayısıyla kaydedilince yeni kurala geçmedi!';
+  if (select tum_sayfalar from public.odevler where id = v_eski) then
+    raise exception 'HATA: sayfa sayısı yazılınca bayrak diriltildi!';
   end if;
-  if not (public.odev_sayfa_kurali(t_ayse, v_eski) ->> 'tum_sayfalar')::boolean then
-    raise exception 'HATA: öğrenci ucu eski ödevi hâlâ eski kuralda gösteriyor!';
+  if (public.odev_sayfa_kurali(t_ayse, v_eski) ->> 'tum_sayfalar')::boolean then
+    raise exception 'HATA: öğrenci ucu zorunlu gösteriyor!';
   end if;
-  begin
-    perform public.odev_gonder(t_ayse, v_eski, 'cozum/' || v_eski || '/' || v_ayse || '.jpg', null, null);
-    raise exception 'HATA: yeni kurala geçen ödevde 1/3 sayfa KABUL EDİLDİ!';
-  exception when invalid_parameter_value then null; end;
+  -- Düzenlemeden SONRA da sayının altında gönderim kabul.
+  perform public.odev_gonder(t_ayse, v_eski, 'cozum/' || v_eski || '/' || v_ayse || '.jpg', null, null);
+  if not exists (select 1 from public.gonderimler
+                  where odev_id = v_eski and ogrenci_id = v_ayse) then
+    raise exception 'HATA: düzenlemeden sonra 1/3 sayfa kabul edilmedi!';
+  end if;
   if not exists (select 1 from public.gonderimler where odev_id = v_eski and ogrenci_id = v_ali) then
-    raise exception 'HATA: Ali''nin eski kuralla yaptığı gönderim kayboldu!';
+    raise exception 'HATA: Ali''nin gönderimi kayboldu!';
   end if;
-  raise notice '    sayısız güncelleme eski kuralda; sayıyla kaydedince zorunlu; eski gönderim duruyor: OK';
+  raise notice '    düzenleme bayrağı açmıyor; 1/3 sayfa kabul; eski gönderim duruyor: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 4. Kardeş yayma gönderimi olan kardeşe de taşıyor ---';
@@ -192,25 +197,26 @@ begin
                                p_aciklama => null, p_sinif_id => v_sinif,
                                p_son_tarih => current_date + 5, p_sayfa_limiti => 4::smallint);
   perform public.odev_kardeslere_yay(t_ogr, v_ka);
-  if (select sayfa_limiti from public.odevler where id = v_kb) <> 4
-     or not (select tum_sayfalar from public.odevler where id = v_kb) then
-    raise exception 'HATA: gönderimi olan kardeşe sayı ve bayrak taşınmadı!';
+  -- 0087: sayı taşınıyor, bayrak kapalı kalıyor.
+  if (select sayfa_limiti from public.odevler where id = v_kb) <> 4 then
+    raise exception 'HATA: gönderimi olan kardeşe sayı taşınmadı!';
+  end if;
+  if (select tum_sayfalar from public.odevler where id = v_kb) then
+    raise exception 'HATA: kardeşe bayrak taşındı — 0087 geri alınmış!';
   end if;
   select foto_yolu, ek_sayfa_yollari into sonra
     from public.gonderimler where odev_id = v_kb and ogrenci_id = v_yabanci_ogr;
   if once is distinct from sonra then
     raise exception 'HATA: kardeşteki gönderim değişti!';
   end if;
-  raise notice '    kardeşe 4 sayfa + bayrak; kardeşteki gönderim aynı: OK';
+  raise notice '    kardeşe 4 sayfa taşındı, bayrak kapalı; kardeşteki gönderim aynı: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 5. Yeniden açılan gönderim yeni sayıyla ---';
   select id into v_gon from public.gonderimler where odev_id = v_eski and ogrenci_id = v_ali;
   perform public.gonderimi_yeniden_ac(t_ogr, v_gon, 'Eksik sayfa: ödev 3 sayfa.', (current_date + 7));
-  begin
-    perform public.odev_gonder(t_ali, v_eski, 'cozum/' || v_eski || '/' || v_ali || '.jpg', null, null);
-    raise exception 'HATA: yeniden açılan gönderim eski sayıyla KABUL EDİLDİ!';
-  exception when invalid_parameter_value then null; end;
+  -- 0087: yeniden açılan gönderim de sayının altında yapılabiliyor;
+  -- ölçüm asıl olarak YENİ SAYININ geçerli olduğunu sınıyor.
   perform public.odev_gonder(t_ali, v_eski, 'cozum/' || v_eski || '/' || v_ali || '.jpg', null,
                              array['cozum/' || v_eski || '/' || v_ali || '-2.jpg',
                                    'cozum/' || v_eski || '/' || v_ali || '-3.jpg']);
@@ -218,7 +224,7 @@ begin
        where odev_id = v_eski and ogrenci_id = v_ali) <> 2 then
     raise exception 'HATA: yeniden gönderimde sayfalar yanlış!';
   end if;
-  raise notice '    yeniden açılınca 1/3 reddedildi, 3/3 kabul: OK';
+  raise notice '    yeniden açılınca 3/3 kabul: OK';
 
   -- Temizlik
   update public.ogrenciler set aktif = false where id in (v_ali, v_ayse, v_yabanci_ogr);

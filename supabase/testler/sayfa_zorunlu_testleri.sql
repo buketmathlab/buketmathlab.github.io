@@ -1,14 +1,22 @@
 -- =============================================================================
--- SEKİZ — 0078 HER SAYFA ZORUNLU TESTLERİ
+-- SEKİZ — ÇÖZÜM SAYFASI SINIRI (0078; ALT SINIR 0087'DE KALKTI)
 --
---  1. Yeni ödev `tum_sayfalar = true` ile kaydediliyor; detay ve öğrenci ucu
---     bunu söylüyor.
---  2. Eksik sayfa REDDEDİLİYOR (mesaj eksik sayıyı söylüyor); fazla sayfa
---     reddediliyor; tam sayfa kabul ediliyor ve sırası korunuyor.
---  3. ESKİ ödev (tum_sayfalar false) eski kuralla sürüyor: sınırın altında
---     gönderim kabul.
+-- 0078 iki kural getirmişti: ÜST sınır (en fazla `sayfa_limiti` sayfa) ve
+-- ALT sınır (tam o kadar sayfa, `tum_sayfalar` bayrağı). 0087 öğretmenin
+-- kararıyla ALT sınırı kaldırdı: "çözüm sayfası en fazla soru kağıdının
+-- sayfası kadar olsun, fakat alt sınır olmasın." Bu dosya 0087'den sonra
+-- bugünkü kuralı ölçüyor; silinmedi, çünkü üst sınır, yol kalıbı, yetki
+-- ve 40 sayfa ölçümleri aynen geçerli.
+--
+--  1. Yeni ödev `tum_sayfalar = false` ile kaydediliyor; detay ve öğrenci
+--     ucu bunu söylüyor (0087).
+--  2. EKSİK SAYFA KABUL EDİLİYOR (0087); fazla sayfa reddediliyor; tam
+--     sayfa kabul ediliyor ve sırası korunuyor.
+--  3. Sınırın altında gönderim her ödevde kabul — 0078 öncesi "eski ödev"
+--     ayrımı kalmadı, kural tek.
 --  4. 40 sayfa: kısıt, yol kalıbı (-40 açık, -41 kapalı), 41 reddediliyor.
---  5. Sayfa sayısı güncelleniyor; kardeş yaymada bayrak taşınıyor. (0078'de
+--  5. Sayfa sayısı güncelleniyor; kardeş yaymada bayrak (artık false)
+--     taşınıyor. (0078'de
 --     gönderim varken kilitliydi; 0079'dan beri kilit yok — ayrıntısı
 --     `sayfa_duzenleme_testleri.sql`.)
 --  6. `odev_sayfa_kurali` yetkisi: başka sınıf, veli ve öğretmen 42501.
@@ -97,43 +105,46 @@ begin
   perform public.odev_yayinla(t_ogr, v_bos);
 
   ------------------------------------------------------------------
-  raise notice '--- 1. Yeni ödev her sayfası zorunlu ---';
-  if not (select tum_sayfalar from public.odevler where id = v_dort) then
-    raise exception 'HATA: yeni ödev tum_sayfalar=true ile kaydedilmedi!';
+  raise notice '--- 1. Yeni ödevde alt sınır yok (0087) ---';
+  -- 0078 burada bayrağı `true` bekliyordu. 0087 kuralı kaldırdı: yeni
+  -- ödev de bayraksız doğuyor ve uçlar bunu söylüyor.
+  if (select tum_sayfalar from public.odevler where id = v_dort) then
+    raise exception 'HATA: yeni ödev hâlâ tum_sayfalar=true ile kaydediliyor!';
   end if;
-  if not (public.odev_detay(t_ogr, v_dort) ->> 'tum_sayfalar')::boolean
+  if (public.odev_detay(t_ogr, v_dort) ->> 'tum_sayfalar')::boolean
      or (public.odev_detay(t_ogr, v_eski) ->> 'tum_sayfalar')::boolean then
     raise exception 'HATA: odev_detay bayrağı yanlış!';
   end if;
   r := public.odev_sayfa_kurali(t_ali, v_dort);
-  if (r ->> 'sayfa')::int <> 4 or not (r ->> 'tum_sayfalar')::boolean then
+  -- SAYFA SAYISI HÂLÂ DOĞRU: kalkan şey alt sınır, üst sınır değil.
+  if (r ->> 'sayfa')::int <> 4 or (r ->> 'tum_sayfalar')::boolean then
     raise exception 'HATA: odev_sayfa_kurali yanlış: %', r;
-  end if;
-  if (public.odev_sayfa_kurali(t_ali, v_eski) ->> 'tum_sayfalar')::boolean then
-    raise exception 'HATA: eski ödev zorunlu görünüyor!';
   end if;
   if public.odev_sayfa_siniri(t_ali, v_dort) <> 4 then
     raise exception 'HATA: eski uç (odev_sayfa_siniri) bozuldu!';
   end if;
-  raise notice '    bayrak, detay, yeni ve eski öğrenci ucu: OK';
+  raise notice '    bayrak kapalı, sayfa sayısı yerinde: OK';
 
   ------------------------------------------------------------------
-  raise notice '--- 2. Eksik reddedilir, fazla reddedilir, tam kabul ---';
+  raise notice '--- 2. Eksik KABUL (0087), fazla reddedilir, tam kabul ---';
   ek := array['cozum/' || v_dort || '/' || v_ali || '-2.jpg',
               'cozum/' || v_dort || '/' || v_ali || '-3.jpg'];
-  begin
-    perform public.odev_gonder(t_ali, v_dort, 'cozum/' || v_dort || '/' || v_ali || '.jpg', null, ek);
-    raise exception 'HATA: 3/4 sayfalık gönderim KABUL EDİLDİ!';
-  exception when invalid_parameter_value then
-    get stacked diagnostics mesaj = message_text;
-    if mesaj not like 'Bu ödev 4 sayfa;%(1 sayfa eksik).' then
-      raise exception 'HATA: eksik sayfa mesajı beklenmedik: %', mesaj;
-    end if;
-  end;
-  begin
-    perform public.odev_gonder(t_ali, v_dort, 'cozum/' || v_dort || '/' || v_ali || '.jpg', null, null);
-    raise exception 'HATA: tek sayfalık gönderim KABUL EDİLDİ!';
-  exception when invalid_parameter_value then null; end;
+  -- 0087: 3/4 ve 1/4 artık GEÇİYOR. Kağıda çözen öğrenci 4 soruyu 3
+  -- sayfaya sığdırabilir; eski kural onu olmayan bir sayfayı uydurmaya
+  -- zorluyordu.
+  r := public.odev_gonder(t_ali, v_dort, 'cozum/' || v_dort || '/' || v_ali || '.jpg', null, ek);
+  if (select cardinality(ek_sayfa_yollari) from public.gonderimler
+       where odev_id = v_dort and ogrenci_id = v_ali) <> 2 then
+    raise exception 'HATA: 3/4 sayfalık gönderim kaydedilmedi!';
+  end if;
+  delete from public.gonderimler where odev_id = v_dort and ogrenci_id = v_ali;
+  r := public.odev_gonder(t_ali, v_dort, 'cozum/' || v_dort || '/' || v_ali || '.jpg', null, null);
+  if not exists (select 1 from public.gonderimler
+                  where odev_id = v_dort and ogrenci_id = v_ali) then
+    raise exception 'HATA: 1/4 sayfalık gönderim kaydedilmedi!';
+  end if;
+  delete from public.gonderimler where odev_id = v_dort and ogrenci_id = v_ali;
+  -- ÜST SINIR DURUYOR — kalkan kuralın yanındaki kural.
   begin
     perform public.odev_gonder(t_ali, v_dort, 'cozum/' || v_dort || '/' || v_ali || '.jpg', null,
                                ek || array['cozum/' || v_dort || '/' || v_ali || '-4.jpg',
@@ -146,16 +157,16 @@ begin
        where odev_id = v_dort and ogrenci_id = v_ali) <> 3 then
     raise exception 'HATA: tam gönderimde ek sayfa sayısı yanlış!';
   end if;
-  raise notice '    eksik ve fazla reddedildi, 4/4 kabul edildi: OK';
+  raise notice '    3/4 ve 1/4 kabul, 5/4 reddedildi, 4/4 kabul: OK';
 
   ------------------------------------------------------------------
-  raise notice '--- 3. Eski ödev eski kuralla sürüyor ---';
+  raise notice '--- 3. Sınırın altında gönderim her ödevde kabul ---';
   r := public.odev_gonder(t_ali, v_eski, 'cozum/' || v_eski || '/' || v_ali || '.jpg', null,
                           array['cozum/' || v_eski || '/' || v_ali || '-2.jpg']);
   if not exists (select 1 from public.gonderimler where odev_id = v_eski and ogrenci_id = v_ali) then
-    raise exception 'HATA: eski ödevde 2/3 sayfa kabul edilmedi — REGRESYON!';
+    raise exception 'HATA: 2/3 sayfa kabul edilmedi — REGRESYON!';
   end if;
-  raise notice '    eski ödevde sınırın altında gönderim kabul: OK';
+  raise notice '    2/3 sayfa kabul: OK';
 
   ------------------------------------------------------------------
   raise notice '--- 4. 40 sayfa ---';
@@ -200,8 +211,9 @@ begin
               p_sayfa_limiti => 3::smallint);
   select id into v_ka from public.odevler where baslik = 'Kardeş' and sinif_id = v_sinif order by created_at desc limit 1;
   select id into v_kb from public.odevler where baslik = 'Kardeş' and sinif_id = v_sinif_b order by created_at desc limit 1;
-  if not (select tum_sayfalar from public.odevler where id = v_kb) then
-    raise exception 'HATA: çoklu oluşturmada bayrak açılmadı!';
+  -- 0087: çoklu oluşturma da bayrağı AÇMIYOR.
+  if (select tum_sayfalar from public.odevler where id = v_kb) then
+    raise exception 'HATA: çoklu oluşturmada bayrak açıldı!';
   end if;
   perform public.odev_yayinla(t_ogr, v_ka);
   perform public.odev_yayinla(t_ogr, v_kb);
@@ -240,18 +252,30 @@ begin
   dn := (public.deneme_hesabi_olustur(t_ogr, v_sinif))->0;
   v_dn := (dn ->> 'id')::uuid;
   t_dn := (public.giris(dn ->> 'ogrenci_kodu')) ->> 'token';
+  -- 0087: deneme hesabı da gerçek öğrenciyle AYNI kuralı yaşıyor —
+  -- eksik sayfa artık geçiyor, fazla sayfa hâlâ geçmiyor. Deneme
+  -- hesabının amacı öğretmenin öğrencinin gördüğünü görmesi; kural
+  -- ayrışırsa o amaç bozulur.
+  r := public.odev_gonder(t_dn, v_bos, 'cozum/' || v_bos || '/' || v_dn || '.jpg', null, null);
+  if not exists (select 1 from public.gonderimler
+                  where odev_id = v_bos and ogrenci_id = v_dn) then
+    raise exception 'HATA: deneme hesabında 1/2 sayfa kabul edilmedi!';
+  end if;
   begin
-    perform public.odev_gonder(t_dn, v_bos, 'cozum/' || v_bos || '/' || v_dn || '.jpg', null, null);
-    raise exception 'HATA: deneme hesabında eksik sayfa kabul edildi!';
-  exception when invalid_parameter_value then null; end;
+    perform public.odev_gonder(t_dn, v_bos, 'cozum/' || v_bos || '/' || v_dn || '.jpg', null,
+                               array['cozum/' || v_bos || '/' || v_dn || '-2.jpg',
+                                     'cozum/' || v_bos || '/' || v_dn || '-3.jpg']);
+    raise exception 'HATA: deneme hesabında fazla sayfa kabul edildi!';
+  exception when invalid_parameter_value then null;
+            when unique_violation then null; end;
   perform public.deneme_hesabi_sil(t_ogr, v_dn);
-  raise notice '    deneme hesabı eksik sayfayla gönderemiyor: OK';
+  raise notice '    deneme hesabı: eksik sayfa geçiyor, fazla geçmiyor: OK';
 
   -- Temizlik
   update public.ogrenciler set aktif = false where id in (v_ali, v_yabanci_ogr);
   update public.odevler set yayinda = false where id in (v_dort, v_eski, v_kirk, v_bos, v_ka, v_kb);
 
   raise notice '';
-  raise notice 'HER SAYFA ZORUNLU TESTLERİ: 7 GRUP GEÇTİ';
+  raise notice 'ÇÖZÜM SAYFASI SINIRI TESTLERİ (0078 + 0087): 7 GRUP GEÇTİ';
 end;
 $$;

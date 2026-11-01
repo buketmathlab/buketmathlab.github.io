@@ -1,5 +1,10 @@
 /**
- * 0078 — ÖDEVİN HER SAYFASI ZORUNLU: GÖVDE FARKI + TARAYICIDA UÇTAN UCA
+ * ÇÖZÜM SAYFASI SINIRI: GÖVDE FARKI (0078) + TARAYICIDA UÇTAN UCA (0087)
+ *
+ * 0087 ALT SINIRI KALDIRDI (öğretmenin kararı: "çözüm sayfası en fazla
+ * soru kağıdının sayfası kadar olsun, fakat alt sınır olmasın"). Bu
+ * dosyanın B bölümü o yüzden yeniden yazıldı; A bölümü AYNEN DURUYOR,
+ * çünkü o 0078 DOSYASINI ölçüyor ve 0078 dosyası değişmedi.
  *
  * A. GÖVDE FARKI (tarayıcısız). 0078 yedi fonksiyonu yeniden tanımlıyor.
  *    Her gövde, kaynağındaki (en son tanım) gövdeye AŞAĞIDAKİ DEĞİŞİMLER
@@ -11,10 +16,28 @@
  *    Z1. Öğretmen soru PDF'i seçince sayfa sayısı OTOMATİK geliyor
  *        ("Soru PDF'i 4 sayfa; sayı oradan geldi"), düzeltilebiliyor ve ağa
  *        düzeltilen değer gidiyor.
- *    Z2. Öğrenci, her sayfası zorunlu ödev, 360 px: gerekçe, sayaç ve
- *        açıklama görünüyor; yatay taşma yok; "birleştir/tek görsel" yok.
- *    Z3. Öğrenci 2/2 sayfayla gönderiyor: odev_gonder 1 + 1 ek sayfa.
- *    Z4. Öğrenci 1/2 sayfayla gönderemiyor: çağrı yok, eksik uyarısı var.
+ *    Z2. Öğrenci, 360 px: sayaç ve açıklama ÜST sınırı söylüyor; "eksik"
+ *        ve "zorunlu" dili YOK; yatay taşma yok; "birleştir/tek görsel" yok.
+ *    Z3. Öğrenci 2/2 sayfayla gönderiyor: odev_gonder 1 + 1 ek sayfa,
+ *        hiçbir şey sorulmuyor.
+ *    Z4. Öğrenci 1/2 sayfayla GÖNDEREBİLİYOR — ama önce soruluyor:
+ *        "Yine de gönder" denince `odev_gonder` gidiyor, "Geri dön"
+ *        denince gitmiyor.
+ *
+ * ---------------------------------------------------------------------------
+ * KUSUR PROVALARI (0087) — beşi de ısırdı
+ *
+ *   1. Eksik sayfa sorusu hiç sorulmaz yapıldı → Z4.
+ *   2. Soru soruluyor ama "Yine de gönder" göndermiyor → Z4.
+ *   3. Uyarı sınır kadar sayfada da çıkar yapıldı → Z3 ("2/2 sayfada
+ *      soru çıktı").
+ *   4. Sayaç yine "… sayfa eksik" diyor → Z2.
+ *   5. İpucu yine alt sınır diliyle → Z2.
+ *
+ * ÖLÇÜMÜN KENDİ KUSURU: Z2'nin yasak-dil listesinde önce yalnız
+ * "zorunlu" kelimesi vardı ve TEMİZ ekranda kırmızı yanıyordu — `Field`
+ * her zorunlu alana ekran okuyucu için " (zorunlu)" ekliyor, sayfa
+ * kuralıyla ilgisi yok. İddia gerçek cümlelere daraltıldı.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/sayfa-zorunlu-denetimi.mjs
@@ -273,13 +296,25 @@ console.log('--- Z1. Öğretmen: sayfa sayısı soru PDF\'inden otomatik, düzel
   await b.close();
 }
 
-console.log('--- Z2. Öğrenci, 360 px: gerekçe, sayaç, açıklama; taşma yok ---');
+console.log('--- Z2. Öğrenci, 360 px: sayaç ve açıklama üst sınırı söylüyor ---');
 {
   const { b, p } = await kur('ogrenci', `/ogrenci/odev/${ODEV}`, 360);
   const m = await metin(p);
-  for (const [ad, parca] of [['gerekçe', 'çözüm yolunun tamamını görebilsin'], ['sayaç', '0 / 2 sayfa eklendi · 2 sayfa eksik'],
-    ['açıklama', 'Bu ödev 2 sayfa. Her sayfanın çözümünü sırayla ekle']]) {
+  for (const [ad, parca] of [['sayaç', '0 / 2 sayfa seçildi'],
+    ['açıklama', 'Bu ödevde en fazla 2 sayfa gönderebilirsin']]) {
     if (!m.includes(parca)) bozuk(`${ad} yok`); else tamam(`${ad} görünüyor`);
+  }
+  // 0087: ALT SINIR DİLİ EKRANDAN GİTTİ. Kalsaydı öğrenci var olmayan
+  // bir kuralı okur ve olmayan bir sayfayı uydururdu.
+  //
+  // "zorunlu" KELİMESİ TEK BAŞINA ARANMIYOR: `Field` her zorunlu alana
+  // ekran okuyucu için " (zorunlu)" ekliyor — başlıkla, sayfa kuralıyla
+  // ilgisi yok. İlk yazdığım iddia onu yakalayıp temiz ekranda kırmızı
+  // yanmıştı; iddia gerçek cümlelere daraltıldı.
+  for (const yasak of ['sayfa eksik', 'her sayfanın çözümünü', 'göndermek zorunda',
+    'çözüm yolunun tamamını görebilsin']) {
+    if (m.includes(yasak)) bozuk(`eski katı dil duruyor: "${yasak}"`);
+    else tamam(`"${yasak}" yok`);
   }
   if (/birleştir|tek görsel|tek PDF/i.test(m)) bozuk('birleştirme sözü var'); else tamam('"birleştir/tek görsel" yok');
   const tasma = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -292,7 +327,7 @@ console.log('--- Z3. Öğrenci 2/2 sayfayla gönderiyor ---');
   const { b, p } = await kur('ogrenci', `/ogrenci/odev/${ODEV}`);
   await p.locator(EKLE).setInputFiles([{ name: 'a.png', mimeType: 'image/png', buffer: PNG }, { name: 'b.png', mimeType: 'image/png', buffer: PNG }]);
   await p.waitForTimeout(1000);
-  if (!(await metin(p)).includes('2 / 2 sayfa eklendi · tamam')) bozuk('sayaç tamam demedi');
+  if (!(await metin(p)).includes('2 / 2 sayfa seçildi')) bozuk('sayaç yanlış');
   const k = p.getByRole('checkbox', { name: /Bu ödevi kendim çözdüm/ });
   await k.evaluate((e) => e.scrollIntoView({ block: 'center' })); await k.check();
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
@@ -300,26 +335,45 @@ console.log('--- Z3. Öğrenci 2/2 sayfayla gönderiyor ---');
   const g = (await cagrilar(p)).filter((x) => x.ad === 'odev_gonder');
   if (g.length !== 1 || g[0].g.p_ek_sayfa_yollari?.length !== 1) bozuk(`gönderim yanlış: ${JSON.stringify(g)}`);
   else tamam('odev_gonder: 1 + 1 ek sayfa');
+  // SINIR KADAR SAYFA VARSA HİÇBİR ŞEY SORULMUYOR.
+  if ((await metin(p)).includes('Yine de gönderilsin mi')) bozuk('2/2 sayfada soru çıktı');
+  else tamam('2/2: soru yok');
   await b.close();
 }
 
-console.log('--- Z4. Öğrenci 1/2 sayfayla gönderemiyor ---');
+console.log('--- Z4. Öğrenci 1/2 sayfayla gönderebiliyor — ama önce soruluyor ---');
 {
+  // ÖNCE "GERİ DÖN": soru çıkıyor ve gönderim GİTMİYOR.
   const { b, p } = await kur('ogrenci', `/ogrenci/odev/${ODEV}`);
   await p.locator(EKLE).setInputFiles([{ name: 'a.png', mimeType: 'image/png', buffer: PNG }]);
   await p.waitForTimeout(1000);
-  if (!(await metin(p)).includes('1 / 2 sayfa eklendi · 1 sayfa eksik')) bozuk('sayaç eksik sayfayı söylemedi');
+  if (!(await metin(p)).includes('1 / 2 sayfa seçildi')) bozuk('sayaç yanlış');
   const k = p.getByRole('checkbox', { name: /Bu ödevi kendim çözdüm/ });
   await k.evaluate((e) => e.scrollIntoView({ block: 'center' })); await k.check();
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
-  await p.waitForTimeout(1000);
+  await p.waitForTimeout(800);
+  let m = await metin(p);
+  if (!m.includes('2 sayfalık ödeve 1 sayfa ekledin')) bozuk('eksik sayfa sorusu çıkmadı');
+  else tamam('soru çıktı: "2 sayfalık ödeve 1 sayfa ekledin"');
+  if (!m.includes('böyle gönderebilirsin')) bozuk('soru suçlayıcı dilde ya da eksik');
+  else tamam('dil yumuşak: "böyle gönderebilirsin"');
+  await p.getByRole('button', { name: 'Geri dön, sayfa ekleyeyim' }).click();
+  await p.waitForTimeout(600);
+  if ((await cagrilar(p)).some((x) => x.ad === 'odev_gonder')) bozuk('"Geri dön" dendiği hâlde gönderildi');
+  else tamam('"Geri dön": gönderim yok');
+
+  // SONRA "YİNE DE GÖNDER": gidiyor.
+  await p.getByRole('button', { name: 'Ödevi gönder' }).click();
+  await p.waitForTimeout(800);
+  await p.getByRole('button', { name: 'Yine de gönder' }).click();
+  await p.waitForTimeout(1500);
   const g = (await cagrilar(p)).filter((x) => x.ad === 'odev_gonder');
-  if (g.length) bozuk('eksik sayfayla odev_gonder çağrıldı');
-  else if (!(await metin(p)).includes('1 sayfa eksik. Ödevi gönderebilmek için')) bozuk('eksik uyarısı görünmedi');
-  else tamam('gönderim yok, "1 sayfa eksik" uyarısı');
+  if (g.length !== 1) bozuk(`"Yine de gönder" sonrası çağrı sayısı: ${g.length}`);
+  else if (g[0].g.p_ek_sayfa_yollari?.length) bozuk('tek sayfalık gönderimde ek sayfa gitti');
+  else tamam('"Yine de gönder": odev_gonder tek sayfayla gitti');
   await b.close();
 }
 
 console.log('');
-if (hata) { console.log(`HER SAYFA ZORUNLU DENETİMİ BAŞARISIZ — ${hata} sapma`); process.exit(1); }
-console.log('HER SAYFA ZORUNLU DENETİMİ GEÇTİ');
+if (hata) { console.log(`ÇÖZÜM SAYFASI SINIRI DENETİMİ BAŞARISIZ — ${hata} sapma`); process.exit(1); }
+console.log('ÇÖZÜM SAYFASI SINIRI DENETİMİ GEÇTİ');

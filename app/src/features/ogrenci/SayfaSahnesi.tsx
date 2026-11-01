@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Field, Input } from '@/components/ui/Field';
 import { Tag } from '@/components/ui/Tag';
-import { HER_SAYFA_GEREKCESI, sayfaIpucuMetni, sayfaSayacMetni } from '@/lib/cozum-sayfalari';
+import { sayfaIpucuMetni, sayfaSayacMetni } from '@/lib/cozum-sayfalari';
 
 export type Sayfa = { id: string; dosya: File };
 
 type Props = {
   sayfalar: readonly Sayfa[];
   sinir: number;
-  /** Her sayfa zorunlu mu (0078): sayaç eksik sayfayı söyler. */
-  zorunlu: boolean;
   /** Seçilen dosyalar sıkıştırılırken ekleme kapalı. */
   isliyor: boolean;
   hata: string | null;
@@ -21,7 +19,7 @@ type Props = {
 
 /**
  * Çözüm sayfaları (0054). 0078'den beri TEK YOL: her ödev burada sayfa
- * sayfa yükleniyor (tek görsele birleştirme kalktı). Her sayfası zorunlu
+ * sayfa yükleniyor (tek görsele birleştirme kalktı). 0087'den beri alt sınır yok:
  * ödevde sayaç eksik sayfayı söylüyor ve gerekçe bir kez yazıyor.
  *
  * SIRA = SAYFA NUMARASI. Öğretmen sayfaları öğrencinin eklediği sırayla
@@ -35,7 +33,7 @@ type Props = {
  * olduğu fotoğrafları birden seçebiliyor hem de kamerayla tek tek
  * ekleyebiliyor; her seçim listeye EKLENİYOR, üzerine yazmıyor.
  */
-export function SayfaSahnesi({ sayfalar, sinir, zorunlu, isliyor, hata, onEkle, onCikar, onDegistir }: Props) {
+export function SayfaSahnesi({ sayfalar, sinir, isliyor, hata, onEkle, onCikar, onDegistir }: Props) {
   const dolu = sayfalar.length >= sinir;
 
   return (
@@ -83,24 +81,21 @@ export function SayfaSahnesi({ sayfalar, sinir, zorunlu, isliyor, hata, onEkle, 
 
       {/* Sayaç CANLI BÖLGE: ekran okuyucu eklenen/çıkarılan sayfayı duysun. */}
       <p className="mb-2" aria-live="polite">
-        <Tag tur={sayfalar.length === 0 ? 'bilgi' : zorunlu && !dolu ? 'uyari' : 'basari'}>
-          <span className="sk-sayi">{sayfaSayacMetni(sayfalar.length, sinir, zorunlu)}</span>
+        {/* 0087: sayaç artık "eksik" demiyor — alt sınır yok, eksik
+            diye bir durum da yok. */}
+        <Tag tur={sayfalar.length === 0 ? 'bilgi' : 'basari'}>
+          <span className="sk-sayi">{sayfaSayacMetni(sayfalar.length, sinir)}</span>
         </Tag>
       </p>
-      {zorunlu && sayfalar.length === 0 && (
-        <p className="mb-2 text-[13px] text-ink">{HER_SAYFA_GEREKCESI}</p>
-      )}
 
       {dolu ? (
         <p className="text-[13px] text-muted">
-          {zorunlu
-            ? 'Bütün sayfalar eklendi. Bir sayfayı yenilemek istersen “Değiştir”e dokun.'
-            : 'Sınıra ulaştın. Başka bir sayfa eklemek için önce birini çıkar.'}
+          Sınıra ulaştın. Başka bir sayfa eklemek için önce birini çıkar.
         </p>
       ) : (
         <Field
           etiket={sayfalar.length === 0 ? 'Çözüm sayfaları' : `${sayfalar.length + 1}. sayfayı ekle`}
-          ipucu={sayfaIpucuMetni(sinir, zorunlu)}
+          ipucu={sayfaIpucuMetni(sinir)}
           zorunlu={sayfalar.length === 0}
           {...(hata ? { hata } : {})}
         >

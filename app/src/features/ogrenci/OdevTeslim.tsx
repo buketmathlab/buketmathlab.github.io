@@ -30,7 +30,8 @@ import { sureDurumu } from '@/lib/son-tarih';
 import { iptalMi, iptalSorulari, numaraListesi } from '@/lib/soru-iptali';
 import {
   cozumSayfaYolu,
-  eksikSayfaMetni,
+  eksikSayfaUyarisi,
+  type EksikSayfaUyarisi,
   oncedenYuklenenMetni,
   sahnedenCikar,
   sahneyeEkle,
@@ -81,6 +82,7 @@ export function OdevTeslim() {
   const [yuklemeYolu, setYuklemeYolu] = useState<YuklemeYolu>('yeni');
   // Boş cevap uyarısı açıkken dolu; "Yine de gönder" onu onaylıyor.
   const [bosUyari, setBosUyari] = useState<BosCevapUyarisi | null>(null);
+  const [eksikUyari, setEksikUyari] = useState<EksikSayfaUyarisi | null>(null);
   // El yazısı onayı (öğretmenin kuralı). Saklanmıyor; gönderimin ön şartı.
   const [elYazisiOnay, setElYazisiOnay] = useState(false);
   const [onayEksik, setOnayEksik] = useState(false);
@@ -95,7 +97,7 @@ export function OdevTeslim() {
    *
    * `odev_sayfa_kurali` {sayfa, tum_sayfalar} döndürüyor. Eski uç
    * `odev_sayfa_siniri` yedek: 0078 henüz çalıştırılmamışsa sınır oradan
-   * okunuyor, her sayfa zorunlu sayılmıyor. İkisi de okunamazsa {1, false}
+   * okunuyor. İkisi de okunamazsa {1}
    * — bir ayarın okunamaması ödev göndermeyi engellememeli (Part VIII).
    */
   const { veri: hamKural, durum: kuralDurumu } = useVeri<unknown>('odev_sayfa_kurali', {
@@ -106,7 +108,7 @@ export function OdevTeslim() {
     p_token: oturum?.token,
     p_odev_id: id,
   });
-  const { sayfa: sinir, tumSayfalar: zorunlu } = sayfaKuraliniOku(hamKural, hamSinir);
+  const { sayfa: sinir } = sayfaKuraliniOku(hamKural, hamSinir);
   // Kural gelmeden alan çizilmiyor: sayfa sayısı sonradan değişirse
   // öğrencinin o arada seçtiği sayfalar yanlış sayılırdı.
   const sinirHazir = kuralDurumu !== 'yukleniyor' && sinirDurumu !== 'yukleniyor';
@@ -203,7 +205,7 @@ export function OdevTeslim() {
 
     const sorunlar: string[] = [];
     const disarida = tasan + pdfTasan + (dosyalar.length - alinacak.length);
-    if (disarida > 0) sorunlar.push(tasmaMetni(sinir, disarida, zorunlu));
+    if (disarida > 0) sorunlar.push(tasmaMetni(sinir, disarida));
     if (okunamayan.length > 0) {
       sorunlar.push(`Okunamayan görsel: ${okunamayan.join(', ')}. Başka bir fotoğraf seçebilirsin.`);
     }
@@ -212,7 +214,7 @@ export function OdevTeslim() {
   }
 
   /**
-   * Bir sayfayı YERİNDE değiştirir (0078). Her sayfası zorunlu ödevde sıra
+   * Bir sayfayı YERİNDE değiştirir (0078). Sıra
    * sayfa numarası: yanlış çekilen 3. sayfa çıkarılıp sona eklenseydi 8.
    * sayfa olurdu. PDF seçilirse yalnız ilk sayfası alınır — tek sayfanın
    * yerine geçiyor.
@@ -242,7 +244,7 @@ export function OdevTeslim() {
     }
   }
 
-  async function gonder(bosOnaylandi = false) {
+  async function gonder(bosOnaylandi = false, eksikOnaylandi = false) {
     if (!odev || !oturum?.ogrenci) return;
     // 0082: ÖNCEKİ SAYFALARI KULLAN. Hiç yükleme yapılmıyor — o dosyalar
     // zaten depoda ve sunucu eski denemenin yollarını kabul ediyor.
@@ -250,12 +252,6 @@ export function OdevTeslim() {
     const dosyalar = sayfalar.map((s) => s.dosya);
     if (!oncekiyle && dosyalar.length === 0) {
       return setFotoHatasi('Çözüm fotoğrafı olmadan ödev gönderilemez.');
-    }
-    // HER SAYFA ZORUNLU (0078). Sunucu da reddediyor; burada söylemek
-    // öğrenciyi boşuna yüklemeden kurtarıyor. Düğme kapatılmıyor: öğrenci
-    // bastığında neyin eksik olduğunu görsün (el yazısı onayındaki kural).
-    if (!oncekiyle && zorunlu && dosyalar.length < sinir) {
-      return setFotoHatasi(eksikSayfaMetni(sinir - dosyalar.length));
     }
     // EL YAZISI ONAYI — sunucuya gitmeden. Düğme kapatılmıyor: öğrenci
     // bastığında neyin eksik olduğunu görsün.
@@ -270,6 +266,16 @@ export function OdevTeslim() {
       if (uyari) return setBosUyari(uyari);
     }
     setBosUyari(null);
+
+    // 0087: SINIRIN ALTINDA SAYFA VARSA BİR KEZ SOR — ENGEL DEĞİL.
+    // Alt sınır kalktı (öğretmenin kararı: çözümünü 3 sayfaya sığdıran
+    // öğrenci olmayan bir sayfayı uydurmasın). Soru yalnız kazara eksik
+    // göndermeyi önlüyor; "Yine de gönder" denince gidiyor.
+    if (!oncekiyle && !eksikOnaylandi) {
+      const uyari = eksikSayfaUyarisi(dosyalar.length, sinir);
+      if (uyari) return setEksikUyari(uyari);
+    }
+    setEksikUyari(null);
 
     setGonderiyor(true);
     const yollar: string[] = oncekiyle ? [...oncekiSayfalar] : [];
@@ -357,6 +363,17 @@ export function OdevTeslim() {
         onayTuru={bosUyari?.hepsiBos ? 'tehlike' : 'birincil'}
         onOnay={() => void gonder(true)}
       />
+      {/* 0087 — EKSİK SAYFA SORUSU. Boş optik uyarısıyla aynı desen;
+          ikisi de engel değil, bir kez sorulan soru. */}
+      <Dialog
+        acik={eksikUyari !== null}
+        onKapat={() => setEksikUyari(null)}
+        baslik={eksikUyari ? `${eksikUyari.baslik}. Yine de gönderilsin mi?` : ''}
+        {...(eksikUyari ? { aciklama: eksikUyari.metin } : {})}
+        kapatEtiketi="Geri dön, sayfa ekleyeyim"
+        onayEtiketi="Yine de gönder"
+        onOnay={() => void gonder(true, true)}
+      />
       {!odev ? (
         <Card>
           <p className="mb-3 text-[15px] text-ink">Bu ödevi bulamadım.</p>
@@ -382,7 +399,6 @@ export function OdevTeslim() {
             })
           }
           sinir={sinir}
-          zorunlu={zorunlu}
           sinirHazir={sinirHazir}
           sayfalar={sayfalar}
           isliyor={isliyor}
@@ -425,8 +441,6 @@ type IcerikProps = {
   onCevap: (no: number, sik: string | null) => void;
   /** Ödevin sayfa sayısı (0054/0078); okunamazsa 1. */
   sinir: number;
-  /** Her sayfa zorunlu mu (0078 sonrası ödev). */
-  zorunlu: boolean;
   /** Sınır yanıtı geldi mi (başarılı ya da hatalı). */
   sinirHazir: boolean;
   sayfalar: readonly Sayfa[];
@@ -460,7 +474,6 @@ function OdevIcerigi({
   gonderiyor,
   onCevap,
   sinir,
-  zorunlu,
   sinirHazir,
   sayfalar,
   isliyor,
@@ -747,7 +760,6 @@ function OdevIcerigi({
               <SayfaSahnesi
                 sayfalar={sayfalar}
                 sinir={sinir}
-                zorunlu={zorunlu}
                 isliyor={isliyor}
                 hata={fotoHatasi}
                 onEkle={onSayfaEkle}
