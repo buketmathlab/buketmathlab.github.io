@@ -7639,3 +7639,63 @@ güvence vermek kadar kötü.
 
 Öğretmen yayından sonra yeni bir yedek alacak ve o dosya aynı ölçümden
 geçirilecek: **eksik tablo kalmadığı dosyanın kendisinde kanıtlanacak.**
+
+## Soruşturma kapandı — "kaybolan gönderimler" aslında yeniden açmalar
+
+Öğretmen, gönderilmiş ve **puanlanmış** ödevlerin "gönderilmedi"
+göründüğünü bildirdi. Sonuç: **sistemde veri kaybı yok.** Dört yedek ve
+denetim izi birlikte okununca tablo kapandı.
+
+### Dört anlık görüntü (4 Ekim → 1 Kasım, dört hafta)
+
+| | 4 Ekim | 15 Ekim | 19 Ekim | 1 Kasım |
+| --- | --- | --- | --- | --- |
+| Öğrenci | 377 | 379 | 379 | 379 |
+| Ödev | 20 | 29 | 38 | 61 |
+| Gönderim | 225 | 551 | 751 | 989 |
+
+Kimlik kimlik karşılaştırıldı: **hiç ödev silinmemiş, hiç öğrenci
+silinmemiş**, toplam **iki** gönderim kaybolmuş — ve ikisi de denetim
+izindeki yeniden açma listesinde, öğretmenin kendi gerekçesiyle.
+
+### Denetim izi: 19 satırın 17'si öğretmenin kendi işlemi
+
+Gerekçeler onun yazdıkları: *"Soruda düzeltme yapıldı."*, *"Kaydırma
+yapmış, düzeltme imkanı verildi."*, *"Çözüm kağıdı sisteme siyah görüntü
+olarak ulaştı."*, *"Mazereti dolayısıyla ek süre verildi."* Kalan 2
+satır, artık var olmayan ödevlere ait (0089 öncesi silmeler — 0089 tam o
+sessizliği kapatıyor).
+
+Bildirilen örnek listede: **"1. Tema Tekrarı"nda bir soru düzeltilince
+altı öğrencinin gönderimi aynı gerekçeyle yeniden açılmış.** Önceki
+puanları 62.50 ile 100.00 arasındaydı.
+
+### ASIL KUSUR BURADA: "yeniden aç" = sil, ama kimse bunu görmüyor
+
+`gonderimi_yeniden_ac` gönderim satırını **siliyor** (0081). Teknik
+olarak doğru ve bilinçli bir karar; ama sonucunda:
+
+- öğrenci ekranında ödev "gönderilmedi"ye dönüyor, **puanı kayboluyor**;
+- öğretmen listesinde öğrenci "göndermemiş" görünüyor;
+- **veli, çocuğunun ödevi hiç yapmadığını sanıyor.**
+
+Öğretmen "sil" demedi, "yeniden aç" dedi. Öğrenci gerçekten göndermişti
+ve puanı hesaplanmıştı. **İkisi de haklı; ürün ikisine de yanlış şey
+söylüyor.** Öğretmenin endişesi ("velilere ödev yapmadı demek büyük
+haksızlık olur") tam olarak bu davranıştan doğuyor.
+
+Önerilen tur: yeniden açılmış gönderim, öğretmen ve veli ekranında
+*"Yeniden açıldı — önceki gönderim 75 puan · soruda düzeltme yapıldı"*
+diye görünsün. Veri denetim izinde zaten duruyor; yalnız ekrana
+taşınacak.
+
+### Yöntem dersi: anlık görüntü karşılaştırmasının kör noktası
+
+İlk turda "veri kaybı yok" denildi ve bu **fazla kesin bir cümleydi**.
+İki yedeği karşılaştırmak yalnız anlık görüntülerde VAR OLAN satırları
+görebilir; iki yedek arasında oluşup yine o aralıkta silinen bir satır
+görünmez. Bildirilen örneklerden biri (30 Ekim teslimli ödev) tam o kör
+noktadaydı. Kesin cevap **denetim izinden** geldi, yedeklerden değil.
+
+**Ders: anlık görüntü neyin kaybolduğunu değil, neyin kaldığını söyler.
+"Ne oldu" sorusunun cevabı izdedir.**
