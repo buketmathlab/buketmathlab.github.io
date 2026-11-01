@@ -22,6 +22,16 @@ export type YedekOzeti = {
   gonderim: number;
   mesaj: number;
   kod: number;
+  /**
+   * Denetim izi satırı (0089). 0089 çalıştırılmamış sunucuda 0 —
+   * `yedekIzNotu` o durumu AYRI bir cümleyle söylüyor, çünkü "0 satır"
+   * ile "bu sürüm izi hiç almıyor" aynı şey değil.
+   */
+  iz: number;
+  /** Sunucudaki toplam iz satırı; alan gelmezse null. */
+  izToplam: number | null;
+  /** 50 000 sınırına takılıp kesildi mi. */
+  izKesildi: boolean;
 };
 
 /**
@@ -45,6 +55,7 @@ export function yedekDosyaAdi(tarih: Date = new Date()): string {
 export function yedekOzeti(veri: unknown): YedekOzeti {
   const d = (veri ?? {}) as Record<string, unknown>;
   const say = (ad: string) => (Array.isArray(d[ad]) ? (d[ad] as unknown[]).length : 0);
+  const toplam = d['denetim_izi_toplam'];
   return {
     ogrenci: say('ogrenciler'),
     sinif: say('siniflar'),
@@ -52,7 +63,36 @@ export function yedekOzeti(veri: unknown): YedekOzeti {
     gonderim: say('gonderimler'),
     mesaj: say('mesajlar'),
     kod: say('giris_kodlari'),
+    iz: say('denetim_izi'),
+    izToplam: typeof toplam === 'number' ? toplam : null,
+    izKesildi: d['denetim_izi_kesildi'] === true,
   };
+}
+
+/**
+ * DENETİM İZİ CÜMLESİ (0089) — üç ayrı durum, üç ayrı cümle.
+ *
+ * Yedek 0034'ten beri denetim izini HİÇ almıyordu ve bu ancak gerçek bir
+ * kayıp yaşandığında anlaşıldı: silinen gönderimlerin tek kanıtı o
+ * tablodaydı ve yedekte yoktu. Artık alınıyor, ama 50 000 satırla
+ * sınırlı — sınırsız alsaydık dosya bir gün tabletin belleğini aşardı.
+ *
+ * KESİLDİYSE SÖYLENİYOR. Sessizce eksik yedek vermek, yedeği hiç
+ * vermemekten kötü olurdu: öğretmen elinde tam bir kopya olduğunu sanır.
+ *
+ * Uç yoksa (0089 henüz çalıştırılmamış) ayrı bir cümle: "0 satır" demek
+ * yanlış olurdu, iz orada duruyor — yedeğe girmiyor.
+ */
+export function yedekIzNotu(o: YedekOzeti): string {
+  if (o.izToplam === null) {
+    return 'Denetim izi bu yedekte YOK. Sunucuda 0089 güncellemesi henüz '
+      + 'çalıştırılmamış; çalıştırıldığında silinen gönderimlerin kaydı da yedeğe girer.';
+  }
+  if (o.izKesildi) {
+    return `Denetim izinin yalnız EN YENİ ${o.iz} satırı alındı (sunucuda toplam `
+      + `${o.izToplam}). Daha eski kayıtlar bu dosyada yok.`;
+  }
+  return `Denetim izi tam alındı: ${o.iz} satır.`;
 }
 
 /**
@@ -104,4 +144,39 @@ export function yedekTazelik(yasGun: number | null): { metin: string; uyar: bool
     metin: `Son yedek ${yasGun} gün önce alındı.`,
     uyar: yasGun > TAZE_GUN,
   };
+}
+
+/**
+ * ÖDEV SİLME SEBEBİ (0089) — gönderimi olan ödevde zorunlu.
+ *
+ * Sunucu da reddediyor (`odev_sil`, 22023); burada söylemek öğretmeni
+ * boşuna bir ağ turundan kurtarıyor. Düğme KAPATILMIYOR: bastığında
+ * neyin eksik olduğunu görsün (el yazısı onayındaki kuralın aynısı).
+ *
+ * Sınırlar sunucudakiyle birebir: 3–500 karakter.
+ */
+export function silmeSebebiHatasi(gonderimSayisi: number, sebep: string): string | null {
+  if (gonderimSayisi <= 0) return null;
+  const s = sebep.trim();
+  if (s.length < 3) return 'Bu ödevi neden sildiğinizi yazın.';
+  if (s.length > 500) return 'Sebep en fazla 500 karakter olabilir.';
+  return null;
+}
+
+/**
+ * Silme penceresinde öğretmene ne olacağını söyleyen cümle.
+ *
+ * 0089: artık "geri alınamaz" demiyoruz, çünkü doğru değil — silinen her
+ * gönderim tam satırıyla denetim izine yazılıyor ve oradan geri
+ * getirilebiliyor. Ödevin kendisi listeden kalkar, puanlar kayıt altında
+ * kalır. Yanlış bir söz vermek de, olmayan bir güvence vermek kadar kötü.
+ */
+export function silmeUyarisi(baslik: string, gonderimSayisi: number): string {
+  if (gonderimSayisi <= 0) {
+    return `“${baslik}” silinecek. Henüz gönderim yok.`;
+  }
+  return (
+    `“${baslik}” silinecek. Bu ödeve yapılmış ${gonderimSayisi} gönderim ve puan da `
+    + 'silinir. Hepsi denetim izine yazılıyor; gerekirse geri getirilebilir.'
+  );
 }

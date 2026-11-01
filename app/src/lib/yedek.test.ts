@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  silmeSebebiHatasi,
+  silmeUyarisi,
   yedekDosyaAdi,
   yedekGecerliMi,
+  yedekIzNotu,
   yedekOzeti,
   yedekTazelik,
   yedekYasiGun,
@@ -77,8 +80,12 @@ describe('yedekGecerliMi', () => {
 
 describe('yedekOzeti', () => {
   it('gerçekte ne alındığını sayıyor', () => {
+    // 0089: özete denetim izi alanları eklendi. `TAM` 0089 öncesi biçimde
+    // (sunucuda güncelleme çalışmamış hâli) ve o yedek hâlâ geçerli —
+    // beklenti bugünkü şekle çekildi, iddia gevşetilmedi.
     expect(yedekOzeti(TAM)).toEqual({
       ogrenci: 3, sinif: 2, odev: 1, gonderim: 2, mesaj: 0, kod: 2,
+      iz: 0, izToplam: null, izKesildi: false,
     });
   });
 
@@ -127,5 +134,99 @@ describe('yedekTazelik', () => {
     expect(yedekTazelik(0).metin).toBe('Bugün yedek aldınız.');
     expect(yedekTazelik(1).metin).toBe('Son yedek dün alındı.');
     expect(yedekTazelik(3).metin).toBe('Son yedek 3 gün önce alındı.');
+  });
+});
+
+// ===========================================================================
+// 0089 — denetim izi ve silme sebebi
+// ===========================================================================
+describe('yedekIzNotu (0089)', () => {
+  const temel = {
+    ogrenci: 1, sinif: 1, odev: 1, gonderim: 1, mesaj: 1, kod: 1,
+  };
+
+  // 0089 ÇALIŞTIRILMAMIŞ SUNUCU: alan hiç gelmez. "0 satır" demek yanlış
+  // olurdu — iz orada duruyor, yedeğe girmiyor. Ayrı cümle gerekiyor.
+  it('uç yoksa "bu yedekte YOK" der, "0 satır" demez', () => {
+    const m = yedekIzNotu({ ...temel, iz: 0, izToplam: null, izKesildi: false });
+    expect(m).toContain('YOK');
+    expect(m).toContain('0089');
+    expect(m).not.toContain('0 satır');
+  });
+
+  // SESSİZCE EKSİK YEDEK VERMEK, YEDEĞİ HİÇ VERMEMEKTEN KÖTÜ.
+  it('kesildiyse kaç satır alındığını ve toplamı söyler', () => {
+    const m = yedekIzNotu({ ...temel, iz: 50000, izToplam: 73412, izKesildi: true });
+    expect(m).toContain('50000');
+    expect(m).toContain('73412');
+    expect(m).toContain('EN YENİ');
+  });
+
+  it('tam alındıysa bunu söyler', () => {
+    const m = yedekIzNotu({ ...temel, iz: 1200, izToplam: 1200, izKesildi: false });
+    expect(m).toContain('tam alındı');
+    expect(m).toContain('1200');
+  });
+});
+
+describe('yedekOzeti — denetim izi alanları (0089)', () => {
+  it('yeni alanları okur', () => {
+    const o = yedekOzeti({
+      ogrenciler: [], siniflar: [], odevler: [], gonderimler: [], mesajlar: [],
+      giris_kodlari: [], denetim_izi: [1, 2, 3], denetim_izi_toplam: 9,
+      denetim_izi_kesildi: true,
+    });
+    expect(o.iz).toBe(3);
+    expect(o.izToplam).toBe(9);
+    expect(o.izKesildi).toBe(true);
+  });
+
+  it('eski yedekte alanlar yoksa çökmez, izToplam null olur', () => {
+    const o = yedekOzeti({ ogrenciler: [], gonderimler: [] });
+    expect(o.iz).toBe(0);
+    expect(o.izToplam).toBeNull();
+    expect(o.izKesildi).toBe(false);
+  });
+});
+
+// ELDEKİ ESKİ YEDEK "BOZUK" SAYILMAMALI: öğretmenin 1 Kasım'da aldığı
+// dosya 0089 öncesi biçimde ve hâlâ geçerli bir yedek.
+describe('yedekGecerliMi — 0089 eski dosyaları reddetmiyor', () => {
+  it('denetim izi olmayan eski yedek geçerli sayılır', () => {
+    expect(yedekGecerliMi({
+      siniflar: [], ogrenciler: [], giris_kodlari: [], odevler: [],
+      gonderimler: [], mesajlar: [], dersler: [], odemeler: [],
+    })).toBe(true);
+  });
+});
+
+describe('silmeSebebiHatasi (0089)', () => {
+  it('gönderim yoksa sebep istemez', () => {
+    expect(silmeSebebiHatasi(0, '')).toBeNull();
+  });
+
+  it('gönderim varsa boş ve kısa sebebi reddeder', () => {
+    expect(silmeSebebiHatasi(3, '')).toBe('Bu ödevi neden sildiğinizi yazın.');
+    expect(silmeSebebiHatasi(3, ' ab ')).toBe('Bu ödevi neden sildiğinizi yazın.');
+  });
+
+  it('500 karakterden uzun sebebi reddeder — sunucudaki sınırla aynı', () => {
+    expect(silmeSebebiHatasi(1, 'a'.repeat(501))).toContain('500');
+    expect(silmeSebebiHatasi(1, 'a'.repeat(500))).toBeNull();
+  });
+});
+
+describe('silmeUyarisi (0089)', () => {
+  // "Geri alınamaz" ARTIK YANLIŞ: her gönderim ize yazılıyor. Olmayan bir
+  // kesinlik söylemek, olmayan bir güvence vermek kadar kötü.
+  it('gönderim varken sayıyı söyler ve "geri alınamaz" DEMEZ', () => {
+    const m = silmeUyarisi('Dörtgenler', 24);
+    expect(m).toContain('24 gönderim');
+    expect(m).toContain('denetim izine');
+    expect(m).not.toContain('geri alınamaz');
+  });
+
+  it('gönderim yokken kısa cümle', () => {
+    expect(silmeUyarisi('Taslak', 0)).toContain('Henüz gönderim yok');
   });
 });

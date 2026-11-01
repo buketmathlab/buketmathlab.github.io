@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { Dialog } from '@/components/ui/Dialog';
+import { Field, Input } from '@/components/ui/Field';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useDosyaAc } from '@/components/DosyaAcici';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { silmeSebebiHatasi, silmeUyarisi } from '@/lib/yedek';
 import { ortalamaYazisi } from '@/lib/odev-kiyasi-metni';
 import { tarihSatiri, uzatmaEtiketi } from '@/lib/odev-tarihleri';
 import { rpc } from '@/services/supabase';
@@ -54,6 +56,10 @@ export function Odevler() {
   >('hepsi');
   const [sinifId, setSinifId] = useState('');
   const [silinecek, setSilinecek] = useState<OdevSatiri | null>(null);
+  // 0089: gönderimi olan ödevde sebep zorunlu. Sunucu da reddediyor;
+  // burada söylemek öğretmeni boşuna bir ağ turundan kurtarıyor.
+  const [silmeSebebi, setSilmeSebebi] = useState('');
+  const [silmeHatasi, setSilmeHatasi] = useState<string | null>(null);
   const [islemde, setIslemde] = useState(false);
 
   const { veri, durum, hata, yenile } = useVeri<OdevSatiri[]>(
@@ -97,10 +103,27 @@ export function Odevler() {
 
   async function sil() {
     if (!silinecek) return;
+    // Düğme KAPATILMIYOR: öğretmen bastığında neyin eksik olduğunu görsün
+    // (el yazısı onayındaki kuralın aynısı).
+    const sorun = silmeSebebiHatasi(silinecek.gonderim_sayisi, silmeSebebi);
+    if (sorun) {
+      setSilmeHatasi(sorun);
+      return;
+    }
     setIslemde(true);
     try {
-      await rpc('odev_sil', { p_token: oturum?.token, p_id: silinecek.id });
-      bildir(`${silinecek.baslik} silindi`);
+      const sonuc = await rpc<{ silinen_gonderim?: number }>('odev_sil', {
+        p_token: oturum?.token,
+        p_id: silinecek.id,
+        // 0089: gönderim yoksa null gidiyor — sunucu zaten sormuyor.
+        p_neden: silmeSebebi.trim() || null,
+      });
+      const kac = sonuc?.silinen_gonderim ?? 0;
+      bildir(
+        kac > 0
+          ? `${silinecek.baslik} silindi — ${kac} gönderim denetim izine yazıldı`
+          : `${silinecek.baslik} silindi`,
+      );
       setSilinecek(null);
       yenile();
     } catch (e) {
@@ -361,22 +384,45 @@ export function Odevler() {
 
       <Dialog
         acik={silinecek !== null}
-        onKapat={() => setSilinecek(null)}
+        onKapat={() => {
+          setSilinecek(null);
+          setSilmeSebebi('');
+          setSilmeHatasi(null);
+        }}
         baslik="Ödevi sil"
-        aciklama={
-          silinecek
-            ? `“${silinecek.baslik}” silinecek. ${
-                silinecek.gonderim_sayisi > 0
-                  ? `Bu ödeve yapılmış ${silinecek.gonderim_sayisi} gönderim ve puan da silinir.`
-                  : 'Henüz gönderim yok.'
-              } Bu işlem geri alınamaz.`
-            : ''
-        }
+        /* 0089: "geri alınamaz" cümlesi KALKTI — artık doğru değil.
+           Silinen her gönderim tam satırıyla denetim izine yazılıyor ve
+           oradan geri getirilebiliyor. Olmayan bir kesinlik söylemek,
+           olmayan bir güvence vermek kadar kötü. */
+        aciklama={silinecek ? silmeUyarisi(silinecek.baslik, silinecek.gonderim_sayisi) : ''}
         onayEtiketi="Sil"
         onayTuru="tehlike"
         onOnay={sil}
         onayYukleniyor={islemde}
-      />
+      >
+        {/* SEBEP YALNIZ GÖNDERİM VARKEN. Boş bir ödevi silmek için sebep
+            istemek, öğretmeni gereksiz yere yavaşlatırdı. */}
+        {silinecek && silinecek.gonderim_sayisi > 0 && (
+          <Field
+            etiket="Neden siliyorsunuz?"
+            ipucu="Denetim izine bu sebeple yazılacak; sonradan ne olduğunu anlamanızı sağlar."
+            zorunlu
+            {...(silmeHatasi ? { hata: silmeHatasi } : {})}
+          >
+            {(k) => (
+              <Input
+                {...k}
+                value={silmeSebebi}
+                onChange={(e) => {
+                  setSilmeSebebi(e.target.value);
+                  setSilmeHatasi(null);
+                }}
+                placeholder="Yanlış sınıfa verilmiş"
+              />
+            )}
+          </Field>
+        )}
+      </Dialog>
     </>
   );
 }

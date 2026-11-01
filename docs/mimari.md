@@ -7569,3 +7569,73 @@ koşuluyla veriyor; `odev_detay` (0083/0085/0088) kardeş kartını ayrıca
 "3 sınıf" yazarken düzenleme ekranında hiçbir kardeş kartı çıkmaz.
 Bugünkü veride `ogretmen_id` NOT NULL ve 0033'te geri dolduruldu, yani
 bu turda yaşanan sorun bu değildi. Ayrı bir turda ele alınacak.
+
+## 0089 — Ödev silme geri alınabilir olsun, yedek eksiksiz olsun (1 Kasım)
+
+Öğretmenin bildirimi: *"Öğrenciler daha önceden gönderdikleri ödevleri
+gönderilmemiş olarak görüyorlar. Göndermişler, hatta puanlandırılmış."*
+
+Adli rapor (`supabase/panel-icin/kayip-gonderim-raporu.sql`) canlı
+veritabanında koşturuldu: **19 gönderim denetim izinde var, bugün yok.**
+Kayıp gerçek. Sebebin hangi yol olduğu bu tur yazılırken henüz
+okunmamıştı; ama araştırma iki gerçek kusur çıkardı ve ikisi de bu
+olayın sebebi olabilir.
+
+### 1. Ödev silinince puanlar sessizce gidiyordu
+
+`gonderimler.odev_id` yabancı anahtarı `on delete cascade`. Ödev
+silinince gönderimler ve puanlar da siliniyor, ama denetim izine yalnız
+`odev_silindi` yazılıyordu — silinen gönderimler için **tek satır bile
+yoktu.** Arayüz uyarıyordu, sunucu kayıt tutmuyordu.
+
+Silme yasaklanmadı: öğretmen ödevin sahibi. Silme **geri alınabilir**
+oldu — gönderim varsa sebep zorunlu (0081'in kalıbı) ve silinen her
+gönderim tam satırıyla `gonderim_odevle_silindi` olarak ize giriyor.
+
+### 2. Yedek 0034'ten beri güncellenmemişti
+
+Öğretmenin 1 Kasım'da aldığı **gerçek yedek dosyası ölçüldü**: 2,13 MB,
+geçerli JSON, 989 gönderim ve 986 puan içeriyor — ama **12 tablo var, 13
+tablo yok.** En acısı `denetim_izi`: 19 kayıp gönderimin tek kanıtı
+orada ve yedekte yoktu. `odev_ek_sure` de yoktu, yani bir geri
+yüklemede öğrencilerin kişisel teslim tarihleri sessizce kaybolurdu.
+
+Giren: denetim izi (en yeni 50 000 satır + kesilme bayrağı),
+`odev_ek_sure`, duyurular üçlüsü, anket üçlüsü, `okundu`, `ayarlar`.
+Bilerek girmeyen: `oturumlar` (canlı jetonlar — `pin_hash`in dışarıda
+bırakılmasıyla aynı gerekçe), `giris_denemeleri`, `uygulanan_migrationlar`.
+
+**Kesilme SÖYLENİYOR.** Sessizce eksik yedek vermek, öğretmene elinde
+tam bir kopya olduğunu sandırırdı; `yedekIzNotu` üç durumu üç ayrı
+cümleyle ayırıyor (tam alındı / en yeni N satır alındı / bu yedekte yok).
+
+### Bir cümle düzeltildi
+
+Silme penceresindeki *"Bu işlem geri alınamaz."* **kaldırıldı** —
+0089'dan beri doğru değil. Olmayan bir kesinlik söylemek, olmayan bir
+güvence vermek kadar kötü.
+
+### Ölçüm
+
+- `silme_izi_testleri.sql` — 10 grup. **Yedi kusur provasının hepsi
+  ısırdı:** A (sebep kapısı), B (iz hiç yazılmadı), C (iz tam satır
+  taşımadı → puan yok), D (yedekteki iz boş), E ve F (öz-denetim
+  yakaladı), **E2** (aynı jeton sızıntısı öz-denetimi atlattı → çalışma
+  zamanı kapısı tek başına tuttu).
+- `silme-izi-denetimi.mjs` **yeni denetim** (süpürme 59 → 60): sebep
+  boşken ağa tek bir `odev_sil` çağrısı bile gitmiyor; `p_neden`
+  gidiyor; gönderimsiz ödevde sebep sorulmuyor; yedek kartı üç durumu da
+  söylüyor. **Dört arayüz kusur provası da ısırdı.**
+- **Koşum takımı dersi (yine):** U4'ün ilk iki yazımı derlemeyi bozdu ve
+  denetim ESKİ PAKETİ ölçtü — "ısırdı" sanılan sonuç bir öncekinin
+  sonucuydu. Prova artık ancak `npm run build` "built in" dedikten sonra
+  koşuyor. **Derlemeden geçmeyen bir yama prova değildir.**
+- `kayip-gonderim-raporu.sql` yeni izi tanıyor ve bu **uçtan uca**
+  doğrulandı: öğrenci gerçekten gönderdi (100 puan), öğretmen sebeple
+  sildi, rapor *"ÖDEVLE BİRLİKTE SİLİNDİ · puan: 100.00 · sebep: … →
+  İZDE SAKLI, GERİ ALINABİLİR"* dedi.
+
+### Bu turun kabul ölçütü yayından SONRA
+
+Öğretmen yayından sonra yeni bir yedek alacak ve o dosya aynı ölçümden
+geçirilecek: **eksik tablo kalmadığı dosyanın kendisinde kanıtlanacak.**

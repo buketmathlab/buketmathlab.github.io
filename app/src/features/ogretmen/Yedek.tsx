@@ -7,6 +7,7 @@ import { rpc } from '@/services/supabase';
 import {
   yedekDosyaAdi,
   yedekGecerliMi,
+  yedekIzNotu,
   yedekOzeti,
   yedekTazelik,
   yedekYasiGun,
@@ -113,6 +114,21 @@ export function Yedek() {
         </p>
       )}
 
+      {/* 0089 — DENETİM İZİ. Yedek 0034'ten beri bu tabloyu hiç almıyordu
+          ve bu ancak gerçek bir kayıp yaşandığında anlaşıldı: silinen
+          gönderimlerin tek kanıtı oradaydı. Artık alınıyor; 50 000
+          satırla sınırlı ve KESİLDİYSE SÖYLENİYOR — sessizce eksik yedek
+          vermek, öğretmene elinde tam bir kopya olduğunu sandırırdı. */}
+      {ozet && (
+        <p
+          className={`mt-2 text-[13px] ${
+            ozet.izToplam === null || ozet.izKesildi ? 'text-warning' : 'text-ink'
+          }`}
+        >
+          {yedekIzNotu(ozet)}
+        </p>
+      )}
+
       <div className="mt-4 rounded-sk-sm bg-warning-bg p-3">
         <p className="text-[13px] text-warning">
           <strong>Bu dosya sistemin kendisi kadar hassastır.</strong> İçinde öğrenci ve veli
@@ -123,7 +139,8 @@ export function Yedek() {
 
       <p className="mt-3 text-[13px] text-muted">
         Dosyada <strong>kayıtlar</strong> var: öğrenciler, kodlar, sınıflar, ödevler, cevap
-        anahtarları, gönderimler, puanlar, mesajlar, dersler ve ödemeler.{' '}
+        anahtarları, gönderimler, puanlar, mesajlar, dersler, ödemeler, duyurular, anketler,
+        kişisel ek süreler ve denetim izi.{' '}
         <strong>Dosyalar yok</strong> — çözüm fotoğrafları ve PDF'ler Supabase Storage'da
         duruyor, burada yalnız adresleri var. PIN'iniz de yedeğe girmiyor; geri yüklemeden
         sonra yeniden belirlersiniz.

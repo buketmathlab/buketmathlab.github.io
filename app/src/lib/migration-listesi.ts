@@ -96,4 +96,5 @@ export const MIGRATION_LISTESI: readonly MigrationKaydi[] = [
   { no: '0086', dosya: '0086_calisma_kagidi.sql' },
   { no: '0087', dosya: '0087_sayfa_alt_siniri_kalkti.sql' },
   { no: '0088', dosya: '0088_kardes_son_tarih.sql' },
+  { no: '0089', dosya: '0089_silme_izi_ve_yedek.sql' },
 ];

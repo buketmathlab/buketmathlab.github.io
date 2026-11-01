@@ -21,7 +21,9 @@
 --   1. "Gönderimi yeniden aç" (denetim izinde `gonderim_yeniden_acildi`;
 --      sebebi ve eski puanı izde saklı — geri alınabilir),
 --   2. ÖDEVİN silinmesi (`odev_silindi`) — ödev silinince ona bağlı bütün
---      gönderimler ve puanlar da silinir,
+--      gönderimler ve puanlar da silinir. 0089'dan beri bunlar da tek tek
+--      ize yazılıyor (`gonderim_odevle_silindi`) ve GERİ ALINABİLİR;
+--      0089 ÖNCESİNDE silinenler için böyle bir kayıt YOK,
 --   3. ÖĞRENCİ kaydının silinmesi — o öğrencinin bütün gönderimleri gider.
 --
 -- ## Nasıl kullanılır
@@ -85,6 +87,19 @@ kayip as (
 
 -- 1. YOL — "Gönderimi yeniden aç". `eski` tam satırı taşıyor: hangi ödev,
 -- hangi puan. Yani bu yoldan gidenler GERİ ALINABİLİR.
+-- 0089: ÖDEVLE BİRLİKTE SİLİNENLER. Tam satır izde: puan, cevaplar,
+-- fotoğraf yolu. Bu yoldan gidenler geri getirilebilir.
+odevle as (
+  select z.kayit_id as gonderim_id,
+         (z.yeni ->> 'odev_id')::uuid as odev_id,
+         (z.yeni ->> 'odev')  as odev_adi,
+         (z.yeni ->> 'neden') as neden,
+         (z.eski ->> 'puan')  as eski_puan,
+         z.zaman, z.aktor
+    from public.denetim_izi z
+   where z.tablo = 'gonderimler' and z.islem = 'gonderim_odevle_silindi'
+),
+
 acilan as (
   select z.kayit_id as gonderim_id,
          (z.eski ->> 'odev_id')::uuid as odev_id,
@@ -146,6 +161,12 @@ select * from (
   select '2 · KAYIP GÖNDERİM', 3,
          (select ad from public.ogrenciler x where x.id = k.ogrenci_id),
          case
+           when ob.gonderim_id is not null then
+             'ÖDEVLE BİRLİKTE SİLİNDİ · ödev: ' || coalesce(ob.odev_adi, '—')
+               || ' · puan: ' || coalesce(ob.eski_puan, '—')
+               || ' · silen: ' || ob.aktor
+               || ' · sebep: ' || coalesce(ob.neden, '—')
+               || ' → İZDE SAKLI, GERİ ALINABİLİR'
            when a.gonderim_id is not null then
              'YENİDEN AÇILMIŞ · ödev: '
                || coalesce((select baslik from public.odevler d where d.id = a.odev_id),
@@ -156,12 +177,15 @@ select * from (
                || ' · sebep: ' || coalesce(a.neden, '—')
                || ' → İZDE SAKLI, GERİ ALINABİLİR'
            else
-             'SEBEP İZDE YOK · ödev ya da öğrenci kaydı silinmiş olabilir'
-               || ' (bkz. 3. bölüm). Gönderim kimliği: ' || k.gonderim_id::text
+             'SEBEP İZDE YOK · 0089 öncesinde ödev ya da öğrenci kaydı'
+               || ' silinmiş olabilir (bkz. 3. bölüm). Bu yoldan gidenler izden'
+               || ' GERİ GELMEZ; yedekten dönmek gerekir. Gönderim kimliği: '
+               || k.gonderim_id::text
          end,
          to_char(k.zaman at time zone 'Europe/Istanbul', 'DD.MM.YYYY HH24:MI')
     from kayip k
     left join acilan a on a.gonderim_id = k.gonderim_id
+    left join odevle ob on ob.gonderim_id = k.gonderim_id
   union all
   -- ---------------------------------------------------------------- 3
   select '3 · SİLİNEN ÖDEV', 4, coalesce(s.baslik, '(başlıksız)'),
