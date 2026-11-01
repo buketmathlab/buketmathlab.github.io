@@ -90,7 +90,6 @@ type OdevDetay = {
   tarihler?: OdevTarihleri | null;
   /** Ödevin sayfa sayısı (0054). 0054 çalıştırılmadıysa gelmez → 1. */
   sayfa_limiti?: number;
-  /** Her sayfa zorunlu mu (0078). Gelmezse ya da false ise eski kural. */
   /**
    * 0078'in "her sayfa zorunlu" bayrağı. 0087'den beri HER ÖDEVDE false
    * ve hiçbir ekran okumuyor; sunucu eski istemciler için göndermeye

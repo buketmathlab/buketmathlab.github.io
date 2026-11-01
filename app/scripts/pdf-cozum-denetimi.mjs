@@ -5,22 +5,34 @@
  * çevriliyor; depoya JPEG gidiyor, sunucu değişmiyor.
  *
  * 0078: TEK GÖRSELE BİRLEŞTİRME KALKTI. PDF'in her sayfası ayrı bir çözüm
- * sayfası; yeni ödevde öğrenci TAM ödevin sayfa sayısı kadar sayfa gönderir.
+ * sayfası.
  *
- *  P1. Her sayfası zorunlu 3 sayfalık ödev: 3 sayfalık PDF → 3 ayrı JPEG
- *      (1400 px, içerik dolu); sayaç "3 / 3 sayfa eklendi · tamam";
- *      ekranda "birleştir" / "tek görsel" yok; odev_gonder 1 + 2 ek sayfa.
- *  P2. Zorunlu 3: 4 sayfalık PDF → 3 sayfa + "fazladan seçtiğin 1 görsel".
- *  P3. Zorunlu 4: 2 sayfa → "2 sayfa eksik" sayacı; gönder → eksik uyarısı,
- *      HİÇBİR yükleme ve odev_gonder YOK.
+ * 0087: SAYFA SAYISI YALNIZ ÜST SINIR. Alt sınır kalktı; sınırın altında
+ * sayfa varsa bir kez SORULUYOR, yasak yok. Bu dosya o yüzden yeniden
+ * yazıldı: sayaç artık "eksik/tamam" demiyor, P3'ün önermesi "eksikken
+ * gönderilmez"den "eksikken sorulur, onaylanınca gönderilir"e döndü.
+ *
+ *  P1. Sınır 3: 3 sayfalık PDF → 3 ayrı JPEG (1400 px, içerik dolu); sayaç
+ *      "3 / 3 sayfa seçildi" ve "eksik/tamam" eki YOK; ekranda "birleştir" /
+ *      "tek görsel" yok; odev_gonder 1 + 2 ek sayfa.
+ *  P2. Sınır 3: 4 sayfalık PDF → 3 sayfa + üst sınır uyarısı (ÜST sınır
+ *      0087'de duruyor).
+ *  P3. Sınır 4, 2 sayfalık PDF: "eksik" metni YOK; gönderde yumuşak onay
+ *      soruluyor; "Geri dön" → hiçbir yükleme/odev_gonder YOK, seçim
+ *      duruyor; "Yine de gönder" → 2 sayfa gidiyor.
  *  P4. Bozuk "PDF" → "PDF okunamadı … fotoğraf olarak yüklemeyi dene".
- *  P5. Eski 1 sayfalık ödev: fotoğraf 1400 px JPEG olarak gidiyor.
- *  P6. Eski 1 sayfalık ödev + 3 sayfalık PDF → birleştirme YOK, yalnız
- *      1. sayfa; 2 görsel için taşma uyarısı.
- *  P7. "Değiştir": zorunlu 3 sayfada 2. sayfa yerinde yenileniyor, sıra
- *      ve sayı bozulmuyor.
+ *  P5. Sınır 1: fotoğraf 1400 px JPEG olarak gidiyor.
+ *  P6. Sınır 1 + 3 sayfalık PDF → birleştirme YOK, yalnız 1. sayfa;
+ *      2 görsel için taşma uyarısı.
+ *  P7. "Değiştir": 3 sayfada 2. sayfa yerinde yenileniyor, sıra ve sayı
+ *      bozulmuyor.
  *  P8 (isteğe bağlı) GERÇEK PDF: `COZUM_PDF=…` verilirse her sayfa 10 MB
  *      sınırının altında.
+ *
+ * KUSUR PROVASI (0087, K1). `OdevTeslim.gonder` içindeki yumuşak onay
+ * kapısı (`if (uyari) return setEksikUyari(uyari)`) `false &&` ile
+ * atlatıldı, yeniden derlendi: P3 "eksik sayfa sorusu çıkmadı" dedi.
+ * Kapı ısırıyor.
  *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/pdf-cozum-denetimi.mjs
@@ -146,21 +158,28 @@ async function gonder(p) {
   };
 }
 
-const Z3 = { sayfa: 3, tum_sayfalar: true };
-const ESKI1 = { sayfa: 1, tum_sayfalar: false };
+// 0087 SONRASI GERÇEK ŞEKİL: sunucu `tum_sayfalar` alanını eski
+// istemciler için göndermeye devam ediyor ama HER ÖDEVDE false, ve bu
+// ekran onu okumuyor bile. Fikstür alanı `true` taşısaydı, bugün hiç
+// gelmeyen bir cevabı ölçmüş olurduk (0086'nın 5. provasının dersi).
+const S3 = { sayfa: 3, tum_sayfalar: false };
+const S1 = { sayfa: 1, tum_sayfalar: false };
 const birlesimYok = (m, n) => {
   if (/birleştir|tek görsel|tek PDF/i.test(m)) bozuk(`${n}: ekranda birleştirme sözü var`);
   else tamam(`${n}: ekranda "birleştir/tek görsel" yok`);
 };
 
-console.log('--- P1. Zorunlu 3: 3 sayfalık PDF → 3 ayrı JPEG ---');
+console.log('--- P1. Sınır 3: 3 sayfalık PDF → 3 ayrı JPEG ---');
 {
-  const { b, p } = await kur(Z3);
+  const { b, p } = await kur(S3);
   birlesimYok(await metin(p), 'boş ekran');
   await sec(p, 'cozum.pdf', pdfUret(3));
   const m = await metin(p);
-  if (!m.includes('3 / 3 sayfa eklendi · tamam')) bozuk(`sayaç yok: ${m.slice(-400)}`);
-  else tamam('"3 / 3 sayfa eklendi · tamam"');
+  if (!m.includes('3 / 3 sayfa seçildi')) bozuk(`sayaç yok: ${m.slice(-400)}`);
+  else tamam('"3 / 3 sayfa seçildi"');
+  // 0087: sayaç "eksik" demiyor artık — eksik diye bir durum yok.
+  if (/sayfa eksik|· tamam/.test(m)) bozuk('sayaçta 0078\'in "eksik/tamam" eki duruyor');
+  else tamam('sayaçta "eksik"/"tamam" eki yok');
   birlesimYok(m, 'seçimden sonra');
   const r = await gonder(p);
   if (r.yuklenen.length !== 3 || r.yuklenen.some((x) => x.en !== 1400 || x.tur !== 'image/jpeg' || x.bantlar[0] < 200)) {
@@ -172,37 +191,70 @@ console.log('--- P1. Zorunlu 3: 3 sayfalık PDF → 3 ayrı JPEG ---');
   await b.close();
 }
 
-console.log('--- P2. Zorunlu 3: 4 sayfalık PDF → 3 sayfa + taşma ---');
+console.log('--- P2. Sınır 3: 4 sayfalık PDF → 3 sayfa + taşma ---');
 {
-  const { b, p } = await kur(Z3);
+  const { b, p } = await kur(S3);
   await sec(p, 'cozum.pdf', pdfUret(4));
   const m = await metin(p);
-  if (!m.includes('3 / 3 sayfa eklendi')) bozuk(`3 sayfa eklenmedi: ${m.slice(-400)}`);
+  if (!m.includes('3 / 3 sayfa seçildi')) bozuk(`3 sayfa eklenmedi: ${m.slice(-400)}`);
   else tamam('3 sayfa eklendi');
-  if (!m.includes('Bu ödev 3 sayfa; fazladan seçtiğin 1 görsel eklenmedi.')) bozuk('taşma uyarısı yok');
-  else tamam('"fazladan seçtiğin 1 görsel eklenmedi"');
+  // ÜST SINIR 0087'de DURUYOR — kalkan yalnız alt sınır.
+  if (!m.includes('Bu ödevde en fazla 3 sayfa yükleyebilirsin. 1 görsel eklenmedi.')) bozuk('taşma uyarısı yok');
+  else tamam('"en fazla 3 sayfa yükleyebilirsin. 1 görsel eklenmedi."');
   await b.close();
 }
 
-console.log('--- P3. Zorunlu 4: 2 sayfa → eksik, gönderilmiyor ---');
+console.log('--- P3. Sınır 4, 2 sayfalık PDF: yumuşak onay (0087) ---');
 {
-  const { b, p } = await kur({ sayfa: 4, tum_sayfalar: true });
+  // 0078: BU BİR YASAKTI — "2 sayfa eksik, her sayfanın çözümünü
+  // eklemelisin". 0087: yasak kalktı (öğretmenin kararı), yerine bir kez
+  // sorulan soru kondu. Ölçüm hem sorunun çıktığını hem de "Geri dön"
+  // denince HİÇBİR ŞEYİN gitmediğini kanıtlıyor — soru gerçekten tutuyor.
+  const { b, p } = await kur({ sayfa: 4, tum_sayfalar: false });
   await sec(p, 'cozum.pdf', pdfUret(2));
   let m = await metin(p);
-  if (!m.includes('2 / 4 sayfa eklendi · 2 sayfa eksik')) bozuk(`eksik sayacı yok: ${m.slice(-400)}`);
-  else tamam('"2 / 4 sayfa eklendi · 2 sayfa eksik"');
-  const r = await gonder(p);
+  if (!m.includes('2 / 4 sayfa seçildi')) bozuk(`sayaç yok: ${m.slice(-400)}`);
+  else tamam('"2 / 4 sayfa seçildi"');
+  if (/sayfa eksik|her sayfanın çözümünü eklemelisin|Bu ödev 4 sayfa\./.test(m)) {
+    bozuk('0078\'in "eksik / zorunlu" metni ekranda duruyor');
+  } else tamam('"eksik"/"zorunlu" metni YOK — alt sınır kalktı');
+
+  await onayla(p);
+  const d = p.getByRole('button', { name: 'Ödevi gönder' });
+  await d.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+  await d.click();
+  await p.waitForTimeout(600);
   m = await metin(p);
-  if (!m.includes('2 sayfa eksik. Ödevi gönderebilmek için her sayfanın çözümünü eklemelisin.')) bozuk('eksik uyarısı yok');
-  else tamam('eksik uyarısı gösterildi');
-  if (r.yuklenen.length !== 0 || r.gonder.length !== 0) bozuk(`eksikken yükleme/gönderim oldu: ${r.yuklenen.length}/${r.gonder.length}`);
-  else tamam('eksikken yükleme ve odev_gonder YOK');
+  if (!m.includes('4 sayfalık ödeve 2 sayfa ekledin. Yine de gönderilsin mi?')
+      || !m.includes('Eklemeyi unuttuğun bir sayfa varsa şimdi ekleyebilirsin')) {
+    bozuk(`eksik sayfa sorusu çıkmadı: ${m.slice(0, 240)}`);
+  } else tamam('"4 sayfalık ödeve 2 sayfa ekledin. Yine de gönderilsin mi?"');
+
+  await p.getByRole('button', { name: 'Geri dön, sayfa ekleyeyim' }).click();
+  await p.waitForTimeout(500);
+  let y = await p.evaluate(() => window.__yuklenen);
+  let g = (await p.evaluate(() => window.__cagrilar)).filter((c) => c.ad === 'odev_gonder');
+  if (y.length || g.length) bozuk(`"Geri dön" sonrası yükleme/gönderim oldu: ${y.length}/${g.length}`);
+  else tamam('"Geri dön, sayfa ekleyeyim" → hiçbir yükleme ve odev_gonder YOK');
+  if (!(await metin(p)).includes('2 / 4 sayfa seçildi')) bozuk('geri dönünce seçim kayboldu');
+  else tamam('geri dönünce seçilen 2 sayfa duruyor');
+
+  await d.click();
+  await p.waitForTimeout(600);
+  await p.getByRole('button', { name: 'Yine de gönder' }).click();
+  await p.waitForTimeout(1500);
+  y = await p.evaluate(() => window.__yuklenen);
+  g = (await p.evaluate(() => window.__cagrilar)).filter((c) => c.ad === 'odev_gonder');
+  if (y.length !== 2 || g.length !== 1 || g[0].govde.p_ek_sayfa_yollari?.length !== 1) {
+    bozuk(`"Yine de gönder" 2 sayfayı göndermedi: ${y.length} yükleme, `
+      + `${JSON.stringify(g[0]?.govde?.p_ek_sayfa_yollari)}`);
+  } else tamam('"Yine de gönder" → 2 sayfa yüklendi, odev_gonder 1 + 1 ek sayfa');
   await b.close();
 }
 
 console.log('--- P4. Bozuk PDF ---');
 {
-  const { b, p } = await kur(Z3);
+  const { b, p } = await kur(S3);
   await sec(p, 'bozuk.pdf', Buffer.from('bu bir pdf değil'));
   const m = await metin(p);
   if (!/Okunamayan görsel|PDF (okunamadı|açılamadı)/.test(m)) bozuk(`hata yok: ${m.slice(-300)}`);
@@ -210,9 +262,9 @@ console.log('--- P4. Bozuk PDF ---');
   await b.close();
 }
 
-console.log('--- P5. Eski 1 sayfalık ödev: fotoğraf ---');
+console.log('--- P5. Sınır 1: fotoğraf ---');
 {
-  const { b, p } = await kur(ESKI1);
+  const { b, p } = await kur(S1);
   const foto = await sharp({ create: { width: 2000, height: 1500, channels: 3, background: '#fff' } }).jpeg().toBuffer();
   await sec(p, 'foto.jpg', foto, 'image/jpeg');
   const m = await metin(p);
@@ -225,9 +277,9 @@ console.log('--- P5. Eski 1 sayfalık ödev: fotoğraf ---');
   await b.close();
 }
 
-console.log('--- P6. Eski 1 sayfalık ödev + 3 sayfalık PDF: birleştirme yok ---');
+console.log('--- P6. Sınır 1 + 3 sayfalık PDF: birleştirme yok ---');
 {
-  const { b, p } = await kur(ESKI1);
+  const { b, p } = await kur(S1);
   await sec(p, 'cozum.pdf', pdfUret(3));
   const m = await metin(p);
   if (!m.includes('1 / 1 sayfa seçildi') || !m.includes('2 görsel eklenmedi')) bozuk(`beklenmeyen: ${m.slice(-400)}`);
@@ -242,7 +294,7 @@ console.log('--- P6. Eski 1 sayfalık ödev + 3 sayfalık PDF: birleştirme yok 
 
 console.log('--- P7. "Değiştir": sayfa yerinde yenileniyor ---');
 {
-  const { b, p } = await kur(Z3);
+  const { b, p } = await kur(S3);
   await sec(p, 'cozum.pdf', pdfUret(3));
   const yeni = await sharp({ create: { width: 1400, height: 1000, channels: 3, background: '#000' } })
     .composite([{ input: Buffer.from('<svg width="1400" height="1000"><rect x="0" y="0" width="1400" height="1000" fill="white"/><rect x="100" y="100" width="300" height="300" fill="black"/></svg>') }])
@@ -250,7 +302,7 @@ console.log('--- P7. "Değiştir": sayfa yerinde yenileniyor ---');
   await p.locator('input[aria-label="2. sayfayı değiştir"]').setInputFiles({ name: 'yeni.jpg', mimeType: 'image/jpeg', buffer: yeni });
   await p.waitForTimeout(800);
   const m = await metin(p);
-  if (!m.includes('3 / 3 sayfa eklendi · tamam')) bozuk(`değiştirince sayı bozuldu: ${m.slice(-300)}`);
+  if (!m.includes('3 / 3 sayfa seçildi')) bozuk(`değiştirince sayı bozuldu: ${m.slice(-300)}`);
   else tamam('değiştirince sayı 3 / 3 kaldı');
   const r = await gonder(p);
   const boylar = r.yuklenen.map((x) => x.boy);

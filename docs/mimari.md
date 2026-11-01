@@ -7457,3 +7457,36 @@ sarma dışında bir şey yapılacaksa okunması gereken not.
 - Arayüzde ölü kalacak iki metin (`HER_SAYFA_GEREKCESI`,
   `eksikSayfaMetni`) ve `SayfaKurali.tumSayfalar` alanı **silindi** —
   `YUKLEME_IPUCU` dersi: ölü metin bırakılmıyor.
+
+### Süpürmenin yakaladığı üç denetim — ders
+
+Tam süpürme (59 denetim) **üç kırmızı** verdi ve üçü de 0087'nin bilerek
+değiştirdiği kuralı ezberlemiş denetimlerdi. Gerçek bir gerileme yok; ama
+"ilgisiz" diye geçilmedi, üçü de okundu ve **yeniden yazıldı**:
+
+- `pdf-cozum-denetimi.mjs` — sayaç "3 / 3 sayfa eklendi · tamam"
+  bekliyordu (0078'in katı dalı). P3'ün bütün önermesi döndü: artık
+  "eksikken gönderilmez" değil, **"eksikken sorulur; Geri dön → hiçbir
+  şey gitmez, Yine de gönder → gider"**. Fikstürler de bugünün şekline
+  çekildi (`tum_sayfalar: false`) — 0086'nın 5. provasının dersi.
+- `sayfa-duzenleme-denetimi.mjs` — D1 "önceki düzende verildi" notunu
+  arıyordu. O not 0087'de kalktı (alt sınır yokken geçirilecek kural da
+  yok), iddia **tersine** çevrildi: not çizilmemeli. Yeni D3: sayıya
+  dokunulmadan kaydedilince `p_sayfa_limiti` **ağa gitmemeli**.
+- `sayfa-siniri-denetimi.mjs` — B3/B4 yumuşak onayı bilmediği için
+  gönderim hiç olmuyordu; o soru geçilerek ölçülüyor ve **sorulmadan
+  hiçbir şeyin gitmediği** ayrıca kanıtlanıyor. B7'deki "eski ödev"
+  dalının beklentisi tersine döndü.
+
+Üç kapı için üç kusur provası, hepsi yeniden derlenerek:
+
+| Prova | Kusur | Isırdı |
+| --- | --- | --- |
+| K1 | yumuşak onay kapısı atlatıldı | pdf-cozum P3, sayfa-siniri B3 (2 iddia), sayfa-zorunlu (2 iddia) |
+| K2 | "önceki düzende" notu geri kondu | sayfa-duzenleme D1, sayfa-siniri B7 (2 fikstür) |
+| K3 | `sinirDegisti` eski hâline döndü | sayfa-duzenleme D3, sayfa-siniri B7 (2 fikstür) |
+
+**Ders:** bir kuralı kaldırmak, o kuralı ölçen testleri aramakla bitmiyor
+— kuralın *metnini* ezberlemiş denetimler de var ve onlar ancak tam
+süpürmede görünüyor. Bu turda üçü de yalnız süpürme sayesinde çıktı;
+0087'nin kendi denetimi (`sayfa-zorunlu`) baştan yeşildi.

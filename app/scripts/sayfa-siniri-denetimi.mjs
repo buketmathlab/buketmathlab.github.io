@@ -25,6 +25,20 @@
  * da soru PDF'inden alıyor. Yeni kuralın ayrıntılı ölçümü:
  * `sayfa-zorunlu-denetimi.mjs` ve `pdf-cozum-denetimi.mjs`.
  *
+ * 0087 SONRASI: ALT SINIR KALKTI. Sayfa sayısı yalnız ÜST sınır; sınırın
+ * altında gönderen öğrenciye bir kez soru soruluyor ("Yine de gönder"),
+ * yasak yok. B3/B4 o soruyu geçerek ölçüyor, B7'de ise "eski ödev" ayrımı
+ * kalktığı için not ve zorunlu kayıt beklentisi TERSİNE çevrildi: not
+ * çizilmemeli, değişmeyen sayı ağa gitmemeli. Bu dosyanın A bölümü 0054'ün
+ * kendi gövde farkı — 0054 değişmedi, oraya dokunulmadı.
+ *
+ * KUSUR PROVALARI (0087). Üçü de yeniden derlenerek ölçüldü.
+ *   K1. Yumuşak onay kapısı atlatıldı → B3 "eksik sayfa sorusu çıkmadı" ve
+ *       "soru cevaplanmadan yükleme/odev_gonder yapıldı".
+ *   K2. "önceki düzende" notu geri kondu → B7 iki fikstürde de düştü.
+ *   K3. `sinirDegisti` eski hâline döndürüldü → B7 "sayı değişmediği hâlde
+ *       ağa gitti: 3" ve "… : 1".
+ *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/sayfa-siniri-denetimi.mjs
  */
@@ -599,7 +613,7 @@ console.log('--- B2. Öğrenci, UÇLAR YOK: ekran bozulmuyor, sınır 1 ---');
 }
 
 // ---------------------------------------------------------------------------
-console.log('--- B3. Öğrenci, SINIR 3: sınır, çıkarma, sıra ---');
+console.log('--- B3. Öğrenci, SINIR 3: sınır, çıkarma, sıra, eksik sayfa sorusu ---');
 {
   const { b, p } = await kur({ rol: 'ogrenci', sinir: 3 }, `/ogrenci/odev/${ODEV}`);
   if (!(await metin(p)).includes('0 / 3 sayfa seçildi')) bozuk('sayaç çizilmedi');
@@ -620,6 +634,21 @@ console.log('--- B3. Öğrenci, SINIR 3: sınır, çıkarma, sıra ---');
   } else tamam('ortadan çıkarılınca 2 sayfa, boşluksuz numara');
   await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
+  await bekle(p, 500);
+  // 0087: sınırın ALTINDA sayfa var. 0078'de bu bir YASAKTI; artık bir kez
+  // sorulan soru. Önce sorunun çıktığı, sonra sorulmadan hiçbir şeyin
+  // gitmediği ölçülüyor — soru gerçekten tutuyor mu.
+  {
+    const d = await metin(p);
+    if (!d.includes('3 sayfalık ödeve 2 sayfa ekledin. Yine de gönderilsin mi?')
+        || !d.includes('Çözümünü daha az sayfaya sığdırdıysan sorun yok')) {
+      bozuk(`2/3 sayfada eksik sayfa sorusu çıkmadı: ${d.slice(0, 240)}`);
+    } else tamam('2/3 sayfada yumuşak onay soruldu (0087: engel değil, soru)');
+    if ((await gonderim(p)).length || (await yuklemeler(p)).length) {
+      bozuk('soru cevaplanmadan yükleme/odev_gonder yapıldı');
+    } else tamam('soru cevaplanmadan hiçbir şey gönderilmedi');
+  }
+  await p.getByRole('button', { name: 'Yine de gönder' }).click();
   await bekle(p, 1500);
   const y = await yuklemeler(p);
   const g = await gonderim(p);
@@ -640,6 +669,10 @@ console.log('--- B4. YARIDA KALAN yükleme: gönderim YOK, seçim duruyor ---');
   await bekle(p, 1000);
   await onayla(p);
   await p.getByRole('button', { name: 'Ödevi gönder' }).click();
+  await bekle(p, 500);
+  // 2 sayfa, sınır 3 → 0087'nin sorusu önce çıkıyor; onaylanınca yükleme
+  // başlıyor ve 2. sayfada düşüyor.
+  await p.getByRole('button', { name: 'Yine de gönder' }).click();
   await bekle(p, 1200);
   const m = await metin(p);
   if ((await gonderim(p)).length) bozuk('YARIM YÜKLEMEYLE odev_gonder ÇAĞRILDI');
@@ -694,7 +727,7 @@ for (const sayi of ['', '3']) {
 }
 
 // ---------------------------------------------------------------------------
-console.log('--- B7. Öğretmen, DÜZENLE (0079): gönderim varken de değişir, eski ödev geçer ---');
+console.log('--- B7. Öğretmen, DÜZENLE (0079/0087): gönderim varken de değişir, "eski ödev" ayrımı yok ---');
 {
   const { b, p } = await kur({ rol: 'ogretmen', detaySinir: 3, detayZorunlu: true, gonderimSayisi: 4 }, '/ogretmen/odevler/a1');
   await bekle(p);
@@ -723,21 +756,30 @@ console.log('--- B7. Öğretmen, DÜZENLE (0079): gönderim varken de değişir,
   else tamam('yeni ödevde sayı değişmediyse gönderilmiyor');
   await b.close();
 }
-for (const [detaySinir, beklenen] of [[3, 3], [undefined, 1]]) {
-  const { b, p } = await kur({ rol: 'ogretmen', detaySinir }, '/ogretmen/odevler/a1');
+// 0087: "ESKİ ÖDEV" AYRIMI KALKTI. 0078 ödevleri iki kurala bölmüştü (alt
+// sınırı olan / olmayan) ve bu ekran eski ödeve "önceki düzende verildi …
+// kaydettiğinizde her sayfa zorunlu olur" notunu çiziyor, kayıtta sayıyı
+// DEĞİŞMESE DE gönderiyordu — sunucuyu o ödevi yeni kurala geçirmeye
+// zorlamak için. Alt sınır kalkınca geçirilecek kural kalmadı: not yanlış
+// bir söz verir, boş kayıt da denetim izine anlamsız bir satır yazardı.
+for (const [detaySinir, detayZorunlu, beklenen] of [[3, false, 3], [undefined, undefined, 1]]) {
+  const { b, p } = await kur({ rol: 'ogretmen', detaySinir, detayZorunlu, gonderimSayisi: 0 },
+    '/ogretmen/odevler/a1');
   await bekle(p);
   const m = await metin(p);
   const k = p.getByLabel(/Ödevin sayfa sayısı/);
-  if (!m.includes('önceki düzende') || !m.includes(`en fazla\n${beklenen}\nsayfa`) && !m.includes(`en fazla ${beklenen} sayfa`)
-      || !m.includes('Kaydettiğinizde') || !(await k.count()) || (await k.inputValue()) !== String(beklenen)
-      || /tek görsel/.test(m)) {
-    bozuk(`eski ödev (${detaySinir}) notu ya da kutusu yanlış`);
-  } else tamam(`eski ödev (sınır ${detaySinir ?? 'yok'}) → not + kutuda ${beklenen}`);
+  if (/önceki düzende|her birini göndermek zorunda|Kaydettiğinizde bu ödevde de/.test(m)) {
+    bozuk(`eski düzen notu HÂLÂ çiziliyor (sınır ${detaySinir ?? 'yok'})`);
+  } else if (!(await k.count()) || (await k.inputValue()) !== String(beklenen) || /tek görsel/.test(m)) {
+    bozuk(`sayı kutusu yanlış (sınır ${detaySinir ?? 'yok'}): ${await k.inputValue()}`);
+  } else tamam(`sınır ${detaySinir ?? 'yok'} → eski düzen notu YOK, kutuda ${beklenen}`);
   await p.getByRole('button', { name: 'Değişiklikleri kaydet' }).click();
   await bekle(p, 800);
   const c = (await cagrilar(p)).filter((x) => x.ad === 'odev_guncelle');
-  if (!c.length || c[0].govde.p_sayfa_limiti !== beklenen) bozuk(`eski ödev kaydedilince sayı gitmedi: ${c[0]?.govde.p_sayfa_limiti}`);
-  else tamam(`eski ödev kaydedilince \`p_sayfa_limiti: ${beklenen}\` gitti (yeni kurala geçiş)`);
+  if (!c.length) bozuk('kayıt yapılmadı');
+  else if ('p_sayfa_limiti' in c[0].govde) {
+    bozuk(`sayı değişmediği hâlde ağa gitti: ${c[0].govde.p_sayfa_limiti}`);
+  } else tamam(`sınır ${detaySinir ?? 'yok'}: değişmeyen sayı ağa GİTMEDİ`);
   await b.close();
 }
 
