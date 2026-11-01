@@ -7,6 +7,10 @@ import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { sureDurumu } from '@/lib/son-tarih';
 import { uzatmaMetni, verilisMetni } from '@/lib/odev-tarihleri';
+import {
+  VELI_ACIKLAMASI,
+  yenidenAcmaSatiri,
+} from '@/lib/yeniden-acma-metni';
 import { calismaMi, turAdi } from '@/lib/odev-turu';
 import type { VeliPaneli } from '@/types/api';
 import { VeliOdevDosyalari } from './VeliOdevDosyalari';
@@ -100,10 +104,37 @@ export function VeliOdevler() {
                           {uzatmaMetni(o.tarihler)}
                         </p>
                       )}
+                      {/* 0090: VELİ ÇOCUĞUNUN ÖDEVİ YAPMADIĞINI SANMASIN.
+                          Yeniden açma gönderimi siliyor (0081) ve bu kart
+                          kırmızı "Göndermedi" yazıyordu. Öğretmen "sil"
+                          demedi, "yeniden aç" dedi; çocuk göndermişti ve
+                          puanı hesaplanmıştı. Öğretmenin kaygısı buydu:
+                          "böyle bir hata varsa çok büyük haksızlık ve
+                          güvensizlik oluşur."
+
+                          SEBEP BURADA YOK ve `sebepGoster: false` yalnız
+                          ikinci kat: `veli_paneli` `neden` alanını hiç
+                          göndermiyor (0081'in ayrımı — sebep öğrenciyle
+                          öğretmen arasında). */}
+                      {yenidenAcmaSatiri(o.yeniden_acma, { sebepGoster: false }) && (
+                        <div data-test="veli-yeniden-acma" className="mt-1">
+                          <p className="text-[13px] text-ink">
+                            {yenidenAcmaSatiri(o.yeniden_acma, { sebepGoster: false })}
+                          </p>
+                          <p className="text-[13px] text-muted">{VELI_ACIKLAMASI}</p>
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-wrap justify-end gap-1">
                       {o.gonderildi ? (
                         <Tag tur="basari">Gönderdi</Tag>
+                      ) : o.yeniden_acma?.zaman ? (
+                        /* KIRMIZI "Göndermedi" DEĞİL. Çocuk göndermişti;
+                           öğretmen yeniden göndermesini istedi. Damga
+                           yine bir eksik işi söylüyor ama doğrusunu. */
+                        <Tag tur="uyari">
+                          <span data-test="veli-yeniden-acildi">Yeniden açıldı</span>
+                        </Tag>
                       ) : sure.gecti ? (
                         <Tag tur="tehlike">Göndermedi</Tag>
                       ) : (

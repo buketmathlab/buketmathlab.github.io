@@ -185,6 +185,44 @@ export type OdevTarihleri = {
   yon: 'uzatildi' | 'one_alindi' | null;
 };
 
+/**
+ * YENİDEN AÇMANIN GEÇMİŞİ (0090).
+ *
+ * `gonderimi_yeniden_ac` (0081) gönderim satırını SİLİYOR: öğrencinin
+ * ekranında ödev "gönderilmedi"ye dönüyor, puanı kayboluyor, öğretmen
+ * listesinde öğrenci "göndermemiş" görünüyor ve veli çocuğunun ödevi hiç
+ * yapmadığını sanıyor. Bilgi denetim izinde duruyordu; 0090 onu ekrana
+ * taşıyor. Yeni veri üretilmiyor.
+ *
+ * VELİDE `neden` VE `onceki_durum` ALANLARI HİÇ GELMİYOR — sunucu
+ * göndermiyor (0081'in ayrımı: sebep öğrenciyle öğretmen arasında,
+ * `kanal = 'ogrenci'`). Tip bunu isteğe bağlı alanla söylüyor; arayüzde
+ * saklamak değil, SUNUCUDA GÖNDERMEMEK (Part XXI).
+ *
+ * 0090 çalıştırılmadıysa alan hiç GELMEZ; ekranlar o hâlde bugünkü gibi
+ * davranıyor.
+ */
+export type YenidenAcma = {
+  /** Gönderimin yeniden açıldığı an (ISO). */
+  zaman: string;
+  /**
+   * Öğretmenin yazdığı sebep. VELİDE GELMEZ. Açık uçlu bir cümle:
+   * "Soruda düzeltme yapıldı.", "Kaydırma yapmış, düzeltme imkanı
+   * verildi.", "Çözüm kağıdı sisteme siyah görüntü olarak ulaştı."
+   */
+  neden?: string | null;
+  /** Yeniden açarken verilen kişisel son tarih (0081). */
+  yeni_son_tarih: string | null;
+  /**
+   * SİLİNEN gönderimin puanı — `coalesce(ogretmen_puan, puan)`, yani
+   * `VeliOdevi.puan` ile aynı kural. Açık uçlu ödev henüz
+   * puanlanmamışsa `null` ve ekran puan UYDURMUYOR.
+   */
+  onceki_puan: number | null;
+  /** Silinen gönderimin durumu. VELİDE GELMEZ. */
+  onceki_durum?: string | null;
+};
+
 export type OdevSatiri = {
   id: string;
   baslik: string;
@@ -360,6 +398,13 @@ export type OgrenciOdev = {
    * yeniden çekmesi gereksiz iş olurdu (öğretmenin kararı).
    */
   onceki_sayfalar?: string[] | null;
+  /**
+   * 0090 — bu ödevin gönderimi yeniden açıldıysa geçmişi; yoksa `null`.
+   * Sebep öğrenciye 0081'den beri MESAJ olarak gidiyordu; ödev
+   * sayfasında ödev sessizce "gönderilmedi"ye dönüyor ve puanı
+   * kayboluyordu. Artık sebep ödevin yanında duruyor.
+   */
+  yeniden_acma?: YenidenAcma | null;
   soru_sayisi: number | null;
   gec_teslim: boolean;
   /** 4 (A–D) ya da 5 (A–E). Öğrenci ızgarası kaç düğme çizeceğini buradan bilir. */
@@ -413,6 +458,13 @@ export type GonderimSatiri = {
    * yanında "ek süre verildi · <tarih>" olarak görünüyor.
    */
   ek_sure?: string | null;
+  /**
+   * 0090 — bu öğrencinin gönderimi yeniden açıldıysa geçmişi; yoksa
+   * `null`. `gonderdi` false iken bu alan DOLUYSA öğrenci göndermemiş
+   * değil: GÖNDERDİ ve öğretmen yeniden açtı. Liste ikisini birlikte
+   * okuyor; yalnız "göndermedi" yazmak veliye yanlış bilgi vermekti.
+   */
+  yeniden_acma?: YenidenAcma | null;
   durum: 'incelemede' | 'onaylandi' | 'puanlandi' | null;
   dogru: number | null;
   yanlis: number | null;
@@ -813,6 +865,15 @@ export type VeliOdevi = {
   gonderildi: boolean;
   gonderim_zamani: string | null;
   puan: number | null;
+  /**
+   * 0090 — ödev yeniden açıldıysa geçmişi; yoksa `null`. Veli bunu
+   * GÖRMEK ZORUNDA: yoksa `gonderildi` false olduğu için çocuğunun ödevi
+   * hiç yapmadığını sanıyor. Asıl şikâyet buydu.
+   *
+   * SEBEP BURADA YOK. Sunucu `neden` ve `onceki_durum` alanlarını veliye
+   * hiç göndermiyor (`veli_paneli` gövdesinde jsonb'den çıkarılıyor).
+   */
+  yeniden_acma?: YenidenAcma | null;
   durum: string | null;
   /** Konu analizi (0020). Veli hangi konuda eksik olduğunu görüyor. */
   konu_analizi: KonuAnalizi[];

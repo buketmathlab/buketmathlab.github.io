@@ -17,6 +17,11 @@ import { useBenKimim } from '@/hooks/useBenKimim';
 import { EkSureVer } from './EkSureVer';
 import * as EK_SURE from '@/lib/ek-sure-metni';
 import { ekSureEtiketi } from '@/lib/iptal-metni';
+import {
+  gondermeyenlerAciklamasi,
+  ogretmenDurumu,
+  yenidenAcmaSatiri,
+} from '@/lib/yeniden-acma-metni';
 import { duzeltmeIsareti } from '@/lib/puan-duzeltme';
 import { sureDurumu } from '@/lib/son-tarih';
 import type { OdevGonderimleri as Veri, GonderimSatiri } from '@/types/api';
@@ -141,7 +146,13 @@ export function OdevGonderimleri() {
             {gondermeyen.length > 0 && (
               <Bolum
                 baslik={`Göndermeyenler (${gondermeyen.length})`}
-                aciklama="Bu öğrencilerden henüz gönderim yok."
+                /* 0090: BU CÜMLE YENİDEN AÇILMIŞ ÖĞRENCİ İÇİN YANLIŞTI.
+                   Öğretmen tam buna bakıp veliye ödevin yapılmadığını
+                   söyleyecekti; oysa öğrenci göndermişti ve puanı
+                   hesaplanmıştı. Sayım değişmiyor, cümle değişiyor. */
+                aciklama={gondermeyenlerAciklamasi(
+                  gondermeyen.filter((s) => s.yeniden_acma?.zaman).length,
+                )}
               >
                 <Card>
                   <ul className="divide-y divide-line">
@@ -174,6 +185,20 @@ export function OdevGonderimleri() {
                             düşüyor. Ek süre yazılmazsa öğretmen kendi
                             verdiği tarihi hiçbir yerde göremezdi. */}
                         <EkSure tarih={s.ek_sure} />
+                        {/* 0090: "göndermedi" ARTIK YALNIZ BAŞINA
+                            DURMUYOR. Yeniden açma gönderimi siliyor
+                            (0081); bilgi denetim izinde duruyordu ve
+                            ekranda yoktu.
+
+                            ETİKET DE CÜMLE DE KENDİ SATIRINDA
+                            (`basis-full`). İlk yazımda etiket adın yanına
+                            konmuştu ve ÖLÇÜM gösterdi: iki etiket yan yana
+                            gelince uzun ad sıkışıp etiketlerin ALTINDA
+                            kalıyordu. Ad okunamayan bir listenin ek süre
+                            kutusu da işe yaramaz. */}
+                        <div className="basis-full">
+                          <YenidenAcmaSatiri satir={s} />
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -233,6 +258,11 @@ export function OdevGonderimleri() {
                               Notunuz: {s.ogretmen_yorum}
                             </p>
                           )}
+                          {/* 0090: YENİDEN GÖNDERDİKTEN SONRA DA GEÇMİŞ
+                              YAZILIYOR. Öğretmen elindeki puanın ikinci
+                              gönderimin puanı olduğunu bilmeli; birinciyi
+                              kendisi iptal etti. */}
+                          <YenidenAcmaSatiri satir={s} />
                         </div>
                         <div className="flex flex-wrap justify-end gap-1">
                           {s.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
@@ -359,6 +389,37 @@ function EkSure({ tarih }: { tarih: string | null | undefined }) {
   );
 }
 
+/**
+ * "Yeniden açıldı — önceki gönderim 75 puan · … · 31 Ekim 2026" (0090).
+ *
+ * `gonderdi` false + `yeniden_acma` dolu ⇒ öğrenci GÖNDERMEDİ DEĞİL,
+ * gönderdi ve öğretmen yeniden açtı. Asıl kusur buradaydı: liste yalnız
+ * "göndermedi" diyordu ve veliye öyle aktarılıyordu.
+ *
+ * AYRI BİR "Yeniden açıldı" ETİKETİ YOK. İlk yazımda vardı; görsel ölçüm
+ * gösterdi ki cümle zaten aynı sözle başlıyor ve etiket aynı şeyi ikinci
+ * kez söylüyordu. Onun yerine satırın VURGUSU durumu ayırıyor:
+ *
+ *   bekliyor → koyu metin: öğretmenin hâlâ takip etmesi gereken satır,
+ *   gonderdi → soluk metin: öğrenci yeniden gönderdi, bu artık geçmiş.
+ *
+ * 0090 çalışmamış sunucuda alan gelmiyor ve hiçbir şey çizilmiyor.
+ */
+function YenidenAcmaSatiri({ satir }: { satir: GonderimSatiri }) {
+  // Öğretmen SEBEBİ GÖRÜYOR: kendi yazdığı cümle.
+  const metin = yenidenAcmaSatiri(satir.yeniden_acma, { sebepGoster: true });
+  if (metin === null) return null;
+  const bekliyor = ogretmenDurumu(satir.gonderdi, satir.yeniden_acma) === 'bekliyor';
+  return (
+    <p
+      className={`mt-1 text-[13px] ${bekliyor ? 'font-medium text-ink' : 'text-muted'}`}
+      data-test="yeniden-acma-satiri"
+    >
+      {metin}
+    </p>
+  );
+}
+
 /** Tek bir açık uçlu gönderimin puanlama kartı. */
 function Puanlama({
   satir,
@@ -413,6 +474,11 @@ function Puanlama({
           {satir.gecikmeli && <Tag tur="uyari">Gecikmeli</Tag>}
           <EkSure tarih={satir.ek_sure} />
         </div>
+      </div>
+      {/* 0090: açık uçluyu puanlarken öğretmen bunun KAÇINCI gönderim
+          olduğunu ve önceki puanı görüyor. */}
+      <div className="mb-3">
+        <YenidenAcmaSatiri satir={satir} />
       </div>
 
       {satir.gonderim_id && satir.foto_var && (

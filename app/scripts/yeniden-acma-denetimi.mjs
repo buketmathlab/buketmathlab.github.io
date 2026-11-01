@@ -36,6 +36,41 @@
  *        ve işaretlenen cevap yükte.
  *    B4. Hepsi işaretliyse hiçbir şey sorulmuyor.
  *
+ * F. 0090 — YENİDEN AÇMANIN GEÇMİŞİ ÜÇ EKRANDA
+ *    F1. ÖĞRETMEN: "Göndermeyenler" satırında "göndermedi" YALNIZ BAŞINA
+ *        durmuyor — "Yeniden açıldı" etiketi ve tam cümle (önceki puan +
+ *        sebep + tarih) var. Bölüm açıklaması da düzeliyor.
+ *    F2. ÖĞRENCİ: sebep EKRANDA (bugüne kadar yalnız mesaj kutusundaydı)
+ *        ve ne yapması gerektiği yazıyor.
+ *    F3. VELİ: önceki puan GÖRÜNÜYOR, kırmızı "Göndermedi" damgası
+ *        KALKIYOR — ama SEBEP GÖRÜNMÜYOR.
+ *    F4. Alan gelmezse (0090 çalışmamış) üç ekran da bugünkü hâlinde.
+ *    F5. 360 px'te taşma yok.
+ *    F6. ÖĞRENCİ LİSTESİ kişisel süreyi sayıyor: "Süresi doldu" yazmıyor,
+ *        düğme "Ödevi yap" diyor. (0081'den kalma çelişki; sunucu kabul
+ *        ederken ekran "yapamazsın" diyordu.)
+ *
+ * -----------------------------------------------------------------------------
+ * F GRUBU İÇİN ARAYÜZ KUSUR PROVALARI (ölçüldü)
+ *
+ *   U1  Öğretmen satırı yeniden açmayı HİÇ söylemiyor (0090 öncesi hâl)
+ *         → F1a ve F1b ısırdı.
+ *       İLK YAZIMINDA bileşenler tamamen siliniyordu ve DERLEME BOZULDU;
+ *       koşum takımı bunu yakaladı ve denetimi ESKİ pakete baktırmadı.
+ *       `npm run build` "built in" demeden denetim koşturulmuyor — 0089'da
+ *       bu iki kez yanıltmıştı.
+ *   U2  Veli ekranı sebebi yazıyor (`sebepGoster: true`) ve taklit sunucu
+ *       sebebi gönderiyor
+ *         → F3e ısırdı: "SEBEP VELİYE SIZDI".
+ *   U3  Puanlanmamış gönderim "0 puan" diye yazılıyor
+ *         → birim testi ısırdı (iki durum).
+ *   U4  "Göndermeyenler" açıklaması 0090 öncesine dönüyor
+ *         → F1e ısırdı.
+ *   U5  Velide kırmızı "Göndermedi" damgası geri geliyor
+ *         → F3d ısırdı.
+ *   U6  Öğrenci listesi yine SINIFIN tarihini sayıyor
+ *         → F6a ve F6b ısırdı.
+ *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/yeniden-acma-denetimi.mjs
  */
@@ -758,6 +793,237 @@ console.log('--- E6. 360 px: taşma yok ---');
   else if (olcu.disarida) bozuk('E6: 360 px: kutu ekran dışında');
   else tamam('E6: 360 px — kutu 44 px, taşma ve yatay kayma yok');
   await b.close();
+}
+
+
+// ===========================================================================
+// F. 0090 — YENİDEN AÇMANIN GEÇMİŞİ ÜÇ EKRANDA
+//
+// Gerçek olay: öğretmen "1. Tema Tekrarı"nda bir soruyu düzeltti ve altı
+// öğrencinin gönderimini aynı anda yeniden açtı. Önceki puanları 62.50 ile
+// 100.00 arasındaydı. Yeniden açmak gönderimi SİLİYOR (0081), yani o altı
+// öğrenci üç ekranda da "göndermedi" oldu ve öğretmen velilere ödevin
+// yapılmadığını söyleyecekti. Öğrenci göndermişti ve puanı hesaplanmıştı.
+// ===========================================================================
+const VELI_OTURUMU = { rol: 'veli', token: 't'.repeat(64),
+  ogrenci: { id: 'o1', ad: 'Duru Dilara Aygün', tur: 'okul', sinif: '9C' } };
+
+const ACMA = {
+  zaman: '2026-10-31T09:14:00+03:00',
+  neden: 'Soruda düzeltme yapıldı.',
+  yeni_son_tarih: '2026-11-12',
+  onceki_puan: 75,
+  onceki_durum: 'puanlandi',
+};
+/** Veliye giden hâl: sunucu `neden` ve `onceki_durum` GÖNDERMİYOR. */
+const ACMA_VELIYE = {
+  zaman: ACMA.zaman, yeni_son_tarih: ACMA.yeni_son_tarih, onceki_puan: 75,
+};
+
+/** Yeniden açılmış öğrenci: gönderim satırı silindiği için `gonderdi: false`. */
+const F_GONDERIMLER = (acma) => ({
+  odev: { id: 'a1', baslik: '1. Tema Tekrarı', tur: 'test', sinif: '9C',
+          son_tarih: '2026-10-02', soru_sayisi: N, gec_teslim: false, yayinda: true },
+  ozet: { mevcut: 1, gonderen: 0, gecikmeli: 0, puan_bekleyen: 0 },
+  konu_ozeti: [],
+  satirlar: [{
+    ogrenci_id: 'o1', ogrenci: 'Duru Dilara Aygün', gonderim_id: null, gonderdi: false,
+    zaman: null, gecikmeli: false, durum: null, dogru: null, yanlis: null, bos: null,
+    puan: null, ogretmen_puan: null, ogretmen_yorum: null, ek_sure: '2026-11-12',
+    yeniden_acma: acma,
+    yanlis_sorular: [], bos_sorular: [], foto_var: false,
+    duzeltildi: false, duzeltme_nedeni: null,
+  }],
+});
+
+const F_ODEVLER = (acma) => ({
+  ogrenci: { id: 'o1', ad: 'Duru Dilara Aygün', sinif: '9C', tur: 'okul' },
+  okunmamis_duyuru: 0,
+  okunmamis_mesaj: 0,
+  odevler: [{
+    // GERÇEK DURUM: sınıfın tarihi GEÇMİŞ, kişisel ek süre açık. Yeniden
+    // açma 0081'den beri böyle çalışıyor.
+    id: 'a1', baslik: '1. Tema Tekrarı', aciklama: null, tur: 'test',
+    son_tarih: '2026-10-02', soru_sayisi: N, gec_teslim: false, sik_sayisi: 5,
+    sinif_arsiv: false, odev_yolu: null, ek_sure: '2026-11-12',
+    yeniden_acma: acma,
+    gonderim: null, konu_analizi: [], cevap_anahtari: null, anahtar_yolu: null,
+  }],
+  dersler: [],
+});
+
+const F_VELI = (acma) => ({
+  ogrenci: { ad: 'Duru Dilara Aygün', sinif: '9C', tur: 'okul' },
+  genel_ortalama: 78.5,
+  odevler: [{
+    baslik: '1. Tema Tekrarı', tur: 'test', son_tarih: '2026-10-02',
+    olusturma: '2026-09-20T08:00:00Z', gonderildi: false, gonderim_zamani: null,
+    puan: null, durum: null,
+    yeniden_acma: acma,
+    konu_analizi: [], kiyas: null, yanlis_sorular: [], bos_sorular: [],
+    odev_yolu: null, cozum_yollari: [],
+  }],
+  mesajlar: [], ogretmenler: [], okunmamis_mesaj: 0, odemeler: [], son_gorulme: null,
+});
+
+/** F grubunun kendi kurulumu: üç rol, üç uç, istenen genişlik. */
+async function kurF(oturum, yol, uclar, en = 390) {
+  const b = await chromium.launch();
+  const s = await b.newContext({ viewport: { width: en, height: 900 } });
+  await s.addInitScript(({ oturum, uclar }) => {
+    localStorage.setItem('sekiz_oturum', JSON.stringify(oturum));
+    window.__cagrilar = [];
+    const asil = window.fetch;
+    const json = (o) => new Response(JSON.stringify(o), {
+      status: 200, headers: { 'Content-Type': 'application/json' } });
+    window.fetch = async (u, o) => {
+      const url = String(typeof u === 'string' ? u : u.url);
+      const m = url.match(/\/rpc\/([a-z_]+)/);
+      if (!m) return asil(u, o);
+      window.__cagrilar.push({ ad: m[1] });
+      const VARSAYILAN = {
+        odev_sayfa_siniri: 1,
+        ewalu_mesajlari: [],
+        odev_gonder: { id: 'g2', dogru: 1, yanlis: 0, bos: 50, puan: 2 },
+      };
+      if (m[1] in uclar) return json(uclar[m[1]]);
+      return json(m[1] in VARSAYILAN ? VARSAYILAN[m[1]] : {});
+    };
+  }, { oturum, uclar });
+  const p = await s.newPage();
+  p.on('pageerror', (e) => bozuk(`sayfa hatası: ${e.message}`));
+  await p.goto(KOK + '#' + yol, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  return { b, p };
+}
+
+console.log('--- F1. Öğretmen: "göndermedi" yalnız başına durmuyor ---');
+{
+  const { b, p } = await kurF(OGRETMEN_OTURUMU, '/ogretmen/odevler/a1/gonderimler',
+    { ben_kimim: SAHIP, odev_gonderimleri: F_GONDERIMLER(ACMA) });
+  const g = await metin(p);
+  if (!/Yeniden açıldı/.test(g)) bozuk(`F1a: "Yeniden açıldı" yok: ${g.slice(0, 300)}`);
+  else tamam('F1a: "Yeniden açıldı" etiketi var');
+  // ASIL KUSUR: öğretmenin veliye söyleyeceği şey ÖNCEKİ PUAN.
+  if (!/önceki gönderim 75 puan/.test(g)) bozuk(`F1b: önceki puan yok: ${g.slice(0, 400)}`);
+  else tamam('F1b: "önceki gönderim 75 puan" ekranda');
+  if (!/soruda düzeltme yapıldı/.test(g)) bozuk('F1c: sebep öğretmende yok');
+  else tamam('F1c: sebep öğretmende var (kendi yazdığı cümle)');
+  if (!/31 Ekim 2026/.test(g)) bozuk('F1d: açılma tarihi yok');
+  else tamam('F1d: açılma tarihi yazılı');
+  // Bölüm açıklaması: "Bu öğrencilerden henüz gönderim yok." tek başına
+  // YANLIŞ bir cümleydi.
+  if (!/gönderimi yeniden açıldı — onlar göndermişti/.test(g)) {
+    bozuk(`F1e: bölüm açıklaması düzelmemiş: ${g.slice(0, 400)}`);
+  } else tamam('F1e: "Göndermeyenler" açıklaması yeniden açılanı söylüyor');
+  await b.close();
+}
+
+console.log('--- F2. Öğrenci: sebep ekranda, ne yapacağı yazılı ---');
+{
+  const { b, p } = await kurF(OGRENCI_OTURUMU, '/ogrenci/odevler',
+    { ogrenci_odevleri: F_ODEVLER(ACMA) });
+  const g = await metin(p);
+  if (!/Yeniden açıldı/.test(g) || !/soruda düzeltme yapıldı/.test(g)) {
+    bozuk(`F2a: öğrenci listesinde sebep yok: ${g.slice(0, 400)}`);
+  } else tamam('F2a: öğrenci listesinde sebep görünüyor');
+  if (!/önceki gönderim 75 puan/.test(g)) bozuk('F2b: öğrencide önceki puan yok');
+  else tamam('F2b: öğrenci silinen puanını görüyor');
+  // Ödev sayfası: "ne yapmalıyım" cümlesi.
+  // Listeden ödev sayfasına: kart başlığı tıklanabilir değil, düğme var.
+  await p.getByRole('button', { name: /Ödevi yap|Ödeve bak|Sonucu gör/ }).first().click();
+  await p.waitForTimeout(500);
+  const o = await metin(p);
+  if (!/Çözümünü yeniden gönder/.test(o)) {
+    bozuk(`F2c: ödev sayfasında yönerge yok: ${o.slice(0, 400)}`);
+  } else tamam('F2c: ödev sayfası "Çözümünü yeniden gönder" diyor');
+  if (!/soruda düzeltme yapıldı/.test(o)) bozuk('F2d: ödev sayfasında sebep yok');
+  else tamam('F2d: ödev sayfasında sebep var');
+  await b.close();
+}
+
+console.log('--- F3. Veli: puan görünüyor, SEBEP GÖRÜNMÜYOR ---');
+{
+  const { b, p } = await kurF(VELI_OTURUMU, '/veli/odevler',
+    { veli_paneli: F_VELI(ACMA_VELIYE) });
+  const g = await metin(p);
+  if (!/Yeniden açıldı/.test(g)) bozuk(`F3a: velide etiket yok: ${g.slice(0, 300)}`);
+  else tamam('F3a: velide "Yeniden açıldı" var');
+  if (!/önceki gönderim 75 puan/.test(g)) bozuk('F3b: velide önceki puan yok');
+  else tamam('F3b: veli çocuğunun silinen puanını görüyor');
+  if (!/öğretmen yeniden göndermesini istedi/.test(g)) {
+    bozuk(`F3c: veliye açıklama yok: ${g.slice(0, 400)}`);
+  } else tamam('F3c: veliye "ödev gönderilmişti" açıklaması var');
+  // KIRMIZI DAMGA KALKIYOR: "Göndermedi" yanlış bir cümleydi.
+  if (/Göndermedi/.test(g)) bozuk(`F3d: velide hâlâ "Göndermedi" damgası var`);
+  else tamam('F3d: kırmızı "Göndermedi" damgası kalktı');
+  // SINIR: sebep veliye gitmiyor. Sunucu göndermiyor, ekran da yazmıyor.
+  if (/düzeltme yapıldı/.test(g) || /puanlandi/.test(g)) {
+    bozuk(`F3e: SEBEP VELİYE SIZDI: ${g.slice(0, 400)}`);
+  } else tamam('F3e: sebep velide YOK');
+  await b.close();
+}
+
+console.log('--- F4. Alan gelmezse üç ekran da bugünkü hâlinde ---');
+{
+  // 0090 panelde çalışmadıysa alan hiç gelmez (Part VIII).
+  const sil = (o) => JSON.parse(JSON.stringify(o), (k, v) => (k === 'yeniden_acma' ? undefined : v));
+  for (const [ad, oturum, yol, uclar, yasak] of [
+    ['öğretmen', OGRETMEN_OTURUMU, '/ogretmen/odevler/a1/gonderimler',
+     { ben_kimim: SAHIP, odev_gonderimleri: sil(F_GONDERIMLER(ACMA)) },
+     'gönderimi yeniden açıldı — onlar göndermişti'],
+    ['öğrenci', OGRENCI_OTURUMU, '/ogrenci/odevler',
+     { ogrenci_odevleri: sil(F_ODEVLER(ACMA)) }, 'Yeniden açıldı'],
+    ['veli', VELI_OTURUMU, '/veli/odevler',
+     { veli_paneli: sil(F_VELI(ACMA_VELIYE)) }, 'Yeniden açıldı'],
+  ]) {
+    const { b, p } = await kurF(oturum, yol, uclar);
+    const g = await metin(p);
+    if (g.includes(yasak)) bozuk(`F4 ${ad}: alan yokken cümle çizilmiş`);
+    else if (g.trim() === '') bozuk(`F4 ${ad}: ekran boş kaldı`);
+    else tamam(`F4 ${ad}: alan yok, ekran bugünkü hâlinde`);
+    await b.close();
+  }
+}
+
+console.log('--- F6. Öğrenci listesi kişisel süreyi sayıyor ---');
+{
+  // 0081 SIRALAMAYI düzeltmişti ama kart hâlâ SINIFIN tarihini sayıyordu:
+  // gönderimi yeniden açılmış öğrenci "Süresi doldu" görüp düğmede
+  // "Ödeve bak" okuyordu. Sunucu kabul ederken ekran "yapamazsın" diyordu.
+  const { b, p } = await kurF(OGRENCI_OTURUMU, '/ogrenci/odevler',
+    { ogrenci_odevleri: F_ODEVLER(ACMA) });
+  const g = await metin(p);
+  if (/Süresi doldu/.test(g)) {
+    bozuk(`F6a: kişisel süre açıkken "Süresi doldu" yazıyor: ${g.slice(0, 400)}`);
+  } else tamam('F6a: "Süresi doldu" yazmıyor — kişisel süre açık');
+  if (/Ödeve bak/.test(g) || !/Ödevi yap/.test(g)) {
+    bozuk(`F6b: düğme "Ödevi yap" demiyor: ${g.slice(0, 400)}`);
+  } else tamam('F6b: düğme "Ödevi yap" diyor');
+  await b.close();
+}
+
+console.log('--- F5. 360 px: taşma yok ---');
+{
+  for (const [ad, oturum, yol, uclar] of [
+    ['öğretmen', OGRETMEN_OTURUMU, '/ogretmen/odevler/a1/gonderimler',
+     { ben_kimim: SAHIP, odev_gonderimleri: F_GONDERIMLER(ACMA) }],
+    ['öğrenci', OGRENCI_OTURUMU, '/ogrenci/odevler', { ogrenci_odevleri: F_ODEVLER(ACMA) }],
+    ['veli', VELI_OTURUMU, '/veli/odevler', { veli_paneli: F_VELI(ACMA_VELIYE) }],
+  ]) {
+    const { b, p } = await kurF(oturum, yol, uclar, 360);
+    const olcu = await p.evaluate(() => ({
+      yatay: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      disarida: [...document.querySelectorAll('p, span')].some((e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && (r.left < -1 || r.right > document.documentElement.clientWidth + 1);
+      }),
+    }));
+    if (olcu.yatay) bozuk(`F5 ${ad}: 360 px'te sayfa yatay kayıyor`);
+    else if (olcu.disarida) bozuk(`F5 ${ad}: 360 px'te metin ekran dışına çıkıyor`);
+    else tamam(`F5 ${ad}: 360 px — taşma ve yatay kayma yok`);
+    await b.close();
+  }
 }
 
 console.log('');

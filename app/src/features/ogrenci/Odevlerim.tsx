@@ -6,6 +6,7 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { ekSureAcik, ogrenciEkSure } from '@/lib/iptal-metni';
+import { yenidenAcmaSatiri } from '@/lib/yeniden-acma-metni';
 import { ogrenciOzeti } from '@/lib/ogrenci-ozet-metni';
 import { uzatmaMetni, verilisMetni } from '@/lib/odev-tarihleri';
 import { sureDurumu } from '@/lib/son-tarih';
@@ -152,7 +153,17 @@ export function Odevlerim() {
         <ul className="grid gap-3">
           {odevler.map((o: OgrenciOdev) => {
             const s = sureDurumu(o.son_tarih);
+            /**
+             * 0090: KİŞİSEL SÜRE AÇIKSA GERİ SAYIM ONUN. 0081 sıralamayı
+             * zaten düzeltmişti (`oncelik` ek süreyi 0'a alıyor) ama kart
+             * hâlâ SINIFIN tarihini sayıyordu: gönderimi yeniden açılmış
+             * öğrenci "Süresi doldu" görüp düğmede "Ödeve bak" okuyordu.
+             * Sunucu kabul ederken ekran "yapamazsın" diyordu — bu turun
+             * kapatmaya çalıştığı yanlış mesajın aynısı.
+             */
             const gonderildi = o.gonderim !== null;
+            const kisisel = !gonderildi && ekSureAcik(o.ek_sure);
+            const sure = kisisel ? sureDurumu(o.ek_sure as string) : s;
             return (
               <li key={o.id}>
                 <Card vurgu={!gonderildi && s.acil ? 'uyari' : 'yok'}>
@@ -194,6 +205,16 @@ export function Odevlerim() {
                           {ogrenciEkSure(o.ek_sure)}
                         </p>
                       )}
+                      {/* 0090: listede de yazıyor. Öğrenci ödev sayfasını
+                          açmadan "bunu göndermiştim" diyebilmeli. */}
+                      {yenidenAcmaSatiri(o.yeniden_acma, { sebepGoster: true }) && (
+                        <p
+                          data-test="ogrenci-yeniden-acma"
+                          className="text-[13px] text-ink"
+                        >
+                          {yenidenAcmaSatiri(o.yeniden_acma, { sebepGoster: true })}
+                        </p>
+                      )}
                     </div>
                     {gonderildi ? (
                       <div className="flex flex-wrap justify-end gap-1">
@@ -208,7 +229,7 @@ export function Odevlerim() {
                       </div>
                     ) : (
                       <div className="flex flex-wrap justify-end gap-1">
-                        <Tag tur={s.acil ? 'uyari' : 'notr'}>{s.metin}</Tag>
+                        <Tag tur={sure.acil ? 'uyari' : 'notr'}>{sure.metin}</Tag>
                         {/* Kapanmış ödevi "yapılacak" gibi göstermek boş umut
                             olurdu; öğrenci neden gönderemediğini burada görsün. */}
                         {o.sinif_arsiv ? (
@@ -235,7 +256,11 @@ export function Odevlerim() {
                     olcu="sm"
                     onClick={() => git(`/ogrenci/odev/${o.id}`)}
                   >
-                    {gonderildi ? 'Sonucu gör' : s.gecti ? 'Ödeve bak' : 'Ödevi yap'}
+                    {gonderildi
+                      ? 'Sonucu gör'
+                      : sure.gecti
+                        ? 'Ödeve bak'
+                        : 'Ödevi yap'}
                   </Button>
                 </Card>
               </li>

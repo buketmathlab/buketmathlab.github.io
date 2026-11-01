@@ -7699,3 +7699,102 @@ noktadaydı. Kesin cevap **denetim izinden** geldi, yedeklerden değil.
 
 **Ders: anlık görüntü neyin kaybolduğunu değil, neyin kaldığını söyler.
 "Ne oldu" sorusunun cevabı izdedir.**
+
+## 0090 — Yeniden açmanın geçmişi ekranda görünsün (1 Kasım)
+
+Bir üstteki soruşturmanın sonucu bu tur. Soruşturma "veri kaybı yok"
+dedi ve asıl kusuru buldu: **"yeniden aç" = sil, ama kimse bunu
+görmüyor.** 0090 o kusuru kapatıyor.
+
+**Yeni veri üretilmiyor.** Hiçbir satır eklenmiyor, silinmiyor,
+değiştirilmiyor. Bilgi `denetim_izi`de duruyordu — `eski` silinen
+gönderimin tam satırını (puanı dahil), `yeni` sebebi ve verilen yeni
+tarihi taşıyor. Tur onu **ekrana taşıyor**.
+
+Hedef cümle, öğretmenin onayladığı hâliyle:
+
+> **Yeniden açıldı** — önceki gönderim **75 puan** · soruda düzeltme
+> yapıldı · 31 Ekim 2026
+
+### Hesap tek yerde: `_gonderim_yeniden_acma`
+
+0085'in `_odev_tarihleri` deseni birebir: `stable`, `security definer`,
+istemciye kapalı. Üç ucun aynı yardımcıyı çağırması, aynı gerçeğin
+öğretmene, öğrenciye ve veliye farklı görünmesini imkânsız kılıyor.
+Sorgu kalıbı uydurulmadı: `ogrenci_odevleri`'nin `onceki_sayfalar` alanı
+0082'den beri aynı izi aynı biçimde okuyor.
+
+Aynı ödev iki kez açılabiliyor (0081'in `on conflict` dalı bunu
+bekliyor), bu yüzden yardımcı **EN SON** açmayı döndürüyor; `zaman`
+eşitse `id` karar veriyor (0085'in `ilk` dalındaki gerekçe).
+`onceki_puan` kuralı `coalesce(ogretmen_puan, puan)` — `veli_paneli`in
+bugünkü hesabıyla birebir aynı, yani açık uçlu ödevde de doğru puan.
+
+### Veliye sebep gitmiyor — ve bu yeni bir karar değil
+
+0081 sebebi öğrenciye `kanal = 'ogrenci'` mesajı olarak gönderiyor ve
+gövdesinde açıkça yazıyor: *"VELİ GÖRMÜYOR (0025'in ayrımı)"*. Sebep çoğu
+zaman öğrencinin kendi hatasını anlatıyor; o cümle öğrenciyle öğretmen
+arasında. 0090 aynı sınırı sürdürüyor: veli `zaman`, `onceki_puan` ve
+`yeni_son_tarih` alıyor; `neden` ve `onceki_durum` **sunucuda**
+çıkarılıyor (`- 'neden' - 'onceki_durum'`). Part XXI: göstermediğini
+gönderme — arayüzde saklamak yetmez.
+
+### Veli ekranında bir damga kalktı
+
+Veli kartı yeniden açılmış ödevde kırmızı **"Göndermedi"** yazıyordu. O
+damga yanlış bilgiydi: çocuk göndermişti. Yerine "Yeniden açıldı" ve bir
+açıklama geliyor — damga yine eksik bir iş olduğunu söylüyor ama
+doğrusunu.
+
+### Öğretmen ekranında bir cümle düzeldi
+
+"Göndermeyenler" başlığının altında *"Bu öğrencilerden henüz gönderim
+yok."* yazıyordu ve yeniden açılmış öğrenci için bu cümle **yanlıştı** —
+öğretmen tam ona bakıp veliye ödevin yapılmadığını söyleyecekti. Cümle
+artık kaç öğrencinin gönderiminin yeniden açıldığını da söylüyor.
+
+**Sayım değişmedi:** o öğrencilerden gerçekten yeni bir gönderim
+bekleniyor ve "göndermeyenlere ek süre ver" akışı (0084) onları hâlâ
+kapsıyor. Listeden çıkarmak ayrı bir karar ve bu turda yok.
+
+### Ölçüm
+
+- `yeniden_acma_gorunurlugu_testleri.sql` — 10 grup. **Yedi kusur
+  provası:** A (yardımcı ilk açmayı okudu → 4b), B (`coalesce` düştü →
+  3b), C (sebep veliye sızdı → 6a + öz-denetim), D (öğrenci eşleşmesi
+  düştü → 8a), F (kopya 0081'in `ek_sure`sini düşürdü → 9b + öz-denetim),
+  G (bir uç alanı vermedi → 1c). **E** (yardımcı istemciye açık) tam
+  süitte Faz 11 güvenlik denetimi tarafından DAHA ÖNCE yakalanıyor; 7.
+  grup ona ek bir kat ve kendisi ayrıca ölçüldü.
+- **B provası ilk yazımda ISIRMADI** ve kusur üründe değil ölçümdeydi:
+  kapı `(…)::numeric <> 75` yazıyordu, `null <> 75` ise SQL'de NULL döner
+  ve `if` hiç tetiklenmez. Dosyadaki bütün karşılaştırmalar bu yüzden
+  `is distinct from`. **Isırmayan provada önce koşum takımına bakılır.**
+- `yeniden-acma-denetimi.mjs` **F grubuyla genişletildi** (yeni dosya
+  açılmadı, süpürme 60'ta kaldı): öğretmen satırında "göndermedi" yalnız
+  başına durmuyor; öğrenci sebebi ekranda görüyor; **veli önceki puanı
+  görüyor ama sebebi GÖRMÜYOR**; alan gelmezse üç ekran da bugünkü
+  hâlinde; 360 px'te taşma yok. **Altı arayüz kusur provası da ısırdı.**
+- **Görsel ölçüm iki kusur buldu, ikisi de düzeltildi.** (a) Öğretmen
+  satırında etiket adın yanına konunca uzun öğrenci adı etiketlerin
+  ALTINDA kalıyordu; ad okunamayan bir listenin ek süre kutusu da işe
+  yaramaz. Etiket kaldırıldı, cümle kendi satırına indi ve durumu artık
+  satırın VURGUSU ayırıyor (bekleyen koyu, yeniden gönderen soluk).
+  (b) **0081'den kalma bir çelişki:** öğrenci listesi kişisel süre açıkken
+  bile SINIFIN tarihini sayıyor, "Süresi doldu" yazıp düğmede "Ödeve bak"
+  diyordu — sunucu kabul ederken ekran "yapamazsın" diyordu. Bu turun
+  kapatmaya çalıştığı yanlış mesajın aynısı olduğu için burada
+  düzeltildi (F6 + U6 provası).
+- `yeniden-acma-metni.ts` 18 birim testi. Puan uydurulmuyor: puanlanmamış
+  açık uçlu gönderimde cümle *"önceki gönderim"* deyip bitiyor.
+- **Kabul ölçütü karşılandı:** panelde `yeniden-acilan-bekleyenler.sql`
+  ile elle çıkardığımız liste artık öğretmenin kendi ekranında, sorgu
+  çalıştırmadan görünüyor.
+
+### Açık kalanlar
+
+- **"Göndermeyenler" sayısı** yeniden açılanları dışlasın mı? Etiketi
+  gördükten sonra karar vermek daha sağlıklı.
+- Silinen gönderimi izden **geri yükleyen** bir uç (0089'un açık kalanı).
+- Egress / soru PDF'i sıkıştırma.

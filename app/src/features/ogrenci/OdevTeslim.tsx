@@ -21,6 +21,10 @@ import { rpc } from '@/services/supabase';
 import { cozumSayfasiYukle, dosyaAdresi } from '@/services/dosya';
 import { gorseliSikistir } from '@/lib/gorsel-sikistir';
 import { ekSureAcik, gunMetni, ogrenciEkSure } from '@/lib/iptal-metni';
+import {
+  OGRENCI_ACIKLAMASI,
+  yenidenAcmaSatiri,
+} from '@/lib/yeniden-acma-metni';
 import * as YUKLEME from '@/lib/yeniden-yukleme-metni';
 import type { YuklemeYolu } from '@/lib/yeniden-yukleme-metni';
 import { gonderildiMetni } from '@/lib/yeniden-yukleme-metni';
@@ -538,6 +542,22 @@ function OdevIcerigi({
           <p data-test="ogrenci-ek-sure" className="mt-1 text-[14px] text-ink">
             {ogrenciEkSure(odev.ek_sure)}
           </p>
+        )}
+        {/* 0090: ÖDEV NEDEN YENİDEN "GÖNDERİLMEDİ" OLDU.
+            0081'den beri sebep yalnız MESAJ kutusuna düşüyordu; ödev
+            sayfasında ödev sessizce gönderilmemişe dönüyor ve puanı
+            kayboluyordu. Öğrenci burada ne olduğunu ve ne yapması
+            gerektiğini görüyor. Yeniden gönderdikten sonra da yazıyor:
+            elindeki puanın ikinci gönderimin puanı olduğunu bilsin. */}
+        {yenidenAcmaSatiri(odev.yeniden_acma, { sebepGoster: true }) && (
+          <div data-test="ogrenci-yeniden-acma" className="mt-2">
+            <p className="text-[14px] text-ink">
+              {yenidenAcmaSatiri(odev.yeniden_acma, { sebepGoster: true })}
+            </p>
+            {!gonderildi && (
+              <p className="text-[13px] text-muted">{OGRENCI_ACIKLAMASI}</p>
+            )}
+          </div>
         )}
         {/* 0086: ÇALIŞMA KAĞIDINDA PUAN YOK, ÖĞRENCİ BUNU ÖNCEDEN BİLSİN.
             Gönderdikten sonra puan bekleyip bulamamak, ekranın ona
