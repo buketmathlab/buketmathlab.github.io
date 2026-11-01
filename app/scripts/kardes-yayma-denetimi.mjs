@@ -12,6 +12,22 @@
  *
  * Görünürlük `innerText` ile ölçülüyor; `textContent` kapalı diyalogların
  * gizli başlıklarını da sayıyor (0021'de o hata yapılmıştı).
+ *
+ * 0088 — SON TARİH ARTIK SEÇENEKLİ. Bu dosyanın 2. grubu "son tarih
+ * TAŞINMAYANLAR'da yazılı" diye ölçüyordu; o iddia bugün YANLIŞ. İddia
+ * silinmedi, bugünkü kurala çevrildi (0087'nin dersi) ve üç yeni kapı
+ * eklendi: kutu VARSAYILAN İŞARETLİ geliyor, işaretliyken
+ * `p_son_tarih_de: true` / kaldırınca `false` gidiyor, kardeşlerin kendi
+ * tarihleri kartta ve yeni tarih raporda yazılı.
+ *
+ * KUSUR PROVALARI (0088). Dördü de yeniden derlenerek ölçüldü:
+ *   U1. Kutu varsayılan KAPALI yapıldı → 4 iddia düştü ("kutu VARSAYILAN
+ *       İŞARETLİ geliyor" dâhil).
+ *   U2. `p_son_tarih_de` ağa hiç gönderilmedi (0088 öncesi çağrı şekli)
+ *       → 3. ve 3b gruplarındaki iki iddia düştü.
+ *   U3. Rapor, tarih değişmediği hâlde "oldu" dedi → hem bu denetim hem
+ *       `kardes-yayma-metni.test.ts` (2 test) düştü.
+ *   U4. Kardeşin kendi son tarihi kartta çizilmedi → 1. grup düştü.
  */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
@@ -24,25 +40,37 @@ const SINIFLAR = [
 ];
 
 /** Üç kardeş bilerek farklı: biri ayrışmış, biri aynı, biri arşivde. */
+// 0088 SONRASI GERÇEK ŞEKİL: her kardeş KENDİ `son_tarih`ini taşıyor ve
+// üçü de kaynaktan (30 Eylül) farklı — "zaten aynıydı" diye yeşil
+// veremeyen bir fikstür.
 const KARDES_DETAY = [
-  { id: 'a2', sinif: '10V', gonderim_sayisi: 26, anahtar_ayni: false, arsiv: false },
-  { id: 'a3', sinif: '10W', gonderim_sayisi: 22, anahtar_ayni: true, arsiv: false },
-  { id: 'a4', sinif: '10Y', gonderim_sayisi: 18, anahtar_ayni: false, arsiv: true },
+  { id: 'a2', sinif: '10V', gonderim_sayisi: 26, anahtar_ayni: false, arsiv: false,
+    son_tarih: '2026-10-05' },
+  { id: 'a3', sinif: '10W', gonderim_sayisi: 22, anahtar_ayni: true, arsiv: false,
+    son_tarih: '2026-10-09' },
+  { id: 'a4', sinif: '10Y', gonderim_sayisi: 18, anahtar_ayni: false, arsiv: true,
+    son_tarih: '2026-10-12' },
 ];
 
 /** Sunucunun döneceği rapor. Zeynep BİLEREK YOK: puanı değişmeyen raporda yer almaz. */
+// 10V'de tarih DEĞİŞTİ, 10W'de değişmedi (sunucu o satırda iki alanı da
+// null gönderiyor), 10Y atlandı. Üç durum da raporda ayrı ayrı ölçülüyor.
 const RAPOR = [
   {
     sinif: '10V',
     odev_id: 'a2',
     atlandi: null,
+    son_tarih_eski: '2026-10-05',
+    son_tarih_yeni: '2026-09-30',
     yeniden_puanlanan: [
       { ogrenci: 'Efe Yayma', eski_puan: 50, yeni_puan: 100 },
       { ogrenci: 'Mert Yayma', eski_puan: 0, yeni_puan: 50 },
     ],
   },
-  { sinif: '10W', odev_id: 'a3', atlandi: null, yeniden_puanlanan: [] },
-  { sinif: '10Y', odev_id: 'a4', atlandi: 'arsiv', yeniden_puanlanan: [] },
+  { sinif: '10W', odev_id: 'a3', atlandi: null, yeniden_puanlanan: [],
+    son_tarih_eski: null, son_tarih_yeni: null },
+  { sinif: '10Y', odev_id: 'a4', atlandi: 'arsiv', yeniden_puanlanan: [],
+    son_tarih_eski: null, son_tarih_yeni: null },
 ];
 
 let hata = 0;
@@ -146,6 +174,9 @@ console.log('--- 1. Kart: kardeşler ve durumları yazılı ---');
   de(/Anahtar farklı/.test(t), 'ayrışan anahtar "Anahtar farklı" olarak işaretli');
   de(/Anahtar aynı/.test(t), 'ayrışmayan kardeş "Anahtar aynı" olarak işaretli');
   de(/Arşivde/.test(t), 'arşivdeki kardeş ekranda ATLANACAK diye yazılı');
+  // 0088: öğretmen neyin ÜZERİNE yazacağını basmadan önce görmeli.
+  de(/Son teslim: 5 Ekim 2026/.test(t) && /Son teslim: 9 Ekim 2026/.test(t),
+     'her kardeşin KENDİ son tarihi kartta yazılı');
   // Arşivdeki sınıf düğme metnine girmemeli: yayılmayacak bir sınıfı
   // düğmede vaat etmek, raporda "atlandı" görünce şaşırtırdı.
   const dugme = await p.getByRole('button', { name: /uygula/i }).first().innerText();
@@ -168,8 +199,28 @@ console.log('\n--- 2. ONAY KAPISI: onaylamadan hiçbir not değişmiyor ---');
   const t = await metin(p);
   de(/notları değişecek/.test(t), 'onay diyaloğu notların değişeceğini söylüyor');
   de(/geri alınamaz/.test(t), 'geri alınamaz olduğu yazılı');
-  de(/son tarih/i.test(t) && /Taşınmayacaklar/.test(t),
-     'TAŞINMAYANLAR diyalogda tek tek yazılı');
+  // 0088: ESKİ İDDİA "son tarih TAŞINMAYANLAR'da yazılı" idi — bugün
+  // yanlış. Kutu VARSAYILAN İŞARETLİ geldiği için son tarih
+  // TAŞINACAKLAR'da olmalı ve taşınmayanlarda GÖRÜNMEMELİ.
+  de(/Taşınmayacaklar/.test(t), 'TAŞINMAYANLAR diyalogda yazılı');
+  de(/SON TARİH/.test(t), 'kutu işaretliyken son tarih TAŞINACAKLAR\'da');
+  de(/Taşınmayacaklar: geç teslim/.test(t),
+     'taşınmayanlar listesi son tarihle BAŞLAMIYOR (kutu işaretli)');
+
+  const kutu = p.getByRole('checkbox', { name: /Son tarihi de bu şubelere uygula/ });
+  de((await kutu.count()) === 1, 'son tarih onay kutusu diyalogda var');
+  de(await kutu.isChecked(), 'kutu VARSAYILAN İŞARETLİ geliyor');
+
+  // Kutu kaldırılınca iki liste de yer değiştirmeli — öğretmen basmadan
+  // önce ne olacağını okuyor.
+  await kutu.uncheck();
+  await p.waitForTimeout(200);
+  const t2 = await metin(p);
+  de(/Taşınmayacaklar: son tarih/.test(t2),
+     'kutu kaldırılınca son tarih TAŞINMAYANLAR\'a geçiyor');
+  de(!/SON TARİH/.test(t2), 'kutu kaldırılınca taşınacaklarda son tarih yok');
+  de(/kendi son tarihini koruyacak/.test(t2), 'kapalı hâlin ne demek olduğu yazılı');
+  await kutu.check();
 
   // Vazgeçince gerçekten hiçbir şey olmamalı.
   await p.keyboard.press('Escape');
@@ -192,6 +243,9 @@ console.log('\n--- 3. Onaylanınca: tam bir çağrı ve sınıf sınıf sonuç -
   const y = c.filter((x) => x.ad === 'odev_kardeslere_yay');
   de(y.length === 1, 'onaydan sonra TAM BİR yayma çağrısı');
   de(y[0]?.govde?.p_id === 'a1', 'çağrı kaynak ödevin id’siyle gidiyor');
+  // 0088: kutuya dokunulmadı → varsayılan AÇIK ağa `true` olarak gidiyor.
+  de(y[0]?.govde?.p_son_tarih_de === true,
+     'kutuya dokunulmadan `p_son_tarih_de: true` gidiyor');
 
   const t = await metin(p);
   de(/Efe Yayma/.test(t) && /50/.test(t) && /100/.test(t),
@@ -203,6 +257,28 @@ console.log('\n--- 3. Onaylanınca: tam bir çağrı ve sınıf sınıf sonuç -
   de(/Atlandı/.test(t) && /arşivde/.test(t),
      'ARŞİVDEKİ SINIF ATLANDIĞI RAPORDA YAZILI — sessiz atlama yok');
   de(/denetim izine kaydedildi/.test(t), 'denetim izi bilgisi ekranda');
+  // 0088: tarih GERÇEKTEN değişen sınıfta yazılı, değişmeyende YAZILI DEĞİL.
+  de(/Son tarih 5 Ekim 2026 → 30 Eylül 2026 oldu\./.test(t),
+     'raporda değişen tarih iki yönüyle yazılı');
+  de((t.match(/Son tarih .* oldu\./g) ?? []).length === 1,
+     'TARİHİ DEĞİŞMEYEN SINIFTA "oldu" cümlesi YOK');
+  await b.close();
+}
+
+// ============================================================================
+console.log('\n--- 3b. Kutu kaldırılınca ağa `false` gidiyor (0088) ---');
+// ============================================================================
+{
+  const { b, p } = await kur(true);
+  await p.getByRole('button', { name: /uygula/i }).first().click();
+  await p.waitForTimeout(200);
+  await p.getByRole('checkbox', { name: /Son tarihi de bu şubelere uygula/ }).uncheck();
+  await p.getByRole('button', { name: /^Uygula$/ }).click();
+  await p.waitForTimeout(600);
+  const y = (await cagrilar(p)).filter((x) => x.ad === 'odev_kardeslere_yay');
+  de(y.length === 1, 'kutu kaldırılmış hâlde tam bir çağrı');
+  de(y[0]?.govde?.p_son_tarih_de === false,
+     'KUTU KALDIRILINCA `p_son_tarih_de: false` gidiyor');
   await b.close();
 }
 

@@ -241,6 +241,12 @@ export type KardesDetay = {
   anahtar_ayni: boolean;
   /** Arşivdeki sınıf yaymada ATLANIR (0016 kuralı). */
   arsiv: boolean;
+  /**
+   * Bu kardeşin KENDİ son tarihi (0088). Öğretmen, yayarken neyin
+   * üzerine yazacağını basmadan ÖNCE görsün diye geliyor. 0088
+   * çalıştırılmadıysa alan hiç gelmez; `?:` bu yüzden.
+   */
+  son_tarih?: string | null;
 };
 
 /**
@@ -264,6 +270,13 @@ export type YaymaRaporu = {
   yeniden_puanlanan: Array<{ ogrenci: string; eski_puan: number | null; yeni_puan: number }>;
   /** Atlandıysa nedeni; atlanmadıysa null. */
   atlandi: 'arsiv' | null;
+  /**
+   * Son tarih GERÇEKTEN değiştiyse eski ve yeni değer; değişmediyse
+   * ikisi de null (0088). "Değişti" demek, değişmediği hâlde öğretmeni
+   * yanıltırdı. 0088 çalıştırılmadıysa alanlar hiç gelmez.
+   */
+  son_tarih_eski?: string | null;
+  son_tarih_yeni?: string | null;
 };
 
 /** `odevler_coklu_olustur` (0030) yanıtı. */

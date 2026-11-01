@@ -246,6 +246,10 @@ echo "==> Gönderim iptali testleri (0081)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/gonderim_iptali_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Kardeş son tarihi testleri (0088)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/kardes_son_tarih_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Sayfa alt sınırı testleri (0087)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/sayfa_alt_siniri_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'

@@ -5,6 +5,14 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Tag } from '@/components/ui/Tag';
 import { useToast } from '@/components/ui/toast-baglam';
 import { useOturum } from '@/hooks/oturum-baglam';
+import {
+  SON_TARIH_KUTUSU,
+  kardesTarihSatiri,
+  raporTarihSatiri,
+  sonTarihKutuAciklamasi,
+  tasinacaklarMetni,
+  tasinmayacaklarMetni,
+} from '@/lib/kardes-yayma-metni';
 import { rpc } from '@/services/supabase';
 import type { KardesDetay, YaymaRaporu } from '@/types/api';
 
@@ -13,6 +21,8 @@ type Props = {
   /** Kaynak ödevin kendi sınıfı — listede "buradan yayılıyor" olarak yazılı. */
   kaynakSinif: string;
   kardesler: KardesDetay[];
+  /** Kaynak ödevin son tarihi — kutu açıkken şubelere yazılacak olan (0088). */
+  kaynakSonTarih?: string | null;
   /** Yayma sonrası ekranın kendini tazelemesi için. */
   onYayildi: () => void;
 };
@@ -30,18 +40,33 @@ type Props = {
  * 1. **Otomatik yayma yok.** Öğretmen onaylamadan başka sınıfın notu
  *    değişmiyor; düğme ayrıca bir onay diyaloğu açıyor. Sessiz not
  *    değişikliği bu üründe kabul edilemez.
- * 2. **Taşınmayanlar yazılı.** Son tarih, geç teslim ve yayında olma
- *    taşınmıyor — her sınıfın kendi programı var. Kural sunucuda
- *    zorlanıyor (0031 kendi denetimi), burada yalnız SÖYLENİYOR.
+ * 2. **Taşınmayanlar yazılı.** Geç teslim ve yayında olma taşınmıyor —
+ *    her sınıfın kendi programı var. Kural sunucuda zorlanıyor (0031
+ *    kendi denetimi), burada yalnız SÖYLENİYOR.
+ *
+ *    0088: SON TARİH bu listeden ÇIKTI ve ONAY KUTUSUNA döndü.
+ *    Öğretmen "diğer şubelere de uygulansın dediğimde uygulanmıyor"
+ *    dedi; taşınmaması onun işine yaramıyordu. Kutu VARSAYILAN AÇIK,
+ *    ama kapatılabiliyor: şubelerin dersi farklı günlerdeyse tarihleri
+ *    zorla eşitlemek yanlış olurdu. Hangi durumda ne olacağı iki
+ *    listede de yazılı — öğretmen basmadan önce okuyor.
  * 3. **Arşivdeki sınıf atlanıyor** ve raporda ayrıca yazılıyor (0016).
  *    Görünmeyen bir sınıfın notunu sessizce değiştirmek o kuralı delerdi.
  */
-export function KardeslereYayma({ odevId, kaynakSinif, kardesler, onYayildi }: Props) {
+export function KardeslereYayma({
+  odevId,
+  kaynakSinif,
+  kardesler,
+  kaynakSonTarih,
+  onYayildi,
+}: Props) {
   const { oturum } = useOturum();
   const { bildir } = useToast();
   const [onayAcik, setOnayAcik] = useState(false);
   const [yayiyor, setYayiyor] = useState(false);
   const [rapor, setRapor] = useState<YaymaRaporu[] | null>(null);
+  // 0088: VARSAYILAN AÇIK — öğretmenin bildirdiği sorun tam buydu.
+  const [sonTarihDe, setSonTarihDe] = useState(true);
 
   // Yayılabilecek kardeşler = arşivde OLMAYANLAR. Hepsi arşivdeyse yayacak
   // bir şey yok; düğme çıkmıyor ama sınıflar yine listeleniyor.
@@ -54,6 +79,7 @@ export function KardeslereYayma({ odevId, kaynakSinif, kardesler, onYayildi }: P
       const sonuc = await rpc<YaymaRaporu[]>('odev_kardeslere_yay', {
         p_token: oturum?.token,
         p_id: odevId,
+        p_son_tarih_de: sonTarihDe,
       });
       setRapor(sonuc);
       const degisen = sonuc.reduce((t, s) => t + s.yeniden_puanlanan.length, 0);
@@ -81,6 +107,12 @@ export function KardeslereYayma({ odevId, kaynakSinif, kardesler, onYayildi }: P
             {rapor.map((s) => (
               <li key={s.odev_id} className="border-t border-line pt-3 first:border-0 first:pt-0">
                 <p className="text-[15px] font-semibold text-ink">{s.sinif}</p>
+                {/* 0088: tarih GERÇEKTEN değiştiyse söyleniyor. Sunucu
+                    değişmediğinde iki alanı da null gönderiyor; "değişti"
+                    demek öğretmeni yanıltırdı. */}
+                {raporTarihSatiri(s) && (
+                  <p className="mt-1 text-[14px] text-ink">{raporTarihSatiri(s)}</p>
+                )}
                 {s.atlandi === 'arsiv' ? (
                   <p className="mt-1 text-[14px] text-muted">
                     Atlandı — bu sınıf arşivde. Notlarına dokunulmadı.
@@ -124,6 +156,11 @@ export function KardeslereYayma({ odevId, kaynakSinif, kardesler, onYayildi }: P
               <span className="sk-sayi text-[14px] text-muted">
                 {`${k.gonderim_sayisi} gönderim`}
               </span>
+              {/* 0088: şubenin KENDİ son tarihi — öğretmen neyin üzerine
+                  yazacağını basmadan ÖNCE görsün. */}
+              {kardesTarihSatiri(k) && (
+                <span className="sk-sayi text-[14px] text-muted">{kardesTarihSatiri(k)}</span>
+              )}
               {k.arsiv ? (
                 <Tag tur="notr">Arşivde — atlanacak</Tag>
               ) : k.anahtar_ayni ? (
@@ -160,11 +197,30 @@ export function KardeslereYayma({ odevId, kaynakSinif, kardesler, onYayildi }: P
         onOnay={() => void yay()}
         onayYukleniyor={yayiyor}
       >
-        <p className="text-[14px] text-ink">Taşınacaklar: başlık, açıklama, cevap anahtarı, soru ve şık sayısı, sayfa sayısı, konular, iki PDF.</p>
-        <p className="mt-2 text-[14px] text-muted">
-          <strong>Taşınmayacaklar:</strong> son tarih, geç teslim izni ve yayında olma
-          durumu. Her sınıfın kendi programı korunuyor.
-        </p>
+        {/* 0088 — SON TARİH KUTUSU. Biçim `GecTeslimSecimi`nin deseni:
+            aynı görünüm, aynı dokunma alanı. VARSAYILAN AÇIK, çünkü
+            öğretmenin bildirdiği sorun buydu; kapatmak bilinçli bir
+            seçim olmalı, kutuyu fark etmemenin sonucu değil. */}
+        <div className="mb-3 rounded-sk-sm border border-line bg-line-soft p-3">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={sonTarihDe}
+              onChange={(e) => setSonTarihDe(e.target.checked)}
+              className="mt-[2px] h-6 w-6 shrink-0 accent-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            />
+            <span>
+              <span className="block text-[15px] font-semibold text-ink">
+                {SON_TARIH_KUTUSU}
+              </span>
+              <span className="mt-1 block text-[13px] text-muted">
+                {sonTarihKutuAciklamasi(sonTarihDe, kaynakSonTarih)}
+              </span>
+            </span>
+          </label>
+        </div>
+        <p className="text-[14px] text-ink">{tasinacaklarMetni(sonTarihDe)}</p>
+        <p className="mt-2 text-[14px] text-muted">{tasinmayacaklarMetni(sonTarihDe)}</p>
       </Dialog>
     </>
   );

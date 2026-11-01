@@ -7490,3 +7490,82 @@ değiştirdiği kuralı ezberlemiş denetimlerdi. Gerçek bir gerileme yok; ama
 — kuralın *metnini* ezberlemiş denetimler de var ve onlar ancak tam
 süpürmede görünüyor. Bu turda üçü de yalnız süpürme sayesinde çıktı;
 0087'nin kendi denetimi (`sayfa-zorunlu`) baştan yeşildi.
+
+## 0088 — Yayarken son tarih de taşınsın (1 Kasım)
+
+Öğretmenin bildirimi: *"Bir sınıfa yaptığım değişiklik diğer şubelere de
+uygulansın dediğimde uygulanmıyor. Her şubeyi tek tek düzeltmem
+gerekiyor."*
+
+### Kırık kod değildi
+
+`odev_kardeslere_yay` 0031'den beri son tarihi **bilerek** taşımıyordu;
+gövdesinde yazılıydı: *"sinif_id, son_tarih, gec_teslim, yayinda ve
+grup_id BİLEREK YOK"*, gerekçe *"her sınıfın kendi programı var"*.
+Öğretmen düğmeyi görüyor, basıyor, içerik gerçekten taşınıyor — ama
+değiştirdiği şey son tarih olduğu için ekranda hiçbir şey değişmiyor.
+
+Gerekçe yanlış değildi (10A'nın dersi pazartesi, 10B'ninki çarşamba
+olabilir). Eksik olan, bunun bir **seçim** olmamasıydı. Öğretmenin
+kararı: onay penceresinde işaretlenebilir olsun, **varsayılan işaretli**.
+Geç teslim izni ve yayında/taslak durumu taşınmamaya devam ediyor — yine
+onun kararı; özellikle "yayında", diğer şubenin öğrencilerinin ödevi
+anında görmesi demek olurdu.
+
+### İmza değişti — 0007 tuzağı
+
+`p_son_tarih_de boolean default true` eklemek **yeni bir fonksiyon**
+yaratıyor. İki argümanlı sürüm açıkça düşürüldü, yetkiler yeni imzaya
+yeniden verildi. Varsayılanın `true` olması bilinçli: önbellekteki eski
+istemci iki argümanla çağırsa bile uç çözülür ve öğretmenin istediği gibi
+davranır (Part VIII).
+
+### Ölçümün ortaya çıkardığı ikinci iş
+
+0085'in "Son teslim tarihi uzatıldı" rozeti `_odev_tarihleri`'nden
+geliyor ve o yardımcı **yalnız `odev_guncellendi`** izlerini sayıyordu.
+Yayma ise `kardeslere_yayildi` yazıyor. Dokunulmasaydı kardeş şubedeki
+öğrenci ve veli tarihin değiştiğini **hiç görmezdi** — sessizce yeni
+tarihi bulurdu. Yardımcı artık iki işlemi de sayıyor.
+
+### İki gerçek hata — ikisini de ÖLÇÜM yakaladı
+
+1. **Öz-denetim kendi kodumda ısırdı.**
+   `pg_get_function_identity_arguments` parametre **adlarını** da
+   taşıyor (`p_token text, p_id uuid`), yalnız tipleri değil. İlk yazım
+   tiplerle karşılaştırıyordu ve "üç argümanlı fonksiyon yok" dedi.
+2. **`odev_detay` yanlış kaynaktan kopyalandı.** 0083'ten alınmıştı;
+   oysa onu en son **0085** tanımlamıştı. Kopya, 0085'in eklediği
+   `tarihler` alanını **sessizce geri alıyordu**. Kod okumak yakalamadı;
+   ölçümün 8. grubu yakaladı. Kural bir kez daha: **kaynak her zaman en
+   son tanım.** Öz-denetime kalıcı bir kapı kondu.
+
+### Ölçüm
+
+- `kardes_son_tarih_testleri.sql` — 9 grup. **Altı kusur provasının
+  hepsi ısırdı:** A2 (tarih hiç taşınmıyor, öz-denetimi atlatarak),
+  B (kutu kapatılamıyor), C (yayma izi sayılmıyor → öğrenci uzatmayı
+  görmüyor), D (kapsam genişledi), E (rapor değişmeyen tarihi "değişti"
+  sayıyor), F (arşivdeki kardeş atlanmıyor).
+- **Prova koşum takımı iki kez yanıltı verdi, ikisi de düzeltildi:**
+  biri `calistir.sh`in olumsuz testlerde bilerek bastırdığı `ERROR`
+  satırlarını başarısızlık sandı (çıkış koduna bakacak şekilde
+  düzeltildi); öbürü PostgreSQL'in ölü olduğu bir anda "ısırdı" dedi.
+  **Prova ısırdığında da önce koşum takımına bakılıyor.**
+- `kardes_yayma_testleri.sql` **yeniden yazıldı, silinmedi**: eski
+  `5g` ("son tarih taşındı — taşınmamalıydı") bugünkü kurala çevrildi ve
+  yeni `5g2` eklendi (varsayılan açıkken taşınıyor).
+- `kardes-yayma-denetimi.mjs` **yeniden yazıldı**: 2. gruptaki "son
+  tarih TAŞINMAYANLAR'da" iddiası tersine döndü; kutu, iki liste, ağa
+  giden değer ve rapor cümlesi için yeni kapılar kondu.
+  **Dört arayüz kusur provasının hepsi ısırdı.**
+- `kardes-yayma-metni.ts` + 11 birim testi: cümleler tek yerde.
+
+### Açık kalan not
+
+`odevler_listesi` (0086) "N sınıf" rozetini yalnız `grup_id is not null`
+koşuluyla veriyor; `odev_detay` (0083/0085/0088) kardeş kartını ayrıca
+`d.ogretmen_id = v_ogretmen` koşuluna bağlıyor. İkisi ayrışırsa listede
+"3 sınıf" yazarken düzenleme ekranında hiçbir kardeş kartı çıkmaz.
+Bugünkü veride `ogretmen_id` NOT NULL ve 0033'te geri dolduruldu, yani
+bu turda yaşanan sorun bu değildi. Ayrı bir turda ele alınacak.

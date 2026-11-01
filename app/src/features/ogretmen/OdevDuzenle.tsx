@@ -506,6 +506,7 @@ export function OdevDuzenle() {
                 odevId={detay.id}
                 kaynakSinif={detay.sinif}
                 kardesler={detay.kardes_detay}
+                kaynakSonTarih={detay.son_tarih}
                 onYayildi={yenile}
               />
             ) : (

@@ -7,11 +7,17 @@
 -- düzelttiğini elle doğrulanabilir sayılarla ölçüyor — "çalışıyor gibi
 -- görünmesi" yetmez.
 --
--- İKİNCİ SORU KAPSAM. Öğretmenin kararı: içerik ve başlık taşınır; son
--- tarih, geç teslim ve yayında olma TAŞINMAZ (her sınıfın kendi programı),
--- sınıf hiçbir koşulda değişmez. 5. grup bunu iki yönlü ölçüyor — taşınanın
+-- İKİNCİ SORU KAPSAM. Öğretmenin kararı: içerik ve başlık taşınır; geç
+-- teslim ve yayında olma TAŞINMAZ (her sınıfın kendi programı), sınıf
+-- hiçbir koşulda değişmez. 5. grup bunu iki yönlü ölçüyor — taşınanın
 -- taşındığı VE taşınmayanın taşınmadığı. Kapsam bir gün sessizce genişlerse
 -- bu grup kırılır.
+--
+-- 0088: SON TARİH bu listeden ÇIKTI — artık seçenekli taşınıyor, varsayılan
+-- açık. Öğretmen "diğer şubelere de uygulansın dediğimde uygulanmıyor"
+-- dedi; taşınmaması onun işine yaramıyordu. Ayrıntılı ölçümü
+-- `kardes_son_tarih_testleri.sql`de; burada yalnız kapsamın iki yönü
+-- korunuyor.
 --
 -- ÜÇÜNCÜ SORU ARŞİV. 0016'nın kuralı: arşivdeki sınıf öğretmenin hiçbir
 -- listesinde yok. Görünmeyen bir sınıfın notunu sessizce değiştirmek o kuralı
@@ -251,18 +257,33 @@ begin
   end if;
 
   -- TAŞINMAYANLAR — öğretmenin kararının kod karşılığı.
-  -- 10V'nin son tarihi bilerek farklılaştırılıp yayma tekrar çağrılıyor;
-  -- taşınsaydı bu değer kaynağınkine dönerdi.
+  -- 10V'nin ayarları bilerek farklılaştırılıp yayma tekrar çağrılıyor;
+  -- taşınsalardı bu değerler kaynağınkine dönerdi.
+  --
+  -- 0088: SON TARİH ARTIK TAŞINIYOR (seçenekli, varsayılan açık). Bu
+  -- grubun eski 5g iddiası — "son tarih taşındı, taşınmamalıydı" —
+  -- kaldırılan kuralı ezberlemişti; bugünkü kurala çevrildi. Taşınmayan
+  -- ÜÇÜ (geç teslim, yayında, sınıf) ölçülmeye devam ediyor ve o üçünü
+  -- ölçerken tarih kapısı KAPATILIYOR ki ölçüm tek şeye baksın.
   update public.odevler set son_tarih = current_date + 30, gec_teslim = false
    where id = d_v;
   select son_tarih, gec_teslim, yayinda into eski_tarih, eski_gec, eski_yayin
     from public.odevler where id = d_v;
 
-  perform public.odev_kardeslere_yay(jt, d_u);
+  perform public.odev_kardeslere_yay(jt, d_u, false);
 
   if (select son_tarih from public.odevler where id = d_v) <> eski_tarih then
-    raise exception '5g: SON TARİH taşındı — taşınmamalıydı';
+    raise exception '5g: kutu KAPALIYKEN son tarih taşındı';
   end if;
+
+  -- Varsayılan (kutu açık) → taşınıyor. 0088'in asıl kuralı.
+  update public.odevler set son_tarih = current_date + 11 where id = d_u;
+  perform public.odev_kardeslere_yay(jt, d_u);
+  if (select son_tarih from public.odevler where id = d_v) <> current_date + 11 then
+    raise exception '5g2: VARSAYILAN açıkken son tarih taşınmadı (0088)';
+  end if;
+  select son_tarih, gec_teslim, yayinda into eski_tarih, eski_gec, eski_yayin
+    from public.odevler where id = d_v;
   if (select gec_teslim from public.odevler where id = d_v) is distinct from eski_gec then
     raise exception '5h: GEÇ TESLİM ayarı taşındı — taşınmamalıydı';
   end if;
@@ -273,7 +294,7 @@ begin
     raise exception '5j: SINIF değişti — hiçbir koşulda değişmemeliydi';
   end if;
 
-  raise notice '5 OK — içerik taşındı; son tarih, geç teslim, yayın ve sınıf yerinde';
+  raise notice '5 OK — içerik ve (0088) son tarih taşındı; geç teslim, yayın ve sınıf yerinde';
 
   -- ===========================================================================
   raise notice '--- 6. ARŞİVDEKİ KARDEŞ ATLANIYOR (0016 kuralı) ---';
