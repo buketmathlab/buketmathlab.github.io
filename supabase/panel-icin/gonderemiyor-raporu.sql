@@ -127,6 +127,10 @@ en_son as (
 ozet as (
   select count(*) filter (where durum not in ('GÖNDERDİ', 'ENGEL YOK')) as engelli,
          count(*) as toplam,
+         -- SAYFA SINIRI ÖĞRENCİ BAŞINA BİR "ENGEL" DEĞİL: kimse engellenmiş
+         -- görünmez, buna rağmen çözümü iki sayfa olan bir sınıfın tamamı
+         -- yükleyemez. Bu yüzden özet onu ayrıca söylüyor.
+         (select sayfa_limiti from en_son limit 1) as sinir,
          (select durum from en_son e2
            where e2.durum not in ('GÖNDERDİ', 'ENGEL YOK')
            group by durum order by count(*) desc limit 1) as baskin,
@@ -145,6 +149,25 @@ kardes as (
     join public.siniflar s2 on s2.id = d2.sinif_id
    where d2.grup_id is not null
      and d2.grup_id in (select grup_id from son_odev where grup_id is not null)
+),
+
+-- 6. BÖLÜM — GÖNDERİLEN SAYFA SAYISI.
+--
+-- Sınırın DAR olup olmadığını ÖLÇÜYOR, çıkarmıyor: gönderenlerin hepsi
+-- tam sınır kadar sayfa gönderdiyse sınır büyük olasılıkla dar (herkes
+-- tavana dayanmış); sınırın altında kalanlar varsa dar değil.
+-- `foto_yolu` her zaman 1. sayfa, `ek_sayfa_yollari` kalanlar (0054).
+sayfa_sayim as (
+  select g.odev_id,
+         count(*) as gonderim,
+         min(1 + coalesce(array_length(g.ek_sayfa_yollari, 1), 0)) as en_az,
+         max(1 + coalesce(array_length(g.ek_sayfa_yollari, 1), 0)) as en_cok,
+         count(*) filter (
+           where 1 + coalesce(array_length(g.ek_sayfa_yollari, 1), 0) >= d.sayfa_limiti
+         ) as tavanda
+    from public.gonderimler g
+    join son_odev d on d.id = g.odev_id
+   group by g.odev_id
 ),
 
 -- 5. BÖLÜM — DEPODA DURAN AMA GÖNDERİMİ OLMAYAN DOSYA.
@@ -188,11 +211,19 @@ select * from (
            when (select count(*) from son_odev) = 0 then
              'Bu sınıfta hiç ödev yok.'
            when (select engelli from ozet) = 0 then
-             'ENGEL YOK. "' || coalesce((select baslik from ozet), '—')
+             'ÖĞRENCİ BAŞINA ENGEL YOK. "' || coalesce((select baslik from ozet), '—')
                || '" ödevinde ' || (select toplam from ozet)::text
                || ' öğrencinin hiçbirinin önünde sunucu tarafında engel yok.'
-               || ' Sorun gönderimin yarıda kalmasında olabilir:'
-               || ' aşağıdaki "5 · DEPODA DURAN DOSYA" bölümüne bakın.'
+               -- İKİ OLASILIK DA SÖYLENİYOR, BİRİ SEÇİLMİYOR. Hangisinin
+               -- doğru olduğu alttaki bölümlerin sayılarından çıkar.
+               || case when (select sinir from ozet) = 1
+                       then ' AMA SAYFA SINIRI 1: öğrenci yalnız TEK fotoğraf'
+                            || ' yükleyebiliyor. Çözümü iki sayfa olan öğrenci'
+                            || ' ikincisini EKLEYEMEZ ve "yükleyemiyorum" der.'
+                            || ' Bkz. "1 · ÖDEV" ve "6 · GÖNDERİLEN SAYFA SAYISI".'
+                       else '' end
+               || ' Gönderim yarıda da kalmış olabilir:'
+               || ' bkz. "5 · DEPODA DURAN DOSYA".'
            else
              'DİKKAT: "' || coalesce((select baslik from ozet), '—')
                || '" ödevinde ' || (select toplam from ozet)::text
@@ -218,6 +249,13 @@ select * from (
                 when not d.yayinda then '  →  TASLAK: öğrenci bu ödevi HİÇ GÖRMÜYOR'
                 when not d.gec_teslim and (select bugun from ayar) > d.son_tarih
                   then '  →  TESLİM KAPALI'
+                -- SINIR 1 SESSİZ BİR KAPI. `sayfa_limiti` varsayılanı 1;
+                -- ödev sayfa sayısı verilmeden açıldıysa öğrenci tek
+                -- fotoğrafla sınırlı kalıyor ve bunu hiçbir öğretmen
+                -- ekranı söylemiyor.
+                when d.sayfa_limiti = 1
+                  then '  →  SAYFA SINIRI 1: öğrenci yalnız TEK fotoğraf'
+                       || ' yükleyebilir; çözümü iki sayfaysa ikincisi EKLENMİYOR'
                 else '' end,
          to_char(d.created_at at time zone 'Europe/Istanbul', 'DD.MM.YYYY HH24:MI')
     from son_odev d
@@ -276,5 +314,27 @@ select * from (
            || ' (bağlantı koptu ya da "Gönder" adımı düştü)',
          to_char(y.yuklendi at time zone 'Europe/Istanbul', 'DD.MM.YYYY HH24:MI')
     from oksuz y
+  union all
+  -- ---------------------------------------------------------------- 6
+  -- SINIR DAR MI: ÖLÇÜM, ÇIKARIM DEĞİL. Gönderenlerin hepsi tavana
+  -- dayandıysa sınır büyük olasılıkla dar; altında kalanlar varsa
+  -- değil. Rapor sayıyı veriyor, kararı öğretmen veriyor.
+  select '6 · GÖNDERİLEN SAYFA SAYISI', 7,
+         d.sinif_ad || ' · ' || d.baslik,
+         'sayfa sınırı: ' || d.sayfa_limiti::text
+           || ' · gönderen: ' || y.gonderim::text
+           || ' · gönderilen sayfa: en az ' || y.en_az::text
+           || ', en çok ' || y.en_cok::text
+           || ' · sınıra DAYANAN: ' || y.tavanda::text || '/' || y.gonderim::text
+           || case
+                when d.sayfa_limiti > 1 and y.tavanda = y.gonderim
+                  then '  →  GÖNDERENLERİN HEPSİ TAVANDA: sınır dar olabilir'
+                when d.sayfa_limiti = 1
+                  then '  →  SINIR 1 OLDUĞU İÇİN HERKES ZORUNLU OLARAK TAVANDA;'
+                       || ' bu sayı sınırın dar olup olmadığını SÖYLEMEZ'
+                else '' end,
+         ''
+    from sayfa_sayim y
+    join son_odev d on d.id = y.odev_id
 ) r
 order by sira, kim, ayrinti;

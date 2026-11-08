@@ -32,6 +32,11 @@
 --   9.  KARDEŞ ŞUBELER bölümü şubeler arası tarih farkını gösteriyor
 --  10.  DEPODA DURAN DOSYA — yüklenmiş ama gönderimi olmayan sayfa
 --  11.  "Son ödev" EN SON VERİLEN ödev (son tarihi en ileri olan değil)
+--  12.  SON TARİH BUGÜN kapı DEĞİL — ama sayfa sınırı 1 ise rapor onu
+--       adıyla söylüyor (öğretmenin bildirdiği durumun tam kendisi)
+--  13.  Sınır genişken uyarı ÇIKMIYOR
+--  14.  Gönderilen sayfa sayısı ölçülüyor; "hepsi tavanda" yorumu
+--       sayıma bağlı, çıkarım değil
 --
 -- `now()` bir işlem boyunca DONUK; tarih kapıları `current_date`
 -- üzerinden kuruluyor, denetim izi gerekmiyor.
@@ -64,6 +69,16 @@
 --         → 1a ısırdı: "engel yokken 3 öğrenci engelli sayıldı"
 --   R6  Kardeş şubeler yalnız incelenen sınıfla sınırlanıyor
 --         → 9a ısırdı: "iki kardeş satırı beklenirken 1"
+--   R7  Özet sayfa sınırını hiç söylemiyor ("engel yok" deyip bırakıyor)
+--         → 12c ısırdı
+--   R8  Ödev satırındaki sınır uyarısı kalkıyor
+--         → 12d ısırdı
+--   R9  Uyarı HER sınırda çıkıyor (her şeye "sorun var" diyen rapor)
+--         → 13a ısırdı
+--  R10  Tavan sayımı sınır yerine 1'e bakıyor
+--         → 14c ısırdı
+--  R11  "Hepsi tavanda" cümlesi sayıma bakmadan yazılıyor
+--         → 14d ısırdı
 --
 -- Isırmayan — ya da BEKLENMEDİK yerden ısıran — provada önce koşum
 -- takımına bakılıyor. R4 tam bunun örneği.
@@ -175,7 +190,10 @@ begin
       n, (select string_agg(kim || ' → ' || ayrinti, ' | ') from gr where bolum = '4 · ÖĞRENCİ');
   end if;
   select ayrinti into t from gr where bolum = '0 · OZET';
-  if t not like 'ENGEL YOK%' then
+  -- Cümle "ÖĞRENCİ BAŞINA ENGEL YOK" ile başlıyor: öğrenci başına engel
+  -- olmaması, sınıfın gönderebildiği ANLAMINA GELMİYOR (12. grup). Ayrım
+  -- özetin kendi sözünde duruyor.
+  if t not like 'ÖĞRENCİ BAŞINA ENGEL YOK%' then
     raise exception '1b BAŞARISIZ — özet engel uydurdu: %', t;
   end if;
   raise notice '    engel yokken rapor engel UYDURMUYOR: OK';
@@ -420,7 +438,112 @@ begin
   end if;
   raise notice '    "son ödev" = en son VERİLEN; öncekiler yine listede: OK';
 
+  -- ---------------------------------------------------------------------------
+  raise notice '--- 12. SON TARİH BUGÜN + SAYFA SINIRI 1 ---';
+  -- ---------------------------------------------------------------------------
+  -- ÖĞRETMENİN BİLDİRDİĞİ DURUMUN TAM KENDİSİ: "teslim tarihi bugün olan
+  -- ödevler". Bugün son tarih kapısını AÇMIYOR — sunucu da `bugun >
+  -- son_tarih` diyor ve bugün > bugün yanlış. Öğrenci başına engel yok;
+  -- ama sayfa sınırı 1 ise sınıfın tamamı yine de ikinci sayfayı
+  -- yükleyemez. Rapor bunu ADIYLA söylemeli, yoksa "engel yok" deyip
+  -- öğretmeni boş yere rahatlatır.
+  update public.odevler
+     set son_tarih = current_date, sayfa_limiti = 1 where id = d_yeni;
+  drop table gr;
+  execute 'create temp table gr as ' || rapor;
+
+  select count(*) into n from gr where bolum = '4 · ÖĞRENCİ';
+  if n <> 0 then
+    raise exception '12a BAŞARISIZ — son tarih BUGÜNKEN % öğrenci engelli sayıldı: %',
+      n, (select string_agg(kim || ' → ' || ayrinti, ' | ') from gr where bolum = '4 · ÖĞRENCİ');
+  end if;
+  select ayrinti into t from gr where bolum = '0 · OZET';
+  if t not like 'ÖĞRENCİ BAŞINA ENGEL YOK%' then
+    raise exception '12b BAŞARISIZ — bugün son tarihken özet engel uydurdu: %', t;
+  end if;
+  if t not like '%SAYFA SINIRI 1%' then
+    raise exception '12c BAŞARISIZ — özet sayfa sınırını söylemiyor: %', t;
+  end if;
+  if not exists (select 1 from gr where bolum = '1 · ÖDEV'
+                   and kim like '%Son Ödev%' and ayrinti like '%SAYFA SINIRI 1%') then
+    raise exception '12d BAŞARISIZ — ödev satırı sayfa sınırını söylemiyor';
+  end if;
+  raise notice '    bugün kapı değil; sayfa sınırı 1 adıyla söyleniyor: OK';
+
+  -- ---------------------------------------------------------------------------
+  raise notice '--- 13. Sınır genişken uyarı ÇIKMIYOR ---';
+  -- ---------------------------------------------------------------------------
+  -- Her şeye "sorun var" diyen bir rapor da bütün kapılarda yeşil yanardı.
+  update public.odevler set sayfa_limiti = 5 where id = d_yeni;
+  drop table gr;
+  execute 'create temp table gr as ' || rapor;
+
+  select ayrinti into t from gr where bolum = '0 · OZET';
+  if t like '%SAYFA SINIRI 1%' then
+    raise exception '13a BAŞARISIZ — sınır 5 iken özet sınır uyarısı verdi: %', t;
+  end if;
+  if exists (select 1 from gr where bolum = '1 · ÖDEV'
+               and kim like '%Son Ödev%' and ayrinti like '%SAYFA SINIRI 1%') then
+    raise exception '13b BAŞARISIZ — sınır 5 iken ödev satırı uyarı verdi';
+  end if;
+  if t not like 'ÖĞRENCİ BAŞINA ENGEL YOK%' then
+    raise exception '13c BAŞARISIZ — özet bozuldu: %', t;
+  end if;
+  raise notice '    sınır genişken uyarı yok: OK';
+
+  -- ---------------------------------------------------------------------------
+  raise notice '--- 14. GÖNDERİLEN SAYFA SAYISI ölçülüyor ---';
+  -- ---------------------------------------------------------------------------
+  -- Sınırın dar olup olmadığı ÇIKARILMIYOR, sayılıyor: gönderenlerin
+  -- hepsi tavana dayandıysa sınır dar olabilir; altında kalan varsa değil.
+  update public.gonderimler
+     set ek_sayfa_yollari = array[
+           'cozum/' || d_yeni || '/' || o1 || '-2.jpg',
+           'cozum/' || d_yeni || '/' || o1 || '-3.jpg']
+   where odev_id = d_yeni and ogrenci_id = o1;
+  insert into public.gonderimler (odev_id, ogrenci_id, foto_yolu, ek_sayfa_yollari, durum)
+  values (d_yeni, o3, 'cozum/' || d_yeni || '/' || o3 || '.jpg',
+          array['cozum/' || d_yeni || '/' || o3 || '-2.jpg',
+                'cozum/' || d_yeni || '/' || o3 || '-3.jpg',
+                'cozum/' || d_yeni || '/' || o3 || '-4.jpg',
+                'cozum/' || d_yeni || '/' || o3 || '-5.jpg'], 'incelemede');
+  drop table gr;
+  execute 'create temp table gr as ' || rapor;
+
+  select ayrinti into t from gr
+   where bolum = '6 · GÖNDERİLEN SAYFA SAYISI' and kim like '10B%';
+  if t is null then
+    raise exception '14a BAŞARISIZ — 6. bölüm hiç çizilmedi';
+  end if;
+  if t not like '%en az 3, en çok 5%' then
+    raise exception '14b BAŞARISIZ — sayfa sayıları yanlış: %', t;
+  end if;
+  -- Biri tavanda (5), biri değil (3): sınır DAR DEĞİL ve rapor bunu
+  -- "hepsi tavanda" diye yorumlamamalı.
+  if t not like '%sınıra DAYANAN: 1/2%' then
+    raise exception '14c BAŞARISIZ — tavan sayımı yanlış: %', t;
+  end if;
+  if t like '%HEPSİ TAVANDA%' then
+    raise exception '14d BAŞARISIZ — altında kalan varken "hepsi tavanda" dedi: %', t;
+  end if;
+  -- Şimdi 3 sayfalık gönderim de tavana çekiliyor: ikisi de 5.
+  update public.gonderimler
+     set ek_sayfa_yollari = array[
+           'cozum/' || d_yeni || '/' || o1 || '-2.jpg',
+           'cozum/' || d_yeni || '/' || o1 || '-3.jpg',
+           'cozum/' || d_yeni || '/' || o1 || '-4.jpg',
+           'cozum/' || d_yeni || '/' || o1 || '-5.jpg']
+   where odev_id = d_yeni and ogrenci_id = o1;
+  drop table gr;
+  execute 'create temp table gr as ' || rapor;
+  select ayrinti into t from gr
+   where bolum = '6 · GÖNDERİLEN SAYFA SAYISI' and kim like '10B%';
+  if t not like '%HEPSİ TAVANDA%' then
+    raise exception '14e BAŞARISIZ — hepsi tavandayken söylemiyor: %', t;
+  end if;
+  raise notice '    sayfa sayıları ve tavan sayımı doğru, yorum ölçüme bağlı: OK';
+
   drop table gr;
   raise notice '';
-  raise notice 'GÖNDEREMİYOR RAPORU TESTLERİ GEÇTİ (11 grup)';
+  raise notice 'GÖNDEREMİYOR RAPORU TESTLERİ GEÇTİ (14 grup)';
 end $$;
