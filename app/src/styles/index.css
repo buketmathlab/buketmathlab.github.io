@@ -311,7 +311,7 @@
   /* ÇİZELGENİN ANTETİNDEKİ MASKOT (öğretmenin isteği).
      Boyu ARMANIN BOYUNU AŞMIYOR: antetin yüksekliğini arma belirliyor,
      maskot onun altında kaldığı sürece çizelge bir milimetre bile
-     uzamıyor ve yarıma sığan ödev satırı düşmüyor. 14 mm'nin üstündeki
+     uzamıyor ve sayfaya sığan ödev satırı düşmüyor. 14 mm'nin üstündeki
      her 10,17 mm bir ödev satırı demek.
      `print-color-adjust`: tarayıcı yazdırırken arka plan görsellerini
      soldurabiliyor; bu bir fotoğraf, olduğu gibi bassın. */
@@ -325,37 +325,44 @@
 }
 
 /* ===========================================================================
-   VELİ ÇİZELGESİ (0091) — bir A4'e İKİ öğrenci
+   VELİ ÇİZELGESİ (0091) — bir A4'e BİR öğrenci
 
-   Öğretmenin kararı: "1 A4'e 2 öğrenci olsun." Ölçüler `mm`: `px`
-   yazsaydık yazıcının ölçeğine göre kayar ve makasla kesilen yarım
-   kâğıttaki çizgiyle tutmazdı (kod fişlerinin aynı gerekçesi).
+   Öğretmenin kararı: "Bir A4 sayfasında sadece bir öğrencinin bilgileri
+   olsun." İlk tasarım iki öğrenciliydi ve kâğıt ortadan kesiliyordu;
+   veli kodu, giriş yönlendirmesi ve kurulum yönergesi (46,8 mm) yarıma
+   sığmayınca o düzen bırakıldı.
 
-   HESAP: A4'ün yazılabilir boyu 277 mm (10 mm kenar boşluğuyla). İki
-   çizelge + aradaki 3 mm kesme payı → çizelge EN ÇOK 137 mm olabilir.
-   Burada ALT SINIR veriliyor, sabit yükseklik değil: içeriği tablo
-   belirlesin, üst sınırı `veli-cizelgesi-denetimi.mjs`in A4 ölçümü
-   korusun. Sabit yükseklik verilseydi uzun bir ödev başlığı ya da fazla
-   satır kâğıtta SESSİZCE kırpılırdı — ve bu kâğıt veliye gidiyor.
+   Ölçüler `mm`: `px` yazsaydık yazıcının ölçeğine göre kayardı (kod
+   fişlerinin aynı gerekçesi).
+
+   HESAP: A4'ün yazılabilir boyu 277 mm (10 mm kenar boşluğuyla).
+   Burada SABİT YÜKSEKLİK VERİLMİYOR: içeriği tablo belirlesin, üst
+   sınırı `veli-cizelgesi-denetimi.mjs`in A4 ölçümü korusun. Sabit
+   yükseklik verilseydi uzun bir ödev başlığı ya da fazla satır kâğıtta
+   SESSİZCE kırpılırdı — ve bu kâğıt veliye gidiyor.
    =========================================================================== */
 .sk-cizelge-izgara {
-  /* Ekranda tek sütun: çizelge geniş, yan yana iki tanesi telefonda
-     okunmaz. Kâğıtta da tek sütun — iki öğrenci ALT ALTA. */
+  /* Tek sütun: çizelge geniş, yan yana iki tanesi telefonda okunmaz.
+     Kâğıtta da tek sütun — her çizelge kendi kâğıdında. */
   grid-template-columns: 1fr;
   width: 190mm;
   max-width: 100%;
   margin: 0 auto;
 }
 
+/* KÂĞIT BAŞINA BİR ÖĞRENCİ (öğretmenin kararı: "Bir A4 sayfasında
+   sadece bir öğrencinin bilgileri olsun").
+   Kesikli kenarlık ve `min-height: 128mm` kalktı: ikisi de kâğıdı
+   ortadan kesip iki veliye vermek içindi. Artık kâğıdın tamamı tek
+   veliye gidiyor, kesilecek bir yer yok. */
 .sk-veli-cizelge {
-  border: 1px dashed var(--color-line);   /* kesme çizgisi */
+  border: 1px solid var(--color-line);
   border-radius: 2mm;
   padding: 3mm 4mm;
-  min-height: 128mm;
   break-inside: avoid;                     /* çizelge iki sayfaya bölünmesin */
 }
 
-/* Tablo yarım A4'te dar: satır yüksekliği ve ayraçlar kısılıyor ama
+/* Tablo kâğıtta dar: satır yüksekliği ve ayraçlar kısılıyor ama
    PUNTO DÜŞÜRÜLMÜYOR. Bu kâğıdı veli okuyacak; en çok okunması gereken
    şey ödev adı ve puan. */
 .sk-cizelge-tablo {
@@ -369,27 +376,17 @@
     gap: 3mm;
   }
 
-  /* HER İKİ ÇİZELGEDE BİR YENİ KÂĞIT. `break-inside: avoid` tek başına
-     üçüncü çizelgenin ikinci sayfaya taşmasını engelliyor ama ilk iki
-     çizelgenin aynı kâğıtta kalacağını garanti etmiyor; `min-height`
-     ikisini bir sayfaya oturtuyor ve üçüncüsü kendiliğinden taşıyor. */
+  /* HER ÇİZELGEDEN SONRA YENİ KÂĞIT — kâğıt başına bir öğrenci.
+     `break-inside: avoid` tek başına yetmiyor: o yalnız bir çizelgenin
+     iki sayfaya bölünmesini engelliyor, iki çizelgenin aynı kâğıtta
+     yan yana düşmesini değil. Son çizelgede `auto`, yoksa çıktının
+     sonuna boş bir kâğıt eklenirdi. */
   .sk-veli-cizelge {
     border-color: #999;
-  }
-
-  /* KODLU MOD: KÂĞIT BAŞINA BİR ÖĞRENCİ.
-     Giriş bloğu yarımın üçte birini kaplıyor (44,68 mm; ölçüldü), yarıma
-     bölünse öğrenci başına iki ödev satırı kalırdı. Burada çizelge tam
-     sayfayı alıyor: `min-height` kelepçesi kalkıyor, her çizelgeden
-     sonra yeni kâğıt başlıyor. Kesme çizgisi de gereksiz — kâğıdın
-     tamamı tek veliye gidiyor. */
-  .sk-cizelge-izgara--tam .sk-veli-cizelge {
-    min-height: 0;
-    border-style: solid;
     break-after: page;
   }
 
-  .sk-cizelge-izgara--tam .sk-veli-cizelge:last-child {
+  .sk-veli-cizelge:last-child {
     break-after: auto;
   }
 

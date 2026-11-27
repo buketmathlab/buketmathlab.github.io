@@ -33,12 +33,13 @@ import {
 import {
   CIZELGE_BASLIGI,
   CIZELGE_NOTU,
+  DERS,
   GIRIS_BASLIGI,
   GIRIS_SATIRLARI,
   KOD_ETIKETI,
-  KUNYE,
   KURULUM,
   KURULUM_BASLIGI,
+  MASKOT_EKRAN_PX,
   girisBloguVarMi,
   SUTUNLAR,
   YAZDIR_CIZELGE,
@@ -46,9 +47,9 @@ import {
   devamBasligi,
   durumYazisi,
   gecikmeIsareti,
-  MASKOT_EKRAN_PX,
   kagitDuzeni,
   kisaGun,
+  kunyeSatiri,
   parcalaraBol,
   puanYazisi,
   seviyeBasligi,
@@ -465,22 +466,29 @@ function VeliCizelgeleri({
   const verilisVar = cizelge.odevler.some((d) => d.tarihler !== undefined);
 
   /**
-   * KÂĞIT DÜZENİ ÖLÇÜMDEN GELİYOR, TERCİHTEN DEĞİL.
+   * KÂĞIT BAŞINA BİR ÖĞRENCİ — öğretmenin kararı: "Bir A4 sayfasında
+   * sadece bir öğrencinin bilgileri olsun."
    *
-   * Giriş bloğu (kod + yönlendirme + kurulum) 44,68 mm, yani yarım A4'ün
-   * üçte biri. Yarıma bölünürse öğrenci başına iki ödev satırı kalıyor:
-   * 10 ödevlik bir öğrenci 2,5 kâğıda yayılırdı. Kod basılınca kâğıt
-   * başına BİR öğrenciye geçiliyor — hem 15 satır sığıyor hem de kâğıt
-   * az gidiyor. Rakamlar `veli-cizelgesi-metni.ts`te, ölçüm denetimde.
-   *
-   * DÜZEN TEK KARAR: sınıfın bir kısmının veli kodu yoksa o öğrencinin
-   * kâğıdında giriş bloğu çizilmiyor ama düzen yine tam sayfa. Kâğıt
-   * başına öğrenci sayısını öğrenciye göre değiştirmek, aynı tomarda
-   * bazı kâğıtların ortadan kesileceği bazılarının kesilmeyeceği
-   * anlamına gelirdi. Hiç kod yoksa (`{}`) düzen yarım kalıyor.
+   * Önceki tasarım koşulluydu (kod basılmıyorsa bir kâğıda iki öğrenci).
+   * O koşul kalktı; kesme çizgisi de kalktı, çünkü kâğıdın tamamı tek
+   * veliye gidiyor. Değişmeyen tek şey satır sayısının kodlu/kodsuz
+   * olmasına bağlı olması: giriş bloğu sayfanın 46,8 mm'sini alıyor.
+   * Rakamlar `veli-cizelgesi-metni.ts`te, ölçüm denetimde.
    */
   const kodluMod = kodlar !== null && Object.keys(kodlar).length > 0;
   const duzen = kagitDuzeni(kodluMod);
+
+  /**
+   * ANTETTEKİ KÜNYE O SINIFIN ÖĞRETMENİNDEN GELİYOR, SABİT DEĞİL.
+   *
+   * Öğretmen: "her diğer öğretmenlerin de dersine giren öğretmen kimse
+   * onun adı yazsın." Kayıt `ogretmen_siniflari`nda ve uçtan
+   * `sinif.ogretmenler` olarak geliyor. Kâğıdı BASAN öğretmene değil,
+   * sınıfa giren öğretmene bakılıyor: "Hepsine ödev gönderiyorum fakat
+   * ders işlediğim sınıflar bunlar."
+   */
+  const kunye = kunyeSatiri(cizelge.sinif.ogretmenler);
+  const ogretmenKaydiYok = kunye === DERS;
 
   // Her öğrencinin parçaları: taşan çizelge bölünüyor.
   const yarimlar = cizelge.ogrenciler.flatMap((o) => {
@@ -505,14 +513,18 @@ function VeliCizelgeleri({
           {CIZELGE_BASLIGI}
         </h2>
         <p className="mt-1 text-[14px] text-muted">{duzen.aciklama}</p>
+        {/* EKSİK KAYIT KÂĞIDA ÇIKMADAN ÖNCE SÖYLENİYOR. Antette ad
+            yazmamasının sebebi uydurma değil, kayıt eksikliği; öğretmen
+            bunu basmadan görsün ve isterse sınıfa kendini ekleyip
+            yeniden bassın. */}
+        {ogretmenKaydiYok && (
+          <p className="mt-1 text-[13px] text-muted">
+            Bu sınıfa kayıtlı öğretmen yok; antette yalnız ders yazacak.
+          </p>
+        )}
       </div>
 
-      <div
-        className={
-          'sk-cizelge-izgara mt-4 grid gap-3 print:mt-0'
-          + (duzen.ogrenciSayisi === 1 ? ' sk-cizelge-izgara--tam' : '')
-        }
-      >
+      <div className="sk-cizelge-izgara mt-4 grid gap-3 print:mt-0">
         {yarimlar.map((y) => (
           <div key={y.anahtar} className="sk-veli-cizelge rounded-sk-sm border border-line p-4">
             {/* ÇİZELGENİN KENDİ ANTETİ: kesilip tek başına gittiğinde de
@@ -524,7 +536,7 @@ function VeliCizelgeleri({
                   {OKUL_ADI}
                 </p>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
-                  {CIZELGE_BASLIGI} · {KUNYE}
+                  {CIZELGE_BASLIGI} · {kunye}
                 </p>
               </div>
               {/* EWALU — öğretmenin isteği: "Ödev çizelgesinde Ewalu

@@ -8,25 +8,22 @@ import {
   DERS,
   GIRIS_SATIRLARI,
   KOD_ETIKETI,
-  KUNYE,
   KURULUM,
   KURULUM_BASLIGI,
   ARMA_KAGIT_MM,
   MASKOT_KAGIT_MM,
-  OGRETMEN,
   SABIT_MM,
   SATIR_MM,
-  SAYFAYA_SIGAN_SATIR,
+  SIGAN_SATIR,
   SUTUNLAR,
   TAM_BUTCE_MM,
-  YARIM_BUTCE_MM,
   girisBloguVarMi,
-  YARIMA_SIGAN_SATIR,
   cizelgeAltNotu,
   devamBasligi,
   durumYazisi,
   gecikmeIsareti,
   kagitDuzeni,
+  kunyeSatiri,
   kisaGun,
   parcalaraBol,
   puanYazisi,
@@ -189,12 +186,12 @@ describe('soruDokumu', () => {
 
 describe('parcalaraBol', () => {
   it('sığan çizelge tek parça', () => {
-    const p = parcalaraBol(Array.from({ length: YARIMA_SIGAN_SATIR }, (_, i) => i));
+    const p = parcalaraBol(Array.from({ length: SIGAN_SATIR.kodsuz }, (_, i) => i));
     expect(p).toHaveLength(1);
   });
 
-  it('taşan çizelge ikinci yarıma geçiyor — KIRPILMIYOR', () => {
-    const satir = Array.from({ length: YARIMA_SIGAN_SATIR + 3 }, (_, i) => i);
+  it('taşan çizelge ikinci kâğıda geçiyor — KIRPILMIYOR', () => {
+    const satir = Array.from({ length: SIGAN_SATIR.kodsuz + 3 }, (_, i) => i);
     const p = parcalaraBol(satir);
     expect(p).toHaveLength(2);
     // Hiçbir satır kaybolmamalı: sessizce kırpmak bir ödevi yok saymak olurdu.
@@ -205,15 +202,15 @@ describe('parcalaraBol', () => {
     expect(parcalaraBol([])).toEqual([[]]);
   });
 
-  it('kodlu modda tam sayfa sınırıyla bölüyor', () => {
-    const satir = Array.from({ length: SAYFAYA_SIGAN_SATIR + 1 }, (_, i) => i);
-    expect(parcalaraBol(satir, SAYFAYA_SIGAN_SATIR)).toHaveLength(2);
-    expect(parcalaraBol(satir, SAYFAYA_SIGAN_SATIR).flat()).toEqual(satir);
-    // Aynı satırlar yarım sayfada çok daha fazla parçaya bölünüyor.
-    expect(parcalaraBol(satir, YARIMA_SIGAN_SATIR).length).toBeGreaterThan(2);
+  it('kodlu sınır daha dar — giriş bloğu yer kaplıyor', () => {
+    const satir = Array.from({ length: SIGAN_SATIR.kodlu + 1 }, (_, i) => i);
+    expect(parcalaraBol(satir, SIGAN_SATIR.kodlu)).toHaveLength(2);
+    expect(parcalaraBol(satir, SIGAN_SATIR.kodlu).flat()).toEqual(satir);
+    // Aynı satırlar kodsuz sınırda tek kâğıda sığıyor.
+    expect(parcalaraBol(satir, SIGAN_SATIR.kodsuz)).toHaveLength(1);
   });
 
-  it('anlamsız sınır verilirse yarım sayfa sınırına düşüyor — sonsuz döngü yok', () => {
+  it('anlamsız sınır verilirse varsayılana düşüyor — sonsuz döngü yok', () => {
     const satir = [1, 2, 3, 4, 5, 6, 7];
     for (const kotu of [0, -3, Number.NaN, Number.POSITIVE_INFINITY]) {
       const p = parcalaraBol(satir, kotu);
@@ -224,34 +221,41 @@ describe('parcalaraBol', () => {
 });
 
 describe('kagitDuzeni — rakamlar ÖLÇÜMDEN geliyor', () => {
-  it('kodsuz: iki öğrenci, yarım sayfa sınırı', () => {
+  /**
+   * KÂĞIT BAŞINA BİR ÖĞRENCİ, HER İKİ HÂLDE.
+   *
+   * Öğretmenin kararı: "Bir A4 sayfasında sadece bir öğrencinin
+   * bilgileri olsun." Değişen tek şey satır sayısı: giriş bloğu
+   * sayfanın 46,8 mm'sini alıyor.
+   */
+  it('kodsuz: sayfaya daha çok satır sığıyor', () => {
     const d = kagitDuzeni(false);
-    expect(d.ogrenciSayisi).toBe(2);
-    expect(d.siganSatir).toBe(YARIMA_SIGAN_SATIR);
-    expect(d.aciklama).toContain('iki öğrenci');
+    expect(d.siganSatir).toBe(SIGAN_SATIR.kodsuz);
+    expect(d.aciklama).toContain('ayrı bir A4');
+    expect(d.aciklama).not.toContain('Kesip');
   });
 
-  it('kodlu: bir öğrenci, tam sayfa sınırı', () => {
+  it('kodlu: giriş bloğu yüzünden satır sayısı düşüyor', () => {
     const d = kagitDuzeni(true);
-    expect(d.ogrenciSayisi).toBe(1);
-    expect(d.siganSatir).toBe(SAYFAYA_SIGAN_SATIR);
-    expect(d.aciklama).toContain('bir öğrenci');
+    expect(d.siganSatir).toBe(SIGAN_SATIR.kodlu);
+    expect(d.siganSatir).toBeLessThan(SIGAN_SATIR.kodsuz);
+    expect(d.aciklama).toContain('ayrı bir A4');
   });
 
   /**
-   * SABİTLER ÖLÇÜMLE TUTARLI OLMALI. Ölçülen rakamlar
-   * (satır 10,17 mm; sabit 66,63 / 113,43 mm; bütçe 137 / 277 mm)
-   * değişirse bu test kırmızı yanar ve sabit elle güncellenir — eski
-   * 8 rakamı tam böyle bir denetim olmadığı için yanlış kalmıştı.
+   * SABİTLER ÖLÇÜMLE TUTARLI OLMALI. Ölçülen rakamlar (satır 10,17 mm;
+   * sabit 74,83 / 121,62 mm; sayfa bütçesi 277 mm) değişirse bu test
+   * kırmızı yanar ve sabit ELLE güncellenir — eski 8 rakamı tam böyle
+   * bir kapı olmadığı için yanlış kalmıştı.
    */
   it('sığan satır sayıları ölçülen mm değerleriyle uyuşuyor', () => {
-    const kodsuz = Math.floor((YARIM_BUTCE_MM - SABIT_MM.kodsuz) / SATIR_MM);
-    expect(YARIMA_SIGAN_SATIR).toBeLessThanOrEqual(kodsuz);
-    const kodlu = Math.floor((TAM_BUTCE_MM - SABIT_MM.kodlu) / SATIR_MM);
-    expect(SAYFAYA_SIGAN_SATIR).toBeLessThanOrEqual(kodlu);
-    // Kâğıda gerçekten sığıyor: sabit + satırlar bütçeyi aşmıyor.
-    expect(SABIT_MM.kodsuz + YARIMA_SIGAN_SATIR * SATIR_MM).toBeLessThanOrEqual(YARIM_BUTCE_MM);
-    expect(SABIT_MM.kodlu + SAYFAYA_SIGAN_SATIR * SATIR_MM).toBeLessThanOrEqual(TAM_BUTCE_MM);
+    for (const anahtar of ['kodsuz', 'kodlu'] as const) {
+      const sinir = Math.floor((TAM_BUTCE_MM - SABIT_MM[anahtar]) / SATIR_MM);
+      expect(SIGAN_SATIR[anahtar]).toBeLessThanOrEqual(sinir);
+      // Kâğıda gerçekten sığıyor: sabit + satırlar bütçeyi aşmıyor.
+      expect(SABIT_MM[anahtar] + SIGAN_SATIR[anahtar] * SATIR_MM)
+        .toBeLessThanOrEqual(TAM_BUTCE_MM);
+    }
   });
 
   /**
@@ -265,10 +269,16 @@ describe('kagitDuzeni — rakamlar ÖLÇÜMDEN geliyor', () => {
     expect(MASKOT_KAGIT_MM).toBeLessThanOrEqual(ARMA_KAGIT_MM);
   });
 
+  /**
+   * YARIM A4 NEDEN BIRAKILDI — gerekçe rakamla duruyor.
+   *
+   * Giriş bloğuyla yarım sayfaya (137 mm) öğrenci başına iki satır
+   * kalıyordu. Bu test, "yarıma dönelim" denirse bedelin ne olduğunu
+   * söylüyor.
+   */
   it('kodlu yarım sayfa KULLANIŞSIZ — düzen değişikliğinin gerekçesi', () => {
-    // Giriş bloğu yarıma sığdırılırsa öğrenci başına 2 satır kalıyor.
-    const yarimdaKodlu = Math.floor((YARIM_BUTCE_MM - SABIT_MM.kodlu) / SATIR_MM);
-    expect(yarimdaKodlu).toBeLessThan(3);
+    const YARIM = (TAM_BUTCE_MM - 3) / 2;
+    expect(Math.floor((YARIM - SABIT_MM.kodlu) / SATIR_MM)).toBeLessThan(3);
   });
 });
 
@@ -290,12 +300,54 @@ describe('cizelgeAltNotu', () => {
   });
 });
 
-describe('antet künyesi', () => {
-  it('ders ve öğretmen yazıyor', () => {
+describe('antet künyesi — ad SINIFTAN geliyor', () => {
+  it('ders yazıyor', () => {
     // Öğretmen sordu: "Matematik dersi olduğu yazıyor mu?" Yazmıyordu.
-    expect(KUNYE).toContain('Matematik');
-    expect(KUNYE).toContain('Buket Topuzoğlu');
-    expect(KUNYE).toBe(`${DERS} · ${OGRETMEN}`);
+    expect(kunyeSatiri(['Buket Topuzoğlu'])).toContain('Matematik');
+  });
+
+  it('o sınıfa giren öğretmenin adı yazıyor', () => {
+    expect(kunyeSatiri(['Buket Topuzoğlu'])).toBe('Matematik · Buket Topuzoğlu');
+  });
+
+  /**
+   * ORTAK SINIFTA HEPSİ — öğretmenin kararı.
+   *
+   * Sıra uçtan geldiği gibi korunuyor (0091: yönetici önce, sonra ad);
+   * burada yeniden sıralamak, iki yerde iki türlü sıra demek olurdu.
+   */
+  it('ortak sınıfta bütün öğretmenler yazıyor, sıra bozulmuyor', () => {
+    expect(kunyeSatiri(['Buket Topuzoğlu', 'Ayşe Demir']))
+      .toBe('Matematik · Buket Topuzoğlu, Ayşe Demir');
+  });
+
+  /**
+   * KAYIT YOKSA AD UYDURULMUYOR (Part VIII).
+   *
+   * Sarkık bir "·" basmak ya da kâğıdı basan öğretmenin adını koymak,
+   * veliye doğrulanmamış bir bilgi vermek olurdu.
+   */
+  it('kayıt yoksa yalnız ders — sarkık ayraç yok', () => {
+    for (const bos of [[], undefined, null, ['', '   ']]) {
+      const y = kunyeSatiri(bos);
+      expect(y).toBe(DERS);
+      expect(y).not.toContain('·');
+    }
+  });
+
+  it('boş adlar eleniyor, baştaki/sondaki boşluk kırpılıyor', () => {
+    expect(kunyeSatiri(['  Ayşe Demir  ', '', '   ', 'Ali Can']))
+      .toBe('Matematik · Ayşe Demir, Ali Can');
+  });
+
+  /**
+   * SABİT AD KALMADI. İlk yazımda `OGRETMEN = 'Buket Topuzoğlu'` vardı
+   * ve başka bir öğretmenin sınıfında da o ad basılırdı.
+   */
+  it('başka bir öğretmenin sınıfında başka ad yazıyor', () => {
+    const y = kunyeSatiri(['Ayşe Demir']);
+    expect(y).toContain('Ayşe Demir');
+    expect(y).not.toContain('Buket');
   });
 });
 

@@ -54,10 +54,44 @@ export const CIZELGE_BASLIGI = 'Ödev çizelgesi';
  * elinde birkaç öğretmenden kâğıt oluyor; hangisinin hangi ders olduğu
  * sonradan belli olmalı. Okul Yönetimi Bilgilendirmesi belgesinde de
  * aynı sebeple künye var.
+ *
+ * ÖĞRETMEN ADI SABİT DEĞİL — VE İLK YAZIMDA SABİTTİ.
+ *
+ * `OGRETMEN = 'Buket Topuzoğlu'` yazıyordu; başka bir öğretmenin sınıfı
+ * için basılan kâğıtta da o ad çıkardı. Öğretmenin düzeltmesi: "her
+ * diğer öğretmenlerin de dersine giren öğretmen kimse onun adı yazsın.
+ * Diğer öğretmenlerin de sistemde sınıfları yazıyor, var kayıtlı."
+ *
+ * Kayıt gerçekten var: `ogretmen_siniflari` (0033) ve şemadaki kendi
+ * yorumu bu cümlenin aynısı — "Hangi öğretmen hangi sınıfa giriyor."
+ * `sinif_not_cizelgesi` o adları 0063'ten beri `sinif.ogretmenler`
+ * olarak gönderiyor (yönetici önce, sonra ad). Yeni sunucu işi yok.
+ *
+ * ÖDEVİ VEREN DEĞİL, DERSE GİREN. Öğretmen ikisinin ayrı olduğunu
+ * söyledi: "Hepsine ödev gönderiyorum fakat ders işlediğim sınıflar
+ * bunlar." Künye `odev.ogretmen`e değil `sinif.ogretmenler`e bakıyor.
  */
 export const DERS = 'Matematik';
-export const OGRETMEN = 'Buket Topuzoğlu';
-export const KUNYE = `${DERS} · ${OGRETMEN}`;
+
+/**
+ * Künye satırı: ders · o sınıfa giren öğretmen(ler).
+ *
+ * ORTAK SINIFTA HEPSİ YAZILIYOR (öğretmenin kararı): velinin elindeki
+ * kâğıt, çocuğun dersine giren bütün öğretmenleri göstersin.
+ *
+ * KAYIT YOKSA AD UYDURULMUYOR. Dizi boşsa yalnız ders yazıyor; sarkık
+ * bir "·" basmak ya da kâğıdı basan öğretmenin adını koymak, veliye
+ * doğrulanmamış bir bilgi vermek olurdu (Part VIII).
+ */
+export function kunyeSatiri(ogretmenler: readonly string[] | undefined | null): string {
+  const adlar = Array.isArray(ogretmenler)
+    ? ogretmenler
+      .filter((a): a is string => typeof a === 'string')
+      .map((a) => a.trim())
+      .filter((a) => a.length > 0)
+    : [];
+  return adlar.length === 0 ? DERS : `${DERS} · ${adlar.join(', ')}`;
+}
 
 /**
  * VELİ GİRİŞİ — kod, adres ve uygulama kurulumu (öğretmenin isteği:
@@ -247,9 +281,7 @@ export const CIZELGE_NOTU =
  * altında "gecikmeli". Sabit, satırların HEPSİ bu hâldeyken ölçülüyor —
  * "temsilî" bir satırla ölçmek, kâğıtta taşan bir çizelge demek.
  *
- *   iki yarım + ızgara boşluğu  ≤ 277 mm   (A4 − 2 × 10 mm kenar)
- *   ızgara boşluğu                 3 mm
- *   yarım başına bütçe           137 mm   ((277 − 3) / 2)
+ *   sayfa bütçesi               277 mm   (A4 − 2 × 10 mm kenar)
  *   satır başına               10,17 mm   (2/4/6/8 satırda doğrusal)
  *
  * ÖLÇÜM KÂĞIDIN GENİŞLİĞİNDE YAPILIYOR: 190 mm = 718 px. 1280 px'te
@@ -261,19 +293,19 @@ export const CIZELGE_NOTU =
  *   kodsuz  74,83 mm   antet, ad, özet, tablo başlığı, konular, notlar
  *   kodlu  121,62 mm   + veli kodu, sekizkyal yönlendirmesi, kurulum
  *
- * Giriş bloğunun kendisi 46,8 mm, yani yarımın üçte biri (kurulum
- * yönergesi tek başına 6 satır).
+ * Giriş bloğunun kendisi 46,8 mm (kurulum yönergesi tek başına 6 satır).
+ * Öğretmen kısaltılmamasını istedi: "Kurulum yönergesi kısaltılmasın."
  *
- * BURADAN ÇIKAN SONUÇ, TASARIM TERCİHİ DEĞİL GEOMETRİ:
+ * KÂĞIT BAŞINA BİR ÖĞRENCİ — ÖĞRETMENİN KARARI. İlk tasarım koşulluydu
+ * (kodsuzsa bir kâğıda iki öğrenci, yarıma 6 ödev); öğretmen o koşulu
+ * kaldırdı: "Bir A4 sayfasında sadece bir öğrencinin bilgileri olsun."
+ * Böylece yarım bütçesi (137 mm) yerine tam sayfa bütçesi geçerli:
  *
- *   kodsuz yarım  (137 − 74,83)  / 10,17 = 6,1  → 6 satır,  A4'te 2 öğrenci
- *   kodlu yarım   (137 − 121,62) / 10,17 = 1,5  → 1 satır   (kullanışsız)
- *   kodlu TAM A4  (277 − 121,62) / 10,17 = 15,3 → 15 satır, A4'te 1 öğrenci
+ *   kodsuz  (277 − 74,83)  / 10,17 = 19,9 → 19 satır
+ *   kodlu   (277 − 121,62) / 10,17 = 15,3 → 15 satır
  *
- * Kod basılırken yarım A4'te iki satır kalıyor: 10 ödevlik bir öğrenci
- * 5 yarıma, yani 2,5 kâğıda yayılırdı. Aynı öğrenci tam sayfada TEK
- * kâğıda sığıyor. Bu yüzden kod basılınca kâğıt başına bir öğrenciye
- * geçiliyor — kâğıt da az gidiyor.
+ * Kodlu/kodsuz ayrımı DURUYOR, çünkü değişen şey kâğıda kaç öğrenci
+ * sığdığı değil, giriş bloğunun yer kaplaması.
  *
  * ESKİ SABİT 8'Dİ VE YANLIŞTI. İlk ölçüm "temsilî" bir fikstürle
  * yapılmıştı: satırların ikisi boş durumdaydı, o yüzden satır başına
@@ -295,7 +327,7 @@ export const CIZELGE_NOTU =
  *
  * KÂĞITTAKİ BOYU ARMANIN BOYUNU AŞMIYOR (14 mm). Antetin yüksekliğini
  * arma belirliyor; maskot onun altında kaldığı sürece çizelgeye BİR
- * MİLİMETRE bile eklemiyor ve yarıma sığan ödev satırı düşmüyor.
+ * MİLİMETRE bile eklemiyor ve sayfaya sığan ödev satırı düşmüyor.
  * Büyütmek doğrudan ödev satırından yiyor: 14 mm'nin üstündeki her
  * 10,17 mm bir ödev satırı demek.
  *
@@ -308,40 +340,35 @@ export const ARMA_KAGIT_MM = 14;
 
 export const SATIR_MM = 10.17;
 export const SABIT_MM = { kodsuz: 74.83, kodlu: 121.62 } as const;
-export const YARIM_BUTCE_MM = 137;
 export const TAM_BUTCE_MM = 277;
 
-/** Kodsuz yarım A4'e sığan ödev satırı (ölçüldü: 6,1 → 6). */
-export const YARIMA_SIGAN_SATIR = 6;
-
-/** Kodlu TAM A4'e sığan ödev satırı (ölçüldü: 15,3 → 15). */
-export const SAYFAYA_SIGAN_SATIR = 15;
+/**
+ * Bir A4'e sığan ödev satırı. Kâğıt başına her zaman BİR öğrenci.
+ *
+ * Ölçüldü: kodsuz 19,9 → 19; kodlu 15,3 → 15.
+ */
+export const SIGAN_SATIR = { kodsuz: 19, kodlu: 15 } as const;
 
 /**
- * Kâğıt başına kaç öğrenci ve bir parçaya kaç satır.
+ * Bir kâğıda kaç ödev satırı ve ekranda ne yazacağı.
  *
- * `kodlu` = öğretmen veli kodlarını basmayı onayladı.
+ * `kodlu` = öğretmen veli kodlarını basmayı onayladı; giriş bloğu
+ * sayfanın 46,8 mm'sini alıyor, o yüzden satır sayısı düşüyor.
  */
-export function kagitDuzeni(kodlu: boolean): {
-  siganSatir: number;
-  ogrenciSayisi: 1 | 2;
-  aciklama: string;
-} {
+export function kagitDuzeni(kodlu: boolean): { siganSatir: number; aciklama: string } {
   return kodlu
     ? {
-      siganSatir: SAYFAYA_SIGAN_SATIR,
-      ogrenciSayisi: 1,
+      siganSatir: SIGAN_SATIR.kodlu,
       aciklama:
-          'Veli kodu basıldığı için bir A4\'e bir öğrenci. Kod, giriş '
-          + 'yönlendirmesi ve kurulum yönergesi yarım sayfanın üçte birini '
-          + 'kaplıyor; yarıma bölünse öğrenci başına iki ödev satırı kalırdı.',
+          'Her öğrenci için ayrı bir A4. Kesmeye gerek yok, kâğıdı doğrudan '
+          + 'veliye verin. Veli kodu basıldığı için sayfaya '
+          + `${SIGAN_SATIR.kodlu} ödev satırı sığıyor.`,
     }
     : {
-      siganSatir: YARIMA_SIGAN_SATIR,
-      ogrenciSayisi: 2,
+      siganSatir: SIGAN_SATIR.kodsuz,
       aciklama:
-          'Bir A4\'e iki öğrenci. Kesip her veliye yalnız kendi çocuğunun '
-          + 'yarısını verin.',
+          'Her öğrenci için ayrı bir A4. Kesmeye gerek yok, kâğıdı doğrudan '
+          + `veliye verin. Sayfaya ${SIGAN_SATIR.kodsuz} ödev satırı sığıyor.`,
     };
 }
 
@@ -353,9 +380,9 @@ export function kagitDuzeni(kodlu: boolean): {
  */
 export function parcalaraBol<T>(
   satirlar: readonly T[],
-  sigan: number = YARIMA_SIGAN_SATIR,
+  sigan: number = SIGAN_SATIR.kodsuz,
 ): T[][] {
-  const adim = Number.isFinite(sigan) && sigan >= 1 ? Math.floor(sigan) : YARIMA_SIGAN_SATIR;
+  const adim = Number.isFinite(sigan) && sigan >= 1 ? Math.floor(sigan) : SIGAN_SATIR.kodsuz;
   if (satirlar.length === 0) return [[]];
   const parcalar: T[][] = [];
   for (let i = 0; i < satirlar.length; i += adim) {
@@ -364,7 +391,7 @@ export function parcalaraBol<T>(
   return parcalar;
 }
 
-/** İkinci ve sonraki yarımların başlığı — kâğıt karışmasın. */
+/** İkinci ve sonraki parçaların başlığı — kâğıt karışmasın. */
 export function devamBasligi(ad: string, sira: number, toplam: number): string {
   return toplam <= 1 ? ad : `${ad} — ${sira}/${toplam}`;
 }

@@ -16,16 +16,16 @@
  *    A5. KURAL 6: işaretlenen şık hiçbir yerde yok; yalnız soru numarası.
  *
  * B. GİZLİLİK — KÂĞIT VELİYE GİDİYOR
- *    B1. Bir öğrencinin yarımında BAŞKA öğrencinin adı GEÇMİYOR.
+ *    B1. Bir öğrencinin kâğıdında BAŞKA öğrencinin adı GEÇMİYOR.
  *    B2. Çizelge basılırken sınıf listesi ve veli fişi kâğıttan düşüyor
  *        (üçü aynı kâğıda çıkarsa veli öbür çocukların puanını görür).
  *
  * C. KÂĞIT — GERÇEKTEN ÖLÇÜLÜYOR
- *    C1.  Kodsuz: `emulateMedia({ media: 'print' })` ile A4'te SAYFA
- *         BAŞINA İKİ çizelge; ızgara yazılabilir alana sığıyor.
- *    C1k. Kodlu: giriş bloğu yarımın üçte birini kaplıyor, o yüzden
- *         kâğıt başına BİR öğrenci. Tam sayfa ölçülüyor, her çizelgeden
- *         sonra yeni kâğıt başlıyor ve kâğıt sayısı kodsuzdan AZ.
+ *    C1.  `emulateMedia({ media: 'print' })` ile KÂĞIT BAŞINA BİR
+ *         öğrenci: her çizelge tek başına yazılabilir alana sığıyor ve
+ *         her çizelgeden sonra yeni kâğıt başlıyor.
+ *    C1k. Kodlu: giriş bloğu sayfanın 46,8 mm'sini alıyor, o yüzden
+ *         sayfaya daha AZ ödev satırı sığıyor.
  *    C2.  Hiçbir çizelgenin metni kutusundan taşmıyor.
  *    C4.  GERÇEK PDF'İN SAYFA SAYISI. Milimetre yetmiyor: mm'si doğru
  *         olan bir çıktının sonunda boş bir kâğıt olabiliyor.
@@ -55,7 +55,16 @@
  *         → C4  ısırdı: kısa çizelge 2 sayfa (1 olmalı)
  *         MİLİMETRE ÖLÇÜMLERİNİN HİÇBİRİ KIRMIZI YANMADI — mm doğruydu,
  *         sonda boş kâğıt vardı.
- *   Ue  Sığan satır sabitleri şişirildi (6 → 8, 15 → 18)
+ *   Ug  Künye yine sabit ada döndürüldü (`Matematik · Buket Topuzoğlu`)
+ *         → I1, I2, I3, I4 ısırdı: 5 sapma
+ *         İLK DENEMEDE PROVA "GEÇTİ" — çünkü yamanın tip hatası vardı,
+ *         DERLEME DÜŞTÜ ve denetim ESKİ PAKETİ ölçtü. Derleme çıktısına
+ *         bakılmadan koşturulan bir prova, hiç koşturulmamış demektir.
+ *   Uh  Sığan satır sabitleri şişirildi (19 → 26, 15 → 21)
+ *         → C1  ısırdı: 331,1 mm / 277 mm
+ *         → C1k ısırdı: 327,0 mm / 277 mm
+ *         → C4 ve C4k ısırdı: 4 parça için 5 sayfa
+ *   Ue  Sığan satır sabitleri şişirildi (6 → 8, 15 → 18) [yarım düzende]
  *         → C1  ısırdı: 287,4 mm / 277 mm (pay −10,4)
  *         → C1k ısırdı: 296,5 mm / 277 mm (pay −19,5)
  *         (birim test de kırmızı yandı: sabit ölçülen mm'yle uyuşmuyor)
@@ -97,6 +106,12 @@
  *    F3. ÖĞRENCİ kodu bu kâğıda girmiyor (uç döndürse bile).
  *    F4. Kodlar tarayıcı deposunda tutulmuyor.
  *    F5. Sahipsiz bir yarımda kod yok.
+ *
+ * I. ANTETTEKİ KÜNYE (öğretmenin düzeltmesi)
+ *    I1. Ad SABİT DEĞİL: o sınıfa giren öğretmen yazıyor.
+ *    I2. Ortak sınıfta hepsi yazıyor.
+ *    I3. Kayıt yoksa yalnız ders; ad uydurulmuyor, sarkık "·" yok.
+ *    I4. Sabit ad kaçağı yok.
  *
  * H. ANTETTEKİ EWALU MASKOTU (öğretmenin isteği)
  *    H1. Görsel her parçanın antetinde ve gerçekten yüklenmiş.
@@ -439,11 +454,11 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
       adet: yarimlar.length,
       boslukMm: mm(bosluk),
       enBuyukMm: mm(Math.max(...boylar, 0)),
-      ikisiMm: mm(boylar.slice(0, 2).reduce((a, x) => a + x, 0) + bosluk),
       // 1 px pay: alt piksel yuvarlamaları taşma sayılmasın.
       tasan: yarimlar.filter((y) => y.scrollHeight > y.clientHeight + 1).length,
       tekSutun: getComputedStyle(izgara).gridTemplateColumns.split(' ').length === 1,
-      tamMod: izgara.classList.contains('sk-cizelge-izgara--tam'),
+      // Antetteki künye: ekranda ne yazıyorsa o.
+      kunye: yarimlar[0]?.innerText.split('\n').slice(0, 3).join(' ') ?? '',
       // Parça başına satır: SABİTİ ÖLÇÜM OKUYOR, denetim onu yazmıyor.
       // Sabit büyütülürse bu sayı ve boylar kendiliğinden büyüyor.
       parcaSatiri: yarimlar[0] ? yarimlar[0].querySelectorAll('tbody tr').length : 0,
@@ -476,48 +491,45 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
 
 {
   /**
-   * SAYFA SAYMAK YETMEZ. DOM'da iki çizelge olması, ikisinin AYNI KÂĞIDA
-   * sığdığını söylemez. Ölçülen şey milimetre.
+   * MİLİMETRE ÖLÇÜLÜYOR, SONRA SAYFA SAYILIYOR.
    *
    * FİKSTÜR EN KÖTÜ HÂL (`enKotu: true`): her satırda soru dökümü VE
    * "gecikmeli" alt satırı, öğrencide üç uzun konu adı. İlk yazımda
    * fikstür "temsilî"ydi — iki satırı boş durumdaydı — ve satır başına
    * 6,44 mm çıkarmıştı. Gerçek rakam 10,17 mm; o yüzden eski sabit (8)
-   * kâğıdı 22 mm aşıyordu ve bu ölçüm onu görmüyordu.
+   * kâğıdı aşıyordu ve bu ölçüm onu görmüyordu.
    *
    * ÖDEV SAYISI BİLEREK ÇOK (40): parçanın kaç satır tutacağına ekranın
    * kendi sabiti karar veriyor, denetim onu YAZMIYOR. Sabit büyütülürse
    * ölçülen parça da büyüyor ve bu satır kırmızı yanıyor. Fikstürün
    * satır sayısını sabite eşitlemek, sabiti kendi kendine onaylatmak
    * olurdu.
+   *
+   * KÂĞIT BAŞINA BİR ÖĞRENCİ (öğretmenin kararı): artık "iki çizelge
+   * bir A4'e sığıyor mu" diye ölçülmüyor; ölçülen şey HER çizelgenin
+   * tek başına sayfaya sığdığı ve parça sayısı kadar kâğıt çıktığı.
    */
   const kodsuz = await kagitOlcusu({ odevSayisi: 40, kodlu: false });
   console.log(`  · kodsuz parça başına ${kodsuz.parcaSatiri} satır`);
-  de(kodsuz.tekSutun, 'C1: kâğıtta tek sütun — iki öğrenci alt alta');
-  de(!kodsuz.tamMod, 'C1: kodsuz modda ızgara yarım düzende');
+  de(kodsuz.tekSutun, 'C1: kâğıtta tek sütun');
   de(
-    kodsuz.ikisiMm <= KULLANILABILIR,
-    `C1: KODSUZ — iki çizelge A4'e sığıyor: ${kodsuz.ikisiMm} mm / ${KULLANILABILIR} mm `
-    + `(pay ${(KULLANILABILIR - kodsuz.ikisiMm).toFixed(1)} mm)`,
+    kodsuz.enBuyukMm <= KULLANILABILIR,
+    `C1: KODSUZ — en uzun çizelge A4'e sığıyor: ${kodsuz.enBuyukMm} mm / ${KULLANILABILIR} mm `
+    + `(pay ${(KULLANILABILIR - kodsuz.enBuyukMm).toFixed(1)} mm)`,
   );
+  de(kodsuz.sayfaKesmesi, 'C1: her çizelgeden sonra yeni kâğıt başlıyor');
   de(kodsuz.tasan === 0, `C2: hiçbir çizelgenin metni kutusundan taşmıyor (${kodsuz.tasan})`);
   de(
-    kodsuz.sayfa === Math.ceil(kodsuz.adet / 2),
-    `C4: KODSUZ — ${kodsuz.adet} yarım ${Math.ceil(kodsuz.adet / 2)} kâğıda basılıyor `
-    + `(gerçek PDF: ${kodsuz.sayfa} sayfa)`,
+    kodsuz.sayfa === kodsuz.adet,
+    `C4: KODSUZ — kâğıt başına bir çizelge: ${kodsuz.adet} parça / ${kodsuz.sayfa} sayfa`,
   );
 
   /**
-   * KODLU MOD — KÂĞIT BAŞINA BİR ÖĞRENCİ.
-   *
-   * Giriş bloğu 44,68 mm, yani yarım A4'ün üçte biri; yarıma bölünse
-   * öğrenci başına iki ödev satırı kalırdı. Ölçülen şey: 15 satırlık en
-   * kötü çizelge TAM sayfaya sığıyor ve her çizelgeden sonra yeni kâğıt
-   * başlıyor.
+   * KODLU MOD — giriş bloğu sayfanın 46,8 mm'sini alıyor, o yüzden
+   * satır sayısı düşüyor ama kâğıt başına yine bir öğrenci var.
    */
   const kodlu = await kagitOlcusu({ odevSayisi: 40, kodlu: true });
   console.log(`  · kodlu parça başına ${kodlu.parcaSatiri} satır`);
-  de(kodlu.tamMod, 'C1k: kodlu modda ızgara tam sayfa düzenine geçti');
   de(
     kodlu.enBuyukMm <= KULLANILABILIR,
     `C1k: KODLU — en uzun çizelge A4'e sığıyor: ${kodlu.enBuyukMm} mm / ${KULLANILABILIR} mm `
@@ -529,24 +541,25 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
     kodlu.sayfa === kodlu.adet,
     `C4k: KODLU — kâğıt başına bir çizelge: ${kodlu.adet} parça / ${kodlu.sayfa} sayfa`,
   );
-  // KODLU MOD DAHA AZ KÂĞIT YİYOR: aynı 40 ödev, daha az parça.
+  // GİRİŞ BLOĞU YER YİYOR: aynı 40 ödev kodlu modda daha çok parça.
   de(
-    kodlu.adet < kodsuz.adet,
-    `C1k: kodlu mod daha az parça üretiyor — ${kodlu.adet} < ${kodsuz.adet}`,
+    kodlu.parcaSatiri < kodsuz.parcaSatiri,
+    `C1k: kodlu sayfaya daha az satır sığıyor — ${kodlu.parcaSatiri} < ${kodsuz.parcaSatiri}`,
   );
 
   /**
    * SONDA BOŞ KÂĞIT ÇIKMIYOR.
    *
-   * En küçük hâl: iki öğrenci, ikisi de tek yarım. Doğru çıktı TEK
-   * kâğıt. Bu ölçüm yazılmadan önce gerçek PDF İKİ sayfaydı ve ikincisi
-   * bomboştu — ekranda hiçbir şey görünmediği için kimse fark etmezdi,
-   * ama öğretmen her sınıfta bir kâğıt fazla basardı.
+   * En küçük hâl: iki öğrenci, ikisi de tek parça → TAM İKİ kâğıt.
+   * Bu ölçüm yazılmadan önce çıktının sonunda fazladan boş bir sayfa
+   * vardı; ekranda hiçbir şey görünmediği için kimse fark etmezdi, ama
+   * öğretmen her sınıfta bir kâğıt fazla basardı.
    */
   const kucuk = await kagitOlcusu({ odevSayisi: 3, kodlu: false });
   de(
-    kucuk.sayfa === 1,
-    `C4: iki öğrencilik kısa çizelge TEK kâğıt — sonda boş sayfa yok (${kucuk.sayfa})`,
+    kucuk.sayfa === kucuk.adet && kucuk.adet === 2,
+    `C4: iki öğrenci → tam iki kâğıt, sonda boş sayfa yok `
+    + `(${kucuk.adet} parça / ${kucuk.sayfa} sayfa)`,
   );
 }
 
@@ -554,23 +567,31 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
 console.log('--- C3. Taşan liste bir sonraki parçaya geçiyor ---');
 // ===========================================================================
 {
-  // 15 ödev, kodsuz: sığan satır 6, yani ilk öğrenci üç parçaya taşmalı.
+  /**
+   * 45 ödev: sığan satır ne olursa olsun bir kâğıda sığmaz, yani
+   * çizelge bölünmek ZORUNDA. Parça sayısı denetimde YAZILI DEĞİL;
+   * ekranın kendi sabitinden geliyor ve başlıktan okunuyor — sabiti
+   * buraya yazmak, sabiti kendi kendine onaylatmak olurdu.
+   */
+  const ODEV = 45;
   const { b, p } = await kur({
     ben_kimim: SAHIP,
     sinif_ogrenci_ozeti: OZET,
-    sinif_not_cizelgesi: cizelge({ odevSayisi: 15 }),
+    sinif_not_cizelgesi: cizelge({ odevSayisi: ODEV }),
   });
   const g = await metin(p);
-  de(g.includes(`${BIR} — 1/3`) && g.includes(`${BIR} — 3/3`),
-    'C3: taşan çizelge "— 1/3" … "— 3/3" olarak bölündü');
+  const toplam = Number(/ — 1\/(\d+)/.exec(g)?.[1] ?? 0);
+  de(toplam >= 2, `C3: taşan çizelge parçalara bölündü (— 1/${toplam || '?'})`);
+  de(g.includes(`${BIR} — 1/${toplam}`) && g.includes(`${BIR} — ${toplam}/${toplam}`),
+    `C3: ilk ve son parça numaralı — "1/${toplam}" … "${toplam}/${toplam}"`);
 
   // HİÇBİR ÖDEV KAYBOLMAMALI: sessizce kırpmak bir ödevi yok saymaktır.
   const sayim = await p.evaluate((ad) => {
-    const yarimlar = [...document.querySelectorAll('.sk-veli-cizelge')]
+    const parcalar = [...document.querySelectorAll('.sk-veli-cizelge')]
       .filter((y) => y.innerText.includes(ad));
-    return yarimlar.reduce((a, y) => a + y.querySelectorAll('tbody tr').length, 0);
+    return parcalar.reduce((a, y) => a + y.querySelectorAll('tbody tr').length, 0);
   }, BIR);
-  de(sayim === 15, `C3: 15 ödevin hepsi kâğıtta (${sayim})`);
+  de(sayim === ODEV, `C3: ${ODEV} ödevin hepsi kâğıtta (${sayim})`);
   await b.close();
 }
 
@@ -775,6 +796,58 @@ console.log('--- H. Antetteki Ewalu maskotu ---');
   );
   await p.emulateMedia({ media: 'screen' });
   await b.close();
+}
+
+// ===========================================================================
+console.log('--- I. Antetteki künye: ad SINIFTAN geliyor ---');
+// ===========================================================================
+{
+  /**
+   * Öğretmenin düzeltmesi: "her diğer öğretmenlerin de dersine giren
+   * öğretmen kimse onun adı yazsın. Diğer öğretmenlerin de sistemde
+   * sınıfları yazıyor, var kayıtlı."
+   *
+   * İLK YAZIMDA AD SABİTTİ (`OGRETMEN = 'Buket Topuzoğlu'`) ve başka
+   * bir öğretmenin sınıfı için basılan kâğıtta da o ad çıkardı. Bu
+   * grubun asıl ölçtüğü şey I4: SABİT AD KAÇAĞI YOK.
+   */
+  /**
+   * ARAMA TÜRKÇE-DUYARLI OLMAK ZORUNDA. Antet CSS'te `uppercase` ve
+   * `innerText` onu uygulayıp döndürüyor: "Matematik" ekrandan
+   * "MATEMATİK" olarak okunuyor. JS düzenli ifadesinin `i` bayrağı
+   * Türkçe İ/i çiftini eşlemiyor, o yüzden karşılaştırma
+   * `toLocaleLowerCase('tr')` ile yapılıyor (F2'nin aynı dersi).
+   */
+  const kucuk = (x) => x.toLocaleLowerCase('tr');
+  const kunyeli = async (ogretmenler) => {
+    const c = cizelge();
+    c.sinif.ogretmenler = ogretmenler;
+    const { b, p } = await kur({
+      ben_kimim: SAHIP, sinif_ogrenci_ozeti: OZET, sinif_not_cizelgesi: c,
+    }, 718);
+    const g = kucuk(await metin(p));
+    await b.close();
+    return g;
+  };
+
+  const tek = await kunyeli(['Ayşe Demir']);
+  de(tek.includes(kucuk('Ayşe Demir')), 'I1: sınıfın öğretmeninin adı antette');
+  de(tek.includes(kucuk('Matematik')), 'I1: ders adı antette');
+  // I4 — SABİT AD KAÇAĞI. Uç başka bir ad döndürürken kâğıtta eski
+  // sabitin kalıntısı olmamalı.
+  de(!tek.includes(kucuk('Buket')), 'I4: sabit ad kaçağı yok — "Buket" geçmiyor');
+
+  const ikisi = await kunyeli(['Buket Topuzoğlu', 'Ayşe Demir']);
+  de(ikisi.includes(kucuk('Buket Topuzoğlu')) && ikisi.includes(kucuk('Ayşe Demir')),
+    'I2: ortak sınıfta iki öğretmen de yazılı');
+
+  const bos = await kunyeli([]);
+  de(bos.includes(kucuk('Matematik')), 'I3: kayıt yoksa ders yine yazılı');
+  de(!bos.includes(kucuk('Buket')) && !bos.includes(kucuk('Ayşe')),
+    'I3: kayıt yoksa ad uydurulmuyor');
+  // SARKIK AYRAÇ YOK: "Ödev çizelgesi · Matematik ·" diye biten bir
+  // antet, veliye eksik bir bilgi vaat ederdi.
+  de(!new RegExp(`${kucuk('Matematik')}\\s*·`).test(bos), 'I3: sarkık "·" basılmıyor');
 }
 
 console.log('');

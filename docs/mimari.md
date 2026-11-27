@@ -7921,35 +7921,74 @@ sabit kısmını **66,63 → 113,43 mm** çıkardı: giriş bloğunun kendisi
 **44,68 mm**, yani yarım A4'ün üçte biri (kurulum yönergesi tek başına
 19,65 mm / 6 satır).
 
-Ölçülen rakamlar (Chromium, `media: 'print'`, A4 − 2 × 10 mm kenar):
+Ölçülen rakamlar (Chromium, `media: 'print'`, A4 − 2 × 10 mm kenar,
+**kâğıdın genişliğinde**: 190 mm = 718 px):
 
 | | sabit kısım | bütçe | sığan satır |
 |---|---|---|---|
-| kodsuz yarım A4 | 66,63 mm | 137 mm | (137 − 66,63) / 10,17 = 6,9 → **6** |
-| kodlu yarım A4 | 113,43 mm | 137 mm | 2,3 → **2** (kullanışsız) |
-| kodlu tam A4 | 113,43 mm | 277 mm | 16,1 → **15** |
+| kodsuz tam A4 | 74,83 mm | 277 mm | (277 − 74,83) / 10,17 = 19,9 → **19** |
+| kodlu tam A4 | 121,62 mm | 277 mm | 15,3 → **15** |
+| kodlu yarım A4 | 121,62 mm | 137 mm | 1,5 → **1** (yarım düzenin bırakılma sebebi) |
 
-### Kod basılınca kâğıt başına BİR öğrenci — geometri, tercih değil
+### Kâğıt başına BİR öğrenci — öğretmenin kararı
 
-Öğretmen *"1 A4'e 2 öğrenci"* istedi ve bir tur sonra giriş bloğunu
-istedi. İkisi aynı kâğıda sığmıyor: giriş bloğuyla yarım A4'te öğrenci
-başına **iki ödev satırı** kalıyor, yani 10 ödevlik bir öğrenci 5 yarıma
-— 2,5 kâğıda — yayılırdı. Aynı öğrenci tam sayfada **tek kâğıda**
-sığıyor.
+Öğretmen önce *"1 A4'e 2 öğrenci"* istedi, sonra giriş bloğunu istedi;
+ikisi aynı kâğıda sığmadı. Ölçüm şunu gösterdi: giriş bloğuyla yarım
+A4'te öğrenci başına **iki ödev satırı** kalıyor, yani 10 ödevlik bir
+öğrenci 2,5 kâğıda yayılırdı. Bir tur koşullu düzen denendi (kodsuzsa
+iki öğrenci, kodluysa bir); öğretmen koşulu kaldırdı:
 
-Bu yüzden düzen basıma göre değişiyor (`kagitDuzeni`):
+> *"Bir A4 sayfasında sadece bir öğrencinin bilgileri olsun. Yani her
+> öğrenci için bir A4 sayfası olacak."*
 
-- **Kod basılmıyorsa:** bir A4'e iki öğrenci, yarım başına 6 ödev satırı,
-  kesme çizgisi kesikli. Ölçüm: **259 / 277 mm** (pay 18 mm).
-- **Kod basılıyorsa:** bir A4'e bir öğrenci, sayfaya 15 ödev satırı, her
-  çizelgeden sonra yeni kâğıt (`break-after: page`). Ölçüm:
-  **266 / 277 mm** (pay 11 mm).
+Artık **tek düzen** var ve kesme çizgisi de kalktı — kâğıdın tamamı tek
+veliye gidiyor. Değişen tek şey satır sayısı, çünkü giriş bloğu sayfanın
+46,8 mm'sini alıyor (öğretmen *"kurulum yönergesi kısaltılmasın"* dedi):
 
-İkinci düzen **daha az kâğıt** yiyor: aynı 40 ödevde kodsuz 14 parça,
-kodlu 6 parça. Denetim bunu da ölçüyor.
+| | sabit kısım | sayfaya sığan ödev | ölçüm |
+|---|---|---|---|
+| kodsuz | 74,83 mm | **19 satır** | 259,9 / 277 mm (pay 17,1) |
+| kodlu | 121,62 mm | **15 satır** | 266,0 / 277 mm (pay 11,0) |
 
-Her iki düzende taşan satırlar sessizce kırpılmıyor; çizelge
-*"— 2/3"* başlığıyla sonraki parçaya geçiyor.
+Taşan satırlar sessizce kırpılmıyor; çizelge *"— 2/3"* başlığıyla
+sonraki kâğıda geçiyor. Denetim parça sayısı kadar kâğıt çıktığını
+**gerçek PDF'in sayfa sayısıyla** ölçüyor.
+
+### Antetteki ad artık SINIFTAN geliyor
+
+Öğretmenin düzeltmesi:
+
+> *"Benim adım zaten logonun yani Sekiz'in yanında yazıyor. Her diğer
+> öğretmenlerin de dersine giren öğretmen kimse onun adı yazsın. Mesela
+> ben 9A, 9B, 10C, 11C sınıflarına giriyorum. Hepsine ödev gönderiyorum
+> fakat ders işlediğim sınıflar bunlar."*
+
+Künye sabitti (`OGRETMEN = 'Buket Topuzoğlu'`): başka bir öğretmenin
+sınıfı için basılan kâğıtta da o ad çıkardı. Artık `kunyeSatiri`
+**`sinif.ogretmenler`**e bakıyor.
+
+**Yeni sunucu işi yok.** Kayıt `ogretmen_siniflari`nda (0033) ve
+şemadaki kendi yorumu bu cümlenin aynısı — *"Hangi öğretmen hangi sınıfa
+giriyor."* `sinif_not_cizelgesi` o adları **0063'ten beri** gönderiyor
+(yönetici önce, sonra ad). Yayın zinciri değişmedi.
+
+Kararlar:
+
+- **Ortak sınıfta hepsi yazılıyor** (öğretmenin kararı): velinin elindeki
+  kâğıt, çocuğun dersine giren bütün öğretmenleri göstersin.
+- **Ödevi veren değil, derse giren.** Öğretmen ikisinin ayrı olduğunu
+  söyledi; künye `odev.ogretmen`e değil `sinif.ogretmenler`e bakıyor.
+  Ödev satırına ayrıca öğretmen adı **konmadı** (öğretmenin kararı).
+- **Kayıt yoksa ad uydurulmuyor:** yalnız "Matematik" yazıyor, sarkık
+  bir "·" basılmıyor. Kâğıdı basan öğretmenin adını oraya koymak,
+  veliye doğrulanmamış bir bilgi vermek olurdu (Part VIII). Ekranda
+  (kâğıtta değil) öğretmene "bu sınıfa kayıtlı öğretmen yok" uyarısı
+  çıkıyor; basmadan önce görsün.
+
+**Bilinen sınır:** `ogretmenler` tablosunda branş alanı yok, `DERS`
+sabiti "Matematik". Sisteme matematik dışı bir zümre girerse künyede
+yanlış ders yazar. 0033 bunu bilerek ertelemiş; zümre eklenirse
+`ogretmenler.brans` bir sonraki turun işi.
 
 **Ders: ölçüm fikstürü TEMSİLÎ değil EN KÖTÜ hâl olmalı.** Ve fikstürün
 satır sayısı sabite eşitlenirse sabit kendini onaylar — artık fikstür 40
@@ -7974,15 +8013,19 @@ zaten zorluyor. Düzeltildi.
   uçlu ödevde anahtar yok, dolayısıyla hiçbir soru "yanlış" çıkamaz — o
   yarı süzgeçsiz bile yanlış bilgi üretmiyor. Sızdıran yarı
   `bos_sorular`: anahtarsız bir ödevde her soru "boş" görünür.
-- `veli-cizelgesi-metni.ts` **45 birim testi**; `karne-sozu.ts`in yasaklı
+- `veli-cizelgesi-metni.ts` **51 birim testi**; `karne-sozu.ts`in yasaklı
   kelimeleri burada da ölçülüyor (kıyas iki kelime için serbest, çünkü
   öğretmen onu açıkça istedi). Beş test sabitlerin ölçülen mm
   değerleriyle tutarlı olduğunu kontrol ediyor — eski 8 rakamı tam böyle
   bir kapı olmadığı için yanlış kalmıştı.
 - `veli-cizelgesi-denetimi.mjs` **yeni denetim** (süpürme 60 → 61):
-  içerik, gizlilik, **iki düzenin de gerçek A4 ölçümü**, taşma, bozuk
-  yanıt, veli kodu ve kodsuz basım. **Beş arayüz kusur provası da
-  ısırdı.**
+  içerik, gizlilik, gerçek A4 ölçümü ve **gerçek PDF'in sayfa sayısı**,
+  taşma, bozuk yanıt, veli kodu, kodsuz basım, maskot ve künye.
+  **Yedi arayüz kusur provası da ısırdı.**
+
+  Provalardan biri ilk denemede "geçti": yamanın tip hatası vardı,
+  **derleme düştü** ve denetim eski paketi ölçtü. *Derleme çıktısına
+  bakılmadan koşturulan bir prova, hiç koşturulmamış demektir.*
 - Gerçek A4 çıktısı PDF olarak üretildi ve gözle doğrulandı.
 
 ### Süpürme bir kusur yakaladı — denetimin göremediği hâl
@@ -8014,14 +8057,11 @@ takımının beşinci yanıltması.
 - Çizelgeye girebilecek ama bu turda konmayanlar: kişisel ek süre (0081),
   yeniden açılmış gönderimler (0090 — veli sebebi görmüyor), puan
   bekleyen açık uçlu sayısı, çalışma kağıtları ayrı satır, aylık gelişim.
-- **Kurulum yönergesi kısaltılırsa kod basılırken de iki öğrenci bir
-  kâğıda sığabilir.** Yönerge tek başına 19,65 mm / 6 satır; iki satıra
-  indirilse kodlu sabit 113,43 → ~100 mm'ye düşer ve yarıma 3-4 satır
-  kalır — yine az. Metin `kod-fisi.ts`ten geldiği için kısaltmak veli
-  fişini de etkiler; o yüzden kendiliğinden yapılmadı, öğretmene
-  soruldu.
-- Ödev satırına **öğretmen adı** (ortak sınıflarda hangi ödev kimin)
-  konmadı; önerildi, karar bekleniyor.
+- Kurulum yönergesinin kısaltılması **öğretmen tarafından reddedildi**
+  ("Kurulum yönergesi kısaltılmasın"); kodlu sayfada 15 satır kalıyor.
+- Ödev satırına **öğretmen adı** konmaması öğretmenin kararı.
+- `ogretmenler.brans` yok; matematik dışı zümre girerse künyedeki ders
+  yanlış olur.
 - Satır yüksekliğinin en kötü hâli 10,17 mm ve bunun 3,3 mm'si başlık
   altındaki soru dökümü, 2,9 mm'si durum altındaki *"gecikmeli"*. İkisi
   satır içine alınırsa sığan satır sayısı artar — ama ikisi de velinin
