@@ -244,6 +244,23 @@ async function kur(uclar, en = 1280) {
 
 const metin = (p) => p.evaluate(() => document.body.innerText);
 
+/**
+ * Sayfada Türkçe-duyarlı arama.
+ *
+ * `innerText` CSS'teki `text-transform: uppercase`'i UYGULUYOR: antetteki
+ * "Veli girişi" ekrandan "VELİ GİRİŞİ" olarak okunuyor. JS'in `i` bayrağı
+ * Türkçe İ/i çiftini doğru eşlemediği için karşılaştırma sayfada
+ * `toLocaleLowerCase('tr')` ile yapılıyor (0041'in dersi).
+ *
+ * İLK YAZIMINDA bu yoktu ve F2 kırmızı yandı — ürün doğruydu, ÖLÇÜM
+ * yanlıştı.
+ */
+const icerir = (p, s) =>
+  p.evaluate(
+    (x) => document.body.innerText.toLocaleLowerCase('tr').includes(x.toLocaleLowerCase('tr')),
+    s,
+  );
+
 // ===========================================================================
 console.log('--- A. Çizelgenin içeriği ---');
 // ===========================================================================
@@ -453,10 +470,10 @@ console.log('--- E. Uç BEKLENMEDİK bir şey döndürürse ekran çökmüyor --
       sinif_not_cizelgesi: yanit,
     });
     const g = await metin(p);
-    de(!g.includes('Ödev çizelgesi'), `E1 ${ad}: çizelge bölümü çizilmedi`);
+    de(!(await icerir(p, 'Ödev çizelgesi')), `E1 ${ad}: çizelge bölümü çizilmedi`);
     // SINIF LİSTESİ VE VELİ FİŞİ ETKİLENMİYOR: bozuk bir uç, çalışan
     // iki çıktıyı da götürmemeli.
-    de(g.includes(BIR) && g.includes('Veli bilgi fişi'),
+    de(g.includes(BIR) && (await icerir(p, 'Veli bilgi fişi')),
       `E1 ${ad}: liste ve veli fişi yerinde`);
     await b.close();
   }
@@ -491,12 +508,13 @@ console.log('--- F. Veli kodu, giriş yönlendirmesi, uygulama kurulumu ---');
   await p.waitForTimeout(900);
 
   const g = await p.evaluate(() => document.body.innerText);
-  de(g.includes('Veli girişi'), 'F2: giriş bloğu çizildi');
+  de(await icerir(p, 'Veli girişi'), 'F2: giriş bloğu çizildi');
   de(g.includes(KOD.o1), 'F2: veli kodu yazılı');
   de(g.includes('sekizkyal.com'), 'F2: giriş adresi yazılı');
   de(/Ana Ekrana Ekle/.test(g) && /Android/.test(g),
     'F2: uygulama kurulumu (iOS + Android) yazılı');
-  de(g.includes('Matematik · Buket Topuzoğlu'), 'F2: antette ders ve öğretmen yazılı');
+  de(await icerir(p, 'Matematik · Buket Topuzoğlu'),
+    'F2: antette ders ve öğretmen yazılı');
 
   // F3 — ÖĞRENCİ KODU BU KÂĞIDA GİRMİYOR. Taklit uç onu döndürüyor;
   // ekranın onu basmadığı ölçülüyor.
@@ -544,9 +562,9 @@ console.log('--- G. Kod olmadan da basılabiliyor ---');
     sinif_not_cizelgesi: cizelge(),
   });
   const g = await p.evaluate(() => document.body.innerText);
-  de(g.includes('Ödev çizelgesi'), 'G1: çizelge kodsuz da çiziliyor');
+  de(await icerir(p, 'Ödev çizelgesi'), 'G1: çizelge kodsuz da çiziliyor');
   de(!g.includes('Veli kodunuz'), 'G1: boş "Veli kodunuz:" satırı basılmıyor');
-  de(!g.includes('Veli girişi'), 'G1: giriş bloğu hiç çizilmiyor');
+  de(!(await icerir(p, 'Veli girişi')), 'G1: giriş bloğu hiç çizilmiyor');
   await b.close();
 }
 

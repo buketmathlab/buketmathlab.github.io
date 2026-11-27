@@ -808,10 +808,28 @@ console.log('--- E6. 360 px: taşma yok ---');
 const VELI_OTURUMU = { rol: 'veli', token: 't'.repeat(64),
   ogrenci: { id: 'o1', ad: 'Duru Dilara Aygün', tur: 'okul', sinif: '9C' } };
 
+/**
+ * TARİHLER BUGÜNE GÖRE — SABİT DEĞİL.
+ *
+ * İlk yazımda `yeni_son_tarih` '2026-11-12' idi. 8 Kasım'da yeşildi,
+ * 27 Kasım'da KIRMIZI yandı: o tarih geçmişte kalınca `ekSureAcik`
+ * yanlış dönüyor ve ekran haklı olarak "Süresi doldu" yazıyor. Ürün
+ * değil FİKSTÜR bozulmuştu — zaman bombası bir ölçüm, kendi yazdığı
+ * kuralı bir gün kendisi çiğner.
+ *
+ * `zaman` geçmişte kalabilir (yeniden açma GEÇMİŞTE oldu), ama kişisel
+ * son tarihin AÇIK olması 6. grubun ölçtüğü şeyin ta kendisi.
+ */
+const gunSonra = (f) => {
+  const d = new Date();
+  d.setDate(d.getDate() + f);
+  return d.toISOString().slice(0, 10);
+};
+
 const ACMA = {
   zaman: '2026-10-31T09:14:00+03:00',
   neden: 'Soruda düzeltme yapıldı.',
-  yeni_son_tarih: '2026-11-12',
+  yeni_son_tarih: gunSonra(12),
   onceki_puan: 75,
   onceki_durum: 'puanlandi',
 };
@@ -829,7 +847,7 @@ const F_GONDERIMLER = (acma) => ({
   satirlar: [{
     ogrenci_id: 'o1', ogrenci: 'Duru Dilara Aygün', gonderim_id: null, gonderdi: false,
     zaman: null, gecikmeli: false, durum: null, dogru: null, yanlis: null, bos: null,
-    puan: null, ogretmen_puan: null, ogretmen_yorum: null, ek_sure: '2026-11-12',
+    puan: null, ogretmen_puan: null, ogretmen_yorum: null, ek_sure: gunSonra(12),
     yeniden_acma: acma,
     yanlis_sorular: [], bos_sorular: [], foto_var: false,
     duzeltildi: false, duzeltme_nedeni: null,
@@ -845,7 +863,7 @@ const F_ODEVLER = (acma) => ({
     // açma 0081'den beri böyle çalışıyor.
     id: 'a1', baslik: '1. Tema Tekrarı', aciklama: null, tur: 'test',
     son_tarih: '2026-10-02', soru_sayisi: N, gec_teslim: false, sik_sayisi: 5,
-    sinif_arsiv: false, odev_yolu: null, ek_sure: '2026-11-12',
+    sinif_arsiv: false, odev_yolu: null, ek_sure: gunSonra(12),
     yeniden_acma: acma,
     gonderim: null, konu_analizi: [], cevap_anahtari: null, anahtar_yolu: null,
   }],
