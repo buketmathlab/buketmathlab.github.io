@@ -236,36 +236,100 @@ export const CIZELGE_NOTU =
   + 'Çalışma kağıtları puanlanmaz.';
 
 /**
- * Bir yarım A4'e kaç ödev satırı sığıyor.
+ * KÂĞIDIN ÖLÇÜLERİ — hepsi Chromium'da `media: 'print'` ile ölçüldü.
  *
- * Yirmi ödevi yarım A4'e sığdırmak mümkün değil. Sessizce kırpmak yerine
- * çizelge bir sonraki yarıma taşıyor.
+ * Ölçüm `app/scripts/veli-cizelgesi-denetimi.mjs`in C grubunda duruyor ve
+ * her koşuda yeniden yapılıyor; buradaki rakamlar o ölçümün sonucudur,
+ * hatırlanmış sayılar değil.
  *
- * SAYI GERÇEKTEN ÖLÇÜLDÜ — ve ilk yazımda 12 YAZIYORDU. O rakam tahmindi
- * ve yorumunda "ölçüldü" yazıyordu; `veli-cizelgesi-denetimi.mjs`in A4
- * ölçümü 12 satırda iki çizelgenin 323,1 mm tuttuğunu, yani A4'ü 46 mm
- * AŞTIĞINI gösterdi. İki ölçümden (8 satır → 271,6 mm; 12 satır →
- * 323,1 mm) türetilen gerçek rakamlar:
+ * EN KÖTÜ SATIR 10,17 mm. Bir ödev satırı üç satır metin tutabiliyor:
+ * ödev adı, adın altında soru dökümü ("yanlış: 3 · boş: 1") ve durumun
+ * altında "gecikmeli". Sabit, satırların HEPSİ bu hâldeyken ölçülüyor —
+ * "temsilî" bir satırla ölçmek, kâğıtta taşan bir çizelge demek.
  *
- *   satır başına        6,44 mm
- *   çizelgenin sabiti  82,8 mm  (antet, ad, özet, tablo başlığı, notlar)
- *   yarım başına bütçe 137 mm   ((277 − 3) / 2)
- *   → sığan satır      (137 − 82,8) / 6,44 ≈ 8,4
+ *   iki yarım + ızgara boşluğu  ≤ 277 mm   (A4 − 2 × 10 mm kenar)
+ *   ızgara boşluğu                 3 mm
+ *   yarım başına bütçe           137 mm   ((277 − 3) / 2)
+ *   satır başına               10,17 mm   (2/4/6/8 satırda doğrusal)
  *
- * 8 seçiliyor: 8,4'ün üstüne çıkmak kâğıtta sessiz bir taşma demek ve bu
- * kâğıt veliye gidiyor. Denetim en kötü hâli (tam 8 satır) ölçüyor.
+ * ÇİZELGENİN SABİT KISMI GİRİŞ BLOĞUYLA İKİYE KATLIYOR:
  *
- * SONUCU: ödev sayısı 8'i geçen sınıfta bir öğrencinin çizelgesi birden
- * çok yarıma taşıyor, yani A4 başına iki öğrenci garantisi yalnız
- * 8 ödeve kadar geçerli. Bu, gizlenecek değil SÖYLENECEK bir sınır.
+ *   kodsuz  66,63 mm   antet, ad, özet, tablo başlığı, konular, notlar
+ *   kodlu  113,43 mm   + veli kodu, sekizkyal yönlendirmesi, kurulum
+ *
+ * Giriş bloğunun kendisi 44,68 mm, yani yarımın üçte biri (kurulum
+ * yönergesi tek başına 19,65 mm / 6 satır).
+ *
+ * BURADAN ÇIKAN SONUÇ, TASARIM TERCİHİ DEĞİL GEOMETRİ:
+ *
+ *   kodsuz yarım  (137 − 66,63)  / 10,17 = 6,9  → 6 satır,  A4'te 2 öğrenci
+ *   kodlu yarım   (137 − 113,43) / 10,17 = 2,3  → 2 satır   (kullanışsız)
+ *   kodlu TAM A4  (277 − 113,43) / 10,17 = 16,1 → 15 satır, A4'te 1 öğrenci
+ *
+ * Kod basılırken yarım A4'te iki satır kalıyor: 10 ödevlik bir öğrenci
+ * 5 yarıma, yani 2,5 kâğıda yayılırdı. Aynı öğrenci tam sayfada TEK
+ * kâğıda sığıyor. Bu yüzden kod basılınca kâğıt başına bir öğrenciye
+ * geçiliyor — kâğıt da az gidiyor.
+ *
+ * ESKİ SABİT 8'Dİ VE YANLIŞTI. İlk ölçüm "temsilî" bir fikstürle
+ * yapılmıştı: satırların ikisi boş durumdaydı, o yüzden satır başına
+ * 6,44 mm çıkmıştı. En kötü hâlde iki yarım 299 mm tutuyor, yani A4'ü
+ * 22 mm aşıyor. Ders: ölçüm fikstürü TEMSİLÎ değil EN KÖTÜ hâl olmalı.
  */
-export const YARIMA_SIGAN_SATIR = 8;
+export const SATIR_MM = 10.17;
+export const SABIT_MM = { kodsuz: 66.63, kodlu: 113.43 } as const;
+export const YARIM_BUTCE_MM = 137;
+export const TAM_BUTCE_MM = 277;
 
-export function parcalaraBol<T>(satirlar: readonly T[]): T[][] {
+/** Kodsuz yarım A4'e sığan ödev satırı (ölçüldü: 6,9 → 6). */
+export const YARIMA_SIGAN_SATIR = 6;
+
+/** Kodlu TAM A4'e sığan ödev satırı (ölçüldü: 16,1 → 15; pay 11 mm). */
+export const SAYFAYA_SIGAN_SATIR = 15;
+
+/**
+ * Kâğıt başına kaç öğrenci ve bir parçaya kaç satır.
+ *
+ * `kodlu` = öğretmen veli kodlarını basmayı onayladı.
+ */
+export function kagitDuzeni(kodlu: boolean): {
+  siganSatir: number;
+  ogrenciSayisi: 1 | 2;
+  aciklama: string;
+} {
+  return kodlu
+    ? {
+      siganSatir: SAYFAYA_SIGAN_SATIR,
+      ogrenciSayisi: 1,
+      aciklama:
+          'Veli kodu basıldığı için bir A4\'e bir öğrenci. Kod, giriş '
+          + 'yönlendirmesi ve kurulum yönergesi yarım sayfanın üçte birini '
+          + 'kaplıyor; yarıma bölünse öğrenci başına iki ödev satırı kalırdı.',
+    }
+    : {
+      siganSatir: YARIMA_SIGAN_SATIR,
+      ogrenciSayisi: 2,
+      aciklama:
+          'Bir A4\'e iki öğrenci. Kesip her veliye yalnız kendi çocuğunun '
+          + 'yarısını verin.',
+    };
+}
+
+/**
+ * Ödev satırlarını kâğıda sığan parçalara böler.
+ *
+ * Sessizce kırpmıyor: taşan satırlar bir sonraki parçaya geçiyor ve
+ * parçalar `devamBasligi` ile numaralanıyor.
+ */
+export function parcalaraBol<T>(
+  satirlar: readonly T[],
+  sigan: number = YARIMA_SIGAN_SATIR,
+): T[][] {
+  const adim = Number.isFinite(sigan) && sigan >= 1 ? Math.floor(sigan) : YARIMA_SIGAN_SATIR;
   if (satirlar.length === 0) return [[]];
   const parcalar: T[][] = [];
-  for (let i = 0; i < satirlar.length; i += YARIMA_SIGAN_SATIR) {
-    parcalar.push(satirlar.slice(i, i + YARIMA_SIGAN_SATIR));
+  for (let i = 0; i < satirlar.length; i += adim) {
+    parcalar.push(satirlar.slice(i, i + adim));
   }
   return parcalar;
 }

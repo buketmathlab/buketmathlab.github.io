@@ -346,6 +346,22 @@
     border-color: #999;
   }
 
+  /* KODLU MOD: KÂĞIT BAŞINA BİR ÖĞRENCİ.
+     Giriş bloğu yarımın üçte birini kaplıyor (44,68 mm; ölçüldü), yarıma
+     bölünse öğrenci başına iki ödev satırı kalırdı. Burada çizelge tam
+     sayfayı alıyor: `min-height` kelepçesi kalkıyor, her çizelgeden
+     sonra yeni kâğıt başlıyor. Kesme çizgisi de gereksiz — kâğıdın
+     tamamı tek veliye gidiyor. */
+  .sk-cizelge-izgara--tam .sk-veli-cizelge {
+    min-height: 0;
+    border-style: solid;
+    break-after: page;
+  }
+
+  .sk-cizelge-izgara--tam .sk-veli-cizelge:last-child {
+    break-after: auto;
+  }
+
   /* Tablo satırı sayfa ortasından bölünmesin; başlık satırı her sayfada
      tekrar etsin (0053'ün sınıf çıktısıyla aynı kural). */
   .sk-cizelge-tablo thead {

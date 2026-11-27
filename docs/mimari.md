@@ -7849,20 +7849,84 @@ ekranı zaten o karara göre kurmuştu. Denetim bunu ölçüyor: bir yarımda
 başka öğrencinin adı geçmiyor, ve çizelge basılırken öbür iki bölüm
 kâğıttan düşüyor.
 
-### Ölçüm bir sabiti düzeltti
+### Künye: kâğıtta hangi dersin olduğu yazıyor
 
-`YARIMA_SIGAN_SATIR` ilk yazımda **12**'ydi ve yorumunda *"ölçüldü"*
-yazıyordu. **Tahmindi.** A4 ölçümü ilk koşuda 8 ödevle yapılmıştı, yani
-sabitin dayandığı sayı hiç ölçülmemişti. En kötü hâl ölçülünce iki
-çizelge **323,1 mm** tuttu — A4'ün yazılabilir boyunu 46 mm aşıyor. İki
-ölçümden türetilen gerçek rakamlar: satır başına 6,44 mm, çizelgenin
-sabiti 82,8 mm, yarım başına bütçe 137 mm → **8,4 satır**. Sabit 8 oldu.
+Öğretmenin sorusu: *"Matematik dersi olduğu yazıyor mu?"* **Yazmıyordu.**
+Çizelge antedinde yalnız okul adı ve "Ödev çizelgesi" vardı; kâğıt
+kesilip tek başına veliye gidiyor ve velinin elinde hangi dersin kâğıdı
+olduğunu söyleyen hiçbir şey yoktu. Antede `KUNYE` girdi:
+**"Matematik · Buket Topuzoğlu"**.
+
+### Veli kodu ve giriş yönlendirmesi çizelgeye girdi
+
+Öğretmenin isteği: *"Bu çizelgede veli kodu ve sekizkyal giriş
+yönlendirmesi yazsın. Uygulama olarak nasıl indirilebileceği yazsın."*
+Metin uydurulmadı: `kod-fisi.ts`in veli fişinde kullandığı aynı dizeler
+(`fisMetni('veli')`) çizelgeye de veriliyor, böylece iki kâğıt aynı şeyi
+iki türlü anlatmıyor.
+
+Kodun taşıdığı korumalar (denetimin F grubu hepsini ölçüyor):
+
+- Kod **onay olmadan ağa gitmiyor**; diyalog yalnız VELİ kodunun
+  basılacağını ve ekranın öğrencilere dönük bırakılmamasını söylüyor.
+- **Öğrenci kodu bu kâğıda hiç girmiyor** — uç onu döndürse bile.
+- Kodlar **tarayıcı deposuna yazılmıyor** (0017 ve `KodFisleri`in aynı
+  kuralı); toplu uç yok, öğrenci başına `ogrenci_kodlari` çağrılıyor.
+- Kod yoksa blok **hiç çizilmiyor**; boş bir *"Veli kodunuz:"* satırı
+  basılmıyor ve çizelge kodsuz da basılabiliyor.
+
+### Ölçüm aynı sabiti İKİ KEZ düzeltti
+
+**(1)** `YARIMA_SIGAN_SATIR` ilk yazımda **12**'ydi ve yorumunda
+*"ölçüldü"* yazıyordu. **Tahmindi.** En kötü hâl ölçülünce iki çizelge
+**323,1 mm** tuttu — A4'ün yazılabilir boyunu 46 mm aşıyor. Sabit 8 oldu.
 
 **Ders: "ölçüldü" diye yazılmış bir yorum, ölçümün kendisi değildir.**
 
-Sonucu açıkça söyleniyor: **A4 başına iki öğrenci garantisi 8 ödeve
-kadar geçerli.** Daha fazlasında bir öğrencinin çizelgesi ikinci yarıma
-*"— 2/2"* başlığıyla taşıyor; sessizce kırpılmıyor.
+**(2) 8 de yanlıştı.** O ölçümün fikstürü *temsilî*ydi: satırların ikisi
+boş durumdaydı (*"süresi devam"*, *"kapsam dışı"*), o yüzden satır
+başına 6,44 mm çıkıyordu. Her satırda soru dökümü **ve** *"gecikmeli"*
+alt satırı olduğunda gerçek rakam **10,17 mm**; 8 satırlık iki çizelge
+**287,4 mm**, A4'ü 10 mm aşıyor. Üstüne giriş bloğu geldi ve çizelgenin
+sabit kısmını **66,63 → 113,43 mm** çıkardı: giriş bloğunun kendisi
+**44,68 mm**, yani yarım A4'ün üçte biri (kurulum yönergesi tek başına
+19,65 mm / 6 satır).
+
+Ölçülen rakamlar (Chromium, `media: 'print'`, A4 − 2 × 10 mm kenar):
+
+| | sabit kısım | bütçe | sığan satır |
+|---|---|---|---|
+| kodsuz yarım A4 | 66,63 mm | 137 mm | (137 − 66,63) / 10,17 = 6,9 → **6** |
+| kodlu yarım A4 | 113,43 mm | 137 mm | 2,3 → **2** (kullanışsız) |
+| kodlu tam A4 | 113,43 mm | 277 mm | 16,1 → **15** |
+
+### Kod basılınca kâğıt başına BİR öğrenci — geometri, tercih değil
+
+Öğretmen *"1 A4'e 2 öğrenci"* istedi ve bir tur sonra giriş bloğunu
+istedi. İkisi aynı kâğıda sığmıyor: giriş bloğuyla yarım A4'te öğrenci
+başına **iki ödev satırı** kalıyor, yani 10 ödevlik bir öğrenci 5 yarıma
+— 2,5 kâğıda — yayılırdı. Aynı öğrenci tam sayfada **tek kâğıda**
+sığıyor.
+
+Bu yüzden düzen basıma göre değişiyor (`kagitDuzeni`):
+
+- **Kod basılmıyorsa:** bir A4'e iki öğrenci, yarım başına 6 ödev satırı,
+  kesme çizgisi kesikli. Ölçüm: **259 / 277 mm** (pay 18 mm).
+- **Kod basılıyorsa:** bir A4'e bir öğrenci, sayfaya 15 ödev satırı, her
+  çizelgeden sonra yeni kâğıt (`break-after: page`). Ölçüm:
+  **266 / 277 mm** (pay 11 mm).
+
+İkinci düzen **daha az kâğıt** yiyor: aynı 40 ödevde kodsuz 14 parça,
+kodlu 6 parça. Denetim bunu da ölçüyor.
+
+Her iki düzende taşan satırlar sessizce kırpılmıyor; çizelge
+*"— 2/3"* başlığıyla sonraki parçaya geçiyor.
+
+**Ders: ölçüm fikstürü TEMSİLÎ değil EN KÖTÜ hâl olmalı.** Ve fikstürün
+satır sayısı sabite eşitlenirse sabit kendini onaylar — artık fikstür 40
+ödev veriyor, parçanın boyuna ekranın kendi sabiti karar veriyor, denetim
+onu yazmıyor. Sabitler şişirilerek (6 → 8, 15 → 18) prova edildi: ölçüm
+iki yerden de kırmızı yandı (287,4 ve 296,5 mm), birim test de.
 
 ### Bir test deseni düzeltildi
 
@@ -7881,12 +7945,15 @@ zaten zorluyor. Düzeltildi.
   uçlu ödevde anahtar yok, dolayısıyla hiçbir soru "yanlış" çıkamaz — o
   yarı süzgeçsiz bile yanlış bilgi üretmiyor. Sızdıran yarı
   `bos_sorular`: anahtarsız bir ödevde her soru "boş" görünür.
-- `veli-cizelgesi-metni.ts` 32 birim testi; `karne-sozu.ts`in yasaklı
+- `veli-cizelgesi-metni.ts` **45 birim testi**; `karne-sozu.ts`in yasaklı
   kelimeleri burada da ölçülüyor (kıyas iki kelime için serbest, çünkü
-  öğretmen onu açıkça istedi).
+  öğretmen onu açıkça istedi). Beş test sabitlerin ölçülen mm
+  değerleriyle tutarlı olduğunu kontrol ediyor — eski 8 rakamı tam böyle
+  bir kapı olmadığı için yanlış kalmıştı.
 - `veli-cizelgesi-denetimi.mjs` **yeni denetim** (süpürme 60 → 61):
-  içerik, gizlilik, gerçek A4 ölçümü, taşma, ve 0091 çalışmamış sunucu.
-  **Dört arayüz kusur provası da ısırdı.**
+  içerik, gizlilik, **iki düzenin de gerçek A4 ölçümü**, taşma, bozuk
+  yanıt, veli kodu ve kodsuz basım. **Beş arayüz kusur provası da
+  ısırdı.**
 - Gerçek A4 çıktısı PDF olarak üretildi ve gözle doğrulandı.
 
 ### Süpürme bir kusur yakaladı — denetimin göremediği hâl
@@ -7918,5 +7985,15 @@ takımının beşinci yanıltması.
 - Çizelgeye girebilecek ama bu turda konmayanlar: kişisel ek süre (0081),
   yeniden açılmış gönderimler (0090 — veli sebebi görmüyor), puan
   bekleyen açık uçlu sayısı, çalışma kağıtları ayrı satır, aylık gelişim.
-- Çizelgenin sabit kısmı 82,8 mm; kısaltılırsa yarıma daha çok ödev
-  sığar.
+- **Kurulum yönergesi kısaltılırsa kod basılırken de iki öğrenci bir
+  kâğıda sığabilir.** Yönerge tek başına 19,65 mm / 6 satır; iki satıra
+  indirilse kodlu sabit 113,43 → ~100 mm'ye düşer ve yarıma 3-4 satır
+  kalır — yine az. Metin `kod-fisi.ts`ten geldiği için kısaltmak veli
+  fişini de etkiler; o yüzden kendiliğinden yapılmadı, öğretmene
+  soruldu.
+- Ödev satırına **öğretmen adı** (ortak sınıflarda hangi ödev kimin)
+  konmadı; önerildi, karar bekleniyor.
+- Satır yüksekliğinin en kötü hâli 10,17 mm ve bunun 3,3 mm'si başlık
+  altındaki soru dökümü, 2,9 mm'si durum altındaki *"gecikmeli"*. İkisi
+  satır içine alınırsa sığan satır sayısı artar — ama ikisi de velinin
+  en çok sorduğu şey, o yüzden küçültülmedi.

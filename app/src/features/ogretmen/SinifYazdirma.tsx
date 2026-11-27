@@ -45,6 +45,7 @@ import {
   devamBasligi,
   durumYazisi,
   gecikmeIsareti,
+  kagitDuzeni,
   kisaGun,
   parcalaraBol,
   puanYazisi,
@@ -427,13 +428,19 @@ export function SinifYazdirma() {
  * sınıfının ortalaması kaçmış, o düzeydeki tüm sınıfların ortalaması
  * kaçmış."
  *
- * YARIM A4 BİR TASARIM TERCİHİ DEĞİL, GİZLİLİK KARARI. Sınıf listesi
- * HER öğrencinin puanını taşıyor; o kâğıdı bir veliye uzatmak öbür
- * çocukların bilgisini de vermek olurdu. `kod-fisi.ts` aynı dersi
- * taşıyor ve bu ekran 0053'te zaten o karara göre kurulmuştu.
+ * ÖĞRENCİ BAŞINA AYRI KÂĞIT PARÇASI BİR TASARIM TERCİHİ DEĞİL, GİZLİLİK
+ * KARARI. Sınıf listesi HER öğrencinin puanını taşıyor; o kâğıdı bir
+ * veliye uzatmak öbür çocukların bilgisini de vermek olurdu.
+ * `kod-fisi.ts` aynı dersi taşıyor ve bu ekran 0053'te zaten o karara
+ * göre kurulmuştu.
  *
- * TAŞMA SESSİZCE KIRPILMIYOR: yirmi ödev yarım A4'e sığmaz, çizelge bir
- * sonraki yarıma "— 2/3" başlığıyla taşıyor (`parcalaraBol`).
+ * KÂĞIT BAŞINA KAÇ ÖĞRENCİ: öğretmen veli kodunu da basıyorsa giriş
+ * bloğu yarımın üçte birini kaplıyor, o yüzden kâğıt başına BİR
+ * öğrenciye geçiliyor (15 ödev satırı). Kodsuz basımda iki öğrenci (6
+ * satır). İkisi de ölçüldü; rakamlar `veli-cizelgesi-metni.ts`te.
+ *
+ * TAŞMA SESSİZCE KIRPILMIYOR: sığmayan ödevler bir sonraki parçaya
+ * "— 2/3" başlığıyla taşıyor (`parcalaraBol`).
  */
 function VeliCizelgeleri({
   cizelge,
@@ -455,13 +462,31 @@ function VeliCizelgeleri({
   const kiyasVar = cizelge.odevler.some((d) => d.kiyas !== undefined);
   const verilisVar = cizelge.odevler.some((d) => d.tarihler !== undefined);
 
-  // Her öğrencinin yarımları: taşan çizelge bölünüyor.
+  /**
+   * KÂĞIT DÜZENİ ÖLÇÜMDEN GELİYOR, TERCİHTEN DEĞİL.
+   *
+   * Giriş bloğu (kod + yönlendirme + kurulum) 44,68 mm, yani yarım A4'ün
+   * üçte biri. Yarıma bölünürse öğrenci başına iki ödev satırı kalıyor:
+   * 10 ödevlik bir öğrenci 2,5 kâğıda yayılırdı. Kod basılınca kâğıt
+   * başına BİR öğrenciye geçiliyor — hem 15 satır sığıyor hem de kâğıt
+   * az gidiyor. Rakamlar `veli-cizelgesi-metni.ts`te, ölçüm denetimde.
+   *
+   * DÜZEN TEK KARAR: sınıfın bir kısmının veli kodu yoksa o öğrencinin
+   * kâğıdında giriş bloğu çizilmiyor ama düzen yine tam sayfa. Kâğıt
+   * başına öğrenci sayısını öğrenciye göre değiştirmek, aynı tomarda
+   * bazı kâğıtların ortadan kesileceği bazılarının kesilmeyeceği
+   * anlamına gelirdi. Hiç kod yoksa (`{}`) düzen yarım kalıyor.
+   */
+  const kodluMod = kodlar !== null && Object.keys(kodlar).length > 0;
+  const duzen = kagitDuzeni(kodluMod);
+
+  // Her öğrencinin parçaları: taşan çizelge bölünüyor.
   const yarimlar = cizelge.ogrenciler.flatMap((o) => {
     const satirlar = cizelge.odevler.map((d) => ({
       odev: d,
       hucre: o.puanlar.find((x) => x.odev_id === d.id) ?? null,
     }));
-    const parcalar = parcalaraBol(satirlar);
+    const parcalar = parcalaraBol(satirlar, duzen.siganSatir);
     return parcalar.map((satir, i) => ({
       anahtar: `${o.id}-${i}`,
       ogrenci: o,
@@ -477,13 +502,15 @@ function VeliCizelgeleri({
         <h2 className="font-display text-[20px] font-semibold text-ink">
           {CIZELGE_BASLIGI}
         </h2>
-        <p className="mt-1 text-[14px] text-muted">
-          Bir A4'e iki öğrenci. Kesip her veliye yalnız kendi çocuğunun yarısını
-          verin.
-        </p>
+        <p className="mt-1 text-[14px] text-muted">{duzen.aciklama}</p>
       </div>
 
-      <div className="sk-cizelge-izgara mt-4 grid gap-3 print:mt-0">
+      <div
+        className={
+          'sk-cizelge-izgara mt-4 grid gap-3 print:mt-0'
+          + (duzen.ogrenciSayisi === 1 ? ' sk-cizelge-izgara--tam' : '')
+        }
+      >
         {yarimlar.map((y) => (
           <div key={y.anahtar} className="sk-veli-cizelge rounded-sk-sm border border-line p-4">
             {/* ÇİZELGENİN KENDİ ANTETİ: kesilip tek başına gittiğinde de

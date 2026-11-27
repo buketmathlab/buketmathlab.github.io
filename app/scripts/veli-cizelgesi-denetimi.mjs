@@ -21,11 +21,14 @@
  *        (üçü aynı kâğıda çıkarsa veli öbür çocukların puanını görür).
  *
  * C. KÂĞIT — GERÇEKTEN ÖLÇÜLÜYOR
- *    C1. `emulateMedia({ media: 'print' })` ile A4'te SAYFA BAŞINA İKİ
- *        çizelge; ızgara yazılabilir alana sığıyor.
- *    C2. Hiçbir çizelgenin metni kutusundan taşmıyor.
- *    C3. Taşan ödev listesi "— 2/2" başlığıyla ikinci yarıma geçiyor,
- *        SESSİZCE KIRPILMIYOR.
+ *    C1.  Kodsuz: `emulateMedia({ media: 'print' })` ile A4'te SAYFA
+ *         BAŞINA İKİ çizelge; ızgara yazılabilir alana sığıyor.
+ *    C1k. Kodlu: giriş bloğu yarımın üçte birini kaplıyor, o yüzden
+ *         kâğıt başına BİR öğrenci. Tam sayfa ölçülüyor, her çizelgeden
+ *         sonra yeni kâğıt başlıyor ve kâğıt sayısı kodsuzdan AZ.
+ *    C2.  Hiçbir çizelgenin metni kutusundan taşmıyor.
+ *    C3.  Taşan ödev listesi "— 2/3" başlığıyla sonraki parçaya geçiyor,
+ *         SESSİZCE KIRPILMIYOR.
  *
  * D. 0091 ÇALIŞMAMIŞ SUNUCU (Part VIII)
  *    D1. `tarihler` ve `kiyas` gelmezse o sütunlar HİÇ ÇİZİLMİYOR ve
@@ -43,17 +46,34 @@
  *         → D1 ısırdı
  *   Ud  Yarımın alt sınırı A4'ün yarısını aşıyor
  *         → C1 ısırdı: 323 mm / 277 mm
+ *   Ue  Sığan satır sabitleri şişirildi (6 → 8, 15 → 18)
+ *         → C1  ısırdı: 287,4 mm / 277 mm (pay −10,4)
+ *         → C1k ısırdı: 296,5 mm / 277 mm (pay −19,5)
+ *         (birim test de kırmızı yandı: sabit ölçülen mm'yle uyuşmuyor)
  *
  * -----------------------------------------------------------------------------
- * BU DENETİM BİR SABİTİ DÜZELTTİ
+ * BU DENETİM AYNI SABİTİ İKİ KEZ DÜZELTTİ
  *
- * `YARIMA_SIGAN_SATIR` ilk yazımda 12'ydi ve yorumunda "ölçüldü"
- * yazıyordu — tahmindi. C1 ölçümü ilk koşuda 8 ödevle yapılmıştı, yani
- * sabitin dayandığı sayı HİÇ ölçülmemişti. En kötü hâl (12 satır)
- * ölçülünce iki çizelge 323,1 mm tuttu: A4'ü 46 mm aşıyor. İki ölçümden
- * türetilen gerçek rakam 8,4 satır; sabit 8 oldu.
+ * (1) `YARIMA_SIGAN_SATIR` ilk yazımda 12'ydi ve yorumunda "ölçüldü"
+ * yazıyordu — tahmindi. En kötü hâl ölçülünce iki çizelge 323,1 mm
+ * tuttu: A4'ü 46 mm aşıyor. Sabit 8 oldu.
  *
  * DERS: "ölçüldü" diye yazılmış bir yorum, ölçümün kendisi değildir.
+ *
+ * (2) 8 DE YANLIŞTI. O ölçümün fikstüründe satırların ikisi boş
+ * durumdaydı ("süresi devam", "kapsam dışı"), yani satır başına 6,44 mm
+ * çıkıyordu. Her satırda soru dökümü VE "gecikmeli" olduğunda gerçek
+ * rakam 10,17 mm: 8 satırlık iki çizelge 287,4 mm, A4'ü 10 mm aşıyor.
+ * Üstelik giriş bloğu (44,68 mm) çizelgenin sabitini 66,63 → 113,43 mm
+ * çıkardığı için kodlu yarıma İKİ satır kalıyordu.
+ *
+ * Bu yüzden iki sabit var ve ikisi de ölçüldü:
+ *   kodsuz yarım A4  →  6 satır, kâğıt başına 2 öğrenci (259 / 277 mm)
+ *   kodlu  tam  A4   → 15 satır, kâğıt başına 1 öğrenci (266 / 277 mm)
+ *
+ * DERS: ölçüm fikstürü TEMSİLÎ değil EN KÖTÜ hâl olmalı; ve fikstürün
+ * satır sayısı sabite eşitlenirse sabit kendini onaylar. Artık fikstür
+ * 40 ödev veriyor, parçanın boyuna ekranın kendi sabiti karar veriyor.
  *
  * E. BOZUK YANIT
  *    E1. Uç `{}` ya da eksik şekilli bir şey döndürürse çizelge bölümü
@@ -123,7 +143,7 @@ const KIYAS = {
  * `odevSayisi` ile uzatılabiliyor: C3 (taşma) gerçekten çok ödev
  * istiyor, A grubu ise okunur bir tablo.
  */
-function cizelge({ odevSayisi = 3, yeniAlanlar = true } = {}) {
+function cizelge({ odevSayisi = 3, yeniAlanlar = true, enKotu = false } = {}) {
   const odevler = Array.from({ length: odevSayisi }, (_, i) => {
     const o = {
       id: `d${i + 1}`,
@@ -154,15 +174,16 @@ function cizelge({ odevSayisi = 3, yeniAlanlar = true } = {}) {
   });
 
   // Son üç ödeve özel durumlar: süresi devam eden, kapsam dışı, gecikmeli.
-  if (odevSayisi >= 3) {
+  // EN KÖTÜ HÂLDE YOK: ölçüm fikstürü "temsilî" olmamalı (aşağıdaki ders).
+  if (odevSayisi >= 3 && !enKotu) {
     odevler[1].son_tarih = '2099-01-01';
     odevler[1].sure_doldu = false;
     if (yeniAlanlar) odevler[1].kiyas = { durum: 'sure_dolmadi' };
   }
 
   const hucre = (id, i) => {
-    if (i === 1) return { odev_id: id, durum: 'suresi_devam', puan: null };
-    if (i === 2) return { odev_id: id, durum: 'kapsam_disi', puan: null };
+    if (!enKotu && i === 1) return { odev_id: id, durum: 'suresi_devam', puan: null };
+    if (!enKotu && i === 2) return { odev_id: id, durum: 'kapsam_disi', puan: null };
     return {
       odev_id: id, durum: 'gonderdi', puan: 75,
       ...(yeniAlanlar
@@ -183,7 +204,15 @@ function cizelge({ odevSayisi = 3, yeniAlanlar = true } = {}) {
         ortalama: 62.5, yapti: 1, yapmadi: 1, ortalama_yapan: 75, ortalama_tum: 62.5,
         yapilan: 1, yapilmayan: 1, calisma_sayisi: 0, calisma_yapilan: 0,
         puanlar: odevler.map((d, i) => hucre(d.id, i)),
-        ...(yeniAlanlar ? { eksik_konular: ['Üslü sayılar'] } : {}),
+        // 0091 sunucuda `limit 3` uyguluyor; en kötü hâl ÜÇ UZUN konu adı.
+        ...(yeniAlanlar
+          ? {
+            eksik_konular: enKotu
+              ? ['Çarpanlara Ayırma ve Özdeşlikler', 'Köklü İfadelerde İşlemler',
+                 'Oran Orantı ve Doğru Orantı']
+              : ['Üslü sayılar'],
+          }
+          : {}),
       },
       {
         id: 'o2', ad: IKI, ogrenci_no: '702', tur: 'okul',
@@ -352,65 +381,133 @@ console.log('--- B. Gizlilik: kâğıt veliye gidiyor ---');
 // ===========================================================================
 console.log('--- C. Kâğıt: A4 ölçülüyor ---');
 // ===========================================================================
-{
-  const { b, p } = await kur({
+
+/** A4 − 2 × 10 mm kenar. Kâğıdın yazılabilir boyu. */
+const KULLANILABILIR = 297 - 2 * 10;
+
+/**
+ * Bir modun kâğıt ölçüsünü al.
+ *
+ * `kodlu` ise veli kodları onaylanıp getiriliyor: giriş bloğu çiziliyor,
+ * ızgara `--tam` moduna geçiyor (kâğıt başına bir öğrenci).
+ */
+async function kagitOlcusu({ odevSayisi, kodlu }) {
+  const uclar = {
     ben_kimim: SAHIP,
     sinif_ogrenci_ozeti: OZET,
-    sinif_not_cizelgesi: cizelge({ odevSayisi: 8 }),
-  });
+    sinif_not_cizelgesi: cizelge({ odevSayisi, enKotu: true }),
+  };
+  if (kodlu) uclar.ogrenci_kodlari = { veli: 'VELI111', ogrenci: 'OGR999' };
+  const { b, p } = await kur(uclar);
+
+  if (kodlu) {
+    await p.getByRole('button', { name: 'Veli kodlarını da ekle' }).click();
+    await p.waitForTimeout(300);
+    await p.locator('dialog[open]').getByRole('button', { name: 'Getir ve hazırla' }).click();
+    await p.waitForTimeout(900);
+  }
+
   await p.getByRole('button', { name: 'Veli çizelgelerini yazdır' }).click();
   await p.waitForTimeout(400);
   await p.emulateMedia({ media: 'print' });
   await p.waitForTimeout(300);
 
-  /**
-   * SAYFA SAYMAK YETMEZ. DOM'da iki çizelge olması, ikisinin AYNI KÂĞIDA
-   * sığdığını söylemez: `min-height` ikisini 128+128+3 = 259 mm'ye
-   * oturtuyor ve A4'ün yazılabilir boyu 277 mm. Ölçülen şey bu.
-   */
-  const KAGIT = { yukseklikMm: 297, kenarMm: 10 };
-  const KULLANILABILIR = KAGIT.yukseklikMm - 2 * KAGIT.kenarMm;
-
   const olcu = await p.evaluate(() => {
     const PX_MM = 96 / 25.4;
+    const mm = (px) => +(px / PX_MM).toFixed(1);
     const yarimlar = [...document.querySelectorAll('.sk-veli-cizelge')];
-    const ikisi = yarimlar.slice(0, 2);
-    const boy = ikisi.reduce((a, y) => a + y.getBoundingClientRect().height, 0);
-    // Aradaki boşluk: ızgaranın `gap`i.
     const izgara = document.querySelector('.sk-cizelge-izgara');
     const bosluk = parseFloat(getComputedStyle(izgara).rowGap || '0');
+    const boylar = yarimlar.map((y) => y.getBoundingClientRect().height);
     return {
       adet: yarimlar.length,
-      ikisiMm: +((boy + bosluk) / PX_MM).toFixed(1),
+      boslukMm: mm(bosluk),
+      enBuyukMm: mm(Math.max(...boylar, 0)),
+      ikisiMm: mm(boylar.slice(0, 2).reduce((a, x) => a + x, 0) + bosluk),
       // 1 px pay: alt piksel yuvarlamaları taşma sayılmasın.
       tasan: yarimlar.filter((y) => y.scrollHeight > y.clientHeight + 1).length,
       tekSutun: getComputedStyle(izgara).gridTemplateColumns.split(' ').length === 1,
+      tamMod: izgara.classList.contains('sk-cizelge-izgara--tam'),
+      // Parça başına satır: SABİTİ ÖLÇÜM OKUYOR, denetim onu yazmıyor.
+      // Sabit büyütülürse bu sayı ve boylar kendiliğinden büyüyor.
+      parcaSatiri: yarimlar[0] ? yarimlar[0].querySelectorAll('tbody tr').length : 0,
+      // Kâğıt başına bir öğrenci: her çizelgeden sonra yeni sayfa.
+      sayfaKesmesi: yarimlar.slice(0, -1).every(
+        (y) => getComputedStyle(y).breakAfter === 'page'),
     };
   });
 
-  de(olcu.tekSutun, 'C1: kâğıtta tek sütun — iki öğrenci alt alta');
-  de(
-    olcu.ikisiMm <= KULLANILABILIR,
-    `C1: iki çizelge A4'e sığıyor — ${olcu.ikisiMm} mm / ${KULLANILABILIR} mm (pay ${(KULLANILABILIR - olcu.ikisiMm).toFixed(1)} mm)`,
-  );
-  de(olcu.tasan === 0, `C2: hiçbir çizelgenin metni kutusundan taşmıyor (${olcu.tasan} taşan)`);
   await p.emulateMedia({ media: 'screen' });
   await b.close();
+  return olcu;
+}
+
+{
+  /**
+   * SAYFA SAYMAK YETMEZ. DOM'da iki çizelge olması, ikisinin AYNI KÂĞIDA
+   * sığdığını söylemez. Ölçülen şey milimetre.
+   *
+   * FİKSTÜR EN KÖTÜ HÂL (`enKotu: true`): her satırda soru dökümü VE
+   * "gecikmeli" alt satırı, öğrencide üç uzun konu adı. İlk yazımda
+   * fikstür "temsilî"ydi — iki satırı boş durumdaydı — ve satır başına
+   * 6,44 mm çıkarmıştı. Gerçek rakam 10,17 mm; o yüzden eski sabit (8)
+   * kâğıdı 22 mm aşıyordu ve bu ölçüm onu görmüyordu.
+   *
+   * ÖDEV SAYISI BİLEREK ÇOK (40): parçanın kaç satır tutacağına ekranın
+   * kendi sabiti karar veriyor, denetim onu YAZMIYOR. Sabit büyütülürse
+   * ölçülen parça da büyüyor ve bu satır kırmızı yanıyor. Fikstürün
+   * satır sayısını sabite eşitlemek, sabiti kendi kendine onaylatmak
+   * olurdu.
+   */
+  const kodsuz = await kagitOlcusu({ odevSayisi: 40, kodlu: false });
+  console.log(`  · kodsuz parça başına ${kodsuz.parcaSatiri} satır`);
+  de(kodsuz.tekSutun, 'C1: kâğıtta tek sütun — iki öğrenci alt alta');
+  de(!kodsuz.tamMod, 'C1: kodsuz modda ızgara yarım düzende');
+  de(
+    kodsuz.ikisiMm <= KULLANILABILIR,
+    `C1: KODSUZ — iki çizelge A4'e sığıyor: ${kodsuz.ikisiMm} mm / ${KULLANILABILIR} mm `
+    + `(pay ${(KULLANILABILIR - kodsuz.ikisiMm).toFixed(1)} mm)`,
+  );
+  de(kodsuz.tasan === 0, `C2: hiçbir çizelgenin metni kutusundan taşmıyor (${kodsuz.tasan})`);
+
+  /**
+   * KODLU MOD — KÂĞIT BAŞINA BİR ÖĞRENCİ.
+   *
+   * Giriş bloğu 44,68 mm, yani yarım A4'ün üçte biri; yarıma bölünse
+   * öğrenci başına iki ödev satırı kalırdı. Ölçülen şey: 15 satırlık en
+   * kötü çizelge TAM sayfaya sığıyor ve her çizelgeden sonra yeni kâğıt
+   * başlıyor.
+   */
+  const kodlu = await kagitOlcusu({ odevSayisi: 40, kodlu: true });
+  console.log(`  · kodlu parça başına ${kodlu.parcaSatiri} satır`);
+  de(kodlu.tamMod, 'C1k: kodlu modda ızgara tam sayfa düzenine geçti');
+  de(
+    kodlu.enBuyukMm <= KULLANILABILIR,
+    `C1k: KODLU — en uzun çizelge A4'e sığıyor: ${kodlu.enBuyukMm} mm / ${KULLANILABILIR} mm `
+    + `(pay ${(KULLANILABILIR - kodlu.enBuyukMm).toFixed(1)} mm)`,
+  );
+  de(kodlu.sayfaKesmesi, 'C1k: her çizelgeden sonra yeni kâğıt başlıyor');
+  de(kodlu.tasan === 0, `C2k: kodlu çizelgenin metni kutusundan taşmıyor (${kodlu.tasan})`);
+  // KODLU MOD DAHA AZ KÂĞIT YİYOR: aynı 40 ödev, daha az parça.
+  de(
+    kodlu.adet < kodsuz.adet,
+    `C1k: kodlu mod daha az parça üretiyor — ${kodlu.adet} < ${kodsuz.adet}`,
+  );
 }
 
 // ===========================================================================
-console.log('--- C3. Taşan liste ikinci yarıma geçiyor ---');
+console.log('--- C3. Taşan liste bir sonraki parçaya geçiyor ---');
 // ===========================================================================
 {
-  // 15 ödev: `YARIMA_SIGAN_SATIR` 12, yani ilk öğrenci iki yarıma taşmalı.
+  // 15 ödev, kodsuz: sığan satır 6, yani ilk öğrenci üç parçaya taşmalı.
   const { b, p } = await kur({
     ben_kimim: SAHIP,
     sinif_ogrenci_ozeti: OZET,
     sinif_not_cizelgesi: cizelge({ odevSayisi: 15 }),
   });
   const g = await metin(p);
-  de(g.includes(`${BIR} — 1/2`) && g.includes(`${BIR} — 2/2`),
-    'C3: taşan çizelge "— 1/2" ve "— 2/2" olarak ikiye bölündü');
+  de(g.includes(`${BIR} — 1/3`) && g.includes(`${BIR} — 3/3`),
+    'C3: taşan çizelge "— 1/3" … "— 3/3" olarak bölündü');
 
   // HİÇBİR ÖDEV KAYBOLMAMALI: sessizce kırpmak bir ödevi yok saymaktır.
   const sayim = await p.evaluate((ad) => {

@@ -12,13 +12,19 @@ import {
   KURULUM,
   KURULUM_BASLIGI,
   OGRETMEN,
+  SABIT_MM,
+  SATIR_MM,
+  SAYFAYA_SIGAN_SATIR,
   SUTUNLAR,
+  TAM_BUTCE_MM,
+  YARIM_BUTCE_MM,
   girisBloguVarMi,
   YARIMA_SIGAN_SATIR,
   cizelgeAltNotu,
   devamBasligi,
   durumYazisi,
   gecikmeIsareti,
+  kagitDuzeni,
   kisaGun,
   parcalaraBol,
   puanYazisi,
@@ -195,6 +201,61 @@ describe('parcalaraBol', () => {
 
   it('hiç ödev yoksa tek boş parça (kart yine çiziliyor)', () => {
     expect(parcalaraBol([])).toEqual([[]]);
+  });
+
+  it('kodlu modda tam sayfa sınırıyla bölüyor', () => {
+    const satir = Array.from({ length: SAYFAYA_SIGAN_SATIR + 1 }, (_, i) => i);
+    expect(parcalaraBol(satir, SAYFAYA_SIGAN_SATIR)).toHaveLength(2);
+    expect(parcalaraBol(satir, SAYFAYA_SIGAN_SATIR).flat()).toEqual(satir);
+    // Aynı satırlar yarım sayfada çok daha fazla parçaya bölünüyor.
+    expect(parcalaraBol(satir, YARIMA_SIGAN_SATIR).length).toBeGreaterThan(2);
+  });
+
+  it('anlamsız sınır verilirse yarım sayfa sınırına düşüyor — sonsuz döngü yok', () => {
+    const satir = [1, 2, 3, 4, 5, 6, 7];
+    for (const kotu of [0, -3, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const p = parcalaraBol(satir, kotu);
+      expect(p.flat()).toEqual(satir);
+      expect(p.length).toBeLessThanOrEqual(satir.length);
+    }
+  });
+});
+
+describe('kagitDuzeni — rakamlar ÖLÇÜMDEN geliyor', () => {
+  it('kodsuz: iki öğrenci, yarım sayfa sınırı', () => {
+    const d = kagitDuzeni(false);
+    expect(d.ogrenciSayisi).toBe(2);
+    expect(d.siganSatir).toBe(YARIMA_SIGAN_SATIR);
+    expect(d.aciklama).toContain('iki öğrenci');
+  });
+
+  it('kodlu: bir öğrenci, tam sayfa sınırı', () => {
+    const d = kagitDuzeni(true);
+    expect(d.ogrenciSayisi).toBe(1);
+    expect(d.siganSatir).toBe(SAYFAYA_SIGAN_SATIR);
+    expect(d.aciklama).toContain('bir öğrenci');
+  });
+
+  /**
+   * SABİTLER ÖLÇÜMLE TUTARLI OLMALI. Ölçülen rakamlar
+   * (satır 10,17 mm; sabit 66,63 / 113,43 mm; bütçe 137 / 277 mm)
+   * değişirse bu test kırmızı yanar ve sabit elle güncellenir — eski
+   * 8 rakamı tam böyle bir denetim olmadığı için yanlış kalmıştı.
+   */
+  it('sığan satır sayıları ölçülen mm değerleriyle uyuşuyor', () => {
+    const kodsuz = Math.floor((YARIM_BUTCE_MM - SABIT_MM.kodsuz) / SATIR_MM);
+    expect(YARIMA_SIGAN_SATIR).toBeLessThanOrEqual(kodsuz);
+    const kodlu = Math.floor((TAM_BUTCE_MM - SABIT_MM.kodlu) / SATIR_MM);
+    expect(SAYFAYA_SIGAN_SATIR).toBeLessThanOrEqual(kodlu);
+    // Kâğıda gerçekten sığıyor: sabit + satırlar bütçeyi aşmıyor.
+    expect(SABIT_MM.kodsuz + YARIMA_SIGAN_SATIR * SATIR_MM).toBeLessThanOrEqual(YARIM_BUTCE_MM);
+    expect(SABIT_MM.kodlu + SAYFAYA_SIGAN_SATIR * SATIR_MM).toBeLessThanOrEqual(TAM_BUTCE_MM);
+  });
+
+  it('kodlu yarım sayfa KULLANIŞSIZ — düzen değişikliğinin gerekçesi', () => {
+    // Giriş bloğu yarıma sığdırılırsa öğrenci başına 2 satır kalıyor.
+    const yarimdaKodlu = Math.floor((YARIM_BUTCE_MM - SABIT_MM.kodlu) / SATIR_MM);
+    expect(yarimdaKodlu).toBeLessThan(3);
   });
 });
 
