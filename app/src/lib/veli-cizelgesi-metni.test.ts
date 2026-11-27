@@ -1,9 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import type { OdevKiyasi } from '@/types/api';
 import { YASAKLI_KELIMELER } from './karne-sozu';
+import { ADRES as FIS_ADRES, fisMetni } from './kod-fisi';
 import {
+  ADRES,
   CIZELGE_NOTU,
+  DERS,
+  GIRIS_SATIRLARI,
+  KOD_ETIKETI,
+  KUNYE,
+  KURULUM,
+  KURULUM_BASLIGI,
+  OGRETMEN,
   SUTUNLAR,
+  girisBloguVarMi,
   YARIMA_SIGAN_SATIR,
   cizelgeAltNotu,
   devamBasligi,
@@ -203,6 +213,57 @@ describe('cizelgeAltNotu', () => {
     expect(cizelgeAltNotu('7C', new Date('2026-11-27T10:00:00+03:00'))).toBe(
       '7C · 27 Kasım 2026 tarihinde hazırlandı.',
     );
+  });
+});
+
+describe('antet künyesi', () => {
+  it('ders ve öğretmen yazıyor', () => {
+    // Öğretmen sordu: "Matematik dersi olduğu yazıyor mu?" Yazmıyordu.
+    expect(KUNYE).toContain('Matematik');
+    expect(KUNYE).toContain('Buket Topuzoğlu');
+    expect(KUNYE).toBe(`${DERS} · ${OGRETMEN}`);
+  });
+});
+
+describe('veli giriş bloğu', () => {
+  it('metin KOD FİŞİNDEN geliyor, kopyalanmıyor', () => {
+    // İki yerde iki türlü yazılsa biri güncellenir öbürü kalırdı.
+    const fis = fisMetni('veli');
+    expect(KOD_ETIKETI).toBe(fis.kodEtiketi);
+    expect(GIRIS_SATIRLARI).toEqual(fis.satirlar);
+    expect(KURULUM_BASLIGI).toBe(fis.kurulumBasligi);
+    expect(KURULUM).toEqual(fis.kurulum);
+    expect(ADRES).toBe(FIS_ADRES);
+  });
+
+  it('giriş yönlendirmesi adresi taşıyor', () => {
+    expect(GIRIS_SATIRLARI.join(' ')).toContain('sekizkyal.com');
+  });
+
+  it('uygulama kurulumu iOS ve Android adımlarını taşıyor', () => {
+    const k = KURULUM.join(' ');
+    expect(k).toContain('iOS');
+    expect(k).toContain('Android');
+    expect(k).toMatch(/Ana Ekrana Ekle|Uygulama olarak ekle/);
+  });
+
+  it('ÖĞRENCİ kodu bu kâğıda ait değil', () => {
+    // `kod-fisi.ts`in ayrımı: iki kodu tek kâğıda basmak, velinin
+    // kanalını çocuğun eline vermek olurdu.
+    const ogrenciFisi = fisMetni('ogrenci');
+    expect(KOD_ETIKETI).not.toBe(ogrenciFisi.kodEtiketi);
+    expect(KOD_ETIKETI.toLocaleLowerCase('tr')).toContain('veli');
+  });
+
+  it('kod yoksa blok çizilmiyor — boş "Veli kodunuz:" basılmıyor', () => {
+    expect(girisBloguVarMi(undefined)).toBe(false);
+    expect(girisBloguVarMi(null)).toBe(false);
+    expect(girisBloguVarMi('')).toBe(false);
+    expect(girisBloguVarMi('   ')).toBe(false);
+  });
+
+  it('kod varsa blok çiziliyor', () => {
+    expect(girisBloguVarMi('A1B2C3')).toBe(true);
   });
 });
 

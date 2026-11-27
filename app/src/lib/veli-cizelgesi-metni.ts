@@ -38,9 +38,60 @@
  * kuralı). Süresi dolmamış ödev de "göndermedi" DEĞİL.
  */
 
+import { ADRES, fisMetni } from './kod-fisi';
 import type { CizelgeDurumu, OdevKiyasi, OdevTarihleri } from '@/types/api';
 
 export const CIZELGE_BASLIGI = 'Ödev çizelgesi';
+
+/**
+ * ANTETTEKİ KÜNYE — ders ve öğretmen.
+ *
+ * İlk yazımda YOKTU ve öğretmen sordu: "Matematik dersi olduğu yazıyor
+ * mu?" Yazmıyordu. Kod fişinde bu satır bilerek kaldırılmıştı
+ * (`kod-fisi.ts`: "fişi eline alan kimin verdiğini zaten biliyor") ama
+ * o gerekçe BURADA GEÇERLİ DEĞİL: kod fişi çocuğa verilen bir giriş
+ * kâğıdı, bu ise veliye verilen bir BELGE. Veli toplantısında velinin
+ * elinde birkaç öğretmenden kâğıt oluyor; hangisinin hangi ders olduğu
+ * sonradan belli olmalı. Okul Yönetimi Bilgilendirmesi belgesinde de
+ * aynı sebeple künye var.
+ */
+export const DERS = 'Matematik';
+export const OGRETMEN = 'Buket Topuzoğlu';
+export const KUNYE = `${DERS} · ${OGRETMEN}`;
+
+/**
+ * VELİ GİRİŞİ — kod, adres ve uygulama kurulumu (öğretmenin isteği:
+ * "bu çizelgede veli kodu ve sekizkyal giriş yönlendirmesi yazsın,
+ * uygulama olarak nasıl indirilebileceği yazsın").
+ *
+ * METİN `kod-fisi.ts`TEN GELİYOR, KOPYALANMIYOR. Veli fişiyle çizelge
+ * aynı yönergeyi anlatıyor; iki yerde iki türlü yazılsa biri bir gün
+ * güncellenir öbürü kalırdı. Adres de oradan (`ADRES`): 0041'de eski
+ * adresin 301 ile yönlendiği ölçülmüştü ve tek doğru yer orası.
+ *
+ * YALNIZ VELİ KODU. Öğrenci kodu bu kâğıda GİRMİYOR — `kod-fisi.ts`in
+ * ayrımı: iki kodu tek kâğıda basmak, velinin kanalını çocuğun eline
+ * vermek olurdu (veli yazışması ve özel derste ödeme bilgisi oradan
+ * görünüyor).
+ */
+export const GIRIS_BASLIGI = 'Veli girişi';
+export const KOD_ETIKETI = fisMetni('veli').kodEtiketi;
+export const GIRIS_SATIRLARI = fisMetni('veli').satirlar;
+export const KURULUM_BASLIGI = fisMetni('veli').kurulumBasligi;
+export const KURULUM = fisMetni('veli').kurulum;
+export { ADRES };
+
+/**
+ * Kod yoksa giriş bloğu HİÇ ÇİZİLMİYOR.
+ *
+ * Öğretmen kodları getirmeyi onaylamadıysa, ya da öğrencinin veli kodu
+ * yoksa, boş bir "Veli kodunuz:" satırı basmak veliye işe yaramaz bir
+ * kâğıt vermek olurdu (`kod-fisi.ts`in "kodu olmayan öğrenci fiş
+ * üretmez" kuralının aynısı).
+ */
+export function girisBloguVarMi(kod: string | null | undefined): boolean {
+  return typeof kod === 'string' && kod.trim() !== '';
+}
 export const YAZDIR_CIZELGE = 'Veli çizelgelerini yazdır';
 
 /** Tablo başlıkları — tek yerde, kâğıtta ve ekranda aynı. */

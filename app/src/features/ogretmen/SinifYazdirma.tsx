@@ -6,6 +6,9 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SchoolCrest } from '@/components/brand/SchoolCrest';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
+import { Dialog } from '@/components/ui/Dialog';
+import { useToast } from '@/components/ui/toast-baglam';
+import { rpc } from '@/services/supabase';
 import {
   BOS_SINIF,
   FIS_BASLIGI,
@@ -29,6 +32,13 @@ import {
 import {
   CIZELGE_BASLIGI,
   CIZELGE_NOTU,
+  GIRIS_BASLIGI,
+  GIRIS_SATIRLARI,
+  KOD_ETIKETI,
+  KUNYE,
+  KURULUM,
+  KURULUM_BASLIGI,
+  girisBloguVarMi,
   SUTUNLAR,
   YAZDIR_CIZELGE,
   cizelgeAltNotu,
@@ -44,7 +54,7 @@ import {
   soruDokumu,
   verilisGunu,
 } from '@/lib/veli-cizelgesi-metni';
-import type { SinifNotCizelgesi, SinifOgrenciOzeti } from '@/types/api';
+import type { Kodlar, SinifNotCizelgesi, SinifOgrenciOzeti } from '@/types/api';
 
 /**
  * SINIF ÇIKTISI — sınıf listesi ve veli fişleri.
@@ -84,6 +94,7 @@ export function SinifYazdirma() {
   const { id = '' } = useParams();
   const { oturum } = useOturum();
   const git = useNavigate();
+  const { bildir } = useToast();
 
   /**
    * Yazdırma anı DONDURULUYOR: `new Date()` her çizimde yeniden
@@ -148,6 +159,52 @@ export function SinifYazdirma() {
       ? hamCizelge
       : null;
 
+  /**
+   * VELİ KODLARI — öğretmenin isteği: "bu çizelgede veli kodu ve
+   * sekizkyal giriş yönlendirmesi yazsın."
+   *
+   * KOD FİŞLERİ EKRANININ KORUMALARI AYNEN GETİRİLİYOR, çünkü bu kâğıt
+   * artık bir KİMLİK BİLGİSİ taşıyor:
+   *   • onay diyaloğu olmadan kod ağa GİTMİYOR,
+   *   • 0017'nin sınırı korunuyor: toplu uç yok, `ogrenci_kodlari`
+   *     öğrenci öğrenci çağrılıyor (sıralı, paralel değil),
+   *   • kodlar tarayıcı deposuna YAZILMIYOR (denetim ölçüyor),
+   *   • yalnız VELİ kodu basılıyor; öğrenci kodu bu kâğıda girmiyor
+   *     (`kod-fisi.ts`in ayrımı).
+   *
+   * Onaylanmazsa çizelge yine basılıyor, giriş bloğu olmadan.
+   */
+  const [kodOnayi, setKodOnayi] = useState(false);
+  const [kodlar, setKodlar] = useState<Record<string, string> | null>(null);
+  const [kodAliniyor, setKodAliniyor] = useState(false);
+
+  async function kodlariGetir() {
+    if (!veri) return;
+    setKodAliniyor(true);
+    try {
+      const toplanan: Record<string, string> = {};
+      for (const o of veri.ogrenciler) {
+        const k = await rpc<Kodlar>('ogrenci_kodlari', {
+          p_token: oturum?.token,
+          p_id: o.id,
+        });
+        // YALNIZ VELİ KODU ALINIYOR. Öğrenci kodu yanıtta gelse bile
+        // buraya yazılmıyor: bu kâğıt veliye gidiyor.
+        if (k?.veli) toplanan[o.id] = k.veli;
+      }
+      setKodlar(toplanan);
+    } catch (e) {
+      // YARIM LİSTE TUTULMUYOR: bazı velilerin kodu olan, bazılarının
+      // olmayan bir tomar, öğretmenin "hepsini dağıttım" sanmasına yol
+      // açardı (`KodFisleri`in aynı gerekçesi).
+      setKodlar(null);
+      bildir(e instanceof Error ? e.message : 'Kodlar alınamadı.', 'hata');
+    } finally {
+      setKodAliniyor(false);
+      setKodOnayi(false);
+    }
+  }
+
   const sinifAdi = veri?.sinif.ad ?? '';
   // 0080: iki ortalama sunucudan geliyorsa kâğıtta da ikisi; eski sunucuda tek sütun.
   const iki = veri?.ogrenciler.some((o) => o.yapilan_ortalama !== undefined) ?? false;
@@ -179,8 +236,33 @@ export function SinifYazdirma() {
           <Button tur="ikincil" onClick={() => yazdir('cizelge')} disabled={!cizelge}>
             {YAZDIR_CIZELGE}
           </Button>
+          {/* KOD AYRI BİR ADIM. Çizelgeyi yalnız ödev durumu için basan
+              öğretmenin eline habersiz bir kimlik bilgisi geçmesin;
+              basmak isteyen açıkça istiyor. */}
+          {kodlar === null && (
+            <Button
+              tur="sade"
+              onClick={() => setKodOnayi(true)}
+              disabled={!veri || kodAliniyor}
+            >
+              {kodAliniyor ? 'Kodlar alınıyor…' : 'Veli kodlarını da ekle'}
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* KOD FİŞLERİ EKRANININ DİYALOĞUNUN AYNISI. Kodların cihaza
+          inmesi yazdırmak için kaçınılmaz; bunu gizlemek yerine
+          söylüyoruz. */}
+      <Dialog
+        acik={kodOnayi}
+        onKapat={() => setKodOnayi(false)}
+        baslik="Sınıfın veli kodları getirilecek"
+        aciklama="Yazdırmak için veli kodları bu cihaza inecek. Ekranı öğrencilere dönük bırakmayın; yazdırdıktan sonra sayfadan çıkın. Çizelgeye yalnız VELİ kodu basılır, öğrenci kodu basılmaz."
+        onayEtiketi="Getir ve hazırla"
+        onOnay={() => void kodlariGetir()}
+        onayYukleniyor={kodAliniyor}
+      />
 
       <AsyncBoundary
         durum={durum}
@@ -326,6 +408,7 @@ export function SinifYazdirma() {
               <VeliCizelgeleri
                 cizelge={cizelge}
                 an={an}
+                kodlar={kodlar}
                 gizli={bolum !== null && bolum !== 'cizelge'}
               />
             )}
@@ -355,10 +438,13 @@ export function SinifYazdirma() {
 function VeliCizelgeleri({
   cizelge,
   an,
+  kodlar,
   gizli,
 }: {
   cizelge: SinifNotCizelgesi;
   an: Date;
+  /** Öğrenci kimliği → VELİ kodu. Onaylanmadıysa `null`. */
+  kodlar: Record<string, string> | null;
   gizli: boolean;
 }) {
   const sinifAdi = cizelge.sinif.ad;
@@ -409,7 +495,7 @@ function VeliCizelgeleri({
                   {OKUL_ADI}
                 </p>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
-                  {CIZELGE_BASLIGI}
+                  {CIZELGE_BASLIGI} · {KUNYE}
                 </p>
               </div>
             </div>
@@ -507,6 +593,38 @@ function VeliCizelgeleri({
               <p className="mt-1 text-[11px] text-ink">
                 {konuSatiri(y.ogrenci.eksik_konular ?? [])}
               </p>
+            )}
+
+            {/* VELİ GİRİŞİ — kod, adres, uygulama kurulumu.
+                YALNIZ İLK YARIMDA: aynı öğrencinin ikinci yarımı da aynı
+                veliye gidiyor, kodu iki kez basmak yer kaybı olurdu.
+                Kod yoksa (onaylanmadı ya da velinin kodu yok) blok HİÇ
+                çizilmiyor — boş bir "Veli kodunuz:" satırı işe yaramaz. */}
+            {y.ilk && girisBloguVarMi(kodlar?.[y.ogrenci.id]) && (
+              <div className="mt-2 border-t border-ink/20 pt-1">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-ink">
+                  {GIRIS_BASLIGI}
+                </p>
+                <p className="mt-0.5 text-[11px] text-ink">
+                  {KOD_ETIKETI}:{' '}
+                  <span className="sk-sayi font-semibold tracking-[0.12em]">
+                    {kodlar?.[y.ogrenci.id]}
+                  </span>
+                </p>
+                <ul className="mt-0.5 text-[9px] leading-snug text-muted">
+                  {GIRIS_SATIRLARI.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+                <p className="mt-0.5 text-[9px] font-semibold text-ink">
+                  {KURULUM_BASLIGI}
+                </p>
+                <ul className="text-[9px] leading-snug text-muted">
+                  {KURULUM.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             <p className="mt-2 border-t border-line pt-1 text-[9px] leading-snug text-muted">

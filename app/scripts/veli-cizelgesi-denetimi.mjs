@@ -61,6 +61,18 @@
  *        etkilenmiyor. (Bu grubu süpürme yazdırdı: ilk koruma `{}`'ı
  *        doğru sayıyordu.)
  *
+ * F. VELİ KODU VE GİRİŞ YÖNLENDİRMESİ (öğretmenin isteği)
+ *    F1. Onaysız kod ağa GİTMİYOR; diyalog ne olacağını söylüyor.
+ *    F2. Kod, sekizkyal.com yönlendirmesi, uygulama kurulumu ve antette
+ *        "Matematik · Buket Topuzoğlu" yazılı.
+ *    F3. ÖĞRENCİ kodu bu kâğıda girmiyor (uç döndürse bile).
+ *    F4. Kodlar tarayıcı deposunda tutulmuyor.
+ *    F5. Sahipsiz bir yarımda kod yok.
+ *
+ * G. KODSUZ DA BASILABİLİYOR
+ *    G1. Onaylanmazsa çizelge yine çiziliyor, boş "Veli kodunuz:" satırı
+ *        basılmıyor.
+ *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/veli-cizelgesi-denetimi.mjs
  */
@@ -448,6 +460,94 @@ console.log('--- E. Uç BEKLENMEDİK bir şey döndürürse ekran çökmüyor --
       `E1 ${ad}: liste ve veli fişi yerinde`);
     await b.close();
   }
+}
+
+// ===========================================================================
+console.log('--- F. Veli kodu, giriş yönlendirmesi, uygulama kurulumu ---');
+// ===========================================================================
+{
+  const KOD = { o1: 'VELI111', o2: 'VELI222' };
+  const { b, p } = await kur({
+    ben_kimim: SAHIP,
+    sinif_ogrenci_ozeti: OZET,
+    sinif_not_cizelgesi: cizelge(),
+    ogrenci_kodlari: { veli: KOD.o1, ogrenci: 'OGR999' },
+  });
+
+  // F1 — ONAYSIZ KOD AĞA GİTMİYOR.
+  const once = await p.evaluate(() => document.body.innerText);
+  de(!once.includes('Veli kodunuz'), 'F1: onaydan önce giriş bloğu yok');
+  de(!once.includes(KOD.o1), 'F1: onaydan önce kod ekranda yok');
+
+  await p.getByRole('button', { name: 'Veli kodlarını da ekle' }).click();
+  await p.waitForTimeout(300);
+  const diyalog = await p.locator('dialog[open]').innerText();
+  de(/yalnız VELİ kodu basılır/i.test(diyalog),
+    'F1: diyalog öğrenci kodunun basılmadığını söylüyor');
+  de(/öğrencilere dönük bırakmayın/i.test(diyalog),
+    'F1: diyalog ekranı uyarıyor');
+
+  await p.locator('dialog[open]').getByRole('button', { name: 'Getir ve hazırla' }).click();
+  await p.waitForTimeout(900);
+
+  const g = await p.evaluate(() => document.body.innerText);
+  de(g.includes('Veli girişi'), 'F2: giriş bloğu çizildi');
+  de(g.includes(KOD.o1), 'F2: veli kodu yazılı');
+  de(g.includes('sekizkyal.com'), 'F2: giriş adresi yazılı');
+  de(/Ana Ekrana Ekle/.test(g) && /Android/.test(g),
+    'F2: uygulama kurulumu (iOS + Android) yazılı');
+  de(g.includes('Matematik · Buket Topuzoğlu'), 'F2: antette ders ve öğretmen yazılı');
+
+  // F3 — ÖĞRENCİ KODU BU KÂĞIDA GİRMİYOR. Taklit uç onu döndürüyor;
+  // ekranın onu basmadığı ölçülüyor.
+  de(!g.includes('OGR999'), 'F3: ÖĞRENCİ kodu çizelgede YOK');
+
+  // F4 — KODLAR TARAYICI DEPOSUNDA TUTULMUYOR. "Geri gelince yeniden
+  // çekmeyelim" diye depoya yazmak kolay bir iyileştirme gibi görünür;
+  // kodları cihazda kalıcı bırakır (`KodFisleri`in aynı ölçümü).
+  const depoda = await p.evaluate((kodlar) => {
+    const hepsi = [localStorage, sessionStorage]
+      .map((d) => Object.keys(d).map((k) => String(d.getItem(k))).join(' '))
+      .join(' ');
+    return kodlar.filter((k) => hepsi.includes(k)).length;
+  }, [KOD.o1, 'OGR999']);
+  de(depoda === 0, `F4: kodlar tarayıcı deposunda tutulmuyor (${depoda})`);
+
+  // F5 — KOD YALNIZ KENDİ YARIMINDA. Bu kâğıt kesilip veliye gidiyor;
+  // bir yarımda başka öğrencinin kodu olsaydı o veli başka bir çocuğun
+  // veli hesabına girebilirdi.
+  const sizan = await p.evaluate(({ kod, bir, iki }) => {
+    const yarimlar = [...document.querySelectorAll('.sk-veli-cizelge')];
+    return yarimlar.filter((y) => {
+      const t = y.innerText;
+      const kendi = t.includes(bir) ? bir : (t.includes(iki) ? iki : null);
+      // Taklitte iki öğrenciye de aynı kod dönüyor; ölçülen şey kodun
+      // BAŞKA bir öğrencinin yarımında görünüp görünmediği değil, bir
+      // yarımda İKİ öğrencinin birlikte bulunmaması (B1 ile birlikte).
+      return kendi === null && t.includes(kod);
+    }).length;
+  }, { kod: KOD.o1, bir: BIR, iki: IKI });
+  de(sizan === 0, `F5: sahipsiz yarımda kod yok (${sizan})`);
+
+  await b.close();
+}
+
+// ===========================================================================
+console.log('--- G. Kod olmadan da basılabiliyor ---');
+// ===========================================================================
+{
+  // Öğretmen kodları getirmeyi onaylamazsa çizelge YİNE basılıyor;
+  // giriş bloğu olmadan. Kodsuz bir çizelge hâlâ işe yarıyor.
+  const { b, p } = await kur({
+    ben_kimim: SAHIP,
+    sinif_ogrenci_ozeti: OZET,
+    sinif_not_cizelgesi: cizelge(),
+  });
+  const g = await p.evaluate(() => document.body.innerText);
+  de(g.includes('Ödev çizelgesi'), 'G1: çizelge kodsuz da çiziliyor');
+  de(!g.includes('Veli kodunuz'), 'G1: boş "Veli kodunuz:" satırı basılmıyor');
+  de(!g.includes('Veli girişi'), 'G1: giriş bloğu hiç çizilmiyor');
+  await b.close();
 }
 
 console.log('');
