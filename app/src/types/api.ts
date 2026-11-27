@@ -1215,6 +1215,15 @@ export type MudurPaneli = {
  * 0061 — öğrenci × ödev puan çizelgesi (müdür ve sınıfın öğretmeni).
  * `ogrenciler[].puanlar` `odevler` ile AYNI sırada.
  */
+/**
+ * Çizelge hücresinin durumu (0064'ün ayrımı dahil).
+ *
+ * Ayrı bir ad verildi çünkü `veli-cizelgesi-metni.ts` bunu içe alıyor:
+ * dört değerin insan dilindeki karşılığı tek yerde yazılı ve iki ekran
+ * aynı kelimeyi kullanıyor.
+ */
+export type CizelgeDurumu = 'gonderdi' | 'gondermedi' | 'suresi_devam' | 'kapsam_disi';
+
 export type SinifNotCizelgesi = {
   sinif: { id: string; ad: string; ozel: boolean; arsiv: boolean; ogretmenler: string[] };
   /** 0063: 'tum' müdür (ve sahibin önizlemesi); 'ogretmen' erişebildiği ödevler. */
@@ -1234,6 +1243,22 @@ export type SinifNotCizelgesi = {
     cevap_anahtari: Record<string, string> | null;
     son_tarih: string;
     sure_doldu: boolean;
+    /**
+     * 0091 — ödevin VERİLİŞ tarihi ve uzatma geçmişi. `created_at`
+     * TASLAĞIN açıldığı an; veriliş tarihi `odev_yayinlandi` izinden
+     * geliyor. 0091 çalıştırılmadıysa gelmez ve çizelge o sütunu
+     * çizmiyor (Part VIII).
+     */
+    tarihler?: OdevTarihleri | null;
+    /**
+     * 0091 — ödev başına SINIF ve DÜZEY ortalaması (0047'nin yardımcısı),
+     * İSİMSİZ. Öğretmenin kararı: veli çizelgesinde görünsün.
+     *
+     * Kapıları kendisi getiriyor: süresi dolmamış ödevde `sure_dolmadi`,
+     * özel derste ve çalışma kağıdında `kiyas_yok`, ödev tek şubeye
+     * verilmişse `seviye` null. Teslim SAYILARI yok — öğretmenin kuralı.
+     */
+    kiyas?: OdevKiyasi | null;
     /** 0064 — ödevin beklediği öğrenci sayısı: bugün sınıfta olan ve o ödev ona düşen. */
     beklenen: number;
     gonderim: number;
@@ -1265,8 +1290,29 @@ export type SinifNotCizelgesi = {
       odev_id: string;
       puan: number | string | null;
       /** 'kapsam_disi' (0064): sınıfa gelmeden önce verilip süresi dolan ödev. */
-      durum: 'gonderdi' | 'gondermedi' | 'suresi_devam' | 'kapsam_disi';
+      durum: CizelgeDurumu;
+      /**
+       * 0091 — gecikmeli teslim. `durum` DEĞİŞMİYOR: ödev yapıldı, ama
+       * sınıfın tarihinden sonra. İkisi ayrı bilgi (0081'in kararı).
+       */
+      gecikmeli?: boolean | null;
+      dogru?: number | null;
+      yanlis?: number | null;
+      bos?: number | null;
+      /**
+       * 0091 — hangi soruları yanlış yaptı / boş bıraktı. YALNIZ NUMARA:
+       * işaretlediği şık da cevap anahtarı da burada YOK ve sunucu
+       * göndermiyor (Kural 6). Yalnız test ödevinde dolu.
+       */
+      yanlis_sorular?: number[];
+      bos_sorular?: number[];
     }>;
+    /**
+     * 0091 — en çok takıldığı konular (en zayıf üçü).
+     * `sinif_ogrenci_ozeti`dekiyle AYNI ifadeden; iki uç ayrışırsa
+     * veliye başka, öğretmene başka konu yazılırdı.
+     */
+    eksik_konular?: string[];
   }>;
   aylar: Array<{
     ay: string;

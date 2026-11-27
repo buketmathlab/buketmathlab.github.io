@@ -293,6 +293,69 @@
   }
 }
 
+/* ===========================================================================
+   VELİ ÇİZELGESİ (0091) — bir A4'e İKİ öğrenci
+
+   Öğretmenin kararı: "1 A4'e 2 öğrenci olsun." Ölçüler `mm`: `px`
+   yazsaydık yazıcının ölçeğine göre kayar ve makasla kesilen yarım
+   kâğıttaki çizgiyle tutmazdı (kod fişlerinin aynı gerekçesi).
+
+   HESAP: A4'ün yazılabilir boyu 277 mm (10 mm kenar boşluğuyla). İki
+   çizelge + aradaki 3 mm kesme payı → çizelge EN ÇOK 137 mm olabilir.
+   Burada ALT SINIR veriliyor, sabit yükseklik değil: içeriği tablo
+   belirlesin, üst sınırı `veli-cizelgesi-denetimi.mjs`in A4 ölçümü
+   korusun. Sabit yükseklik verilseydi uzun bir ödev başlığı ya da fazla
+   satır kâğıtta SESSİZCE kırpılırdı — ve bu kâğıt veliye gidiyor.
+   =========================================================================== */
+.sk-cizelge-izgara {
+  /* Ekranda tek sütun: çizelge geniş, yan yana iki tanesi telefonda
+     okunmaz. Kâğıtta da tek sütun — iki öğrenci ALT ALTA. */
+  grid-template-columns: 1fr;
+  width: 190mm;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.sk-veli-cizelge {
+  border: 1px dashed var(--color-line);   /* kesme çizgisi */
+  border-radius: 2mm;
+  padding: 3mm 4mm;
+  min-height: 128mm;
+  break-inside: avoid;                     /* çizelge iki sayfaya bölünmesin */
+}
+
+/* Tablo yarım A4'te dar: satır yüksekliği ve ayraçlar kısılıyor ama
+   PUNTO DÜŞÜRÜLMÜYOR. Bu kâğıdı veli okuyacak; en çok okunması gereken
+   şey ödev adı ve puan. */
+.sk-cizelge-tablo {
+  border-collapse: collapse;
+}
+
+@media print {
+  .sk-cizelge-izgara {
+    width: auto;
+    margin: 0;
+    gap: 3mm;
+  }
+
+  /* HER İKİ ÇİZELGEDE BİR YENİ KÂĞIT. `break-inside: avoid` tek başına
+     üçüncü çizelgenin ikinci sayfaya taşmasını engelliyor ama ilk iki
+     çizelgenin aynı kâğıtta kalacağını garanti etmiyor; `min-height`
+     ikisini bir sayfaya oturtuyor ve üçüncüsü kendiliğinden taşıyor. */
+  .sk-veli-cizelge {
+    border-color: #999;
+  }
+
+  /* Tablo satırı sayfa ortasından bölünmesin; başlık satırı her sayfada
+     tekrar etsin (0053'ün sınıf çıktısıyla aynı kural). */
+  .sk-cizelge-tablo thead {
+    display: table-header-group;
+  }
+  .sk-cizelge-tablo tr {
+    break-inside: avoid;
+  }
+}
+
 /* PROJE RAPORU (0075) — A4'te bölümler sayfa ortasından bölünmesin; kutucuk
    ve tablolar kâğıtta da okunaklı kalsın. */
 @media print {

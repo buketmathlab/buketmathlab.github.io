@@ -26,7 +26,7 @@
 --   7. Yardımcı istemciye KAPALI (anon çağıramıyor)
 --   8. BAŞKA ÖĞRENCİNİN açması bu öğrencinin satırına sızmıyor
 --   9. Üç ucun ESKİ alanları bozulmadı (0088'in dersi)
---  10. Zincirin sonu 0090
+--  10. 0090 zincirde (SONUNCU olduğu değil — 10. gruptaki not)
 --
 -- NEDEN DENETİM İZİNİN ZAMANI ELLE GERİYE ALINIYOR
 --
@@ -490,14 +490,21 @@ begin
 end $$;
 
 -- =============================================================================
--- 10. ZİNCİRİN SONU
+-- 10. 0090 ZİNCİRDE
 -- =============================================================================
 do $$
-declare son text;
+declare n integer;
 begin
-  select dosya into son from public.uygulanan_migrationlar order by dosya desc limit 1;
-  if son is distinct from '0090' then
-    raise exception '10 BAŞARISIZ — zincirin sonu % (0090 bekleniyordu)', son;
+  -- 0090 UYGULANDI MI — "zincirin SONU 0090 mu" DEĞİL.
+  --
+  -- İlk yazımda `order by dosya desc limit 1` ile "ben sonuncuyum" diye
+  -- bakıyordu. O kapı her yeni turda kırılır ve kırıldığında 0090 hakkında
+  -- hiçbir şey söylemez — nitekim 0091 eklenince tam böyle oldu.
+  -- 0088'in testi doğru deseni zaten kullanıyordu: KAYDIN VARLIĞI.
+  -- Sıranın kendisini zaten her migration'ın önkoşul bloğu zorluyor.
+  select count(*) into n from public.uygulanan_migrationlar where dosya = '0090';
+  if n <> 1 then
+    raise exception '10 BAŞARISIZ — 0090 kaydı yok';
   end if;
-  raise notice '10 OK — zincirin sonu 0090';
+  raise notice '10 OK — 0090 zincirde';
 end $$;

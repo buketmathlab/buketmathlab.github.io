@@ -7798,3 +7798,101 @@ kapsıyor. Listeden çıkarmak ayrı bir karar ve bu turda yok.
   gördükten sonra karar vermek daha sağlıklı.
 - Silinen gönderimi izden **geri yükleyen** bir uç (0089'un açık kalanı).
 - Egress / soru PDF'i sıkıştırma.
+
+## 0091 — Veli çizelgesi: not çizelgesi veliye verilecek kadar ayrıntılı (27 Kasım)
+
+Öğretmenin isteği: *"Veli toplantısı var, öğrencilerin ödev durumları
+için velilere karne gibi bir çizelge vermek istiyorum. 1 A4'e 2 öğrenci
+olsun. Öğrenciyle ilgili sistemdeki tüm veriler yazmalı. Hangi ödev ne
+zaman verilmiş. Kaç tanesini yapmış yapmamış. Kaç puan almış. O ödevde
+sınıfının ortalaması kaçmış, o düzeydeki tüm sınıfların ortalaması
+kaçmış. En çok eksik olduğu konular yazsın."* Sınıf kıyası **görünsün**,
+eksik konular **girsin**.
+
+### Çoğu zaten vardı — ve ekran da vardı
+
+İlk planda yeni bir ekran (`VeliCizelgeleri.tsx`) vardı. **Yanlıştı.**
+`SinifYazdirma.tsx` (0053) tam bu iş için yazılmış: sınıf listesi +
+kesilip veliye verilen veli fişi, ve başlığında aynı gizlilik gerekçesi
+yazılı. Eksik olan tek şey ÖDEV LİSTESİYDİ. Bu tur onu üçüncü bir çıktı
+olarak ekliyor; fiş ve liste duruyor, öğretmen hangisini basacağını
+seçiyor.
+
+`sinif_not_cizelgesi` de istenenlerin çoğunu zaten döndürüyordu. Tur üç
+eksiği kapattı ve **yeni hesap yazmadı**, var olan yardımcıları çağırdı:
+veriliş tarihi `_odev_tarihleri` (0085), sınıf+düzey ortalaması
+`_odev_kiyasi` (0047), soru dökümü `_soru_dokumu` (0020). Hücreye
+`gecikmeli`, öğrenciye `eksik_konular` girdi — ikincisi
+`sinif_ogrenci_ozeti`dekinin birebir aynı ifadesi, çünkü iki uç aynı şeyi
+iki türlü hesaplarsa veliye başka, öğretmene başka konu yazılır.
+
+### Korunan sınırlar
+
+- **Teslim sayıları yine gitmiyor.** `_odev_kiyasi` sınıf ortalamasını
+  veriyor ama kaç öğrencinin teslim ettiğini bilerek vermiyor —
+  öğretmenin kendi kuralı. Hesap orada yapılmaya devam ediyor, yalnız
+  dışarı çıkmıyor (Part XXI).
+- **Kural 6:** hücre hangi soruların yanlış olduğunu NUMARA olarak
+  veriyor; işaretlenen şık da anahtar da yok. Açık uçlu ödevde döküm hiç
+  üretilmiyor.
+- **Sınıfa sonradan katılan öğrenci** gelmeden önceki ödevde
+  "Gönderilmedi" değil, *"Sınıfa sonra katıldı"* (0064). Süresi dolmamış
+  ödev de "Gönderilmedi" değil, *"Süresi sürüyor"*.
+- **Göndermediği ödev "0 puan" yazılmıyor**, "—" yazılıyor.
+
+### Yarım A4 bir tasarım tercihi değil
+
+Sınıf listesi HER öğrencinin puanını taşıyor; o kâğıdı bir veliye
+uzatmak öbür çocukların bilgisini de vermek olurdu. `kod-fisi.ts` aynı
+dersi taşıyor (öğrenci fişi ile veli fişi ayrı basılıyor) ve 0053 bu
+ekranı zaten o karara göre kurmuştu. Denetim bunu ölçüyor: bir yarımda
+başka öğrencinin adı geçmiyor, ve çizelge basılırken öbür iki bölüm
+kâğıttan düşüyor.
+
+### Ölçüm bir sabiti düzeltti
+
+`YARIMA_SIGAN_SATIR` ilk yazımda **12**'ydi ve yorumunda *"ölçüldü"*
+yazıyordu. **Tahmindi.** A4 ölçümü ilk koşuda 8 ödevle yapılmıştı, yani
+sabitin dayandığı sayı hiç ölçülmemişti. En kötü hâl ölçülünce iki
+çizelge **323,1 mm** tuttu — A4'ün yazılabilir boyunu 46 mm aşıyor. İki
+ölçümden türetilen gerçek rakamlar: satır başına 6,44 mm, çizelgenin
+sabiti 82,8 mm, yarım başına bütçe 137 mm → **8,4 satır**. Sabit 8 oldu.
+
+**Ders: "ölçüldü" diye yazılmış bir yorum, ölçümün kendisi değildir.**
+
+Sonucu açıkça söyleniyor: **A4 başına iki öğrenci garantisi 8 ödeve
+kadar geçerli.** Daha fazlasında bir öğrencinin çizelgesi ikinci yarıma
+*"— 2/2"* başlığıyla taşıyor; sessizce kırpılmıyor.
+
+### Bir test deseni düzeltildi
+
+0090'ın testi *"zincirin SONU 0090 mu"* diye bakıyordu ve 0091 eklenince
+kırıldı. O kapı her yeni turda kırılır ve kırıldığında 0090 hakkında
+hiçbir şey söylemez. 0088'in testi doğru deseni zaten kullanıyordu:
+**kaydın varlığı**. Sıranın kendisini her migration'ın önkoşul bloğu
+zaten zorluyor. Düzeltildi.
+
+### Ölçüm
+
+- `veli_cizelgesi_testleri.sql` — 10 grup. **Altı kusur provası, hepsi
+  ısırdı:** V1 veriliş `created_at`ten, V2 kıyas yok, V3 döküm tür
+  süzgeci, V4 Kural 6 ihlali, V5 gecikme hep false, V6 konu alt sınırı.
+  **V3 ilk yazımında ısırmadı** ve kusur kapıda değil provadaydı: açık
+  uçlu ödevde anahtar yok, dolayısıyla hiçbir soru "yanlış" çıkamaz — o
+  yarı süzgeçsiz bile yanlış bilgi üretmiyor. Sızdıran yarı
+  `bos_sorular`: anahtarsız bir ödevde her soru "boş" görünür.
+- `veli-cizelgesi-metni.ts` 32 birim testi; `karne-sozu.ts`in yasaklı
+  kelimeleri burada da ölçülüyor (kıyas iki kelime için serbest, çünkü
+  öğretmen onu açıkça istedi).
+- `veli-cizelgesi-denetimi.mjs` **yeni denetim** (süpürme 60 → 61):
+  içerik, gizlilik, gerçek A4 ölçümü, taşma, ve 0091 çalışmamış sunucu.
+  **Dört arayüz kusur provası da ısırdı.**
+- Gerçek A4 çıktısı PDF olarak üretildi ve gözle doğrulandı.
+
+### Açık kalanlar
+
+- Çizelgeye girebilecek ama bu turda konmayanlar: kişisel ek süre (0081),
+  yeniden açılmış gönderimler (0090 — veli sebebi görmüyor), puan
+  bekleyen açık uçlu sayısı, çalışma kağıtları ayrı satır, aylık gelişim.
+- Çizelgenin sabit kısmı 82,8 mm; kısaltılırsa yarıma daha çok ödev
+  sığar.

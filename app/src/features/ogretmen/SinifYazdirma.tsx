@@ -26,7 +26,25 @@ import {
   ortalamaSatiri,
   tarihYazisi,
 } from '@/lib/sinif-yazdirma-metni';
-import type { SinifOgrenciOzeti } from '@/types/api';
+import {
+  CIZELGE_BASLIGI,
+  CIZELGE_NOTU,
+  SUTUNLAR,
+  YAZDIR_CIZELGE,
+  cizelgeAltNotu,
+  devamBasligi,
+  durumYazisi,
+  gecikmeIsareti,
+  kisaGun,
+  parcalaraBol,
+  puanYazisi,
+  seviyeBasligi,
+  seviyeOrtalamasi,
+  sinifOrtalamasi,
+  soruDokumu,
+  verilisGunu,
+} from '@/lib/veli-cizelgesi-metni';
+import type { SinifNotCizelgesi, SinifOgrenciOzeti } from '@/types/api';
 
 /**
  * SINIF ÇIKTISI — sınıf listesi ve veli fişleri.
@@ -73,7 +91,7 @@ export function SinifYazdirma() {
    * Aynı çıktının iki parçası aynı zamanı söylemeli.
    */
   const [an] = useState(() => new Date());
-  const [bolum, setBolum] = useState<'liste' | 'fis' | null>(null);
+  const [bolum, setBolum] = useState<'liste' | 'fis' | 'cizelge' | null>(null);
 
   const { veri, durum, hata, yenile } = useVeri<SinifOgrenciOzeti>(
     'sinif_ogrenci_ozeti',
@@ -81,7 +99,7 @@ export function SinifYazdirma() {
     (v) => v.ogrenciler.length === 0,
   );
 
-  function yazdir(hangi: 'liste' | 'fis') {
+  function yazdir(hangi: 'liste' | 'fis' | 'cizelge') {
     setBolum(hangi);
     // Bir çizim beklemek şart: `print()` aynı karede çağrılırsa tarayıcı
     // ESKİ ağacı basar ve öbür bölüm kâğıda çıkar.
@@ -89,6 +107,24 @@ export function SinifYazdirma() {
       requestAnimationFrame(() => window.print());
     });
   }
+
+  /**
+   * ÖDEV ÇİZELGESİ AYRI BİR UÇTAN (0091).
+   *
+   * `sinif_ogrenci_ozeti` öğrenci başına ÖZETİ veriyor; ödevin kendisini
+   * (başlık, veriliş, puan, kıyas) `sinif_not_cizelgesi` taşıyor. İkinci
+   * bir çağrı, 300 satırlık bir gövdeyi kopyalamaktan ucuz — 0016'da
+   * ezberden gövde yazmak iki hataya yol açmıştı.
+   *
+   * HATASI YUTULUYOR ve bu bilinçli: `durum`u burada okunmuyor. 0091
+   * çalıştırılmadıysa ya da uç bir an ulaşılamazsa çizelge düğmesi
+   * kapalı kalıyor; sınıf listesi ve veli fişi bundan etkilenmiyor
+   * (Part VIII).
+   */
+  const { veri: cizelge } = useVeri<SinifNotCizelgesi>('sinif_not_cizelgesi', {
+    p_token: oturum?.token,
+    p_sinif_id: id,
+  });
 
   const sinifAdi = veri?.sinif.ad ?? '';
   // 0080: iki ortalama sunucudan geliyorsa kâğıtta da ikisi; eski sunucuda tek sütun.
@@ -113,6 +149,14 @@ export function SinifYazdirma() {
           <Button tur="ikincil" onClick={() => yazdir('fis')} disabled={!veri}>
             {YAZDIR_FIS}
           </Button>
+          {/* 0091: AYRINTILI ÇİZELGE. Veli fişi özet taşıyor; öğretmenin
+              veli toplantısı için istediği şey ödevin kendisiydi —
+              "hangi ödev ne zaman verilmiş, kaç puan almış, sınıfın ve
+              düzeyin ortalaması kaçmış". Fiş kaldırılmadı: ikisi ayrı
+              işe yarıyor ve öğretmen hangisini basacağını seçiyor. */}
+          <Button tur="ikincil" onClick={() => yazdir('cizelge')} disabled={!cizelge}>
+            {YAZDIR_CIZELGE}
+          </Button>
         </div>
       </div>
 
@@ -126,7 +170,7 @@ export function SinifYazdirma() {
         {veri && (
           <>
             {/* ---------------- SINIF LİSTESİ ---------------- */}
-            <section className={bolum === 'fis' ? 'print:hidden' : ''}>
+            <section className={bolum !== null && bolum !== 'liste' ? 'print:hidden' : ''}>
               <Kunye baslik={LISTE_BASLIGI} sinif={sinifAdi} an={an} />
 
               {/* 360 px'DE TABLO TAŞIYORDU (denetimin 6. grubu ölçtü:
@@ -189,7 +233,7 @@ export function SinifYazdirma() {
 
             {/* ---------------- VELİ FİŞLERİ ---------------- */}
             <section
-              className={`mt-8 print:mt-0 ${bolum === 'liste' ? 'print:hidden' : ''}`}
+              className={`mt-8 print:mt-0 ${bolum !== null && bolum !== 'fis' ? 'print:hidden' : ''}`}
             >
               <div className="print:hidden">
                 <h2 className="font-display text-[20px] font-semibold text-ink">
@@ -254,10 +298,203 @@ export function SinifYazdirma() {
                 })}
               </div>
             </section>
+
+            {/* ---------------- VELİ ÇİZELGESİ (0091) ---------------- */}
+            {cizelge && (
+              <VeliCizelgeleri
+                cizelge={cizelge}
+                an={an}
+                gizli={bolum !== null && bolum !== 'cizelge'}
+              />
+            )}
           </>
         )}
       </AsyncBoundary>
     </>
+  );
+}
+
+/**
+ * VELİ ÇİZELGESİ — her veliye kesilip verilen AYRINTILI karne (0091).
+ *
+ * Öğretmenin isteği: "1 A4'e 2 öğrenci olsun. Hangi ödev ne zaman
+ * verilmiş. Kaç tanesini yapmış yapmamış. Kaç puan almış. O ödevde
+ * sınıfının ortalaması kaçmış, o düzeydeki tüm sınıfların ortalaması
+ * kaçmış."
+ *
+ * YARIM A4 BİR TASARIM TERCİHİ DEĞİL, GİZLİLİK KARARI. Sınıf listesi
+ * HER öğrencinin puanını taşıyor; o kâğıdı bir veliye uzatmak öbür
+ * çocukların bilgisini de vermek olurdu. `kod-fisi.ts` aynı dersi
+ * taşıyor ve bu ekran 0053'te zaten o karara göre kurulmuştu.
+ *
+ * TAŞMA SESSİZCE KIRPILMIYOR: yirmi ödev yarım A4'e sığmaz, çizelge bir
+ * sonraki yarıma "— 2/3" başlığıyla taşıyor (`parcalaraBol`).
+ */
+function VeliCizelgeleri({
+  cizelge,
+  an,
+  gizli,
+}: {
+  cizelge: SinifNotCizelgesi;
+  an: Date;
+  gizli: boolean;
+}) {
+  const sinifAdi = cizelge.sinif.ad;
+  const kiyaslar = cizelge.odevler.map((d) => d.kiyas);
+  const seviyeAd = seviyeBasligi(kiyaslar);
+  // 0091 çalıştırılmadıysa bu iki sütun HİÇ ÇİZİLMİYOR (Part VIII):
+  // boş bir sütun başlığı, veliye olmayan bir bilgiyi vaat ederdi.
+  const kiyasVar = cizelge.odevler.some((d) => d.kiyas !== undefined);
+  const verilisVar = cizelge.odevler.some((d) => d.tarihler !== undefined);
+
+  // Her öğrencinin yarımları: taşan çizelge bölünüyor.
+  const yarimlar = cizelge.ogrenciler.flatMap((o) => {
+    const satirlar = cizelge.odevler.map((d) => ({
+      odev: d,
+      hucre: o.puanlar.find((x) => x.odev_id === d.id) ?? null,
+    }));
+    const parcalar = parcalaraBol(satirlar);
+    return parcalar.map((satir, i) => ({
+      anahtar: `${o.id}-${i}`,
+      ogrenci: o,
+      satir,
+      baslik: devamBasligi(o.ad, i + 1, parcalar.length),
+      ilk: i === 0,
+    }));
+  });
+
+  return (
+    <section className={`mt-8 print:mt-0 ${gizli ? 'print:hidden' : ''}`}>
+      <div className="print:hidden">
+        <h2 className="font-display text-[20px] font-semibold text-ink">
+          {CIZELGE_BASLIGI}
+        </h2>
+        <p className="mt-1 text-[14px] text-muted">
+          Bir A4'e iki öğrenci. Kesip her veliye yalnız kendi çocuğunun yarısını
+          verin.
+        </p>
+      </div>
+
+      <div className="sk-cizelge-izgara mt-4 grid gap-3 print:mt-0">
+        {yarimlar.map((y) => (
+          <div key={y.anahtar} className="sk-veli-cizelge rounded-sk-sm border border-line p-4">
+            {/* ÇİZELGENİN KENDİ ANTETİ: kesilip tek başına gittiğinde de
+                resmî bir kâğıt (veli fişiyle aynı gerekçe). */}
+            <div className="flex items-center gap-3 border-b border-ink/20 pb-2">
+              <SchoolCrest boyut={96} dekoratif className="sk-fis-muhru shrink-0" />
+              <div className="min-w-0">
+                <p className="font-display text-[11px] font-semibold uppercase leading-tight tracking-[0.06em] text-ink">
+                  {OKUL_ADI}
+                </p>
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
+                  {CIZELGE_BASLIGI}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-2 font-display text-[16px] font-semibold text-ink">
+              {y.baslik}
+            </p>
+            <p className="text-[12px] text-muted">
+              {sinifAdi}
+              {y.ogrenci.ogrenci_no ? ` · No ${y.ogrenci.ogrenci_no}` : ''}
+            </p>
+
+            {/* ÖZET YALNIZ İLK YARIMDA: ikinci yarımda tekrar etmek, aynı
+                sayıyı iki kez okutmak olurdu. */}
+            {y.ilk && (
+              <p className="sk-sayi mt-1 text-[12px] text-ink">
+                {odevSayilariYazisi(
+                  y.ogrenci.yapti + y.ogrenci.yapmadi,
+                  y.ogrenci.yapti,
+                  y.ogrenci.yapmadi,
+                )}
+                {' · '}
+                {ikiOrtalamaSatiri(
+                  typeof y.ogrenci.ortalama_yapan === 'string'
+                    ? Number(y.ogrenci.ortalama_yapan)
+                    : (y.ogrenci.ortalama_yapan ?? null),
+                  typeof y.ogrenci.ortalama_tum === 'string'
+                    ? Number(y.ogrenci.ortalama_tum)
+                    : (y.ogrenci.ortalama_tum ?? null),
+                )}
+              </p>
+            )}
+
+            <table className="sk-cizelge-tablo mt-2 w-full text-left text-[10px]">
+              <thead>
+                <tr className="border-b border-line">
+                  {verilisVar && <th className="py-1 pr-1 font-semibold">{SUTUNLAR.verilis}</th>}
+                  <th className="py-1 pr-1 font-semibold">{SUTUNLAR.sonTarih}</th>
+                  <th className="py-1 pr-1 font-semibold">{SUTUNLAR.odev}</th>
+                  <th className="py-1 pr-1 font-semibold">{SUTUNLAR.durum}</th>
+                  <th className="py-1 pr-1 text-right font-semibold">{SUTUNLAR.puan}</th>
+                  {kiyasVar && (
+                    <>
+                      <th className="py-1 pr-1 text-right font-semibold">{SUTUNLAR.sinif}</th>
+                      <th className="py-1 text-right font-semibold">{seviyeAd}</th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {y.satir.map(({ odev, hucre }) => {
+                  const dokum = soruDokumu(hucre?.yanlis_sorular, hucre?.bos_sorular);
+                  const gec = gecikmeIsareti(hucre?.gecikmeli);
+                  return (
+                    <tr key={odev.id} className="border-b border-line/60 align-top">
+                      {verilisVar && (
+                        <td className="py-1 pr-1 whitespace-nowrap">{verilisGunu(odev.tarihler)}</td>
+                      )}
+                      <td className="py-1 pr-1 whitespace-nowrap">
+                        {kisaGun(odev.son_tarih) ?? '—'}
+                      </td>
+                      <td className="py-1 pr-1">
+                        {odev.baslik}
+                        {/* Soru dökümü başlığın ALTINDA: yeni bir sütun
+                            yarım A4'te yer bırakmazdı. Yalnız NUMARA
+                            (Kural 6) — şık ne burada ne de yanıtta var. */}
+                        {dokum && (
+                          <span className="block text-[9px] text-muted">{dokum}</span>
+                        )}
+                      </td>
+                      <td className="py-1 pr-1 whitespace-nowrap">
+                        {durumYazisi(hucre?.durum)}
+                        {gec && <span className="block text-[9px] text-muted">{gec}</span>}
+                      </td>
+                      <td className="sk-sayi py-1 pr-1 text-right">{puanYazisi(hucre?.puan)}</td>
+                      {kiyasVar && (
+                        <>
+                          <td className="sk-sayi py-1 pr-1 text-right">
+                            {sinifOrtalamasi(odev.kiyas)}
+                          </td>
+                          <td className="sk-sayi py-1 text-right">
+                            {seviyeOrtalamasi(odev.kiyas)}
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* EKSİK KONULAR YALNIZ SON YARIMDA: çizelgenin kapanış
+                cümlesi, ortasında değil sonunda. */}
+            {y.ilk && konuSatiri(y.ogrenci.eksik_konular ?? []) && (
+              <p className="mt-1 text-[11px] text-ink">
+                {konuSatiri(y.ogrenci.eksik_konular ?? [])}
+              </p>
+            )}
+
+            <p className="mt-2 border-t border-line pt-1 text-[9px] leading-snug text-muted">
+              {cizelgeAltNotu(sinifAdi, an)}
+            </p>
+            <p className="text-[9px] leading-snug text-muted">{CIZELGE_NOTU}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
