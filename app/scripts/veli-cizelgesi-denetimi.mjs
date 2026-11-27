@@ -55,6 +55,12 @@
  *
  * DERS: "ölçüldü" diye yazılmış bir yorum, ölçümün kendisi değildir.
  *
+ * E. BOZUK YANIT
+ *    E1. Uç `{}` ya da eksik şekilli bir şey döndürürse çizelge bölümü
+ *        çizilmiyor, EKRAN ÇÖKMÜYOR, sınıf listesi ve veli fişi
+ *        etkilenmiyor. (Bu grubu süpürme yazdırdı: ilk koruma `{}`'ı
+ *        doğru sayıyordu.)
+ *
  * ÇALIŞTIRMA: depo kökünden `http-server -p 8788 -c-1` açıkken,
  *   node app/scripts/veli-cizelgesi-denetimi.mjs
  */
@@ -405,6 +411,43 @@ console.log('--- D. 0091 çalışmamış sunucu (Part VIII) ---');
     'D1: çizelge yine çiziliyor, ekran bozulmadı');
   de(g.includes('Gönderildi'), 'D1: durum sütunu çalışıyor');
   await b.close();
+}
+
+// ===========================================================================
+console.log('--- E. Uç BEKLENMEDİK bir şey döndürürse ekran çökmüyor ---');
+// ===========================================================================
+{
+  /**
+   * SÜPÜRME BU KUSURU YAKALADI, BU DENETİM DEĞİL.
+   *
+   * D grubu iyi biçimli ama yeni alanları olmayan bir yanıtı ölçüyordu;
+   * eksik olan hâl BOZUK yanıttı. Koruma `{cizelge && …}` yazıyordu ve
+   * `{}` DOĞRU SAYILIYOR: ekran `cizelge.sinif.ad` satırında çöküyordu.
+   * `iki-ortalama-denetimi.mjs` taklit etmediği uçlara `{}` döndürüyor
+   * ve bu ekrana uğradığı için kırmızı yandı.
+   *
+   * Part VIII'in kuralı "alan gelmezse çizme" değil, "gelmeyen veri
+   * ekranı BOZMASIN".
+   */
+  for (const [ad, yanit] of [
+    ['boş nesne', {}],
+    ['sinif yok', { odevler: [], ogrenciler: [] }],
+    ['odevler dizi değil', { sinif: { ad: '7C' }, odevler: null, ogrenciler: [] }],
+    ['ogrenciler dizi değil', { sinif: { ad: '7C' }, odevler: [], ogrenciler: {} }],
+  ]) {
+    const { b, p } = await kur({
+      ben_kimim: SAHIP,
+      sinif_ogrenci_ozeti: OZET,
+      sinif_not_cizelgesi: yanit,
+    });
+    const g = await metin(p);
+    de(!g.includes('Ödev çizelgesi'), `E1 ${ad}: çizelge bölümü çizilmedi`);
+    // SINIF LİSTESİ VE VELİ FİŞİ ETKİLENMİYOR: bozuk bir uç, çalışan
+    // iki çıktıyı da götürmemeli.
+    de(g.includes(BIR) && g.includes('Veli bilgi fişi'),
+      `E1 ${ad}: liste ve veli fişi yerinde`);
+    await b.close();
+  }
 }
 
 console.log('');

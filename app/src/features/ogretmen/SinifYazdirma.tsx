@@ -121,10 +121,32 @@ export function SinifYazdirma() {
    * kapalı kalıyor; sınıf listesi ve veli fişi bundan etkilenmiyor
    * (Part VIII).
    */
-  const { veri: cizelge } = useVeri<SinifNotCizelgesi>('sinif_not_cizelgesi', {
+  const { veri: hamCizelge } = useVeri<SinifNotCizelgesi>('sinif_not_cizelgesi', {
     p_token: oturum?.token,
     p_sinif_id: id,
   });
+
+  /**
+   * ŞEKLİ DENETLENİYOR, VARLIĞI DEĞİL.
+   *
+   * İlk yazımda koruma `{cizelge && …}` idi ve `{}` DOĞRU SAYILIYOR:
+   * uç beklenmedik bir şey döndürdüğünde (eski sunucu, hata gövdesi,
+   * boş nesne) ekran `cizelge.sinif.ad` satırında ÇÖKÜYORDU. Süpürme
+   * bunu `iki-ortalama-denetimi.mjs`te yakaladı — o denetim taklit
+   * etmediği uçlara `{}` döndürüyor ve bu ekrana uğruyor.
+   *
+   * Part VIII'in kuralı "alan gelmezse çizme" değil, "gelmeyen veri
+   * ekranı BOZMASIN". Üç alanın da gerçekten beklenen biçimde olması
+   * aranıyor; biri eksikse çizelge bölümü hiç çizilmiyor ve sınıf
+   * listesiyle veli fişi etkilenmiyor.
+   */
+  const cizelge =
+    hamCizelge
+    && typeof hamCizelge.sinif?.ad === 'string'
+    && Array.isArray(hamCizelge.odevler)
+    && Array.isArray(hamCizelge.ogrenciler)
+      ? hamCizelge
+      : null;
 
   const sinifAdi = veri?.sinif.ad ?? '';
   // 0080: iki ortalama sunucudan geliyorsa kâğıtta da ikisi; eski sunucuda tek sütun.

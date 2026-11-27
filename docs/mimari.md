@@ -7889,6 +7889,30 @@ zaten zorluyor. Düzeltildi.
   **Dört arayüz kusur provası da ısırdı.**
 - Gerçek A4 çıktısı PDF olarak üretildi ve gözle doğrulandı.
 
+### Süpürme bir kusur yakaladı — denetimin göremediği hâl
+
+Çizelge bölümünün koruması `{cizelge && …}` yazıyordu ve **`{}` doğru
+sayılıyor**: uç beklenmedik bir şey döndürdüğünde (eski sunucu, hata
+gövdesi, boş nesne) ekran `cizelge.sinif.ad` satırında **çöküyordu**.
+
+Bunu bu turun kendi denetimi bulamadı. D grubu *"iyi biçimli ama yeni
+alanları olmayan"* yanıtı ölçüyordu; eksik olan hâl **bozuk** yanıttı.
+Kırmızıyı `iki-ortalama-denetimi.mjs` yaktı: o denetim taklit etmediği
+uçlara `{}` döndürüyor ve bu ekrana uğruyor.
+
+Koruma artık **varlığı değil şekli** denetliyor (`sinif.ad` metin mi,
+`odevler` ve `ogrenciler` dizi mi) ve denetime E grubu eklendi: dört ayrı
+bozuk yanıtta çizelge çizilmiyor, ekran çökmüyor, **sınıf listesi ve veli
+fişi etkilenmiyor**.
+
+**Part VIII'in kuralı "alan gelmezse çizme" değil, "gelmeyen veri ekranı
+BOZMASIN".** Bu ayrım bu turda ölçümle öğrenildi.
+
+Aynı turda bir kez daha koşum takımı yanılttı: süpürmenin betiği oturum
+yeniden başlayınca silinen geçici dizindeydi, ilk saniyede düştü ve
+"koşuyor" diye bildirildi. **Çıktısına bakılmamıştı.** Bu oturumda koşum
+takımının beşinci yanıltması.
+
 ### Açık kalanlar
 
 - Çizelgeye girebilecek ama bu turda konmayanlar: kişisel ek süre (0081),
