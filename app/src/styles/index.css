@@ -220,6 +220,22 @@
     background: #fff;
   }
 
+  /* KABUĞUN EKRANA AİT BOŞLUKLARI KÂĞIDA SONUNDA BOŞ SAYFA ÇIKARIYOR.
+     Ölçüm: içerik 264,3 mm'de bitiyordu ama gövde 317,5 mm sürüyordu ve
+     her çıktının sonuna BOŞ BİR KÂĞIT ekleniyordu. İki kaynak vardı —
+     kabuğun `min-h-dvh`i (kâğıtta bir tam sayfa) ve `main`in alt
+     telefon çubuğu için ayrılmış `pb-28`i (≈ 29,6 mm). İkisi de ekranın
+     kendi ihtiyacı; kâğıtta karşılığı yok.
+     DERS: DOM'da milimetre ölçmek yetmiyor, sayfanın NEREDE bittiğini
+     de ölçmek gerekiyor. */
+  .min-h-dvh {
+    min-height: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
   /* ONAM DÖKÜMÜ (0038).
      Belge bir kayıt: kâğıtta okunaklı olsun diye tablo satırları
      sayfa ortasından BÖLÜNMÜYOR ve metnin tamamı YENİ SAYFADAN

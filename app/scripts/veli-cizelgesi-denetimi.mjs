@@ -27,6 +27,8 @@
  *         kâğıt başına BİR öğrenci. Tam sayfa ölçülüyor, her çizelgeden
  *         sonra yeni kâğıt başlıyor ve kâğıt sayısı kodsuzdan AZ.
  *    C2.  Hiçbir çizelgenin metni kutusundan taşmıyor.
+ *    C4.  GERÇEK PDF'İN SAYFA SAYISI. Milimetre yetmiyor: mm'si doğru
+ *         olan bir çıktının sonunda boş bir kâğıt olabiliyor.
  *    C3.  Taşan ödev listesi "— 2/3" başlığıyla sonraki parçaya geçiyor,
  *         SESSİZCE KIRPILMIYOR.
  *
@@ -46,6 +48,13 @@
  *         → D1 ısırdı
  *   Ud  Yarımın alt sınırı A4'ün yarısını aşıyor
  *         → C1 ısırdı: 323 mm / 277 mm
+ *   Uf  Kabuğun yazdırma düzeltmesi kaldırıldı (`min-h-dvh`, `main`in
+ *       `pb-28`i kâğıda da çıkıyor)
+ *         → C4  ısırdı: 14 yarım için 8 sayfa (7 olmalı)
+ *         → C4k ısırdı: 6 parça için 7 sayfa
+ *         → C4  ısırdı: kısa çizelge 2 sayfa (1 olmalı)
+ *         MİLİMETRE ÖLÇÜMLERİNİN HİÇBİRİ KIRMIZI YANMADI — mm doğruydu,
+ *         sonda boş kâğıt vardı.
  *   Ue  Sığan satır sabitleri şişirildi (6 → 8, 15 → 18)
  *         → C1  ısırdı: 287,4 mm / 277 mm (pay −10,4)
  *         → C1k ısırdı: 296,5 mm / 277 mm (pay −19,5)
@@ -398,7 +407,9 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
     sinif_not_cizelgesi: cizelge({ odevSayisi, enKotu: true }),
   };
   if (kodlu) uclar.ogrenci_kodlari = { veli: 'VELI111', ogrenci: 'OGR999' };
-  const { b, p } = await kur(uclar);
+  // KÂĞIDIN GENİŞLİĞİNDE ÖLÇÜLÜYOR: A4 210 − 2 × 10 mm = 190 mm = 718 px.
+  // 1280 px'te ölçmek, kâğıtta saran satırları görmemek demekti.
+  const { b, p } = await kur(uclar, 718);
 
   if (kodlu) {
     await p.getByRole('button', { name: 'Veli kodlarını da ekle' }).click();
@@ -437,6 +448,22 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
     };
   });
 
+  /**
+   * MİLİMETRE YETMEZ — SAYFA SAYILIYOR.
+   *
+   * DOM'da iki yarımın toplamı 259 mm çıkıyordu (277'nin altında) ama
+   * gerçek PDF İKİ sayfaydı: kabuğun ekrana ait boşlukları (`min-h-dvh`
+   * ve `main`in `pb-28`i) gövdeyi 317,5 mm'ye uzatıyor ve her çıktının
+   * sonuna BOŞ BİR KÂĞIT ekliyordu. Hiçbir mm ölçümü bunu görmedi;
+   * gören şey `page.pdf()`in sayfa sayısı oldu.
+   */
+  const pdf = await p.pdf({
+    format: 'A4',
+    printBackground: true,
+    margin: { top: '10mm', bottom: '10mm', left: '10mm', right: '10mm' },
+  });
+  olcu.sayfa = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+
   await p.emulateMedia({ media: 'screen' });
   await b.close();
   return olcu;
@@ -469,6 +496,11 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
     + `(pay ${(KULLANILABILIR - kodsuz.ikisiMm).toFixed(1)} mm)`,
   );
   de(kodsuz.tasan === 0, `C2: hiçbir çizelgenin metni kutusundan taşmıyor (${kodsuz.tasan})`);
+  de(
+    kodsuz.sayfa === Math.ceil(kodsuz.adet / 2),
+    `C4: KODSUZ — ${kodsuz.adet} yarım ${Math.ceil(kodsuz.adet / 2)} kâğıda basılıyor `
+    + `(gerçek PDF: ${kodsuz.sayfa} sayfa)`,
+  );
 
   /**
    * KODLU MOD — KÂĞIT BAŞINA BİR ÖĞRENCİ.
@@ -488,10 +520,28 @@ async function kagitOlcusu({ odevSayisi, kodlu }) {
   );
   de(kodlu.sayfaKesmesi, 'C1k: her çizelgeden sonra yeni kâğıt başlıyor');
   de(kodlu.tasan === 0, `C2k: kodlu çizelgenin metni kutusundan taşmıyor (${kodlu.tasan})`);
+  de(
+    kodlu.sayfa === kodlu.adet,
+    `C4k: KODLU — kâğıt başına bir çizelge: ${kodlu.adet} parça / ${kodlu.sayfa} sayfa`,
+  );
   // KODLU MOD DAHA AZ KÂĞIT YİYOR: aynı 40 ödev, daha az parça.
   de(
     kodlu.adet < kodsuz.adet,
     `C1k: kodlu mod daha az parça üretiyor — ${kodlu.adet} < ${kodsuz.adet}`,
+  );
+
+  /**
+   * SONDA BOŞ KÂĞIT ÇIKMIYOR.
+   *
+   * En küçük hâl: iki öğrenci, ikisi de tek yarım. Doğru çıktı TEK
+   * kâğıt. Bu ölçüm yazılmadan önce gerçek PDF İKİ sayfaydı ve ikincisi
+   * bomboştu — ekranda hiçbir şey görünmediği için kimse fark etmezdi,
+   * ama öğretmen her sınıfta bir kâğıt fazla basardı.
+   */
+  const kucuk = await kagitOlcusu({ odevSayisi: 3, kodlu: false });
+  de(
+    kucuk.sayfa === 1,
+    `C4: iki öğrencilik kısa çizelge TEK kâğıt — sonda boş sayfa yok (${kucuk.sayfa})`,
   );
 }
 

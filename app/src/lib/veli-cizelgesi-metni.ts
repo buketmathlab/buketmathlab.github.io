@@ -252,19 +252,23 @@ export const CIZELGE_NOTU =
  *   yarım başına bütçe           137 mm   ((277 − 3) / 2)
  *   satır başına               10,17 mm   (2/4/6/8 satırda doğrusal)
  *
+ * ÖLÇÜM KÂĞIDIN GENİŞLİĞİNDE YAPILIYOR: 190 mm = 718 px. 1280 px'te
+ * ölçmek, kâğıtta saran satırları görmemek demekti; sabitin ilk hâli
+ * 8 mm küçük çıkmıştı.
+ *
  * ÇİZELGENİN SABİT KISMI GİRİŞ BLOĞUYLA İKİYE KATLIYOR:
  *
- *   kodsuz  66,63 mm   antet, ad, özet, tablo başlığı, konular, notlar
- *   kodlu  113,43 mm   + veli kodu, sekizkyal yönlendirmesi, kurulum
+ *   kodsuz  74,83 mm   antet, ad, özet, tablo başlığı, konular, notlar
+ *   kodlu  121,62 mm   + veli kodu, sekizkyal yönlendirmesi, kurulum
  *
- * Giriş bloğunun kendisi 44,68 mm, yani yarımın üçte biri (kurulum
- * yönergesi tek başına 19,65 mm / 6 satır).
+ * Giriş bloğunun kendisi 46,8 mm, yani yarımın üçte biri (kurulum
+ * yönergesi tek başına 6 satır).
  *
  * BURADAN ÇIKAN SONUÇ, TASARIM TERCİHİ DEĞİL GEOMETRİ:
  *
- *   kodsuz yarım  (137 − 66,63)  / 10,17 = 6,9  → 6 satır,  A4'te 2 öğrenci
- *   kodlu yarım   (137 − 113,43) / 10,17 = 2,3  → 2 satır   (kullanışsız)
- *   kodlu TAM A4  (277 − 113,43) / 10,17 = 16,1 → 15 satır, A4'te 1 öğrenci
+ *   kodsuz yarım  (137 − 74,83)  / 10,17 = 6,1  → 6 satır,  A4'te 2 öğrenci
+ *   kodlu yarım   (137 − 121,62) / 10,17 = 1,5  → 1 satır   (kullanışsız)
+ *   kodlu TAM A4  (277 − 121,62) / 10,17 = 15,3 → 15 satır, A4'te 1 öğrenci
  *
  * Kod basılırken yarım A4'te iki satır kalıyor: 10 ödevlik bir öğrenci
  * 5 yarıma, yani 2,5 kâğıda yayılırdı. Aynı öğrenci tam sayfada TEK
@@ -273,18 +277,24 @@ export const CIZELGE_NOTU =
  *
  * ESKİ SABİT 8'Dİ VE YANLIŞTI. İlk ölçüm "temsilî" bir fikstürle
  * yapılmıştı: satırların ikisi boş durumdaydı, o yüzden satır başına
- * 6,44 mm çıkmıştı. En kötü hâlde iki yarım 299 mm tutuyor, yani A4'ü
- * 22 mm aşıyor. Ders: ölçüm fikstürü TEMSİLÎ değil EN KÖTÜ hâl olmalı.
+ * 6,44 mm çıkmıştı. En kötü hâlde iki yarım 287,4 mm tutuyor, yani A4'ü
+ * 10 mm aşıyor. Ders: ölçüm fikstürü TEMSİLÎ değil EN KÖTÜ hâl olmalı.
+ *
+ * VE MİLİMETRE TEK BAŞINA YETMİYOR. Bu rakamlar DOM'un ölçüsü; kâğıdın
+ * kaç sayfa çıktığını söylemiyor. Denetim artık `page.pdf()` ile gerçek
+ * SAYFA SAYIYOR — mm'si doğru olan bir çıktının sonunda boş bir kâğıt
+ * olduğu ancak öyle görüldü (kabuğun `min-h-dvh`i ve `main`in `pb-28`i
+ * gövdeyi 317,5 mm'ye uzatıyordu).
  */
 export const SATIR_MM = 10.17;
-export const SABIT_MM = { kodsuz: 66.63, kodlu: 113.43 } as const;
+export const SABIT_MM = { kodsuz: 74.83, kodlu: 121.62 } as const;
 export const YARIM_BUTCE_MM = 137;
 export const TAM_BUTCE_MM = 277;
 
-/** Kodsuz yarım A4'e sığan ödev satırı (ölçüldü: 6,9 → 6). */
+/** Kodsuz yarım A4'e sığan ödev satırı (ölçüldü: 6,1 → 6). */
 export const YARIMA_SIGAN_SATIR = 6;
 
-/** Kodlu TAM A4'e sığan ödev satırı (ölçüldü: 16,1 → 15; pay 11 mm). */
+/** Kodlu TAM A4'e sığan ödev satırı (ölçüldü: 15,3 → 15). */
 export const SAYFAYA_SIGAN_SATIR = 15;
 
 /**
