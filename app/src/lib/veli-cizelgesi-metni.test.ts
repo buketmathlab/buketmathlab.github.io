@@ -11,6 +11,8 @@ import {
   KUNYE,
   KURULUM,
   KURULUM_BASLIGI,
+  ARMA_KAGIT_MM,
+  MASKOT_KAGIT_MM,
   OGRETMEN,
   SABIT_MM,
   SATIR_MM,
@@ -250,6 +252,17 @@ describe('kagitDuzeni — rakamlar ÖLÇÜMDEN geliyor', () => {
     // Kâğıda gerçekten sığıyor: sabit + satırlar bütçeyi aşmıyor.
     expect(SABIT_MM.kodsuz + YARIMA_SIGAN_SATIR * SATIR_MM).toBeLessThanOrEqual(YARIM_BUTCE_MM);
     expect(SABIT_MM.kodlu + SAYFAYA_SIGAN_SATIR * SATIR_MM).toBeLessThanOrEqual(TAM_BUTCE_MM);
+  });
+
+  /**
+   * MASKOT ANTETİ BÜYÜTMEMELİ.
+   *
+   * Antetin yüksekliğini arma belirliyor. Maskot armadan uzun olursa
+   * anteti büyütür ve her 10,17 mm bir ödev satırı yer. Bu kapı,
+   * "biraz büyütelim" denince sessizce satır kaybedilmesini engelliyor.
+   */
+  it('maskot armadan uzun değil — çizelgeye milimetre eklemiyor', () => {
+    expect(MASKOT_KAGIT_MM).toBeLessThanOrEqual(ARMA_KAGIT_MM);
   });
 
   it('kodlu yarım sayfa KULLANIŞSIZ — düzen değişikliğinin gerekçesi', () => {

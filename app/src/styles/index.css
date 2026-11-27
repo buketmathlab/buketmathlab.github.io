@@ -307,6 +307,21 @@
     width: 14mm !important;
     height: 14mm !important;
   }
+
+  /* ÇİZELGENİN ANTETİNDEKİ MASKOT (öğretmenin isteği).
+     Boyu ARMANIN BOYUNU AŞMIYOR: antetin yüksekliğini arma belirliyor,
+     maskot onun altında kaldığı sürece çizelge bir milimetre bile
+     uzamıyor ve yarıma sığan ödev satırı düşmüyor. 14 mm'nin üstündeki
+     her 10,17 mm bir ödev satırı demek.
+     `print-color-adjust`: tarayıcı yazdırırken arka plan görsellerini
+     soldurabiliyor; bu bir fotoğraf, olduğu gibi bassın. */
+  .sk-cizelge-maskot {
+    height: 14mm !important;
+    width: auto !important;
+    border-radius: 1mm !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }
 
 /* ===========================================================================

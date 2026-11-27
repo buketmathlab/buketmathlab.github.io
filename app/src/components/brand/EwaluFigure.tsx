@@ -8,6 +8,14 @@ type Props = {
   boyut?: number;
   /** Dekoratif kullanımda ekran okuyucudan gizlenir. */
   dekoratif?: boolean;
+  /**
+   * Tembel yükleme kapatılır.
+   *
+   * YAZDIRILAN SAYFADA ŞART. Tembel yükleme görünür alanın dışındaki
+   * görseli indirmiyor; kâğıt çıktısında sayfanın altındaki çizelgeler
+   * görünür alanın dışında kalıyor ve maskot BOŞ basılırdı.
+   */
+  acele?: boolean;
   className?: string;
 };
 
@@ -23,6 +31,7 @@ export function EwaluFigure({
   bicim = 'portre',
   boyut = 96,
   dekoratif = false,
+  acele = false,
   className,
 }: Props) {
   const taban = import.meta.env.BASE_URL;
@@ -37,8 +46,8 @@ export function EwaluFigure({
         sizes={`${boyut}px`}
         alt={alt}
         aria-hidden={dekoratif || undefined}
-        loading="lazy"
-        decoding="async"
+        loading={acele ? 'eager' : 'lazy'}
+        decoding={acele ? 'sync' : 'async'}
         className={className}
         style={{ width: boyut, height: 'auto', borderRadius: 'var(--radius-sk-lg)' }}
       />
@@ -55,8 +64,8 @@ export function EwaluFigure({
         sizes={`${boyut}px`}
         alt={alt}
         aria-hidden={dekoratif || undefined}
-        loading="lazy"
-        decoding="async"
+        loading={acele ? 'eager' : 'lazy'}
+        decoding={acele ? 'sync' : 'async'}
         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
       />
     </OctagonFrame>

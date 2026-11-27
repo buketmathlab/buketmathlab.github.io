@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SchoolCrest } from '@/components/brand/SchoolCrest';
+import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { Dialog } from '@/components/ui/Dialog';
@@ -45,6 +46,7 @@ import {
   devamBasligi,
   durumYazisi,
   gecikmeIsareti,
+  MASKOT_EKRAN_PX,
   kagitDuzeni,
   kisaGun,
   parcalaraBol,
@@ -525,6 +527,25 @@ function VeliCizelgeleri({
                   {CIZELGE_BASLIGI} · {KUNYE}
                 </p>
               </div>
+              {/* EWALU — öğretmenin isteği: "Ödev çizelgesinde Ewalu
+                  maskotunun da görüntüsü olsun... arkasında okul adı
+                  gözüken resim."
+
+                  BOYU ARMANIN BOYU: antetin yüksekliğini arma belirliyor,
+                  maskot onu AŞMIYOR, yani çizelgeye bir milimetre bile
+                  eklemiyor ve yarıma sığan ödev satırı düşmüyor. Büyütmek
+                  doğrudan ödev satırından yiyor (ölçüm denetimde).
+
+                  `acele`: yazdırırken tembel yükleme görseli boş basardı.
+                  Karakterin kendisine dokunulmuyor (Kural 9); bu, var olan
+                  "okul" pozunun ta kendisi. */}
+              <EwaluFigure
+                poz="okul"
+                bicim="tam"
+                boyut={MASKOT_EKRAN_PX}
+                acele
+                className="sk-cizelge-maskot ml-auto shrink-0"
+              />
             </div>
 
             <p className="mt-2 font-display text-[16px] font-semibold text-ink">

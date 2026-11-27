@@ -98,6 +98,11 @@
  *    F4. Kodlar tarayıcı deposunda tutulmuyor.
  *    F5. Sahipsiz bir yarımda kod yok.
  *
+ * H. ANTETTEKİ EWALU MASKOTU (öğretmenin isteği)
+ *    H1. Görsel her parçanın antetinde ve gerçekten yüklenmiş.
+ *    H2. Tembel yükleme kapalı — kâğıtta boş basmasın.
+ *    H3. Maskot armadan uzun değil, yani ödev satırı yemiyor.
+ *
  * G. KODSUZ DA BASILABİLİYOR
  *    G1. Onaylanmazsa çizelge yine çiziliyor, boş "Veli kodunuz:" satırı
  *        basılmıyor.
@@ -712,6 +717,63 @@ console.log('--- G. Kod olmadan da basılabiliyor ---');
   de(await icerir(p, 'Ödev çizelgesi'), 'G1: çizelge kodsuz da çiziliyor');
   de(!g.includes('Veli kodunuz'), 'G1: boş "Veli kodunuz:" satırı basılmıyor');
   de(!(await icerir(p, 'Veli girişi')), 'G1: giriş bloğu hiç çizilmiyor');
+  await b.close();
+}
+
+// ===========================================================================
+console.log('--- H. Antetteki Ewalu maskotu ---');
+// ===========================================================================
+{
+  /**
+   * Öğretmenin isteği: "Ödev çizelgesinde Ewalu maskotunun da görüntüsü
+   * olsun... arkasında okul adı gözüken resim."
+   *
+   * ÜÇ ŞEY ÖLÇÜLÜYOR:
+   *   H1. Görsel HER parçanın antetinde ve GERÇEKTEN YÜKLENMİŞ.
+   *       `naturalWidth > 0` olmadan `<img>` etiketi varken kâğıda boş
+   *       bir çerçeve basılır.
+   *   H2. Tembel yükleme KAPALI. Kâğıt çıktısında alttaki çizelgeler
+   *       görünür alanın dışında kalıyor; `lazy` olsaydı o maskotlar
+   *       boş basardı. Bu, ekranda hiç görünmeyen bir kusur.
+   *   H3. Maskot anteti BÜYÜTMÜYOR: boyu armayı aşmıyor. Aşsaydı
+   *       çizelge uzar ve yarıma sığan ödev satırı düşerdi — C1/C4
+   *       zaten kırmızı yanardı, ama bu satır nedenini söylüyor.
+   */
+  const { b, p } = await kur({
+    ben_kimim: SAHIP,
+    sinif_ogrenci_ozeti: OZET,
+    sinif_not_cizelgesi: cizelge({ odevSayisi: 15 }),
+  }, 718);
+  await p.getByRole('button', { name: 'Veli çizelgelerini yazdır' }).click();
+  await p.waitForTimeout(400);
+  await p.emulateMedia({ media: 'print' });
+  await p.waitForTimeout(500);
+
+  const m = await p.evaluate(() => {
+    const yarimlar = [...document.querySelectorAll('.sk-veli-cizelge')];
+    const gorseller = yarimlar.map((y) => y.querySelector('.sk-cizelge-maskot'));
+    const arma = yarimlar[0]?.querySelector('.sk-fis-muhru');
+    const mm = (px) => +(px / (96 / 25.4)).toFixed(2);
+    return {
+      yarim: yarimlar.length,
+      gorsel: gorseller.filter(Boolean).length,
+      yuklenen: gorseller.filter((g) => g && g.naturalWidth > 0).length,
+      tembel: gorseller.filter((g) => g && g.loading !== 'eager').length,
+      kaynak: gorseller[0]?.currentSrc ?? '',
+      maskotMm: gorseller[0] ? mm(gorseller[0].getBoundingClientRect().height) : 0,
+      armaMm: arma ? mm(arma.getBoundingClientRect().height) : 0,
+    };
+  });
+
+  de(m.gorsel === m.yarim, `H1: maskot her parçanın antetinde (${m.gorsel}/${m.yarim})`);
+  de(m.yuklenen === m.yarim, `H1: görsellerin hepsi yüklendi (${m.yuklenen}/${m.yarim})`);
+  de(/okul-tam/.test(m.kaynak), `H1: öğretmenin istediği "okul" pozu — arkasında okul adı (${m.kaynak.split('/').pop()})`);
+  de(m.tembel === 0, `H2: tembel yükleme kapalı — kâğıtta boş basmaz (${m.tembel} tembel)`);
+  de(
+    m.maskotMm <= m.armaMm + 0.1,
+    `H3: maskot anteti büyütmüyor — ${m.maskotMm} mm ≤ arma ${m.armaMm} mm`,
+  );
+  await p.emulateMedia({ media: 'screen' });
   await b.close();
 }
 

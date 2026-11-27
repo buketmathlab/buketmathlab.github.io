@@ -286,6 +286,26 @@ export const CIZELGE_NOTU =
  * olduğu ancak öyle görüldü (kabuğun `min-h-dvh`i ve `main`in `pb-28`i
  * gövdeyi 317,5 mm'ye uzatıyordu).
  */
+/**
+ * ANTETTEKİ MASKOT — öğretmenin isteği.
+ *
+ * "Ödev çizelgesinde Ewalu maskotunun da görüntüsü olsun... arkasında
+ * okul adı gözüken resim." Kullanılan görsel var olan `okul` pozu;
+ * karaktere dokunulmuyor (Kural 9).
+ *
+ * KÂĞITTAKİ BOYU ARMANIN BOYUNU AŞMIYOR (14 mm). Antetin yüksekliğini
+ * arma belirliyor; maskot onun altında kaldığı sürece çizelgeye BİR
+ * MİLİMETRE bile eklemiyor ve yarıma sığan ödev satırı düşmüyor.
+ * Büyütmek doğrudan ödev satırından yiyor: 14 mm'nin üstündeki her
+ * 10,17 mm bir ödev satırı demek.
+ *
+ * Ekranda 180 px: kâğıt ölçüsü CSS'te (`.sk-cizelge-maskot`), armanın
+ * `sk-fis-muhru` ile yaptığının aynısı.
+ */
+export const MASKOT_EKRAN_PX = 180;
+export const MASKOT_KAGIT_MM = 14;
+export const ARMA_KAGIT_MM = 14;
+
 export const SATIR_MM = 10.17;
 export const SABIT_MM = { kodsuz: 74.83, kodlu: 121.62 } as const;
 export const YARIM_BUTCE_MM = 137;

@@ -7857,6 +7857,35 @@ kesilip tek başına veliye gidiyor ve velinin elinde hangi dersin kâğıdı
 olduğunu söyleyen hiçbir şey yoktu. Antede `KUNYE` girdi:
 **"Matematik · Buket Topuzoğlu"**.
 
+### Antete Ewalu maskotu girdi — ve bir milimetre yemedi
+
+Öğretmenin isteği: *"Ödev çizelgesinde Ewalu maskotunun da görüntüsü
+olsun. Okulun adı da tam görünsün. Arnavutköy Korkmaz Yiğit Anadolu
+Lisesi'nde o Ewalu maskotunun arkasında okul adı da gözüken bir resim
+var. Onu kullan."*
+
+Tarif ettiği görsel **zaten vardı**: `EWALU_POZLARI.okul` — Ewalu
+üniformalı, arkada okulun tabelası, Türk bayrağı ve Atatürk büstü. Yeni
+görsel üretilmedi, **karaktere dokunulmadı** (Kural 9); var olan poz
+çizelgenin antetine kondu.
+
+**Boyu armanın boyunu aşmıyor (14 mm).** Antetin yüksekliğini arma
+belirliyor; maskot onun altında kaldığı sürece çizelge bir milimetre
+bile uzamıyor ve yarıma sığan ödev satırı **düşmüyor**. Bu bir tasarım
+tercihi değil aritmetik: 14 mm'nin üstündeki her 10,17 mm bir ödev
+satırı demek. Büyütmek istenirse bedeli ölçülü — yarım A4'te 6 satırdan
+düşülür.
+
+Kâğıda özgü iki tuzak ölçümle yakalandı:
+
+- **Tembel yükleme kâğıtta boş basar.** `EwaluFigure` `loading="lazy"`
+  kullanıyordu; yazdırırken sayfanın altındaki çizelgeler görünür alanın
+  dışında kalıyor ve o maskotlar indirilmemiş oluyordu. Bileşene `acele`
+  eklendi (`eager` + `sync` çözümleme). **Ekranda hiç görünmeyen bir
+  kusur.**
+- **Tarayıcı yazdırırken fotoğrafı soldurabiliyor**; baskı kuralına
+  `print-color-adjust: exact` kondu.
+
 ### Veli kodu ve giriş yönlendirmesi çizelgeye girdi
 
 Öğretmenin isteği: *"Bu çizelgede veli kodu ve sekizkyal giriş
