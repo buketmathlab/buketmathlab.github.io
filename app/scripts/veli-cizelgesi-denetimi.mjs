@@ -338,12 +338,22 @@ console.log('--- A. Çizelgenin içeriği ---');
   de(d === 1, 'A1: çizelge düğmesi var');
 
   const g = await metin(p);
-  for (const [ad, s] of [
+  /**
+   * SÜTUN BAŞLIKLARI TÜRKÇE-DUYARLI ARANIYOR.
+   *
+   * Tasarım turunda tablo başlıkları `uppercase` oldu ve `innerText`
+   * uygulanmış dönüşümü döndürüyor: "Verildi" ekrandan "VERİLDİ" olarak
+   * okunuyor. Düz `includes` ile altı ölçüm birden kırmızı yandı —
+   * ÜRÜN DOĞRUYDU, ölçüm başlığın büyük/küçük harfine bağlıydı.
+   * `icerir` bunu `toLocaleLowerCase('tr')` ile çözüyor (F2'nin dersi,
+   * bu denetimde ikinci kez).
+   */
+  for (const [ad, x] of [
     ['Verildi', 'Verildi'], ['Son teslim', 'Son teslim'], ['Ödev', 'Ödev'],
     ['Durum', 'Durum'], ['Puanı', 'Puanı'], ['Sınıf ort.', 'Sınıf ort.'],
     ['düzey başlığı', '7. sınıflar'],
   ]) {
-    de(g.includes(s), `A2: ${ad} sütunu var`);
+    de(await icerir(p, x), `A2: ${ad} sütunu var`);
   }
   de(g.includes('12 Kas'), 'A2: veriliş tarihi yazılı');
   de(/75/.test(g) && /50/.test(g), 'A2: sınıf 75 ve düzey 50 ortalamaları yazılı');

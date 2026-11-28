@@ -290,8 +290,8 @@ export const CIZELGE_NOTU =
  *
  * ÇİZELGENİN SABİT KISMI GİRİŞ BLOĞUYLA İKİYE KATLIYOR:
  *
- *   kodsuz  74,83 mm   antet, ad, özet, tablo başlığı, konular, notlar
- *   kodlu  121,62 mm   + veli kodu, sekizkyal yönlendirmesi, kurulum
+ *   kodsuz  57,27 mm   antet, ad, özet, tablo başlığı, konular, notlar
+ *   kodlu  107,55 mm   + veli kodu, sekizkyal yönlendirmesi, kurulum
  *
  * Giriş bloğunun kendisi 46,8 mm (kurulum yönergesi tek başına 6 satır).
  * Öğretmen kısaltılmamasını istedi: "Kurulum yönergesi kısaltılmasın."
@@ -301,8 +301,8 @@ export const CIZELGE_NOTU =
  * kaldırdı: "Bir A4 sayfasında sadece bir öğrencinin bilgileri olsun."
  * Böylece yarım bütçesi (137 mm) yerine tam sayfa bütçesi geçerli:
  *
- *   kodsuz  (277 − 74,83)  / 10,17 = 19,9 → 19 satır
- *   kodlu   (277 − 121,62) / 10,17 = 15,3 → 15 satır
+ *   kodsuz  (277 − 57,27)  / 10,17 = 21,6 → 21 satır
+ *   kodlu   (277 − 107,55) / 10,17 = 16,7 → 16 satır
  *
  * Kodlu/kodsuz ayrımı DURUYOR, çünkü değişen şey kâğıda kaç öğrenci
  * sığdığı değil, giriş bloğunun yer kaplaması.
@@ -339,15 +339,21 @@ export const MASKOT_KAGIT_MM = 14;
 export const ARMA_KAGIT_MM = 14;
 
 export const SATIR_MM = 10.17;
-export const SABIT_MM = { kodsuz: 74.83, kodlu: 121.62 } as const;
+export const SABIT_MM = { kodsuz: 57.27, kodlu: 107.55 } as const;
 export const TAM_BUTCE_MM = 277;
 
 /**
  * Bir A4'e sığan ödev satırı. Kâğıt başına her zaman BİR öğrenci.
  *
- * Ölçüldü: kodsuz 19,9 → 19; kodlu 15,3 → 15.
+ * Ölçüldü: kodsuz 21,6 → 21; kodlu 16,7 → 16.
+ *
+ * SAYI TASARIM TURUNDA ARTTI. Öğretmen "kâğıdın arka planı beyaz olsun,
+ * modern ve seçkin tasarla" dedi; kâğıttan kalkan kutu çerçevesi (yarım
+ * düzenden kalmıştı, artık kesilecek yer yok) ve ad ile sınıfın aynı
+ * satıra alınması sabit kısmı 17,6 mm küçülttü. Yani tasarım ödev
+ * satırı YEMEDİ, kodsuzda iki kodluda bir satır KAZANDIRDI.
  */
-export const SIGAN_SATIR = { kodsuz: 19, kodlu: 15 } as const;
+export const SIGAN_SATIR = { kodsuz: 21, kodlu: 16 } as const;
 
 /**
  * Bir kâğıda kaç ödev satırı ve ekranda ne yazacağı.

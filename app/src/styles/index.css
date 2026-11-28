@@ -357,6 +357,12 @@
    veliye gidiyor, kesilecek bir yer yok. */
 .sk-veli-cizelge {
   border: 1px solid var(--color-line);
+  /* ZEMİN BEYAZ (öğretmenin isteği: "kâğıdın arka planı genel olarak
+     beyaz olsun"). Sayfa zemini KREM (`--color-paper`, #fbfaf7) ve
+     çizelgenin kendi zemini olmadığı için ekranda o krem görünüyordu —
+     kâğıda beyaz basıyor olmasına rağmen. `surface` zaten "kart yüzeyi"
+     tokenı; çizelge de bir kart. */
+  background: var(--color-surface);
   border-radius: 2mm;
   padding: 3mm 4mm;
   break-inside: avoid;                     /* çizelge iki sayfaya bölünmesin */
@@ -381,8 +387,17 @@
      iki sayfaya bölünmesini engelliyor, iki çizelgenin aynı kâğıtta
      yan yana düşmesini değil. Son çizelgede `auto`, yoksa çıktının
      sonuna boş bir kâğıt eklenirdi. */
+  /* KÂĞITTA ÇERÇEVE YOK.
+     Çerçeve yarım düzenden kalmıştı: kâğıt ortadan kesilirken kesme
+     çizgisi işe yarıyordu. Kâğıt başına bir öğrenciye geçilince
+     kesilecek yer kalmadı; kutu çizgisi belgeyi daraltıyor ve
+     "genel olarak beyaz" istenen sayfada gereksiz bir gri hat
+     bırakıyordu. Kaldırılan kenar boşluğu doğrudan ödev satırına
+     dönüyor (ölçüm denetimde). */
   .sk-veli-cizelge {
-    border-color: #999;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
     break-after: page;
   }
 

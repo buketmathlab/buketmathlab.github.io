@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SchoolCrest } from '@/components/brand/SchoolCrest';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
+import { GeometricDivider } from '@/components/brand/GeometricDivider';
 import { useBenKimim } from '@/hooks/useBenKimim';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -562,8 +563,13 @@ function VeliCizelgeleri({
                 <p className="font-display text-[11px] font-semibold uppercase leading-tight tracking-[0.06em] text-ink">
                   {OKUL_ADI}
                 </p>
-                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
-                  {CIZELGE_BASLIGI} · {kunye}
+                {/* KÜNYE İKİ TONLU: belgenin ADI koyu, kim verdiği ikincil.
+                    Tek blok hâlinde hepsi kalın-büyük harfken antet kendi
+                    içinde yarışıyordu; okul adı öne çıkmalı. */}
+                <p className="mt-0.5 text-[10px] uppercase tracking-[0.08em] text-muted">
+                  <span className="font-semibold text-ink">{CIZELGE_BASLIGI}</span>
+                  {' · '}
+                  {kunye}
                 </p>
               </div>
               {/* EWALU — öğretmenin isteği: "Ödev çizelgesinde Ewalu
@@ -587,38 +593,66 @@ function VeliCizelgeleri({
               />
             </div>
 
-            <p className="mt-2 font-display text-[16px] font-semibold text-ink">
-              {y.baslik}
-            </p>
-            <p className="text-[12px] text-muted">
-              {sinifAdi}
-              {y.ogrenci.ogrenci_no ? ` · No ${y.ogrenci.ogrenci_no}` : ''}
-            </p>
+            {/* AD VE SINIF AYNI SATIRDA, TABANDAN HİZALI.
+                Alt alta iki satırken kâğıdın en üstü üç ayrı blokla
+                başlıyordu (antet, ad, sınıf). Yan yana durunca hem bir
+                satır yer açılıyor — doğrudan ödev satırına dönüyor — hem
+                de ad tek başına öne çıkıyor. */}
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0">
+              <p className="font-display text-[17px] font-semibold leading-tight text-ink">
+                {y.baslik}
+              </p>
+              <p className="text-[12px] text-muted">
+                {sinifAdi}
+                {y.ogrenci.ogrenci_no ? ` · No ${y.ogrenci.ogrenci_no}` : ''}
+              </p>
+            </div>
 
             {/* ÖZET YALNIZ İLK YARIMDA: ikinci yarımda tekrar etmek, aynı
                 sayıyı iki kez okutmak olurdu. */}
             {y.ilk && (
-              <p className="sk-sayi mt-1 text-[12px] text-ink">
-                {odevSayilariYazisi(
-                  y.ogrenci.yapti + y.ogrenci.yapmadi,
-                  y.ogrenci.yapti,
-                  y.ogrenci.yapmadi,
-                )}
-                {' · '}
-                {ikiOrtalamaSatiri(
-                  typeof y.ogrenci.ortalama_yapan === 'string'
-                    ? Number(y.ogrenci.ortalama_yapan)
-                    : (y.ogrenci.ortalama_yapan ?? null),
-                  typeof y.ogrenci.ortalama_tum === 'string'
-                    ? Number(y.ogrenci.ortalama_tum)
-                    : (y.ogrenci.ortalama_tum ?? null),
-                )}
-              </p>
+              /* ÖZET İKİ SÜTUN — AYNI YÜKSEKLİK, OKUNUR.
+                 Tek satırda beş sayı art arda geliyordu ("Verilen ödev: 7 ·
+                 Yapılan: 6 · Yapılmayan: 1 · Yaptığı ödevlerin ortalaması:
+                 80,4 · Tüm ödevlerin ortalaması: 71,6") ve veli hangisinin
+                 ne olduğunu ayırt edemeden okuyordu. İki sütun satır
+                 yüksekliğini değiştirmiyor ama sayımı ortalamadan ayırıyor.
+                 Metinler `sinif-yazdirma-metni.ts`ten geliyor, burada
+                 yeniden yazılmıyor. */
+              /* SÜTUN ORANI 2:3 — EŞİT DEĞİL.
+                 Eşit bölündüğünde sol sütun ("Verilen ödev: 7 · Yapılan:
+                 6 · Yapılmayan: 1") yarıyı doldurmuyor, sağdaki iki
+                 ortalama ise sarıyordu: solda boşluk, sağda iki satır.
+                 İçeriğin gerçek uzunluğuna göre bölündü. */
+              <div className="sk-sayi mt-1 grid grid-cols-[2fr_3fr] gap-x-4 text-[11px] leading-snug text-ink">
+                <p>
+                  {odevSayilariYazisi(
+                    y.ogrenci.yapti + y.ogrenci.yapmadi,
+                    y.ogrenci.yapti,
+                    y.ogrenci.yapmadi,
+                  )}
+                </p>
+                <p>
+                  {ikiOrtalamaSatiri(
+                    typeof y.ogrenci.ortalama_yapan === 'string'
+                      ? Number(y.ogrenci.ortalama_yapan)
+                      : (y.ogrenci.ortalama_yapan ?? null),
+                    typeof y.ogrenci.ortalama_tum === 'string'
+                      ? Number(y.ogrenci.ortalama_tum)
+                      : (y.ogrenci.ortalama_tum ?? null),
+                  )}
+                </p>
+              </div>
             )}
 
+            {/* TABLO BAŞLIĞI İKİNCİL TONDA.
+                Başlıklar gövdeyle aynı koyulukta ve kalındı; göz önce
+                onlara takılıyordu. Veli bu kâğıtta ÖDEV ADINI ve PUANI
+                arıyor — başlık yol gösterir, yarışmaz. Küçük harf
+                aralığı resmî belge dilinin kendi işareti. */}
             <table className="sk-cizelge-tablo mt-2 w-full text-left text-[10px]">
               <thead>
-                <tr className="border-b border-line">
+                <tr className="border-b border-ink/25 text-[9px] uppercase tracking-[0.07em] text-muted">
                   {verilisVar && <th className="py-1 pr-1 font-semibold">{SUTUNLAR.verilis}</th>}
                   <th className="py-1 pr-1 font-semibold">{SUTUNLAR.sonTarih}</th>
                   <th className="py-1 pr-1 font-semibold">{SUTUNLAR.odev}</th>
@@ -657,7 +691,13 @@ function VeliCizelgeleri({
                         {durumYazisi(hucre?.durum)}
                         {gec && <span className="block text-[9px] text-muted">{gec}</span>}
                       </td>
-                      <td className="sk-sayi py-1 pr-1 text-right">{puanYazisi(hucre?.puan)}</td>
+                      {/* PUAN KOYU: velinin bu kâğıtta ilk aradığı sayı.
+                          Renk KULLANILMIYOR — düşük puanı kırmızıya
+                          boyamak çocuğu etiketlemek olurdu. Vurgu yalnız
+                          ağırlıkla. */}
+                      <td className="sk-sayi py-1 pr-1 text-right font-semibold text-ink">
+                        {puanYazisi(hucre?.puan)}
+                      </td>
                       {kiyasVar && (
                         <>
                           <td className="sk-sayi py-1 pr-1 text-right">
@@ -688,8 +728,14 @@ function VeliCizelgeleri({
                 Kod yoksa (onaylanmadı ya da velinin kodu yok) blok HİÇ
                 çizilmiyor — boş bir "Veli kodunuz:" satırı işe yaramaz. */}
             {y.ilk && girisBloguVarMi(kodlar?.[y.ogrenci.id]) && (
-              <div className="mt-2 border-t border-ink/20 pt-1">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink">
+              <div className="mt-2">
+                {/* KÂĞIDIN TEK GEOMETRİK VURGUSU (Kural 10: bir ekranda
+                    en fazla bir tane). Düz bir çizgi yerine markanın
+                    kendi ayracı: ince hat + sekiz köşeli yıldız düğümü.
+                    Yeri bilinçli — belgenin "okul kaydı" kısmı burada
+                    bitiyor, "eve götürülecek yönerge" burada başlıyor. */}
+                <GeometricDivider className="mb-1" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.07em] text-ink">
                   {GIRIS_BASLIGI}
                 </p>
                 <p className="mt-0.5 text-[11px] text-ink">

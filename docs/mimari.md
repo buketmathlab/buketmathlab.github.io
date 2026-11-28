@@ -8153,3 +8153,58 @@ ekranın tutarsız hâl göstermesi *"işaretledim ama olmadı"* dedirtirdi.
 
 0092 yayınlandıktan sonra Öğretmenler ekranında kendi satırında ders
 verdiği dört sınıfı (9A, 9B, 10C, 11C) **Ders** sütununda işaretlemek.
+
+## Çizelgenin tasarımı: beyaz, sade, tek imza (28 Kasım)
+
+Öğretmen: *"Kağıdın arka planı genel olarak beyaz olsun ve 8 platformuna
+uygun olarak güzel bir şekilde tasarla. Tasarım modern ve seçkin olsun."*
+
+### Önce hangi beyazı kastettiği ölçüldü
+
+Kâğıt zaten beyaz basıyordu, koyu tema da yok. Sorunca çıktı: **ekranda**
+krem görüyordu. Sebep, `--color-paper` (#fbfaf7) sayfa zemini ve
+çizelgenin kendi zemininin olmaması. Çizelge artık `--color-surface`
+(beyaz) üzerinde — zaten "kart yüzeyi" tokenı, çizelge de bir kart.
+
+Maskot için de sordum; **fotoğraf kalsın** dedi, sekizgen portreye
+çevrilmedi.
+
+### Tasarım kararları — hepsi tasarım sisteminden
+
+- **Kâğıttan kutu çerçevesi kalktı.** Çerçeve yarım düzenden kalmıştı:
+  kâğıt ortadan kesilirken kesme çizgisi işe yarıyordu. Kâğıt başına bir
+  öğrenciye geçilince kesilecek yer kalmadı; çizgi belgeyi daraltıyordu.
+- **Ad ve sınıf aynı satırda, tabandan hizalı.** Üç ayrı blokla başlayan
+  bir kâğıt yerine tek bir güçlü satır.
+- **Özet iki sütun, 2:3 oranında.** Tek satırda beş sayı art arda
+  geliyordu; veli hangisinin ne olduğunu ayırt edemeden okuyordu. Eşit
+  bölünce sağdaki ortalamalar sarıyordu, oran içeriğin gerçek uzunluğuna
+  göre verildi.
+- **Tablo başlıkları ikincil tonda**, küçük harf aralığıyla. Veli bu
+  kâğıtta ödev adını ve puanı arıyor; başlık yol gösterir, yarışmaz.
+- **Puan koyu.** Renk **kullanılmadı**: düşük puanı kırmızıya boyamak
+  çocuğu etiketlemek olurdu. Vurgu yalnız ağırlıkla.
+- **Tek geometrik vurgu** (Kural 10): `GeometricDivider` — ince hat +
+  sekiz köşeli yıldız düğümü, veli girişi bloğunun üstünde. Yeri
+  bilinçli: belgenin "okul kaydı" kısmı orada bitiyor, "eve götürülecek
+  yönerge" orada başlıyor.
+
+### Tasarım ödev satırı YEMEDİ, KAZANDIRDI
+
+Kalkan çerçeve ve birleşen ad satırı sabit kısmı küçülttü:
+
+| | sabit kısım | sığan ödev |
+|---|---|---|
+| kodsuz | 74,83 → **57,27 mm** | 19 → **21** |
+| kodlu | 121,62 → **107,55 mm** | 15 → **16** |
+
+Ölçüm: kodsuz 270,8 / 277 mm, kodlu 270,2 / 277 mm. Yani aynı sınıf için
+daha az kâğıt gidiyor.
+
+### Ölçüm yine şekle bağlıydı
+
+Tablo başlıkları `uppercase` olunca `innerText` "VERİLDİ" döndürdü ve
+A grubunda **altı ölçüm birden** kırmızı yandı — ürün doğruydu. Kontrol
+`icerir` ile Türkçe-duyarlı hâle getirildi. **Bu denetimde ikinci kez**
+aynı ders (ilki F2'ydi): bir ölçüm metni ekrandan okuyorsa, ekranın
+büyük/küçük harf dönüşümünü de hesaba katmak zorunda.
