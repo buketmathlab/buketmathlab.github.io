@@ -834,35 +834,63 @@ console.log('--- I. Antetteki künye: ad SINIFTAN geliyor ---');
    * `toLocaleLowerCase('tr')` ile yapılıyor (F2'nin aynı dersi).
    */
   const kucuk = (x) => x.toLocaleLowerCase('tr');
+  /**
+   * YALNIZ ANTET OKUNUYOR, TÜM SAYFA DEĞİL.
+   *
+   * İlk yazımda `document.body.innerText` okunuyordu ve kapı çalışıyordu
+   * — ta ki kâğıdın altına ÜRÜN SAHİBİNİN imzası eklenene kadar
+   * ("8 logosunun altına Buket Topuzoğlu diye de yaz"). O imza künyeye
+   * sızmış bir ad DEĞİL; ayrı bir blok ve her kâğıtta sabit. Kapı tüm
+   * sayfayı okuyunca ikisini ayırt edemedi ve iki ölçüm birden kırmızı
+   * yandı. Artık `.sk-cizelge-antet` bloğunu okuyor.
+   */
   const kunyeli = async (ogretmenler) => {
     const c = cizelge();
     c.sinif.ogretmenler = ogretmenler;
     const { b, p } = await kur({
       ben_kimim: SAHIP, sinif_ogrenci_ozeti: OZET, sinif_not_cizelgesi: c,
     }, 718);
-    const g = kucuk(await metin(p));
+    const g = kucuk(await p.evaluate(
+      () => [...document.querySelectorAll('.sk-cizelge-antet')]
+        .map((e) => e.innerText).join(' ')));
+    const tumu = kucuk(await metin(p));
     await b.close();
-    return g;
+    return { antet: g, tumu };
   };
 
   const tek = await kunyeli(['Ayşe Demir']);
-  de(tek.includes(kucuk('Ayşe Demir')), 'I1: sınıfın öğretmeninin adı antette');
-  de(tek.includes(kucuk('Matematik')), 'I1: ders adı antette');
-  // I4 — SABİT AD KAÇAĞI. Uç başka bir ad döndürürken kâğıtta eski
-  // sabitin kalıntısı olmamalı.
-  de(!tek.includes(kucuk('Buket')), 'I4: sabit ad kaçağı yok — "Buket" geçmiyor');
+  de(tek.antet.includes(kucuk('Ayşe Demir')), 'I1: sınıfın öğretmeninin adı antette');
+  de(tek.antet.includes(kucuk('Matematik')), 'I1: ders adı antette');
+  // I4 — SABİT AD KÜNYEYE SIZMIYOR. Uç başka bir ad döndürürken
+  // ANTETTE eski sabitin kalıntısı olmamalı.
+  de(!tek.antet.includes(kucuk('Buket')), 'I4: künyede sabit ad kaçağı yok');
 
   const ikisi = await kunyeli(['Buket Topuzoğlu', 'Ayşe Demir']);
-  de(ikisi.includes(kucuk('Buket Topuzoğlu')) && ikisi.includes(kucuk('Ayşe Demir')),
+  de(ikisi.antet.includes(kucuk('Buket Topuzoğlu'))
+    && ikisi.antet.includes(kucuk('Ayşe Demir')),
     'I2: ortak sınıfta iki öğretmen de yazılı');
 
   const bos = await kunyeli([]);
-  de(bos.includes(kucuk('Matematik')), 'I3: kayıt yoksa ders yine yazılı');
-  de(!bos.includes(kucuk('Buket')) && !bos.includes(kucuk('Ayşe')),
-    'I3: kayıt yoksa ad uydurulmuyor');
+  de(bos.antet.includes(kucuk('Matematik')), 'I3: kayıt yoksa ders yine yazılı');
+  de(!bos.antet.includes(kucuk('Buket')) && !bos.antet.includes(kucuk('Ayşe')),
+    'I3: kayıt yoksa künyeye ad uydurulmuyor');
   // SARKIK AYRAÇ YOK: "Ödev çizelgesi · Matematik ·" diye biten bir
   // antet, veliye eksik bir bilgi vaat ederdi.
-  de(!new RegExp(`${kucuk('Matematik')}\\s*·`).test(bos), 'I3: sarkık "·" basılmıyor');
+  de(!new RegExp(`${kucuk('Matematik')}\\s*·`).test(bos.antet),
+    'I3: sarkık "·" basılmıyor');
+
+  /**
+   * I6 — ALT İMZA ANTETTEN BAĞIMSIZ (öğretmenin kararı).
+   *
+   * "8 logosunun altına Buket Topuzoğlu diye de yaz" dedi ve adın her
+   * kâğıtta SABİT durmasını seçti; antetteki ad ise o sınıfın ders
+   * öğretmeni. Ayşe'nin sınıfında antette Ayşe, altta Buket yazıyor.
+   * İkisi karışırsa veli yanlış okur, o yüzden ayrı ayrı ölçülüyor.
+   */
+  de(tek.tumu.includes(kucuk('Buket Topuzoğlu')),
+    'I6: ürün sahibinin imzası kâğıtta (antette değil)');
+  de(bos.tumu.includes(kucuk('Buket Topuzoğlu')),
+    'I6: öğretmen kaydı olmasa bile imza duruyor');
 
   /**
    * I5 — EKSİK KAYIT BASMADAN ÖNCE SÖYLENİYOR.
@@ -872,9 +900,9 @@ console.log('--- I. Antetteki künye: ad SINIFTAN geliyor ---');
    * ve sebebi öğretmene EKRANDA söylenmeli, yoksa "adım kayboldu" diye
    * bakar. Uyarı yalnız ekranda: veliye giden kâğıtta yeri yok.
    */
-  de(bos.includes(kucuk('dersine giren öğretmen işaretlenmemiş')),
+  de(bos.tumu.includes(kucuk('dersine giren öğretmen işaretlenmemiş')),
     'I5: kayıt yoksa ekranda sebebi yazılı');
-  de(!tek.includes(kucuk('dersine giren öğretmen işaretlenmemiş')),
+  de(!tek.tumu.includes(kucuk('dersine giren öğretmen işaretlenmemiş')),
     'I5: kayıt varken o uyarı çıkmıyor');
 }
 

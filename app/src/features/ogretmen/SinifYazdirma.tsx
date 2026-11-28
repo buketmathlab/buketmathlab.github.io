@@ -558,7 +558,12 @@ function VeliCizelgeleri({
           <div key={y.anahtar} className="sk-veli-cizelge rounded-sk-sm border border-line p-4">
             {/* ÇİZELGENİN KENDİ ANTETİ: kesilip tek başına gittiğinde de
                 resmî bir kâğıt (veli fişiyle aynı gerekçe). */}
-            <div className="flex items-center gap-3 border-b border-ink/20 pb-2">
+            {/* `sk-cizelge-antet` ÖLÇÜM KANCASI. Künyede sabit ad
+                olmadığını denetleyen kapılar (0092) bu bloğu okuyor;
+                tüm sayfayı okusalardı alt imzadaki ürün sahibini de
+                "künyeye sızmış ad" sanarlardı — nitekim ilk koşuda tam
+                bunu yaptılar. */}
+            <div className="sk-cizelge-antet flex items-center gap-3 border-b border-ink/20 pb-2">
               <SchoolCrest boyut={96} dekoratif className="sk-fis-muhru shrink-0" />
               <div className="min-w-0">
                 <p className="font-display text-[11px] font-semibold uppercase leading-tight tracking-[0.06em] text-ink">
@@ -770,9 +775,12 @@ function VeliCizelgeleri({
                 iki kez sordururdu. Alt imza, basılı belgelerin kendi
                 geleneği.
 
-                `bicim="sade"` — yalnız ad. `ders` biçimi branşı da
-                yazıyor ama antette "MATEMATİK" zaten var; iki kez
-                yazmak gürültü. `xs` ölçüsü kesilip dağıtılan kâğıt için
+                `bicim="sahip"` — işaretin altında ÜRÜNÜN SAHİBİNİN adı
+                (öğretmenin isteği: "8 logosunun altına Buket Topuzoğlu
+                diye de yaz"). Branşsız, çünkü antette "MATEMATİK" zaten
+                var. BU AD ANTETTEKİYLE AYNI ŞEY DEĞİL: antet o sınıfın
+                ders öğretmenini yazıyor (0092), alt imza her kâğıtta
+                sabit kalıyor — öğretmen bu ayrımı bilerek seçti. `xs` ölçüsü kesilip dağıtılan kâğıt için
                 zaten ölçülmüştü (kod fişi, `SekizWordmark`).
 
                 İŞARET DÖNMÜYOR: `acilistaDonsun` varsayılan false, yani
@@ -787,7 +795,7 @@ function VeliCizelgeleri({
                   oturuyor ve kâğıt bir satır uzamıyor. */}
               <div className="flex items-center justify-between gap-3">
                 <p className="min-w-0">{cizelgeAltNotu(sinifAdi, an)}</p>
-                <SekizWordmark bicim="sade" boyut="sm" className="shrink-0" />
+                <SekizWordmark bicim="sahip" boyut="sm" className="shrink-0" />
               </div>
               <p>{CIZELGE_NOTU}</p>
             </div>
