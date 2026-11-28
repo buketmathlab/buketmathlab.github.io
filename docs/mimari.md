@@ -8066,3 +8066,90 @@ takımının beşinci yanıltması.
   altındaki soru dökümü, 2,9 mm'si durum altındaki *"gecikmeli"*. İkisi
   satır içine alınırsa sığan satır sayısı artar — ama ikisi de velinin
   en çok sorduğu şey, o yüzden küçültülmedi.
+
+## 0092 — "Ders verdiğim sınıflar": künyedeki ad gerçeği söylesin (28 Kasım)
+
+Öğretmenin sorusu: *"Şimdi hazır mı? Tüm sınıfların diğer öğretmen
+arkadaşlarım için bu ödev çizelgesini alabilecek miyim?"* Ölçünce
+0091'in künyesinin **yanlış ad bastığı** çıktı.
+
+### Kusur 1 — erişim kaydı, ders kaydı sanılıyordu
+
+Künye `sinif.ogretmenler`den geliyor, o da `ogretmen_siniflari`ndan.
+Öğretmenin kendi sözleriyle:
+
+> *"Zaten her sınıfın bir öğretmeni var. Ama ben sahip olduğum için tüm
+> sınıflar bende var gözüküyor. Fakat benim girdiğim sınıflar 9A, 9B,
+> 10C, 11C."*
+
+Doğru: 0033'ün taşıması **bütün sınıfları yöneticiye bağlamış**
+(*"Mevcut BÜTÜN sınıflar yöneticiye bağlanıyor"*) ve `sinif_ekle` her
+yeni sınıfı da bağlıyor. Yani sahip için bu tablo **erişim** kaydı;
+diğer öğretmenlerde erişim ile ders **aynı** şey.
+
+Sonuç: başka bir öğretmenin sınıfı için basılan kâğıtta künyede
+*"Matematik · Buket Topuzoğlu, Ayşe Demir"* yazıyordu. **Veliye giden
+kâğıtta yanlış bilgi** — üstelik 0091'in kendi turunda eklenen bir
+özellik yüzünden.
+
+Çözüm ayrımı şemaya yazıyor: `ogretmen_siniflari.ders_veriyor`.
+Varsayılan `true`, yani **diğer öğretmenlerin davranışı değişmiyor**.
+Taşımada **sahibin kayıtları `false`**: ayarını yapana kadar künyede
+yalnız "Matematik" yazar — eksik, ama yanlış değil. Veliye yanlış bir ad
+basmaktansa hiç basmamak.
+
+Süzgeç yalnız `sinif_not_cizelgesi`e kondu; veliye giden kâğıdın kaynağı
+o. `ogretmen_siniflari`ndan ad listesi üreten öbür uçlar (müdür
+ekranları) **erişim** listesi gösteriyor ve o bağlamda doğru.
+
+### Kusur 2 — sahip bastığında öbür öğretmenin ödevleri kâğıtta yoktu
+
+`_odeve_erisir` (0055): bir öğretmen kendi ödevlerini ve **platform
+sahibinin** ödevlerini görür, başka öğretmeninkini görmez. Sahip de muaf
+değildi. `sinif_not_cizelgesi` bunun kapısını zaten taşıyordu
+(`p_onizleme` → `v_hepsi`) ama arayüz onu hiç geçmiyordu.
+
+Öğretmenin kararı *"İkisi de olsun"*: sahip `p_onizleme` ile **tam
+kapsamlı** basıyor, her öğretmen de kendi sınıfını basabiliyor. Bu yeni
+bir yetki açmıyor — sahip o veriyi müdür önizlemesinden hâlihazırda
+görüyor.
+
+Kapsam artık **ekranda** yazılı (*"sınıfın bütün ödevleri"* /
+*"yalnız sizin ve platform sahibinin"*). Kâğıda yazılmıyor: öğretmenin
+bildirdiği gerçek düzende her sınıfın tek öğretmeni var, yani eksik
+kapsam oluşmuyor ve veliye durmadan uyarı basmak gürültü olurdu.
+Denetim bu satırın ekranda olduğunu **ve kâğıda çıkmadığını** ölçüyor.
+
+### Testin bulduğu üçüncü kusur
+
+İlk yazımda yalnız `ogretmen_sinif_ata` düzeltilmişti (o uç
+`delete` + `insert` yaptığı için ders işaretini varsayılana döndürürdü).
+Yeni test süiti *"sahibin 75 kaydı hâlâ ders_veriyor"* diye bağırdı:
+**`sinif_ekle` de** yöneticiyi her yeni sınıfa bağlıyor ve işaret
+varsayılanla `true` geliyordu. Arka kapı aynı turda kapatıldı — sahip
+yeni sınıf açtığında kusur geri dönerdi.
+
+Üç gövde de (`sinif_not_cizelgesi`, `ogretmen_sinif_ata`, `sinif_ekle`,
+`ogretmenler_listesi`) **programla kopyalandı**, ezberden yazılmadı; öz
+denetim 0091'in bütün alanlarını tek tek arıyor (0088'in dersi).
+
+### Ekran
+
+Öğretmenler ekranındaki "Sınıfları" penceresi artık **iki soru**
+soruyor: *Erişir* ve *Ders*. Erişim kalkınca ders işareti de kalkıyor —
+sunucu "atanmamış sınıfa ders işareti" isteğini zaten reddediyor,
+ekranın tutarsız hâl göstermesi *"işaretledim ama olmadı"* dedirtirdi.
+
+### Ölçüm
+
+- `ders_verdigi_siniflar_testleri.sql` — **9 grup**, hepsi yeşil.
+  **Üç kusur provası, üçü de ısırdı:** künye süzgeci kaldırıldı (3b),
+  `ogretmen_sinif_ata`nın koruması silindi (7b), taşıma atlandı
+  (migration hiç uygulanmadı).
+- `veli-cizelgesi-denetimi.mjs`e I5 ve **J grubu** eklendi.
+- Süpürme 61/61.
+
+### Öğretmenin yapacağı tek iş
+
+0092 yayınlandıktan sonra Öğretmenler ekranında kendi satırında ders
+verdiği dört sınıfı (9A, 9B, 10C, 11C) **Ders** sütununda işaretlemek.

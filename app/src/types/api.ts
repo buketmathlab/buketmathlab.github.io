@@ -1025,6 +1025,17 @@ export type OgretmenSatiri = {
    * açılan bir pencerede "Kaydet" bütün atamayı siliyordu.
    */
   sinif_idler: string[];
+  /**
+   * DERSİNE GİRDİĞİ sınıflar (0092) — `sinif_idler`in alt kümesi.
+   *
+   * `sinif_idler` ERİŞİMİ gösteriyor. Sahip için ikisi ayrışıyor: 0033'ün
+   * taşıması bütün sınıfları sahibe bağlamıştı, ama sahip hepsinin
+   * dersine girmiyor. Veli çizelgesinin künyesi bu listeye bakıyor.
+   *
+   * 0092 çalıştırılmadıysa GELMEZ (Part VIII): ekran o zaman ders
+   * işaretini hiç çizmiyor, sınıf atama eskisi gibi çalışıyor.
+   */
+  ders_sinif_idler?: string[];
   sinif_sayisi: number;
   odev_sayisi: number;
   son_gorulme: string | null;

@@ -64,6 +64,13 @@ export function Ogretmenler() {
 
   const [sinifAcik, setSinifAcik] = useState<OgretmenSatiri | null>(null);
   const [secili, setSecili] = useState<string[]>([]);
+  /**
+   * DERSİNE GİRDİĞİ sınıflar (0092) — `secili`nin alt kümesi.
+   *
+   * Erişimden AYRI tutuluyor: sahip bütün sınıflara erişiyor ama hepsinin
+   * dersine girmiyor ve veli çizelgesinin künyesi bu listeye bakıyor.
+   */
+  const [dersSecili, setDersSecili] = useState<string[]>([]);
   /** Bütün sınıfları kaldırmanın ayrı onayı (0050) — aşağıda gerekçesi. */
   const [bosOnay, setBosOnay] = useState<OgretmenSatiri | null>(null);
 
@@ -167,6 +174,9 @@ export function Ogretmenler() {
    */
   function sinifPenceresiniAc(o: OgretmenSatiri) {
     setSecili(o.sinif_idler ?? []);
+    // 0050'nin dersi ders işareti için de geçerli: pencere mevcut durumla
+    // açılmazsa "Kaydet" ayarı sessizce siler.
+    setDersSecili(o.ders_sinif_idler ?? []);
     setSinifAcik(o);
   }
 
@@ -187,7 +197,18 @@ export function Ogretmenler() {
     setSinifAcik(null);
   }
 
-  async function sinifAta(hedef: OgretmenSatiri, idler: string[]) {
+  /**
+   * İKİ UÇ, BU SIRAYLA (0092).
+   *
+   * `ogretmen_sinif_ata` ERİŞİMİ yazıyor; ders işareti ancak atanmış bir
+   * sınıfa konabiliyor (sunucu reddediyor). Sıra ters olsaydı yeni
+   * atanan bir sınıfın dersi işaretlenemezdi.
+   *
+   * İKİNCİSİ 0092 ÇALIŞTIRILMADIYSA YOK: uç bulunamazsa erişim ataması
+   * yine de kaydedilmiş oluyor ve ekran bugünkü gibi çalışıyor
+   * (Part VIII). Sessiz yutuluyor ama öğretmene söyleniyor.
+   */
+  async function sinifAta(hedef: OgretmenSatiri, idler: string[], ders?: string[]) {
     setKaydediyor(true);
     try {
       const s = await rpc<{ sinif_sayisi: number }>('ogretmen_sinif_ata', {
@@ -195,7 +216,22 @@ export function Ogretmenler() {
         p_id: hedef.id,
         p_sinif_idler: idler,
       });
-      bildir(`${hedef.ad}: ${s.sinif_sayisi} sınıf atandı.`, 'basari');
+      let dersNotu = '';
+      if (ders) {
+        // Ders listesi erişimin ALT KÜMESİ: işaretli ama atanmamış bir
+        // sınıf sunucudan 42501 döndürürdü.
+        const gecerli = ders.filter((x) => idler.includes(x));
+        try {
+          const d = await rpc<{ ders_sinif_sayisi: number }>(
+            'ogretmen_ders_siniflari_ayarla',
+            { p_token: oturum?.token, p_id: hedef.id, p_sinif_idler: gecerli },
+          );
+          dersNotu = `, ${d.ders_sinif_sayisi} sınıfta ders`;
+        } catch {
+          dersNotu = ' (ders işareti kaydedilemedi)';
+        }
+      }
+      bildir(`${hedef.ad}: ${s.sinif_sayisi} sınıf atandı${dersNotu}.`, 'basari');
       sinifPenceresiniKapat();
       yenile();
     } catch (e) {
@@ -223,7 +259,7 @@ export function Ogretmenler() {
       setSinifAcik(null);
       return;
     }
-    await sinifAta(sinifAcik, secili);
+    await sinifAta(sinifAcik, secili, dersSecili);
   }
 
   async function vekaleteGir() {
@@ -493,28 +529,63 @@ export function Ogretmenler() {
           <p className="text-[14px] text-muted">
             {sinifAcik?.ad} hangi sınıflara giriyor? İşaretlenmeyen sınıflar listesinden düşer.
           </p>
+          {/* İKİ AYRI SORU (0092).
+              "Erişir": sınıfın öğrencilerini, ödevlerini, yazışmalarını
+              görür. "Ders verir": veli çizelgesinin antetinde adı yazar.
+              Sahip için ikisi AYRIŞIYOR — 0033'ün taşıması bütün sınıfları
+              sahibe bağlamıştı, ama sahip hepsinin dersine girmiyor. Bu
+              ayrım yazılmadan önce başka bir öğretmenin sınıfı için basılan
+              kâğıtta künyede sahibin adı da çıkıyordu. */}
+          <div className="flex items-center gap-3 border-b border-line pb-1 text-[12px] text-muted">
+            <span className="w-5 shrink-0 text-center">Erişir</span>
+            <span className="w-5 shrink-0 text-center">Ders</span>
+            <span>Sınıf</span>
+          </div>
           <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
             {(siniflar.veri ?? [])
               .filter((s) => !s.ozel)
               .map((s) => (
-                <label
+                <div
                   key={s.id}
                   className="flex min-h-[44px] items-center gap-3 rounded-sk-sm px-2 hover:bg-line-soft"
                 >
                   <input
                     type="checkbox"
-                    className="size-5"
+                    className="size-5 shrink-0"
+                    aria-label={`${s.ad} sınıfına erişir`}
                     checked={secili.includes(s.id)}
                     onChange={(e) =>
-                      setSecili((o) =>
+                      setSecili((o) => {
+                        if (e.target.checked) return [...o, s.id];
+                        // ERİŞİM KALKINCA DERS DE KALKIYOR: sunucu
+                        // "atanmamış sınıfa ders işareti" isteğini zaten
+                        // reddediyor; ekranın tutarsız bir hâl göstermesi
+                        // öğretmene "işaretledim ama olmadı" dedirtirdi.
+                        setDersSecili((d) => d.filter((x) => x !== s.id));
+                        return o.filter((x) => x !== s.id);
+                      })
+                    }
+                  />
+                  <input
+                    type="checkbox"
+                    className="size-5 shrink-0"
+                    aria-label={`${s.ad} sınıfında ders veriyor`}
+                    checked={dersSecili.includes(s.id)}
+                    disabled={!secili.includes(s.id)}
+                    onChange={(e) =>
+                      setDersSecili((o) =>
                         e.target.checked ? [...o, s.id] : o.filter((x) => x !== s.id),
                       )
                     }
                   />
                   <span className="text-[15px] text-ink">{s.ad}</span>
-                </label>
+                </div>
               ))}
           </div>
+          <p className="text-[13px] text-muted">
+            “Ders” işaretli sınıflarda öğretmenin adı veli çizelgesinin antetine
+            yazılır. Erişim, ders vermeden de verilebilir.
+          </p>
           {/* ÖZEL DERS GRUBU LİSTEDE YOK: özel ders tamamen sahipte
               (öğretmenin kuralı) ve sunucu atamayı zaten reddediyor. */}
           <p className="text-[13px] text-muted">

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SchoolCrest } from '@/components/brand/SchoolCrest';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
+import { useBenKimim } from '@/hooks/useBenKimim';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
 import { Dialog } from '@/components/ui/Dialog';
@@ -136,9 +137,24 @@ export function SinifYazdirma() {
    * kapalı kalıyor; sınıf listesi ve veli fişi bundan etkilenmiyor
    * (Part VIII).
    */
+  /**
+   * SAHİP TAM KAPSAMLA BASIYOR (öğretmenin kararı: "İkisi de olsun").
+   *
+   * `_odeve_erisir` (0055) bir öğretmene yalnız KENDİ ve PLATFORM
+   * SAHİBİNİN ödevlerini gösteriyor. Sahip de bu kuraldan muaf değildi:
+   * başka bir öğretmenin sınıfı için bastığı çizelgede O ÖĞRETMENİN
+   * ödevleri HİÇ ÇIKMIYORDU — veliye eksik bir karne, eksik olduğunu
+   * söylemeden.
+   *
+   * Uç bunun kapısını zaten taşıyor (`p_onizleme` → `v_hepsi`) ve
+   * yalnız YÖNETİCİYE açıyor; yani burada yeni bir yetki verilmiyor.
+   * Sahip o veriyi müdür önizlemesinden hâlihazırda görüyor.
+   */
+  const { ben } = useBenKimim();
   const { veri: hamCizelge } = useVeri<SinifNotCizelgesi>('sinif_not_cizelgesi', {
     p_token: oturum?.token,
     p_sinif_id: id,
+    p_onizleme: ben?.sahip === true,
   });
 
   /**
@@ -519,9 +535,20 @@ function VeliCizelgeleri({
             yeniden bassın. */}
         {ogretmenKaydiYok && (
           <p className="mt-1 text-[13px] text-muted">
-            Bu sınıfa kayıtlı öğretmen yok; antette yalnız ders yazacak.
+            Bu sınıfın dersine giren öğretmen işaretlenmemiş; antette yalnız ders
+            yazacak. Öğretmenler ekranından “ders verdiği sınıflar”ı işaretleyin.
           </p>
         )}
+        {/* KAPSAM BASMADAN ÖNCE SÖYLENİYOR.
+            Çizelge ortak bir sınıfta eksik olabilir; öğretmen bunu kâğıt
+            elinde kalmadan görsün. Kâğıda YAZILMIYOR: öğretmenin bildirdiği
+            gerçek düzende her sınıfın tek öğretmeni var, yani eksik kapsam
+            oluşmuyor; veliye durmadan bir uyarı basmak gürültü olurdu. */}
+        <p className="mt-1 text-[13px] text-muted">
+          {cizelge.kapsam === 'tum'
+            ? 'Bu çizelgede sınıfın bütün ödevleri var.'
+            : 'Bu çizelgede yalnız sizin ve platform sahibinin verdiği ödevler var.'}
+        </p>
       </div>
 
       <div className="sk-cizelge-izgara mt-4 grid gap-3 print:mt-0">

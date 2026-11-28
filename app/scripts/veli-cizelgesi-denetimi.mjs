@@ -112,6 +112,11 @@
  *    I2. Ortak sınıfta hepsi yazıyor.
  *    I3. Kayıt yoksa yalnız ders; ad uydurulmuyor, sarkık "·" yok.
  *    I4. Sabit ad kaçağı yok.
+ *    I5. Ders işareti yoksa sebebi EKRANDA yazılı (0092).
+ *
+ * J. KAPSAM BASMADAN ÖNCE SÖYLENİYOR (0092)
+ *    J1. Ortak sınıfta çizelge eksik olabilir; ekranda yazılı, kâğıtta
+ *        değil.
  *
  * H. ANTETTEKİ EWALU MASKOTU (öğretmenin isteği)
  *    H1. Görsel her parçanın antetinde ve gerçekten yüklenmiş.
@@ -848,6 +853,61 @@ console.log('--- I. Antetteki künye: ad SINIFTAN geliyor ---');
   // SARKIK AYRAÇ YOK: "Ödev çizelgesi · Matematik ·" diye biten bir
   // antet, veliye eksik bir bilgi vaat ederdi.
   de(!new RegExp(`${kucuk('Matematik')}\\s*·`).test(bos), 'I3: sarkık "·" basılmıyor');
+
+  /**
+   * I5 — EKSİK KAYIT BASMADAN ÖNCE SÖYLENİYOR.
+   *
+   * 0092'den sonra sahibin ders işareti taşımada temizleniyor, yani
+   * ayarını yapana kadar künye boş kalıyor. Bu EKSİK ama YANLIŞ DEĞİL —
+   * ve sebebi öğretmene EKRANDA söylenmeli, yoksa "adım kayboldu" diye
+   * bakar. Uyarı yalnız ekranda: veliye giden kâğıtta yeri yok.
+   */
+  de(bos.includes(kucuk('dersine giren öğretmen işaretlenmemiş')),
+    'I5: kayıt yoksa ekranda sebebi yazılı');
+  de(!tek.includes(kucuk('dersine giren öğretmen işaretlenmemiş')),
+    'I5: kayıt varken o uyarı çıkmıyor');
+}
+
+// ===========================================================================
+console.log('--- J. Kapsam basmadan önce söyleniyor (0092) ---');
+// ===========================================================================
+{
+  /**
+   * `_odeve_erisir` (0055) bir öğretmene yalnız KENDİ ve platform
+   * SAHİBİNİN ödevlerini gösteriyor. Ortak bir sınıfta çizelge eksik
+   * olabilir; öğretmen bunu KÂĞIT ELİNDE KALMADAN görmeli.
+   *
+   * Kâğıda yazılmıyor: öğretmenin bildirdiği gerçek düzende her sınıfın
+   * tek öğretmeni var, yani eksik kapsam oluşmuyor ve veliye durmadan
+   * bir uyarı basmak gürültü olurdu.
+   */
+  for (const [kapsam, beklenen] of [
+    ['tum', 'sınıfın bütün ödevleri'],
+    ['ogretmen', 'yalnız sizin ve platform sahibinin'],
+  ]) {
+    const c = cizelge();
+    c.kapsam = kapsam;
+    const { b, p } = await kur({
+      ben_kimim: SAHIP, sinif_ogrenci_ozeti: OZET, sinif_not_cizelgesi: c,
+    }, 718);
+    de(await icerir(p, beklenen), `J1 ${kapsam}: kapsam ekranda yazılı ("${beklenen}")`);
+
+    // KÂĞITTA YOK: yazdırma kipinde o satır düşüyor.
+    await p.getByRole('button', { name: 'Veli çizelgelerini yazdır' }).click();
+    await p.waitForTimeout(300);
+    await p.emulateMedia({ media: 'print' });
+    await p.waitForTimeout(200);
+    const kagitta = await p.evaluate((x) => {
+      const gorunur = [...document.querySelectorAll('p')].filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+      return gorunur.some((e) => e.innerText.toLocaleLowerCase('tr').includes(x));
+    }, beklenen.toLocaleLowerCase('tr'));
+    de(!kagitta, `J1 ${kapsam}: kapsam satırı kâğıda ÇIKMIYOR`);
+    await p.emulateMedia({ media: 'screen' });
+    await b.close();
+  }
 }
 
 console.log('');

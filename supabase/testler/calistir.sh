@@ -334,6 +334,10 @@ echo "==> Veli çizelgesi testleri (0091)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/veli_cizelgesi_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
 
+echo "==> Ders verdiği sınıflar testleri (0092)"
+psql_ -d "$DB" -f "$KOK/supabase/testler/ders_verdigi_siniflar_testleri.sql" 2>&1 \
+  | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
+
 echo "==> Gönderemiyor raporu testleri (panel-icin dosyası)"
 psql_ -d "$DB" -f "$KOK/supabase/testler/gonderemiyor_raporu_testleri.sql" 2>&1 \
   | sed 's/psql:[^ ]*sql:[0-9]*: //' | grep -E 'NOTICE|ERROR' | sed 's/^NOTICE:  //'
