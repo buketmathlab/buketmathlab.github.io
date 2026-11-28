@@ -787,7 +787,7 @@ function VeliCizelgeleri({
                   oturuyor ve kâğıt bir satır uzamıyor. */}
               <div className="flex items-center justify-between gap-3">
                 <p className="min-w-0">{cizelgeAltNotu(sinifAdi, an)}</p>
-                <SekizWordmark bicim="sade" boyut="xs" className="shrink-0" />
+                <SekizWordmark bicim="sade" boyut="sm" className="shrink-0" />
               </div>
               <p>{CIZELGE_NOTU}</p>
             </div>

@@ -264,9 +264,24 @@ export function cizelgeAltNotu(sinifAdi: string, an: Date): string {
   return `${sinifAdi} · ${t} tarihinde hazırlandı.`;
 }
 
+/**
+ * Kâğıdın kapanış notu — YALNIZ SAYIYI DOĞRU OKUTAN BİLGİ.
+ *
+ * BİR CÜMLE BİLEREK ÇIKARILDI. Not şöyle başlıyordu: "Sınıf ve düzey
+ * ortalamaları isimsizdir; hangi öğrencinin kaç aldığı yazmaz."
+ * Öğretmen kaldırttı: "Bu cümleler gereksiz."
+ *
+ * Haklı, ve sebebi ürünün kendi dil kuralında yazılı: GEREKÇELENDİRME
+ * DİLİ YOK. Kâğıtta zaten yalnız o öğrencinin satırları var ve sınıf
+ * ile düzey sütunları isimsiz sayılar — kimsenin aklına gelmeyecek bir
+ * şüpheyi kâğıdın kendisi uyandırıyordu.
+ *
+ * GERİ KONMASIN: bir birim testi notun o cümleyi TAŞIMADIĞINI ölçüyor.
+ * Kalan iki cümle duruyor, çünkü ikisi de velinin sayıyı yanlış
+ * okumasını önleyen gerçek bilgi.
+ */
 export const CIZELGE_NOTU =
-  'Sınıf ve düzey ortalamaları isimsizdir; hangi öğrencinin kaç aldığı '
-  + 'yazmaz. Süresi dolmamış ödevler henüz değerlendirmeye girmez. '
+  'Süresi dolmamış ödevler henüz değerlendirmeye girmez. '
   + 'Çalışma kağıtları puanlanmaz.';
 
 /**

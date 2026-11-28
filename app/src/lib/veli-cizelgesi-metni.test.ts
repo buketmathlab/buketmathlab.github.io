@@ -435,7 +435,27 @@ describe('dil kuralları', () => {
     }
   });
 
-  it('kıyasın isimsiz olduğu çizelgede açıkça yazıyor', () => {
-    expect(CIZELGE_NOTU).toContain('isimsiz');
+  /**
+   * SAVUNMA CÜMLESİ GERİ GELMESİN.
+   *
+   * Not şöyle başlıyordu: "Sınıf ve düzey ortalamaları isimsizdir;
+   * hangi öğrencinin kaç aldığı yazmaz." Öğretmen kaldırttı — "Bu
+   * cümleler gereksiz" — ve ürünün kendi dil kuralı da aynı yönde:
+   * gerekçelendirme dili yok. Kâğıtta zaten yalnız o öğrencinin
+   * satırları var.
+   *
+   * Bu kapı EKSİK OLANI değil, OLMAMASI GEREKENİ ölçüyor: cümleyi
+   * "eksik kalmış" diye geri koyan bir tur burada kırmızı yanar.
+   */
+  it('kapanış notu savunma cümlesi TAŞIMIYOR', () => {
+    const d = CIZELGE_NOTU.toLocaleLowerCase('tr');
+    expect(d).not.toContain('isimsiz');
+    expect(d).not.toContain('kaç aldığı');
+  });
+
+  it('kapanış notu sayıyı doğru okutan iki bilgiyi taşıyor', () => {
+    // Bunlar savunma değil: velinin sayıyı yanlış okumasını önlüyor.
+    expect(CIZELGE_NOTU).toContain('Süresi dolmamış');
+    expect(CIZELGE_NOTU).toContain('Çalışma kağıtları');
   });
 });

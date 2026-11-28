@@ -8221,6 +8221,36 @@ daraltınca notun son kelimesi tek başına üçüncü satıra düşüyordu.
 İmza artık kısa olan tarih satırının hizasında, uzun not tam
 genişlikte. **Kâğıt bir satır bile uzamadı** — pay 9,2 / 9,8 mm.
 
+### Bir savunma cümlesi çıkarıldı
+
+Öğretmen: *"Sınıf ve düzey ortalamaları isimsizdir. Hangi öğrencinin
+kaç aldığı yazmaz. Bu cümleler gereksiz."*
+
+Haklı, ve sebebi ürünün kendi dil kuralında yazılı: **gerekçelendirme
+dili yok**. Kâğıtta zaten yalnız o öğrencinin satırları var; sınıf ve
+düzey sütunları isimsiz sayılar. Kimsenin aklına gelmeyecek bir şüpheyi
+kâğıdın kendisi uyandırıyordu.
+
+Kalan iki cümle duruyor — ikisi de velinin sayıyı yanlış okumasını
+önleyen gerçek bilgi ("süresi dolmamış ödevler değerlendirmeye girmez",
+"çalışma kağıtları puanlanmaz").
+
+**Bir birim testi bu cümleye bekçilik ediyordu**
+(`toContain('isimsiz')`). Silinmedi, **tersine çevrildi**: not artık
+savunma cümlesi *taşımamalı*. Kapı eksik olanı değil, **olmaması
+gerekeni** ölçüyor; cümleyi "eksik kalmış" diye geri koyan bir tur
+burada kırmızı yanar.
+
+### SEKİZ imzası büyüdü
+
+*"8 logosunu daha görünür yapmalısın."* İmza zaten `text-ink`, yani
+soluk değildi — mesele boyuttu. `xs` → `sm`: işaret **4,2 → 7,4 mm**.
+Öğretmen antete taşımayı ve ayrı şerit açmayı seçmedi, aynı yerde iki
+kat büyümesini istedi.
+
+**Ödev satırı yine kaybolmadı:** kısalan not yer kazandırdı, büyüyen
+imza harcadı; 21 ve 16 satır duruyor, pay 9,2 → 6,0 mm.
+
 ### Ölçüm yine şekle bağlıydı
 
 Tablo başlıkları `uppercase` olunca `innerText` "VERİLDİ" döndürdü ve
