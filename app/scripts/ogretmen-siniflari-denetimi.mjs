@@ -53,7 +53,11 @@ const OGRETMENLER = [
   },
   {
     id: 'g-bir', ad: 'Bir Ogretmen', sahip: false, aktif: true, pin_var: true,
-    sinif_idler: ['s-9a', 's-10a'], sinif_sayisi: 2, odev_sayisi: 3, son_gorulme: null,
+    sinif_idler: ['s-9a', 's-10a'],
+    // 0092: ERİŞİM ile DERS ayrı. Bu öğretmen iki sınıfa erişiyor ama
+    // yalnız birinin dersine giriyor — sahibin gerçek hâlinin aynısı.
+    ders_sinif_idler: ['s-9a'],
+    sinif_sayisi: 2, odev_sayisi: 3, son_gorulme: null,
   },
   {
     id: 'g-iki', ad: 'Iki Ogretmen', sahip: false, aktif: true, pin_var: true,
@@ -112,12 +116,37 @@ async function ac() {
   return { s, p };
 }
 
-/** Açık penceredeki işaretli sınıf adları. */
+/**
+ * Açık penceredeki işaretli sınıf adları (ERİŞİM sütunu).
+ *
+ * KANCA `aria-label`, DOM ŞEKLİ DEĞİL. İlk yazımda satır tek bir
+ * `<label>`dı ve ölçüm onu arıyordu; 0092 satıra ikinci bir kutu
+ * (DERS) ekleyince `<label>` `<div>`e dönüştü ve ölçüm HİÇBİR ŞEY
+ * BULAMAZ oldu — ürün çalışıyordu, altı ölçüm birden kırmızı yandı.
+ *
+ * `aria-label` hem gerçek bir erişilebilirlik etiketi hem de ekranın
+ * iç yapısından bağımsız: satır yeniden düzenlenebilir, ölçüm durur.
+ */
+const ERISIM = 'dialog[open] input[type=checkbox][aria-label$="erişir"]';
+const DERS = 'dialog[open] input[type=checkbox][aria-label$="ders veriyor"]';
+
 const isaretliler = (p) =>
-  p.evaluate(() =>
-    [...document.querySelectorAll('dialog[open] label')]
-      .filter((l) => l.querySelector('input[type=checkbox]')?.checked)
-      .map((l) => l.textContent.trim()),
+  p.evaluate(
+    (sec) =>
+      [...document.querySelectorAll(sec)]
+        .filter((k) => k.checked)
+        .map((k) => (k.getAttribute('aria-label') ?? '').split(' sınıf')[0]),
+    ERISIM,
+  );
+
+/** DERS sütununda işaretli sınıflar (0092). */
+const dersIsaretliler = (p) =>
+  p.evaluate(
+    (sec) =>
+      [...document.querySelectorAll(sec)]
+        .filter((k) => k.checked)
+        .map((k) => (k.getAttribute('aria-label') ?? '').split(' sınıf')[0]),
+    DERS,
   );
 
 /**
@@ -216,7 +245,8 @@ console.log('3 — HEPSİNİ KALDIRMAK EK ONAY İSTİYOR (istek GİTMİYOR)');
 
   // İşaretlerin hepsini kaldır.
   await p.evaluate(() => {
-    for (const k of document.querySelectorAll('dialog[open] input[type=checkbox]')) {
+    for (const k of document.querySelectorAll(
+      'dialog[open] input[type=checkbox][aria-label$="erişir"]')) {
       if (k.checked) k.click();
     }
   });
@@ -243,7 +273,8 @@ console.log('4 — ONAY VERİLİNCE BOŞ LİSTE GİDİYOR');
   const { s, p } = await ac();
   await sinifPenceresiniAc(p, 'Bir Ogretmen');
   await p.evaluate(() => {
-    for (const k of document.querySelectorAll('dialog[open] input[type=checkbox]')) {
+    for (const k of document.querySelectorAll(
+      'dialog[open] input[type=checkbox][aria-label$="erişir"]')) {
       if (k.checked) k.click();
     }
   });
@@ -271,10 +302,10 @@ console.log('5 — OLAĞAN KAYDETME: SEÇİLEN KİMLİKLER GİDİYOR');
   await sinifPenceresiniAc(p, 'Iki Ogretmen');
   // 9A'yı da ekle: 9B + 9A gitmeli.
   await p.evaluate(() => {
-    const l = [...document.querySelectorAll('dialog[open] label')].find((x) =>
-      x.textContent.trim().startsWith('9A'),
-    );
-    l?.querySelector('input[type=checkbox]')?.click();
+    const k = [...document.querySelectorAll(
+      'dialog[open] input[type=checkbox][aria-label$="erişir"]')]
+      .find((x) => (x.getAttribute('aria-label') ?? '').startsWith('9A'));
+    k?.click();
   });
   await p.waitForTimeout(200);
   await acikPencereDugmesi(p, 'Kaydet');
@@ -315,6 +346,74 @@ console.log('6 — SAHİP SATIRINDA "SINIFLARI" DÜĞMESİ YOK');
       ).length,
   );
   de(adet === 2, `"Sınıfları" düğmesi sahip dışındaki iki öğretmende (${adet})`);
+  await s.close();
+}
+
+// ---------------------------------------------------------------------------
+console.log('7 — DERS SÜTUNU ERİŞİMDEN AYRI (0092)');
+// ---------------------------------------------------------------------------
+{
+  /**
+   * Öğretmenin düzeltmesi: "Ben sahip olduğum için tüm sınıflar bende var
+   * gözüküyor. Fakat benim girdiğim sınıflar 9A, 9B, 10C, 11C."
+   *
+   * Erişim ile ders ayrı sorular; veli çizelgesinin antetine YALNIZ ders
+   * yazılıyor. Ekran bu ayrımı gösteremezse öğretmen ayarı yapamaz.
+   */
+  const { s, p } = await ac();
+  await sinifPenceresiniAc(p, 'Bir Ogretmen');
+
+  const erisim = await isaretliler(p);
+  const ders = await dersIsaretliler(p);
+  de(erisim.length === 2, `erişim iki sınıfta (${erisim.join(', ') || 'hiçbiri'})`);
+  de(ders.length === 1 && ders[0] === '9A', `ders YALNIZ 9A'da (${ders.join(', ') || 'hiçbiri'})`);
+
+  // ERİŞİMİ OLMAYAN SINIFIN DERS KUTUSU KAPALI. Sunucu "atanmamış sınıfa
+  // ders işareti" isteğini zaten reddediyor; ekranın tıklanabilir
+  // göstermesi "işaretledim ama olmadı" dedirtirdi.
+  const kapali = await p.evaluate((sec) =>
+    [...document.querySelectorAll(sec)]
+      .filter((k) => k.disabled)
+      .map((k) => (k.getAttribute('aria-label') ?? '').split(' sınıf')[0]), DERS);
+  de(kapali.includes('9B'), `erişimsiz sınıfın ders kutusu kapalı (${kapali.join(', ')})`);
+
+  // ERİŞİM KALKINCA DERS DE KALKIYOR.
+  await p.evaluate((sec) => {
+    const k = [...document.querySelectorAll(sec)]
+      .find((x) => (x.getAttribute('aria-label') ?? '').startsWith('9A'));
+    k?.click();
+  }, ERISIM);
+  await p.waitForTimeout(200);
+  de((await dersIsaretliler(p)).length === 0, 'erişim kalkınca ders işareti de kalktı');
+  await s.close();
+}
+
+// ---------------------------------------------------------------------------
+console.log('8 — KAYDET İKİ UCU DA ÇAĞIRIYOR (0092)');
+// ---------------------------------------------------------------------------
+{
+  const { s, p } = await ac();
+  await sinifPenceresiniAc(p, 'Bir Ogretmen');
+  await acikPencereDugmesi(p, 'Kaydet');
+  await p.waitForTimeout(400);
+
+  const ucuncu = await p.evaluate(() =>
+    window.__istekler.filter((i) => i.ad === 'ogretmen_ders_siniflari_ayarla').at(-1) ?? null);
+  de(ucuncu !== null, 'ogretmen_ders_siniflari_ayarla çağrıldı');
+  de(
+    Array.isArray(ucuncu?.govde?.p_sinif_idler)
+      && ucuncu.govde.p_sinif_idler.length === 1
+      && ucuncu.govde.p_sinif_idler[0] === 's-9a',
+    `ders listesi doğru gitti (${(ucuncu?.govde?.p_sinif_idler ?? []).join(', ')})`,
+  );
+
+  // SIRA ÖNEMLİ: erişim önce yazılmalı, yoksa sunucu "önce sınıf atanmalı"
+  // diyerek ders işaretini reddeder.
+  const sira = await p.evaluate(() =>
+    window.__istekler
+      .filter((i) => i.ad === 'ogretmen_sinif_ata' || i.ad === 'ogretmen_ders_siniflari_ayarla')
+      .map((i) => i.ad));
+  de(sira[0] === 'ogretmen_sinif_ata', `erişim ucu önce çağrıldı (${sira.join(' → ')})`);
   await s.close();
 }
 
