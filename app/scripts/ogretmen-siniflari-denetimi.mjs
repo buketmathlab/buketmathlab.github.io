@@ -126,6 +126,18 @@ async function ac() {
  *
  * `aria-label` hem gerçek bir erişilebilirlik etiketi hem de ekranın
  * iç yapısından bağımsız: satır yeniden düzenlenebilir, ölçüm durur.
+ *
+ * -----------------------------------------------------------------------
+ * KUSUR PROVALARI — 7 ve 8. GRUPLAR GERÇEKTEN ISIRIYOR MU (ölçüldü)
+ *
+ *   X1  Kaydet ders ucunu hiç çağırmıyor (erişim yazılıyor, ders işareti
+ *       sessizce düşüyor)
+ *         → 8 ısırdı: "ogretmen_ders_siniflari_ayarla çağrıldı" ve
+ *           "ders listesi doğru gitti ()" — 2 kusur
+ *   X2  Ders kutusu erişimden bağımsızlaşıyor (`disabled` kalkıyor,
+ *       erişim kalkınca ders işareti kalıyor)
+ *         → 7 ısırdı: "erişimsiz sınıfın ders kutusu kapalı ()" ve
+ *           "erişim kalkınca ders işareti de kalktı"
  */
 const ERISIM = 'dialog[open] input[type=checkbox][aria-label$="erişir"]';
 const DERS = 'dialog[open] input[type=checkbox][aria-label$="ders veriyor"]';
