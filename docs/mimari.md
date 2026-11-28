@@ -8201,6 +8201,26 @@ Kalkan çerçeve ve birleşen ad satırı sabit kısmı küçülttü:
 Ölçüm: kodsuz 270,8 / 277 mm, kodlu 270,2 / 277 mm. Yani aynı sınıf için
 daha az kâğıt gidiyor.
 
+### Ürünün adı da kâğıtta
+
+Öğretmen: *"8 uygulamasının logosunu da ekle bir yere."*
+
+**Yeri antet değil alt bilgi.** Antette okul arması var ve bu kâğıt
+OKULUN belgesi; SEKİZ onu hazırlayan araç. İkisini üst üste koymak,
+veliye "bu kâğıdı kim veriyor" sorusunu iki kez sordururdu. Alt imza
+basılı belgelerin kendi geleneği.
+
+Yeni bir şey çizilmedi: `SekizWordmark`in `xs` ölçüsü **zaten kesilip
+dağıtılan kâğıt için** eklenmişti (kod fişi) ve orada ölçülmüştü.
+`bicim="sade"` — yalnız ad, çünkü antette "MATEMATİK" zaten yazıyor.
+İşaret **dönmüyor**: `acilistaDonsun` varsayılan false, sabit 8
+(Kural 12 — dönüş yalnız dört yerde).
+
+İlk yerleşimde imza ile kapanış notu tek bloktaydı; imza metni
+daraltınca notun son kelimesi tek başına üçüncü satıra düşüyordu.
+İmza artık kısa olan tarih satırının hizasında, uzun not tam
+genişlikte. **Kâğıt bir satır bile uzamadı** — pay 9,2 / 9,8 mm.
+
 ### Ölçüm yine şekle bağlıydı
 
 Tablo başlıkları `uppercase` olunca `innerText` "VERİLDİ" döndürdü ve

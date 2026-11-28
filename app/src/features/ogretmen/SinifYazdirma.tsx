@@ -6,6 +6,7 @@ import { AsyncBoundary } from '@/components/ui/Durumlar';
 import { SchoolCrest } from '@/components/brand/SchoolCrest';
 import { EwaluFigure } from '@/components/brand/EwaluFigure';
 import { GeometricDivider } from '@/components/brand/GeometricDivider';
+import { SekizWordmark } from '@/components/brand/SekizWordmark';
 import { useBenKimim } from '@/hooks/useBenKimim';
 import { useOturum } from '@/hooks/oturum-baglam';
 import { useVeri } from '@/hooks/useVeri';
@@ -760,10 +761,36 @@ function VeliCizelgeleri({
               </div>
             )}
 
-            <p className="mt-2 border-t border-line pt-1 text-[9px] leading-snug text-muted">
-              {cizelgeAltNotu(sinifAdi, an)}
-            </p>
-            <p className="text-[9px] leading-snug text-muted">{CIZELGE_NOTU}</p>
+            {/* ALT İMZA — ÜRÜNÜN ADI KÂĞITTA (öğretmenin isteği:
+                "8 uygulamasının logosunu da ekle bir yere").
+
+                YERİ ANTET DEĞİL ALT BİLGİ. Antette okul arması var ve bu
+                kâğıt OKULUN belgesi; SEKİZ onu hazırlayan araç. İkisini
+                üst üste koymak, veliye "bu kâğıdı kim veriyor" sorusunu
+                iki kez sordururdu. Alt imza, basılı belgelerin kendi
+                geleneği.
+
+                `bicim="sade"` — yalnız ad. `ders` biçimi branşı da
+                yazıyor ama antette "MATEMATİK" zaten var; iki kez
+                yazmak gürültü. `xs` ölçüsü kesilip dağıtılan kâğıt için
+                zaten ölçülmüştü (kod fişi, `SekizWordmark`).
+
+                İŞARET DÖNMÜYOR: `acilistaDonsun` varsayılan false, yani
+                sabit 8 (Kural 12 — dönüş yalnız dört yerde). Kâğıtta
+                hareket zaten olamaz; önemli olan bileşenin kâğıt için
+                doğru kipte çağrılması. */}
+            <div className="mt-2 border-t border-line pt-1 text-[9px] leading-snug text-muted">
+              {/* İMZA KISA SATIRIN HİZASINDA, UZUN NOT TAM GENİŞLİKTE.
+                  İkisi tek blokken imza metni daraltıyordu ve kapanış
+                  notunun son kelimesi tek başına üçüncü satıra düşüyordu.
+                  Tarih satırı kısa; imza onun yanında boş duran yere
+                  oturuyor ve kâğıt bir satır uzamıyor. */}
+              <div className="flex items-center justify-between gap-3">
+                <p className="min-w-0">{cizelgeAltNotu(sinifAdi, an)}</p>
+                <SekizWordmark bicim="sade" boyut="xs" className="shrink-0" />
+              </div>
+              <p>{CIZELGE_NOTU}</p>
+            </div>
           </div>
         ))}
       </div>
